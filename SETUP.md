@@ -206,37 +206,48 @@ The proxy is generalisable to any deployment — none of `Caddyfile.tmpl` or `de
 
 ## Populating Songs Data
 
-After setting up the database and environment variables, you need to populate the songs database. Run the following curl commands for each region individually:
+After setting up the database and environment variables, populate each game's song catalog. Catalog writes must run on the game's own deployment, the one whose `FRONTEND_GAME` is that game. Any other deployment answers `409`.
+
+maimai DX reads its International and JP catalogs from maimai DX NET, so those regions need a SEGA account token. On the maimai deployment, update each region:
 
 ```bash
 # Update JP songs
-curl -X POST "https://yourdomain.com/api/admin/update_all?region=jp&token=account://<sega-username>:://<sega-password>" \
+curl "https://yourdomain.com/api/admin/update_all?game=maimai&region=jp&token=account://<sega-username>:://<sega-password>" \
   -H "Authorization: Bearer $ADMIN_UPDATE_TOKEN"
 
 # Update INTL songs
-curl -X POST "https://yourdomain.com/api/admin/update_all?region=intl&token=account://<sega-username>:://<sega-password>" \
+curl "https://yourdomain.com/api/admin/update_all?game=maimai&region=intl&token=account://<sega-username>:://<sega-password>" \
   -H "Authorization: Bearer $ADMIN_UPDATE_TOKEN"
 ```
 
-Replace `<sega-username>` and `<sega-password>` with your SEGA account credentials for the respective region. Each region must be updated separately.
+Replace `<sega-username>` and `<sega-password>` with your SEGA account credentials for the respective region.
 
 For INTL, you can also use a cookie token instead of account credentials:
 
 ```bash
-curl -X POST "https://yourdomain.com/api/admin/update_all?region=intl&token=cookie://<cookie-value>" \
+curl "https://yourdomain.com/api/admin/update_all?game=maimai&region=intl&token=cookie://<cookie-value>" \
   -H "Authorization: Bearer $ADMIN_UPDATE_TOKEN"
 ```
+
+CHUNITHM reads its catalog from otoge-db and needs no token. Without `region`, `update_all` updates every enabled region. On the CHUNITHM deployment:
+
+```bash
+curl "https://your-chunithm-domain.com/api/admin/update_all?game=chunithm" \
+  -H "Authorization: Bearer $ADMIN_UPDATE_TOKEN"
+```
+
+When both games are deployed, list each deployment's origin in the other's `CATALOG_PEER_ORIGINS` and give both the same `ADMIN_UPDATE_TOKEN`, so a catalog write on one also refreshes the other's cached API data. [docs/CHUNITHM_CATALOG.md](docs/CHUNITHM_CATALOG.md) describes the CHUNITHM source and its admin requests.
 
 ## Preparing a New Game Version
 
-When a new maimai DX version is released, you need to copy the existing songs data to the new version. For example, to prepare version 13 (CiRCLE PLUS) for JP by copying all songs from version 12 (CiRCLE):
+When a new maimai DX version is released, copy the existing songs data to the new version. For example, to prepare version 13 (CiRCLE PLUS) for JP by copying all songs from version 12 (CiRCLE), run this on the maimai deployment:
 
 ```bash
-curl "https://yourdomain.com/api/admin/import?from=version<=12@jp-12&to=jp-13" \
+curl "https://yourdomain.com/api/admin/import?game=maimai&from=version<=12@jp-12&to=jp-13" \
   -H "Authorization: Bearer $ADMIN_UPDATE_TOKEN"
 ```
 
-This copies all songs where `addedVersion <= 12` from `jp-12` to `jp-13`. The `from` parameter format is `version[<=|>=|=]NUMBER@[intl|jp]-VERSION_ID` and the `to` parameter format is `[intl|jp]-VERSION_ID`.
+This copies all songs where `addedVersion <= 12` from `jp-12` to `jp-13`. The `from` parameter format is `version[<=|>=|=]NUMBER@REGION-VERSION_ID` and the `to` parameter format is `REGION-VERSION_ID`, where `REGION` is one of the game's regions (`intl`, `jp` or `cn` for maimai DX).
 
 After importing, run the [songs update](#populating-songs-data) for that region to pull in any new songs added in the new version.
 
