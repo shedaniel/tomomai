@@ -267,9 +267,19 @@ behavior when migrating maimai.
 | Connected applications | `/{locale}/settings/applications` | Account-wide grants; placement remains open |
 | Developer settings | `/{locale}/settings/developer` | Account-wide keys/clients; placement remains open |
 
-Current `db/stats`, `db/events`, `db/arcades` and `db/posts` surfaces need an
-explicit inventory: some content may be shared, while metrics and events may
-be game-specific. Do not duplicate everything onto Tomochu by moving a folder.
+Each definition lists its `/db` sections in `catalogSections`, in navigation
+order, each with the capability it requires and whether it is hidden. maimai
+offers songs, stats, events, the changelog (`posts`) and the arcade map, which
+is hidden, and CHUNITHM offers songs. The served descriptor carries only the
+sections its effective capabilities offer. `navCatalogSections` in
+`src/lib/games/frontend.ts` lists the navigation and sitemap sections, and
+`getCatalogSection` guards `/db/[type]`, its metadata and OpenGraph image, the
+changelog routes and the dashboard's changelog announcement. An unknown or
+unoffered section renders an inline not-found page and asks search engines not
+to index it. `src/app/[locale]/db/[type]/sections.tsx` maps each section to what
+the page renders. The sitemap lists the served game's sections, and its players
+with a snapshot of that game in an enabled region.
+
 Song detail uses both the normal `[type]/[slug]` route and the parallel `@detail`
 slot today; preserve list state, direct navigation and browser back behavior.
 
@@ -433,7 +443,8 @@ such a capability, move its component behind a `GAME_UI` slot.
 `src/test/game-branching.test.ts` fails when code outside the game folders
 compares a game id, apart from a shrinking list of comparisons that are waiting
 for their replacement. It also fails when a game other than the owner declares
-one of these single-game features (its `SINGLE_GAME_FEATURES` list).
+one of these single-game features (its `SINGLE_GAME_FEATURES` list), or a `/db`
+section whose view or content is one game's (`SINGLE_GAME_SECTIONS`).
 
 Plates, percentile/recommendation calculations, reserved accounts,
 credit/daily-play images and existing render-token flows remain maimai-only
