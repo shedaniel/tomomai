@@ -54,6 +54,7 @@ vi.mock("@/lib/db", async () => {
 import { persistCatalog } from ".";
 
 const log = pino({ enabled: false });
+const REFERENCING_TABLES = ["score_data", "user_recent_songs", "user_albums"];
 const chart: CatalogChart = { game: "chunithm", songName: "Song", chartType: 0, difficulty: 4,
   artist: "Artist", cover: "image", genre: "Original", level: "14+", levelPrecise: 145, addedVersion: 8, metadata: { source: { provider: "otoge-db", id: "123" } } };
 const storedRow = { id: BigInt(12), parentId: BigInt(5), game: "chunithm", songName: "Song", type: 0,
@@ -151,13 +152,18 @@ describe("catalog persistence", () => {
     expect(result.skippedDeletions.map(change => change.dbId)).toEqual(references && mode !== "destructive" ? ["12"] : []);
     expect(result.affected).toEqual(deleted ? [{ songName: "Song", artist: "Artist", chartType: 0 }] : []);
     expect(state.reads.some(query => query.sql.includes("for update"))).toBe(true);
+    for (const table of REFERENCING_TABLES) {
+      const count = state.reads.find(query => query.sql.includes(`from "${table}"`));
+      expect(count?.sql).toContain(`"${table}"."game" = $1`);
+      expect(count?.params).toEqual(["chunithm", BigInt(12)]);
+    }
     expect(state.deletes).toHaveLength(deleted ? 1 : 0);
     if (deleted) {
       expect(state.deletes[0].sql).toContain('"songs"."game" = $1');
-      expect(state.deletes[0].params).toEqual(["chunithm", BigInt(12)]);
       expect(state.deletes[0].sql.includes("not exists")).toBe(mode === "alter");
-      if (mode === "alter") for (const table of ["score_data", "user_recent_songs", "user_albums"]) {
-        expect(state.deletes[0].sql).toContain(`from "${table}"`);
+      expect(state.deletes[0].params).toEqual(mode === "alter" ? ["chunithm", BigInt(12), "chunithm", "chunithm", "chunithm"] : ["chunithm", BigInt(12)]);
+      if (mode === "alter") for (const table of REFERENCING_TABLES) {
+        expect(state.deletes[0].sql).toContain(`from "${table}" where ("${table}"."game" = $`);
       }
     }
   });
