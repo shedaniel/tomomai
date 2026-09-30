@@ -340,7 +340,7 @@ export const userRecentSongs = pgTable("user_recent_songs", {
   playedAt: timestamp("playedAt", { precision: 0 }).notNull(),
   scoreValue: integer("scoreValue").notNull(), // stored as 10000x, e.g., 99.1234% = 991234 (max 1010000)
   secondaryScore: smallint("secondaryScore").notNull(),
-  maxDxScore: smallint("maxDxScore"),
+  maxSecondaryScore: smallint("maxSecondaryScore"),
   comboStatus: smallint("comboStatus").notNull(),
   syncStatus: smallint("syncStatus").notNull(),
   clearStatus: smallint("clearStatus").notNull().default(0),

@@ -55,7 +55,7 @@ export async function prepareCreditData(
   const recentPlays = await db
     .select({
       ...maimaiRecentPlayColumns,
-      maxDxScore: sql<number>`coalesce(${userRecentSongs.maxDxScore}, 0)`.mapWith(Number).as("maxDxScore"),
+      maxDxScore: sql<number>`coalesce(${userRecentSongs.maxSecondaryScore}, 0)`.mapWith(Number).as("maxDxScore"),
       track: sql<number>`coalesce(${userRecentSongs.track}, 0)`.mapWith(Number).as("track"),
       playlog: maimaiPlaylogColumns,
     })

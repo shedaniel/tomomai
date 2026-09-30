@@ -76,8 +76,8 @@ export async function persistFetchResult(input: PersistFetchResultInput): Promis
       return [{ game, userId, songId, playedAt: recent.playedAt,
         scoreValue: recent.scoreValue, secondaryScore: recent.secondaryScore,
         comboStatus: recent.comboStatus, syncStatus: recent.syncStatus, clearStatus: recent.clearStatus,
-        maxDxScore: recent.maxDxScore,
         track: recent.track,
+        maxSecondaryScore: recent.maxSecondaryScore,
       }];
     });
     if (recents.length) await tx.insert(userRecentSongs).values(recents).onConflictDoNothing();

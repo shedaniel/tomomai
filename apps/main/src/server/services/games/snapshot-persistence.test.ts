@@ -81,6 +81,16 @@ it("persists events against the new snapshot and game", async () => {
   expect(eventWrite.params).toEqual(expect.arrayContaining(["Progress", 10, "maimai", 1]));
 });
 
+it("persists recent plays with their track and maximum secondary score", async () => {
+  const chart = { game: "maimai" as const, region: "jp" as const, version: 14, songName: "Recent", chartType: 1, difficulty: 3 };
+  state.resolveCharts.mockResolvedValue({ chartResolution: new Map([[chartKey(chart), BigInt(7)]]), songsById: new Map() });
+  const recent = { ...score(chart, 1005000), secondaryScore: 2100, playedAt: new Date("2026-09-01T00:00:00Z"), track: 3, maxSecondaryScore: 2400 };
+  await persistFetchResult({ ...persist, fetched: { ...fetched, recents: [recent] } });
+  const recentWrite = state.statements.find(query => query.sql.startsWith('insert into "user_recent_songs"'))!;
+  expect(recentWrite.sql).toContain('"maxSecondaryScore"');
+  expect(recentWrite.params).toEqual(expect.arrayContaining([BigInt(7), 1005000, 2100, 2400, 3]));
+});
+
 it("rejects an expired persistence deadline before writing", async () => {
   await expect(persistFetchResult({ ...persist, deadline: Date.now() - 1 })).rejects.toThrow("timed out");
   expect(state.statements).toEqual([]);

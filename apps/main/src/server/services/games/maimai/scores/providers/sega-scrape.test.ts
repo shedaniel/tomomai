@@ -142,7 +142,7 @@ describe("maimai DX NET scrape", () => {
   it("saves play details and album photos after the snapshot, and one failing does not stop the other", async () => {
     serveSite({ recents: recentPlay });
     const { result, enrich } = await fetchScores(context({ shouldFetchAlbums: true }));
-    expect(result.recents).toEqual([expect.objectContaining({ track: 1, playedAt: new Date("2026-09-28T03:30:00.000Z"), maxDxScore: 400 })]);
+    expect(result.recents).toEqual([expect.objectContaining({ track: 1, playedAt: new Date("2026-09-28T03:30:00.000Z"), maxSecondaryScore: 400 })]);
     mocks.details.mockRejectedValueOnce(new Error("detail layout changed"));
     const persisted = { userId: "user", region: "intl", chartResolution: new Map() } as PersistedSnapshotContext;
     await expect(enrich!(persisted)).resolves.toBeUndefined();

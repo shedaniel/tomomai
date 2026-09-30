@@ -41,8 +41,8 @@ export type NormalizedScore = {
 
 export type NormalizedRecent = NormalizedScore & {
   playedAt: Date;
-  maxDxScore?: number;
   track?: number;
+  maxSecondaryScore?: number;
 };
 
 export type NormalizedEvent = {
@@ -115,7 +115,7 @@ export interface ReservedProfileProvider {
 /** A stored recent play as the shared recents query reads it, before its game adds the details. */
 export type StoredRecentPlay = {
   recentSongId: bigint;
-  maxDxScore: number | null;
+  maxSecondaryScore: number | null;
   metadata: unknown;
 };
 

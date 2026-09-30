@@ -24,8 +24,8 @@ it("reads the playlogs of a page of plays in one query and leaves the others pen
   state.rows = [Object.values({ ...stored, recentSongId: "2", venue: "Arcade", syncScore: null })];
 
   const details = await loadMaimaiRecentDetails([
-    { recentSongId: BigInt(1), maxDxScore: null, metadata: null },
-    { recentSongId: BigInt(2), maxDxScore: 1500, metadata: null },
+    { recentSongId: BigInt(1), maxSecondaryScore: null, metadata: null },
+    { recentSongId: BigInt(2), maxSecondaryScore: 1500, metadata: null },
   ]);
 
   expect(state.queries).toHaveLength(1);

@@ -507,7 +507,7 @@ on the upstream pages. The provider returns
 | `score.secondaryScore` | `0`; CHUNITHM has no DX score |
 | `recent.playedAt` | A `Date` interpreting the upstream local timestamp in JST |
 | `recent.track` | Optional if actually present |
-| `recent.maxDxScore` | Omitted |
+| `recent.maxSecondaryScore` | Omitted |
 | Recent details | Written by the enrichment step into `user_recent_songs.metadata` |
 
 CHUNITHM judgments live in `user_recent_songs.metadata`. The maimai detailed

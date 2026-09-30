@@ -49,8 +49,8 @@ export function normalizeRecent(recent: RecentSongData, ctx: ChartContext): Norm
   return {
     ...normalizeScore(recent, ctx),
     playedAt: recent.playedAt,
-    maxDxScore: recent.maxDxScore,
     track: recent.track,
+    maxSecondaryScore: recent.maxDxScore,
   };
 }
 

@@ -66,7 +66,7 @@ describe("maimai score normalization", () => {
       comboStatus: 1,
       syncStatus: 1,
       clearStatus: 0,
-      maxDxScore: 456,
+      maxSecondaryScore: 456,
       track: 1,
       playedAt: new Date("2026-08-27T00:00:00.000Z"),
     });

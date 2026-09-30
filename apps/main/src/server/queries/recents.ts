@@ -30,7 +30,7 @@ export async function fetchRecentSongs(
       comboStatus: userRecentSongs.comboStatus,
       syncStatus: userRecentSongs.syncStatus,
       clearStatus: userRecentSongs.clearStatus,
-      maxDxScore: userRecentSongs.maxDxScore,
+      maxSecondaryScore: userRecentSongs.maxSecondaryScore,
       metadata: userRecentSongs.metadata,
       track: userRecentSongs.track,
       songId: songInstanceId,
@@ -61,7 +61,7 @@ export async function fetchRecentSongs(
   ]);
 
   return {
-    recentPlays: recentPlays.map(({ maxDxScore, metadata, ...play }, index) => ({
+    recentPlays: recentPlays.map(({ maxSecondaryScore, metadata, ...play }, index) => ({
       ...play,
       track: play.track ?? 0,
       details: details[index],

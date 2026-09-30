@@ -45,7 +45,7 @@ export async function loadMaimaiRecentDetails(plays: readonly StoredRecentPlay[]
   const playlogs = new Map(rows.map(row => [row.recentSongId, toMaimaiPlaylog(row.playlog)]));
   return plays.map(play => ({
     game: "maimai",
-    maxDxScore: play.maxDxScore ?? 0,
+    maxDxScore: play.maxSecondaryScore ?? 0,
     playlog: playlogs.get(play.recentSongId) ?? null,
   }));
 }
