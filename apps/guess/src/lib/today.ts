@@ -1,6 +1,7 @@
 import type { Chart, Hint, Reveal } from "./types";
 import { TOTAL_STEPS } from "./types";
 import { buildStepPlan, getDateKey, pickDailyChart } from "./daily";
+import { getFrozenDaily } from "./daily-store";
 import { getSongPool } from "./song-pool";
 import { HINTS } from "./hints-registry";
 import { getAudioPreview, isHeardle } from "./heardle";
@@ -14,14 +15,21 @@ export type Today = {
 /**
  * Today's chart + plan. With no override, uses `getDateKey()` (JST today or
  * the DEBUG_KEY override). Pass a `YYYY-MM-DD` `dateOverride` to compute the
- * plan for a past date instead — used by the `/[date]` route. Pure function
- * of (dateKey, pool); the pool is cached 1h upstream so this is cheap.
+ * plan for a past date instead — used by the `/[date]` route. The first
+ * computation for each date is frozen in Postgres (see `daily-store.ts`) so
+ * later catalogue changes can't reshuffle past puzzles.
  */
 export async function getToday(dateOverride?: string): Promise<Today> {
   const dateKey = dateOverride ?? getDateKey();
-  const pool = await getSongPool();
-  const chart = pickDailyChart(pool, dateKey);
-  const plan = buildStepPlan(chart, dateKey);
+  const { chart, plan } = await getFrozenDaily(dateKey, async () => {
+    const pool = await getSongPool();
+    const chart = pickDailyChart(pool, dateKey);
+    return { chart, plan: buildStepPlan(chart, dateKey) };
+  });
+  // A GUESS_HINT_COUNT change invalidates stored plans; the pinned chart still holds.
+  if (plan.length !== TOTAL_STEPS - 1) {
+    return { dateKey, chart, plan: buildStepPlan(chart, dateKey) };
+  }
   return { dateKey, chart, plan };
 }
 
