@@ -77,8 +77,6 @@
     "loginWithPasskey": "Sign in with Passkey",
     "signIn": "Sign in",
     "newHere": "New here?",
-    "noAccount": "Don't have an account?",
-    "signup": "Sign up",
     "signupWithDiscord": "Sign up with Discord",
     "signupWithX": "Sign up with X",
     "passkey": {
@@ -87,13 +85,39 @@
     },
     "signupDisabled": "Sign up Currently Disabled",
     "signupDisabledMessage": "We are not accepting new registrations at this time. Please check back later.",
-    "peekExampleProfile": "Have a peek at an example profile",
     "features": {
       "title": "Features:",
       "trackScores": "Track scores across International and Japan regions",
       "viewHistory": "View historical data snapshots",
       "importData": "Import data directly from maimai DX NET",
       "analyzeProgress": "Analyse your progress over time"
+    },
+    "signInTitle": "Sign in to tomomai",
+    "signInDescription": "Welcome back! Continue with the account you signed up with.",
+    "signUpTitle": "Create your tomomai account",
+    "signUpDescription": "Review our policies, then choose an account to sign up with.",
+    "createAccount": "Create an account",
+    "haveAccount": "Already have an account?",
+    "inviteOnlyTitle": "Invitation required",
+    "inviteOnlyMessage": "New sign-ups currently need an invitation link from an existing user.",
+    "errors": {
+      "title": "Authentication error",
+      "noAccount": "There's no tomomai account for that login yet. Create one below to get started.",
+      "signupUnavailable": "We couldn't create your account. New sign-ups may be closed right now.",
+      "inviteRequired": "An invitation is required to sign up right now. Open the invitation link you received and try again.",
+      "inviteInvalid": "That invitation code isn't valid.",
+      "inviteRevoked": "That invitation has been revoked.",
+      "inviteUsed": "That invitation has already been used.",
+      "inviteExpired": "That invitation has expired.",
+      "accountNotLinked": "That provider account isn't linked to your user and couldn't be linked automatically.\n\nYou may already have an account using the same email.\n\nTry signing in with the provider you originally signed up with, then link this one from Settings → Account.",
+      "emailMismatch": "That account's email doesn't match your current account.",
+      "alreadyLinked": "That account is already linked to a different user.",
+      "emailMissing": "That account didn't share an email address, which tomomai needs to sign you in.",
+      "restart": "Your sign-in was interrupted or took too long. Please try again.",
+      "provider": "We couldn't get your account details from the login provider. Please try again.",
+      "banned": "This account has been suspended. If you think this is a mistake, contact us on Discord.",
+      "generic": "Something went wrong during authentication. Please try again.",
+      "code": "Error code: {code}"
     }
   },
   "linkedAccounts": {
@@ -1102,14 +1126,10 @@
       "expired": "This invitation has expired",
       "ownCode": "You cannot use your own invitation code",
       "validationFailed": "Failed to validate invitation"
-    }
+    },
+    "claimed": "Welcome! Your invitation has been claimed."
   },
   "db": {
-    "callout": {
-      "title": "Accessing the database instead?",
-      "subtitle": "Click here to view the song database without logging in.",
-      "description": "tomomai ともマイ DB is a public database of maimai charts, arcades, and more."
-    },
     "beta": {
       "title": "Beta Feature",
       "description": "The database feature is currently in beta. Some data may be incomplete or inaccurate."
@@ -1510,5 +1530,20 @@
     "curveDescription": "Estimated share of players with similar Rating scoring at or below each achievement. {percent} scored at or below your {achievement}. Ties are included.",
     "clusterDescription": "Rating {ratingMin}–{ratingMax}; {achievementMin}–{achievementMax}: {count, plural, one {# sampled score} other {# sampled scores}}",
     "youDescription": "You: {rating} Rating, {achievement}"
+  },
+  "landing": {
+    "headline": "Track your maimai DX scores",
+    "subheadline": "Import from maimai DX NET and see your rating, best scores, and history.",
+    "screenshotAlt": "The tomomai dashboard showing a player's best scores and rating charts",
+    "links": {
+      "db": {
+        "title": "tomomai DB",
+        "description": "Charts, arcades, and more"
+      },
+      "profile": {
+        "title": "Example profile",
+        "description": "See @shedaniel's scores"
+      }
+    }
   }
 }
