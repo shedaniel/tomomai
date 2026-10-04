@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useSession } from "@/lib/auth-client";
+import { useAuthDialog } from "@/components/auth/auth-dialog-provider";
 import { Button } from "@tomomai/ui";
 import { Navigation, X, DoorOpen, Cigarette, MapPin, Clock, CircleDollarSign, Edit } from "lucide-react";
 import Script from "next/script";
@@ -301,7 +303,9 @@ export function ArcadesMap() {
   const [isLoadingLocation, setIsLoadingLocation] = useState(false);
   const [isMapLibreReady, setIsMapLibreReady] = useState(false);
   const [selectedStore, setSelectedStore] = useState<Store | null>(null);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const { data: session } = useSession();
+  const isLoggedIn = !!session;
+  const { openAuthDialog } = useAuthDialog();
   const [showEditDrawer, setShowEditDrawer] = useState(false);
 
   const isMobile = useMediaQuery("(max-width: 768px)", {
@@ -343,18 +347,6 @@ export function ArcadesMap() {
       setSelectedStore(updatedStore);
     }
   }, [storeData]);
-
-  // Check if user is logged in
-  useEffect(() => {
-    fetch("/api/auth/get-session")
-      .then(res => res.json())
-      .then(data => {
-        setIsLoggedIn(!!data.user);
-      })
-      .catch(() => {
-        setIsLoggedIn(false);
-      });
-  }, []);
 
   // If the script was already loaded in a previous mount, mark MapLibre as ready
   useEffect(() => {
@@ -785,7 +777,7 @@ export function ArcadesMap() {
 
   const handleEditClick = () => {
     if (!isLoggedIn) {
-      alert("Please log in to edit arcade data.");
+      openAuthDialog();
       return;
     }
     setShowEditDrawer(true);

@@ -77,8 +77,6 @@
     "loginWithPasskey": "使用 Passkey 登入",
     "signIn": "登入",
     "newHere": "第一次來嗎？",
-    "noAccount": "建立帳戶以開始追蹤你的成績。",
-    "signup": "註冊",
     "signupWithDiscord": "用 Discord 註冊",
     "signupWithX": "以 X 註冊",
     "passkey": {
@@ -87,13 +85,39 @@
     },
     "signupDisabled": "註冊功能已關閉",
     "signupDisabledMessage": "目前暫不開放新用戶註冊，請稍後再試。",
-    "peekExampleProfile": "看看範例個人檔案",
     "features": {
       "title": "功能：",
       "trackScores": "追蹤國際區和日本區的成績",
       "viewHistory": "查看你的歷史遊玩資料",
       "importData": "從 maimai DX NET 匯入資料",
       "analyzeProgress": "分析你的遊玩紀錄"
+    },
+    "signInTitle": "登入 tomomai",
+    "signInDescription": "歡迎回來！請使用註冊時的帳戶繼續。",
+    "signUpTitle": "建立 tomomai 帳戶",
+    "signUpDescription": "請先細閱我們的政策，再選擇用來註冊的帳戶。",
+    "createAccount": "建立帳戶",
+    "haveAccount": "已經有帳戶？",
+    "inviteOnlyTitle": "需要邀請",
+    "inviteOnlyMessage": "目前註冊新帳戶需要現有用戶提供的邀請連結。",
+    "errors": {
+      "title": "驗證錯誤",
+      "noAccount": "這個登入方式仍未有對應的 tomomai 帳戶，請在下方建立帳戶開始使用。",
+      "signupUnavailable": "未能建立帳戶，目前可能暫停接受註冊。",
+      "inviteRequired": "目前註冊需要邀請。請打開你收到的邀請連結後再試。",
+      "inviteInvalid": "此邀請碼無效。",
+      "inviteRevoked": "此邀請已被撤銷。",
+      "inviteUsed": "此邀請已被使用。",
+      "inviteExpired": "此邀請已過期。",
+      "accountNotLinked": "此帳戶未連結到你的用戶，亦未能自動連結。\n\n你可能已有一個使用相同電郵的帳戶。\n\n請先用最初註冊時的方式登入，再到「設定 → 帳戶」連結此帳戶。",
+      "emailMismatch": "此帳戶的電郵與目前帳戶不符。",
+      "alreadyLinked": "此帳戶已連結到其他用戶。",
+      "emailMissing": "此帳戶沒有提供電郵地址，而登入 tomomai 需要電郵地址。",
+      "restart": "登入過程被中斷或逾時，請再試一次。",
+      "provider": "未能從登入服務取得你的帳戶資料，請再試一次。",
+      "banned": "此帳戶已被停用。如你認為有誤，請透過 Discord 聯絡我們。",
+      "generic": "驗證時出現問題，請再試一次。",
+      "code": "錯誤代碼：{code}"
     }
   },
   "linkedAccounts": {
@@ -1093,14 +1117,10 @@
       "expired": "此邀請已過期",
       "ownCode": "你不能使用自己的邀請代碼",
       "validationFailed": "邀請驗證失敗"
-    }
+    },
+    "claimed": "歡迎！已成功使用邀請。"
   },
   "db": {
-    "callout": {
-      "title": "想查詢資料庫嗎？",
-      "subtitle": "無需登入即可查看歌曲資料庫！",
-      "description": "tomomai ともマイ DB 是一個公開的 maimai 譜面、機舖及更多maimai資訊的資料庫"
-    },
     "beta": {
       "title": "測試功能",
       "description": "資料庫功能目前處於測試階段。部分資料可能不完整或不準確。"
@@ -1501,5 +1521,20 @@
     "curveDescription": "估計相近 Rating 玩家中，達成率不高於各數值的比例。有 {percent} 的玩家達成率不高於你的 {achievement}，包含同分。",
     "clusterDescription": "Rating {ratingMin}–{ratingMax}；達成率 {achievementMin}–{achievementMax}：{count} 筆樣本",
     "youDescription": "你：Rating {rating}，達成率 {achievement}"
+  },
+  "landing": {
+    "headline": "記錄你的 maimai DX 成績",
+    "subheadline": "從 maimai DX NET 匯入，查看你的 Rating、最佳成績及歷史記錄。",
+    "screenshotAlt": "顯示玩家最佳成績及 Rating 圖表的 tomomai 主頁",
+    "links": {
+      "db": {
+        "title": "tomomai DB",
+        "description": "譜面、機舖等資料"
+      },
+      "profile": {
+        "title": "範例個人檔案",
+        "description": "看看 @shedaniel 的成績"
+      }
+    }
   }
 }

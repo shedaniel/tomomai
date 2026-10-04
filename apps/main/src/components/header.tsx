@@ -27,6 +27,8 @@ import { getEnabledRegions, isCNExclusive } from "@/lib/enabled-regions";
 import { Locale, setLocaleCookie } from "@/i18n/locale";
 import { cn, getLanguages, isR2Url } from "@/lib/utils";
 import { useLocale } from "./providers/locale-provider";
+import { useAuthDialog } from "@/components/auth/auth-dialog-provider";
+import { useSession } from "@/lib/auth-client";
 
 function XIcon({ className }: { className?: string }) {
   return (
@@ -262,11 +264,14 @@ function DrawerRegionSwitcher({ value, onChange, drawerItemClass }: { value: Reg
   );
 }
 
-function UserIcon({ user, menu, onAbout, onTheme, onDiscordInvite }: Partial<NonNullable<HeaderProps['user']>> & {
+interface UserIconHandlers {
   onAbout: () => void;
   onTheme: () => void;
   onDiscordInvite: () => void;
-}) {
+  onSignIn?: () => void;
+}
+
+function UserIcon({ user, menu, onAbout, onTheme, onDiscordInvite, onSignIn }: Partial<NonNullable<HeaderProps['user']>> & UserIconHandlers) {
   const t = useTranslations();
   const [drawerOpen, setDrawerOpen] = useState(false);
 
@@ -330,10 +335,10 @@ function UserIcon({ user, menu, onAbout, onTheme, onDiscordInvite }: Partial<Non
               {!user && (
                 <>
                   <DrawerClose asChild>
-                    <Link href="/" className={drawerItemClass}>
+                    <button className={drawerItemClass} onClick={onSignIn}>
                       <LogIn className="h-4 w-4" />
-                      <span>{t('common.join')}</span>
-                    </Link>
+                      <span>{t('auth.signIn')}</span>
+                    </button>
                   </DrawerClose>
                   <Separator className="my-1" />
                 </>
@@ -473,11 +478,9 @@ function UserIcon({ user, menu, onAbout, onTheme, onDiscordInvite }: Partial<Non
               </>
             ) : (
               <>
-                <DropdownMenuItem asChild>
-                  <Link href="/">
-                    <LogIn className="mr-2 h-4 w-4" />
-                    <span>{t('common.join')}</span>
-                  </Link>
+                <DropdownMenuItem onClick={onSignIn}>
+                  <LogIn className="mr-2 h-4 w-4" />
+                  <span>{t('auth.signIn')}</span>
                 </DropdownMenuItem>
               </>
             )}
@@ -557,6 +560,29 @@ function UserIcon({ user, menu, onAbout, onTheme, onDiscordInvite }: Partial<Non
   )
 }
 
+// Pages without a server-provided user (public db/profile pages, the landing
+// page) resolve the session on the client so signed-in visitors aren't shown as guests.
+function SessionUserIcon(handlers: Omit<UserIconHandlers, "onSignIn">) {
+  const t = useTranslations();
+  const { data: session, isPending } = useSession();
+  const { openAuthDialog } = useAuthDialog();
+
+  if (session) {
+    return <UserIcon user={session.user} menu={null} {...handlers} />;
+  }
+
+  return (
+    <>
+      {!isPending && (
+        <Button size="sm" className="h-8 rounded-full px-4 max-md:hidden" onClick={() => openAuthDialog()}>
+          {t('auth.signIn')}
+        </Button>
+      )}
+      <UserIcon {...handlers} onSignIn={() => openAuthDialog()} />
+    </>
+  );
+}
+
 export function Header({ currentTab, showDiscordBanner = true, customThemesEnabled = false, user }: HeaderProps) {
   const t = useTranslations();
   const [aboutOpen, setAboutOpen] = useState(false);
@@ -577,7 +603,7 @@ export function Header({ currentTab, showDiscordBanner = true, customThemesEnabl
     <>
       <div className="flex items-center justify-between mb-8">
         <div className="flex items-center space-x-1 max-md:space-x-2">
-          <Link href="/">
+          <Link href="/" className="shrink-0">
             <motion.div
               whileHover={{ scale: 1.05 }}
               transition={getTransition(SPRING_CONFIGS.snappy)}
@@ -592,7 +618,11 @@ export function Header({ currentTab, showDiscordBanner = true, customThemesEnabl
         <div className="flex items-center space-x-4">
           {!isCNExclusive() && <div className="max-md:hidden"><LocaleSwitcher /></div>}
           {user?.menu && getEnabledRegions().length > 1 && <div className="max-md:hidden"><RegionSwitcher header={true} value={user.menu.selectedRegion} onChange={user.menu.onRegionChange} /></div>}
-          <UserIcon user={user?.user} menu={user?.menu} onAbout={() => setAboutOpen(true)} onTheme={() => setThemeOpen(true)} onDiscordInvite={handleDiscordInvite} />
+          {user ? (
+            <UserIcon user={user.user} menu={user.menu} onAbout={() => setAboutOpen(true)} onTheme={() => setThemeOpen(true)} onDiscordInvite={handleDiscordInvite} />
+          ) : (
+            <SessionUserIcon onAbout={() => setAboutOpen(true)} onTheme={() => setThemeOpen(true)} onDiscordInvite={handleDiscordInvite} />
+          )}
         </div>
       </div>
 

@@ -1,55 +1,23 @@
 import { db } from '@/lib/db';
 import { invites, user } from '@/lib/db/schema-pg';
 import { getLogger } from '@/lib/request-logger';
+import { getSignupRequirements } from '@/lib/signup';
+import { usePasskey, useTwitterOauth } from '@/lib/flags';
 import { protectedProcedure, publicProcedure, router } from '@/lib/trpc';
 import { TRPCError } from '@trpc/server';
 import { nanoid } from 'nanoid';
 import { and, count, eq, isNull, lt, or } from 'drizzle-orm';
 import { z } from 'zod';
 
-const SIGNUP_REQUIRED_AMOUNT = 256;
-
 export const invitesRouter = router({
-  getSignupRequirements: publicProcedure
+  getSignInOptions: publicProcedure
     .query(async () => {
-      const SIGNUP_TYPE = process.env.NEXT_PUBLIC_ACCOUNT_SIGNUP_TYPE || 'disabled';
-
-      if (SIGNUP_TYPE === 'disabled') {
-        return {
-          signupEnabled: false,
-          inviteRequired: false,
-          reason: 'disabled'
-        };
-      }
-
-      if (SIGNUP_TYPE === 'enabled') {
-        return {
-          signupEnabled: true,
-          inviteRequired: false,
-          reason: 'enabled'
-        };
-      }
-
-      if (SIGNUP_TYPE === 'invite-only') {
-        const [userCount] = await db
-          .select({ count: count() })
-          .from(user);
-
-        const totalUsers = userCount.count;
-        const inviteRequired = totalUsers >= SIGNUP_REQUIRED_AMOUNT;
-
-        return {
-          signupEnabled: true,
-          inviteRequired,
-          reason: inviteRequired ? 'invite-only' : 'open'
-        };
-      }
-
-      return {
-        signupEnabled: false,
-        inviteRequired: false,
-        reason: 'disabled'
-      };
+      const [signup, passkey, twitterOauth] = await Promise.all([
+        getSignupRequirements(),
+        usePasskey(),
+        useTwitterOauth(),
+      ]);
+      return { signup, passkey, twitterOauth };
     }),
 
   getInvites: protectedProcedure

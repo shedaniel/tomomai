@@ -87,8 +87,6 @@
     "loginWithPasskey": "使用 Passkey 登入",
     "signIn": "登入",
     "newHere": "第一次来吗？",
-    "noAccount": "建立账户以开始追踪你的成绩。",
-    "signup": "注册",
     "signupWithDiscord": "用 Discord 注册",
     "signupWithX": "用 X 注册",
     "passkey": {
@@ -97,13 +95,39 @@
     },
     "signupDisabled": "注册功能已关闭",
     "signupDisabledMessage": "目前暂不开放新用户注册，请稍后再试。",
-    "peekExampleProfile": "看看范例个人主页",
     "features": {
       "title": "功能：",
       "trackScores": "追踪国际服和日本服的成绩",
       "viewHistory": "查看你的历史游玩资料",
       "importData": "从 maimai DX NET 导入数据",
       "analyzeProgress": "分析你的游玩记录"
+    },
+    "signInTitle": "登入 tomomai",
+    "signInDescription": "欢迎回来！请使用注册时的账号继续。",
+    "signUpTitle": "创建 tomomai 账号",
+    "signUpDescription": "请先阅读我们的政策，再选择用于注册的账号。",
+    "createAccount": "创建账号",
+    "haveAccount": "已经有账号了？",
+    "inviteOnlyTitle": "需要邀请",
+    "inviteOnlyMessage": "目前注册新账号需要现有用户提供的邀请链接。",
+    "errors": {
+      "title": "验证错误",
+      "noAccount": "该登入方式还没有对应的 tomomai 账号，请在下方创建账号开始使用。",
+      "signupUnavailable": "无法创建账号，目前可能暂停开放注册。",
+      "inviteRequired": "目前注册需要邀请。请打开你收到的邀请链接后再试一次。",
+      "inviteInvalid": "该邀请码无效。",
+      "inviteRevoked": "该邀请已被撤销。",
+      "inviteUsed": "该邀请已被使用。",
+      "inviteExpired": "该邀请已过期。",
+      "accountNotLinked": "该账号尚未关联到你的用户，且无法自动关联。\n\n你可能已经有一个使用相同邮箱的账号。\n\n请先使用最初注册时的方式登入，再到「设置 → 账号」关联该账号。",
+      "emailMismatch": "该账号的邮箱与当前账号不一致。",
+      "alreadyLinked": "该账号已关联到其他用户。",
+      "emailMissing": "该账号没有提供邮箱地址，而登入 tomomai 需要邮箱地址。",
+      "restart": "登入过程被中断或超时，请重试。",
+      "provider": "无法从登入服务获取你的账号信息，请重试。",
+      "banned": "该账号已被封禁。如果你认为这是误判，请通过 Discord 联系我们。",
+      "generic": "验证时出现问题，请重试。",
+      "code": "错误代码：{code}"
     }
   },
   "linkedAccounts": {
@@ -1093,14 +1117,10 @@
       "expired": "此邀请已过期",
       "ownCode": "你不能使用自己的邀请代码",
       "validationFailed": "邀请验证失败"
-    }
+    },
+    "claimed": "欢迎！已成功使用邀请。"
   },
   "db": {
-    "callout": {
-      "title": "想查询数据库吗？",
-      "subtitle": "无需登入即可查看歌曲数据库！",
-      "description": "tomomai ともマイ DB 是一个公开的 maimai 谱面、机厅及更多maimai资讯的数据库"
-    },
     "beta": {
       "title": "测试功能",
       "description": "数据库功能目前处于测试阶段。部分数据可能不完整或不准确。"
@@ -1501,5 +1521,20 @@
     "curveDescription": "估计相近 Rating 玩家中，达成率不高于各数值的比例。有 {percent} 的玩家达成率不高于你的 {achievement}，包含同分。",
     "clusterDescription": "Rating {ratingMin}–{ratingMax}；达成率 {achievementMin}–{achievementMax}：{count} 笔样本",
     "youDescription": "你：Rating {rating}，达成率 {achievement}"
+  },
+  "landing": {
+    "headline": "记录你的 maimai DX 成绩",
+    "subheadline": "从 maimai DX NET 导入，查看你的 R 值、最佳成绩与历史记录。",
+    "screenshotAlt": "显示玩家最佳成绩与 R 值图表的 tomomai 主页",
+    "links": {
+      "db": {
+        "title": "tomomai DB",
+        "description": "谱面、游戏中心等资料"
+      },
+      "profile": {
+        "title": "范例个人主页",
+        "description": "看看 @shedaniel 的成绩"
+      }
+    }
   }
 }
