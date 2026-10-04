@@ -8,7 +8,7 @@ import { apiKey } from "@better-auth/api-key";
 import { passkey } from "@better-auth/passkey";
 import { oauthProvider } from "@better-auth/oauth-provider";
 import { API_SCOPES, isInternalScope } from "@/lib/api/scopes";
-import { and, count, eq, isNull, lt, or } from "drizzle-orm";
+import { and, eq, isNull, lt, or } from "drizzle-orm";
 import { db } from "./db";
 import * as schema from "./db/schema-pg";
 import { logger } from "@/lib/logger";
@@ -21,6 +21,7 @@ import { useApiKeyCreation, useOauthAppCreation } from "@/lib/flags";
 import { getCurrentLegalVersions } from "@/lib/legal";
 import { getAcceptedPolicyVersions } from "@/lib/legal-acceptance";
 import { NEW_POLICY_REQUIRED_CODE } from "@/lib/security/policy-gate";
+import { getSignupRequirements } from "@/lib/signup";
 
 async function mirrorAvatarForSignup(
   rawUrl: string | null | undefined,
@@ -178,22 +179,6 @@ const CAPTCHA_GATED_PATHS = new Set([
   "/passkey/generate-register-options",
 ]);
 
-const SIGNUP_TYPE = process.env.NEXT_PUBLIC_ACCOUNT_SIGNUP_TYPE || 'disabled'; // disabled, invite-only, enabled
-const SIGNUP_REQUIRED_AMOUNT = 128;
-// Helper function to check if invites are required based on user count
-async function checkInviteRequirement(): Promise<boolean> {
-  if (SIGNUP_TYPE !== 'invite-only') {
-    return SIGNUP_TYPE === 'disabled'; // Always require invite if disabled, never if enabled
-  }
-
-  // For invite-only mode, check user count
-  const [userCount] = await db
-    .select({ count: count() })
-    .from(schema.user);
-
-  return userCount.count >= SIGNUP_REQUIRED_AMOUNT;
-}
-
 // Helper function to validate and claim invitations
 async function validateAndClaimInvite(inviteCode: string, userId: string) {
   const now = new Date();
@@ -324,6 +309,11 @@ export const auth = betterAuth({
   },
   emailAndPassword: {
     enabled: false,
+  },
+  // Errors without a client errorCallbackURL (bad state, bans) land on the
+  // site's own error handling instead of Better Auth's dev-only HTML page.
+  onAPIError: {
+    errorURL: "/",
   },
   database: drizzleAdapter(db, {
     provider: "pg",
@@ -632,19 +622,13 @@ export const auth = betterAuth({
     user: {
       create: {
         before: async (user, context) => {
-          // Mirror Discord/Twitter avatar to R2 so we don't depend on their CDNs.
-          // Failures (dead URL, transient) end up as null; the UI falls back to initials.
-          if (user.image) {
-            user.image = await mirrorAvatarForSignup(user.image, user.id);
+          const { signupEnabled, inviteRequired } = await getSignupRequirements();
+
+          // APIError messages reach the client verbatim as the callback's ?error= code.
+          if (!signupEnabled) {
+            throw new APIError("FORBIDDEN", { message: "unable_to_create_user" });
           }
 
-          const inviteRequired = await checkInviteRequirement();
-
-          if (SIGNUP_TYPE === 'disabled') {
-            throw new Error("unable_to_create_user");
-          }
-
-          // Check if invitation is required based on dynamic logic
           if (inviteRequired) {
             let inviteCode: string | null = null;
 
@@ -664,7 +648,7 @@ export const auth = betterAuth({
 
             if (!inviteCode) {
               logger.info("No invitation code found in cookies during signup");
-              throw new Error("Invitation required for signup");
+              throw new APIError("FORBIDDEN", { message: "invite_required" });
             }
 
             logger.info("Found invitation code during signup");
@@ -684,27 +668,33 @@ export const auth = betterAuth({
               .limit(1);
 
             if (!invite) {
-              throw new Error("Invalid invitation code");
+              throw new APIError("FORBIDDEN", { message: "invite_invalid" });
             }
 
             if (invite.revoked) {
-              throw new Error("This invitation has been revoked");
+              throw new APIError("FORBIDDEN", { message: "invite_revoked" });
             }
 
             if (invite.claimedBy) {
-              throw new Error("This invitation has already been used");
+              throw new APIError("FORBIDDEN", { message: "invite_used" });
             }
 
             if (new Date(invite.expiresAt) <= now) {
-              throw new Error("This invitation has expired");
+              throw new APIError("FORBIDDEN", { message: "invite_expired" });
             }
+          }
+
+          // Mirror Discord/Twitter avatar to R2 so we don't depend on their CDNs.
+          // Failures (dead URL, transient) end up as null; the UI falls back to initials.
+          if (user.image) {
+            user.image = await mirrorAvatarForSignup(user.image, user.id);
           }
 
           return { data: user };
         },
         after: async (user, context) => {
           // Check if invitation was used (and claim it if so)
-          const inviteRequired = await checkInviteRequirement();
+          const { inviteRequired } = await getSignupRequirements();
 
           if (inviteRequired) {
             let inviteCode: string | null = null;
@@ -739,8 +729,8 @@ export const auth = betterAuth({
           }
 
           // Seed policy acceptance for the new user. The consent dialog is the
-          // only path that sets requestSignUp: true (login-screen.tsx
-          // handleConsentGiven), so a brand-new user has just agreed to the
+          // only path that sets requestSignUp: true (auth-dialog.tsx
+          // SignUpPanel), so a brand-new user has just agreed to the
           // current versions. Best-effort: a failure must not break signup; the
           // consent gate re-prompts any user whose acceptance was not recorded.
           try {

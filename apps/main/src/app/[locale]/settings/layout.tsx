@@ -1,5 +1,4 @@
 import { getServerSession } from "@/lib/auth-server";
-import { AuthErrorHandler } from "@/components/auth-error-handler";
 import { SettingsSidebar } from "@/components/settings/sidebar";
 import { Link, redirect } from "@/i18n/navigation"
 import Image from "next/image";
@@ -23,7 +22,6 @@ export default async function SettingsLayout({
 
   return (
     <div className="container mx-auto max-w-200 px-4 py-8 overflow-x-hidden">
-      <AuthErrorHandler />
       <div className="mb-8">
         <Link href="/">
           <Image

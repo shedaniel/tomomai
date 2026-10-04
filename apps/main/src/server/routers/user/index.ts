@@ -47,7 +47,7 @@ export const userRouter = router({
   deleteToken: fetchRouter.deleteToken,
 
   // Invites
-  getSignupRequirements: invitesRouter.getSignupRequirements,
+  getSignInOptions: invitesRouter.getSignInOptions,
   getInvites: invitesRouter.getInvites,
   createInvite: invitesRouter.createInvite,
   revokeInvite: invitesRouter.revokeInvite,

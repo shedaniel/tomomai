@@ -21,6 +21,7 @@ import { trpc } from "@/lib/trpc-client";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { StoreEditForm } from "./store-edit-form";
 import { useSession } from "@/lib/auth-client";
+import { useAuthDialog } from "@/components/auth/auth-dialog-provider";
 import { motion, AnimatePresence } from "motion/react";
 import { useTranslations } from "next-intl";
 import { getGameName, GameId } from "@/lib/game-utils";
@@ -158,6 +159,12 @@ export function StoreEditDrawer({ open, onOpenChange, store, isLoggedIn }: Store
   const [editingExisting, setEditingExisting] = useState(false);
   const [editToDelete, setEditToDelete] = useState<bigint | null>(null);
   const { data: session } = useSession();
+  const { openAuthDialog } = useAuthDialog();
+
+  const promptSignIn = () => {
+    onOpenChange(false);
+    openAuthDialog();
+  };
 
   // Fetch edits for this store
   const { data: editsData, refetch: refetchEdits, isRefetching: isRefetchingEdits } = trpc.store.getStoreEdits.useQuery(
@@ -195,7 +202,7 @@ export function StoreEditDrawer({ open, onOpenChange, store, isLoggedIn }: Store
 
   const handleVote = (editId: bigint, vote: 'upvote' | 'downvote') => {
     if (!isLoggedIn) {
-      alert("Please log in to vote");
+      promptSignIn();
       return;
     }
 
@@ -211,7 +218,7 @@ export function StoreEditDrawer({ open, onOpenChange, store, isLoggedIn }: Store
 
   const handleCreateEdit = () => {
     if (!isLoggedIn) {
-      alert("Please log in to create an edit");
+      promptSignIn();
       return;
     }
 
