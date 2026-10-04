@@ -77,8 +77,6 @@
     "loginWithPasskey": "패스키로 로그인",
     "signIn": "로그인",
     "newHere": "처음이신가요?",
-    "noAccount": "계정이 없으신가요?",
-    "signup": "회원가입",
     "signupWithDiscord": "Discord로 가입",
     "signupWithX": "X로 회원가입",
     "passkey": {
@@ -87,13 +85,39 @@
     },
     "signupDisabled": "가입 일시 중단됨",
     "signupDisabledMessage": "현재 신규 가입을 받지 않고 있습니다. 나중에 다시 확인해 주세요.",
-    "peekExampleProfile": "예시 프로필 둘러보기",
     "features": {
       "title": "주요 기능:",
       "trackScores": "해외판(International) 및 일본판 성과 추적",
       "viewHistory": "과거 기록 스냅샷 열람",
       "importData": "maimai DX NET에서 데이터 가져오기",
       "analyzeProgress": "플레이 성과 및 성장 분석"
+    },
+    "signInTitle": "tomomai에 로그인",
+    "signInDescription": "다시 오신 것을 환영합니다! 가입할 때 사용한 계정으로 계속하세요.",
+    "signUpTitle": "tomomai 계정 만들기",
+    "signUpDescription": "정책을 확인한 뒤 가입에 사용할 계정을 선택하세요.",
+    "createAccount": "계정 만들기",
+    "haveAccount": "이미 계정이 있으신가요?",
+    "inviteOnlyTitle": "초대가 필요합니다",
+    "inviteOnlyMessage": "현재 신규 가입에는 기존 사용자의 초대 링크가 필요합니다.",
+    "errors": {
+      "title": "인증 오류",
+      "noAccount": "이 로그인에 연결된 tomomai 계정이 아직 없습니다. 아래에서 새 계정을 만들어 시작하세요.",
+      "signupUnavailable": "계정을 만들 수 없습니다. 현재 신규 가입이 닫혀 있을 수 있습니다.",
+      "inviteRequired": "현재 가입하려면 초대가 필요합니다. 받은 초대 링크를 연 뒤 다시 시도해 주세요.",
+      "inviteInvalid": "유효하지 않은 초대 코드입니다.",
+      "inviteRevoked": "취소된 초대입니다.",
+      "inviteUsed": "이미 사용된 초대입니다.",
+      "inviteExpired": "만료된 초대입니다.",
+      "accountNotLinked": "이 계정은 사용자와 연결되어 있지 않으며 자동으로 연결할 수 없습니다.\n\n같은 이메일을 사용하는 계정이 이미 있을 수 있습니다.\n\n처음 가입한 방법으로 로그인한 뒤, 설정 → 계정에서 이 계정을 연결해 주세요.",
+      "emailMismatch": "이 계정의 이메일이 현재 계정과 일치하지 않습니다.",
+      "alreadyLinked": "이 계정은 이미 다른 사용자와 연결되어 있습니다.",
+      "emailMissing": "이 계정에서 이메일 주소를 받지 못했습니다. tomomai에 로그인하려면 이메일 주소가 필요합니다.",
+      "restart": "로그인이 중단되었거나 너무 오래 걸렸습니다. 다시 시도해 주세요.",
+      "provider": "로그인 서비스에서 계정 정보를 가져오지 못했습니다. 다시 시도해 주세요.",
+      "banned": "이 계정은 정지되었습니다. 잘못된 조치라고 생각되면 Discord로 문의해 주세요.",
+      "generic": "인증 중 문제가 발생했습니다. 다시 시도해 주세요.",
+      "code": "오류 코드: {code}"
     }
   },
   "linkedAccounts": {
@@ -1102,14 +1126,10 @@
       "expired": "만료된 초대입니다",
       "ownCode": "자신의 초대 코드는 사용할 수 없습니다",
       "validationFailed": "초대 검증 실패"
-    }
+    },
+    "claimed": "환영합니다! 초대를 수락했습니다."
   },
   "db": {
-    "callout": {
-      "title": "데이터베이스를 찾으시나요?",
-      "subtitle": "로그인 없이 악곡 데이터베이스를 보려면 여기를 클릭하세요!",
-      "description": "tomomai ともマイ DB는 maimai의 채보, 오락실 정보 등을 모은 공개 데이터베이스입니다."
-    },
     "beta": {
       "title": "베타 기능",
       "description": "데이터베이스 기능은 현재 베타 버전입니다. 일부 데이터가 불완전하거나 정확하지 않을 수 있습니다."
@@ -1510,5 +1530,20 @@
     "curveDescription": "비슷한 Rating의 플레이어 중 각 달성률 이하인 비율의 추정치입니다. 내 달성률 {achievement} 이하인 플레이어는 {percent}이며 동점도 포함합니다.",
     "clusterDescription": "Rating {ratingMin}–{ratingMax}; {achievementMin}–{achievementMax}: {count, plural, one {# sampled score} other {# sampled scores}}",
     "youDescription": "나: Rating {rating}, 달성률 {achievement}"
+  },
+  "landing": {
+    "headline": "maimai DX 스코어를 기록하세요",
+    "subheadline": "maimai DX NET에서 가져와 레이팅, 베스트 스코어, 기록을 확인할 수 있습니다.",
+    "screenshotAlt": "베스트 스코어와 레이팅 차트를 보여 주는 tomomai 대시보드",
+    "links": {
+      "db": {
+        "title": "tomomai DB",
+        "description": "채보, 오락실 정보 등"
+      },
+      "profile": {
+        "title": "예시 프로필",
+        "description": "@shedaniel의 스코어 보기"
+      }
+    }
   }
 }
