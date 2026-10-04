@@ -1523,27 +1523,10 @@
     "youDescription": "You: {rating} Rating, {achievement}"
   },
   "landing": {
-    "eyebrow": "maimai DX score tracker",
-    "headline": "Your maimai progress, at a glance",
-    "subheadline": "Import your scores from maimai DX NET, see what makes up your rating, and find the charts worth playing next.",
-    "getStarted": "Get started",
+    "headline": "Track your maimai DX scores",
+    "subheadline": "Import from maimai DX NET and see your rating, best scores, and history.",
     "screenshotAlt": "The tomomai dashboard showing a player's best scores and rating charts",
-    "features": {
-      "rating": {
-        "title": "See your rating clearly",
-        "description": "Your B15 and B35 charts laid out, with how much each one adds to your rating."
-      },
-      "recommendations": {
-        "title": "Know what to play next",
-        "description": "Recommendations for charts where you can gain rating, compared against players at your level."
-      },
-      "history": {
-        "title": "Track it over time",
-        "description": "Keep a snapshot of every import and share a public profile or image with friends."
-      }
-    },
-    "explore": {
-      "title": "No account needed",
+    "links": {
       "db": {
         "title": "tomomai DB",
         "description": "Charts, arcades, and more"

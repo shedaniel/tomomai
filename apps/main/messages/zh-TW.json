@@ -1523,27 +1523,10 @@
     "youDescription": "你：Rating {rating}，達成率 {achievement}"
   },
   "landing": {
-    "eyebrow": "maimai DX 成績追蹤工具",
-    "headline": "一眼看懂你的 maimai 進度",
-    "subheadline": "從 maimai DX NET 匯入成績，看清 R 值的組成，找出下一首值得打的譜面。",
-    "getStarted": "開始使用",
+    "headline": "記錄你的 maimai DX 成績",
+    "subheadline": "從 maimai DX NET 匯入，查看你的 R 值、最佳成績與歷史紀錄。",
     "screenshotAlt": "顯示玩家最佳成績與 R 值圖表的 tomomai 主頁",
-    "features": {
-      "rating": {
-        "title": "看清你的 R 值",
-        "description": "列出 B15 與 B35 譜面，以及每首對 R 值的貢獻。"
-      },
-      "recommendations": {
-        "title": "知道下一首打什麼",
-        "description": "與實力相近的玩家比較，推薦你能提升 R 值的譜面。"
-      },
-      "history": {
-        "title": "記錄每一步",
-        "description": "每次匯入都會保存快照，還能用公開個人檔案或圖片和朋友分享。"
-      }
-    },
-    "explore": {
-      "title": "不需要帳號",
+    "links": {
       "db": {
         "title": "tomomai DB",
         "description": "譜面、店鋪等資料"

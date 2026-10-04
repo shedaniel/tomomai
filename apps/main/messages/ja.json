@@ -1523,27 +1523,10 @@
     "youDescription": "あなた：Rating {rating}、達成率{achievement}"
   },
   "landing": {
-    "eyebrow": "maimai DX スコアトラッカー",
-    "headline": "maimai の成長を、ひと目で。",
-    "subheadline": "maimai DX NET からスコアを取り込んで、レート値の内訳を確認し、次に遊ぶべき譜面を見つけましょう。",
-    "getStarted": "はじめる",
+    "headline": "maimai DX のスコアを記録しよう",
+    "subheadline": "maimai DX NET から取り込んで、レート値・ベストスコア・履歴を確認できます。",
     "screenshotAlt": "ベストスコアとレート値のグラフを表示した tomomai のダッシュボード",
-    "features": {
-      "rating": {
-        "title": "レート値をはっきり把握",
-        "description": "B15・B35 の譜面と、それぞれがレート値にどれだけ貢献しているかを一覧で。"
-      },
-      "recommendations": {
-        "title": "次に遊ぶ譜面がわかる",
-        "description": "同じくらいの実力のプレイヤーと比べて、レート値を伸ばせる譜面をおすすめします。"
-      },
-      "history": {
-        "title": "成長を記録",
-        "description": "取り込むたびにスナップショットを保存。公開プロフィールや画像で友だちとシェアできます。"
-      }
-    },
-    "explore": {
-      "title": "アカウント不要",
+    "links": {
       "db": {
         "title": "tomomai DB",
         "description": "譜面、店舗情報など"

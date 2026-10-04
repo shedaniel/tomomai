@@ -574,7 +574,7 @@ function SessionUserIcon(handlers: Omit<UserIconHandlers, "onSignIn">) {
   return (
     <>
       {!isPending && (
-        <Button size="sm" className="h-10 md:h-8 rounded-full px-4" onClick={() => openAuthDialog()}>
+        <Button size="sm" className="h-8 rounded-full px-4 max-md:hidden" onClick={() => openAuthDialog()}>
           {t('auth.signIn')}
         </Button>
       )}
@@ -603,7 +603,7 @@ export function Header({ currentTab, showDiscordBanner = true, customThemesEnabl
     <>
       <div className="flex items-center justify-between mb-8">
         <div className="flex items-center space-x-1 max-md:space-x-2">
-          <Link href="/">
+          <Link href="/" className="shrink-0">
             <motion.div
               whileHover={{ scale: 1.05 }}
               transition={getTransition(SPRING_CONFIGS.snappy)}

@@ -1523,27 +1523,10 @@
     "youDescription": "你：Rating {rating}，達成率 {achievement}"
   },
   "landing": {
-    "eyebrow": "maimai DX 成績追蹤工具",
-    "headline": "一眼看清你的 maimai 進度",
-    "subheadline": "從 maimai DX NET 匯入成績，看清 Rating 的組成，找出下一首值得玩的譜面。",
-    "getStarted": "開始使用",
+    "headline": "記錄你的 maimai DX 成績",
+    "subheadline": "從 maimai DX NET 匯入，查看你的 Rating、最佳成績及歷史記錄。",
     "screenshotAlt": "顯示玩家最佳成績及 Rating 圖表的 tomomai 主頁",
-    "features": {
-      "rating": {
-        "title": "看清你的 Rating",
-        "description": "列出 B15 及 B35 譜面，以及每首對 Rating 的貢獻。"
-      },
-      "recommendations": {
-        "title": "知道下一首玩甚麼",
-        "description": "與實力相近的玩家比較，推薦你能提升 Rating 的譜面。"
-      },
-      "history": {
-        "title": "記錄每一步",
-        "description": "每次匯入都會保存快照，亦可透過公開個人檔案或圖片與朋友分享。"
-      }
-    },
-    "explore": {
-      "title": "毋須帳戶",
+    "links": {
       "db": {
         "title": "tomomai DB",
         "description": "譜面、機舖等資料"

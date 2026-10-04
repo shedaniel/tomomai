@@ -1160,27 +1160,10 @@
     "youDescription": "나: Rating {rating}, 달성률 {achievement}"
   },
   "landing": {
-    "eyebrow": "maimai DX 스코어 트래커",
-    "headline": "maimai 성장 기록을 한눈에",
-    "subheadline": "maimai DX NET에서 스코어를 가져와 레이팅 구성을 확인하고, 다음에 플레이할 만한 채보를 찾아보세요.",
-    "getStarted": "시작하기",
+    "headline": "maimai DX 스코어를 기록하세요",
+    "subheadline": "maimai DX NET에서 가져와 레이팅, 베스트 스코어, 기록을 확인할 수 있습니다.",
     "screenshotAlt": "베스트 스코어와 레이팅 차트를 보여 주는 tomomai 대시보드",
-    "features": {
-      "rating": {
-        "title": "레이팅을 한눈에",
-        "description": "B15와 B35 채보, 그리고 각 채보가 레이팅에 얼마나 기여하는지 보여 줍니다."
-      },
-      "recommendations": {
-        "title": "다음에 할 곡 추천",
-        "description": "비슷한 실력의 플레이어와 비교해 레이팅을 올릴 수 있는 채보를 추천합니다."
-      },
-      "history": {
-        "title": "꾸준히 기록",
-        "description": "가져올 때마다 스냅샷을 남기고, 공개 프로필이나 이미지로 친구와 공유하세요."
-      }
-    },
-    "explore": {
-      "title": "계정 없이 둘러보기",
+    "links": {
       "db": {
         "title": "tomomai DB",
         "description": "채보, 오락실 정보 등"
