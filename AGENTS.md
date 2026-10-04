@@ -8,17 +8,25 @@ it lays out (structured logger over console, the `err` field for errors,
 per-request logger and requestId, flushing in serverless handlers).
 
 ## Database Migrations
+Two apps own separate Postgres databases, each with its own Drizzle schema and
+migration directory. Every rule in this section applies to both:
+
+| App   | Schema                              | Migrations             |
+| ----- | ----------------------------------- | ---------------------- |
+| main  | `apps/main/src/lib/db/schema-pg.ts` | `apps/main/drizzle-pg` |
+| guess | `apps/guess/src/lib/db/schema.ts`   | `apps/guess/drizzle`   |
+
 Never run `db:push`, `db:migrate`, `drizzle-kit push`, `drizzle-kit migrate`, or
 equivalent schema-application commands in this repository. The only permitted
 Drizzle schema command is `db:generate`/`drizzle-kit generate`.
 
 Before generating a migration, notify the user that generation is about to
-reset migration state. Then restore the tracked contents of
-`apps/main/drizzle-pg` from `upstream/main` and remove only untracked files
+reset migration state. Then restore the tracked contents of that app's
+migration directory from `upstream/main` and remove only untracked files
 inside that exact directory so the journal, snapshots, and SQL migrations match
-`upstream/main`. Never reset `schema-pg.ts` or unrelated files. Confirm the
+`upstream/main`. Never reset the schema file or unrelated files. Confirm the
 reset result to the user before running generation. Production receives one
-new generated migration version for the multi-game backend change.
+new generated migration version per app for the multi-game backend change.
 
 Direct edits to migration `.sql` files introduced on the current branch
 (relative to `upstream/main`) are allowed for custom logic that Drizzle Kit
