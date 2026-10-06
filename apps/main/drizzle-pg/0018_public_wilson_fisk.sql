@@ -1,11 +1,9 @@
 -- Requires the deployment runner's transaction and a coordinated write-maintenance window.
 -- Preserve parent/instance IDs; abort unexpected legacy data before retiring it.
-LOCK TABLE parent_song, songs, user_tokens, fetch_sessions, user_snapshots,
+-- "user" is locked up front because its region columns are copied and then dropped.
+LOCK TABLE "user", parent_song, songs, user_tokens, fetch_sessions, user_snapshots,
   score_data, snapshot_scores, snapshot_b50, user_recent_songs, user_albums, user_events
   IN ACCESS EXCLUSIVE MODE;
---> statement-breakpoint
--- Blocks account writes (reads and foreign-key checks still pass) so the region backfill below copies a stable source.
-LOCK TABLE "user" IN SHARE ROW EXCLUSIVE MODE;
 --> statement-breakpoint
 DROP MATERIALIZED VIEW IF EXISTS "public"."chart_percentile_bands";
 --> statement-breakpoint
@@ -148,10 +146,12 @@ ALTER TABLE "songs" ADD CONSTRAINT "songs_parent_game_fk" FOREIGN KEY ("parentId
 ALTER TABLE "user_albums" ADD CONSTRAINT "user_albums_song_game_fk" FOREIGN KEY ("songId","game") REFERENCES "public"."songs"("id","game") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "user_events" ADD CONSTRAINT "user_events_snapshot_game_fk" FOREIGN KEY ("snapshotId","game") REFERENCES "public"."user_snapshots"("id","game") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "user_recent_songs" ADD CONSTRAINT "user_recent_songs_song_game_fk" FOREIGN KEY ("songId","game") REFERENCES "public"."songs"("id","game") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
--- The account-wide region columns become maimai's per-game preferences. They stay as the fallback for reads.
+-- The account-wide region columns become maimai's per-game preferences, then go.
 INSERT INTO "user_game_preferences" ("userId", "game", "region", "profileMainRegion")
 SELECT "id", 'maimai'::"game", "region", "profileMainRegion" FROM "user";
 --> statement-breakpoint
+ALTER TABLE "user" DROP COLUMN "region";--> statement-breakpoint
+ALTER TABLE "user" DROP COLUMN "profileMainRegion";--> statement-breakpoint
 CREATE INDEX "fetch_sessions_userid_game_region_startedat_idx" ON "fetch_sessions" USING btree ("userId","game","region","startedAt");--> statement-breakpoint
 CREATE INDEX "parent_song_game_songname_type_idx" ON "parent_song" USING btree ("game","songName","type");--> statement-breakpoint
 CREATE INDEX "songs_game_region_gameversion_idx" ON "songs" USING btree ("game","region","gameVersion");--> statement-breakpoint

@@ -172,7 +172,7 @@ function useInfoCardOwnerSettings({
       if (publishChanged) {
         mutations.push(updatePublishProfile.mutateAsync({ publishProfile: visibilityDraft.publishProfile }));
       }
-      if (regionChanged) {
+      if (regionChanged && visibilityDraft.profileMainRegion) {
         mutations.push(
           updateProfileMainRegion.mutateAsync({ profileMainRegion: visibilityDraft.profileMainRegion }),
         );

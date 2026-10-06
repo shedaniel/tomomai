@@ -46,12 +46,8 @@ export const user = pgTable("user", {
   banned: boolean("banned").notNull().default(false),
   banReason: text("banReason"),
   banExpires: timestamp("banExpires", { precision: 0 }),
-  // region and profileMainRegion are per game in user_game_preferences. These account-wide copies are
-  // no longer written and only answer for a user who has not set the game's preference yet.
-  region: regionEnum("region"),
   // Profile publishing settings
   publishProfile: boolean("publishProfile").notNull().default(false),
-  profileMainRegion: regionEnum("profileMainRegion").notNull().default("intl"),
   profileShowAllScores: boolean("profileShowAllScores").notNull().default(true),
   profileShowScoreDetails: boolean("profileShowScoreDetails").notNull().default(true),
   profileShowPlates: boolean("profileShowPlates").notNull().default(true),

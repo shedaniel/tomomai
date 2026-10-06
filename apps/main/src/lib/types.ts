@@ -41,7 +41,7 @@ export interface UserData {
 export interface ProfileSettings {
   publishProfile: boolean;
   profileDescription: string | null;
-  profileMainRegion: Region;
+  profileMainRegion: Region | null;
   profileShowAllScores: boolean;
   profileShowScoreDetails: boolean;
   profileShowPlates: boolean;
@@ -56,7 +56,7 @@ export interface ProfileData {
   name: string;
   publishProfile: boolean;
   profileDescription: string | null;
-  profileMainRegion: Region;
+  profileMainRegion: Region | null;
   profileShowAllScores: boolean;
   profileShowScoreDetails: boolean;
   profileShowPlates: boolean;

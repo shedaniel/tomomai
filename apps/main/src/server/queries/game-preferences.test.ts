@@ -12,12 +12,12 @@ const fromRow = (column: string) =>
 
 beforeEach(() => proxy.reset());
 
-it("reads the game's preference row, else the account-wide column of the selected user", async () => {
+it("reads only the game's preference row of the selected user", async () => {
   await proxy.db.select({ region: gamePreference("chunithm", "region") }).from(user);
   await proxy.db.select({ main: gamePreference("maimai", "profileMainRegion") }).from(user).innerJoin(account, eq(account.userId, user.id));
   expect(proxy.queries.map(({ sql, params }) => ({ sql, params }))).toEqual([
-    { sql: `select coalesce(${fromRow("region")}, "region") from "user"`, params: ["chunithm"] },
-    { sql: `select coalesce(${fromRow("profileMainRegion")}, "user"."profileMainRegion") from "user" inner join "account" on "account"."userId" = "user"."id"`, params: ["maimai"] },
+    { sql: `select ${fromRow("region")} from "user"`, params: ["chunithm"] },
+    { sql: `select ${fromRow("profileMainRegion")} from "user" inner join "account" on "account"."userId" = "user"."id"`, params: ["maimai"] },
   ]);
 });
 

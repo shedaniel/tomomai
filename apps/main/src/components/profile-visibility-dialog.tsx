@@ -38,7 +38,7 @@ import type { Dispatch, SetStateAction } from "react";
 
 export type VisibilityDraft = {
   publishProfile: boolean;
-  profileMainRegion: Region;
+  profileMainRegion: Region | null;
   privacySettings: ProfilePrivacySettings;
 };
 
