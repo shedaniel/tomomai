@@ -217,6 +217,8 @@ export type GameBrand = {
   logos: { width: number; height: number; sections: Record<BrandSection, { light: string; dark: string }> } | null;
   /** Artwork drawn on OpenGraph images. Without it they set the brand as text. */
   og: { logo: string; dbLogo: string } | null;
+  /** Dashboard screenshot for the signed-out landing page. Without it the page shows no picture. */
+  screenshot: { src: string; width: number; height: number } | null;
   /** Profiles of the site elsewhere, for structured data. */
   sameAs: readonly string[];
   exampleProfile?: { username: string; region: Region };

@@ -270,7 +270,7 @@ function SignUpPanel({
               ) : game.regions.includes("cn") ? (
                 <span>支持 maimai 日本版及国际版、以及华立科技舞萌之覆盖地区<br /><span className="underline">本站为境外站点，中国大陆地区访问速度可能较慢且不稳定</span>，境内版 tomomai.cn 正在建设中</span>
               ) : (
-                <span>支持 maimai 日本版及国际版覆盖地区<br />原则上暂不支持中国大陆地区访问</span>
+                <span>支持 {game.brand.displayName} 日本版及国际版覆盖地区<br />原则上暂不支持中国大陆地区访问</span>
               )}
             </li>
           )}
@@ -346,6 +346,7 @@ function SignUpPanel({
 
 export function AuthDialog({ open, onOpenChange, mode, onModeChange, error, onErrorChange, callbackURL }: AuthDialogProps) {
   const t = useTranslations("auth");
+  const { brand } = useGame();
 
   const switchTo = (next: AuthDialogMode) => {
     onErrorChange(null);
@@ -359,7 +360,7 @@ export function AuthDialog({ open, onOpenChange, mode, onModeChange, error, onEr
         style={{ backgroundImage: "linear-gradient(160deg, color-mix(in srgb, var(--primary) 18%, transparent), transparent 22%)" }}
       >
         <ResponsiveDialogHeader>
-          <ResponsiveDialogTitle>{mode === "signin" ? t("signInTitle") : t("signUpTitle")}</ResponsiveDialogTitle>
+          <ResponsiveDialogTitle>{t(mode === "signin" ? "signInTitle" : "signUpTitle", { brand: brand.productName })}</ResponsiveDialogTitle>
           <ResponsiveDialogDescription>
             {mode === "signin" ? t("signInDescription") : t("signUpDescription")}
           </ResponsiveDialogDescription>

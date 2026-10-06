@@ -26,7 +26,7 @@ it.each([
       "getPolicies",
       "getPublicPlayerStats",
       "getPublicRecentSongs",
-      "getSignupRequirements",
+      "getSignInOptions",
       "getSimpleSongDetails",
       "getSongDetails",
       "getUserSelectableFlags",

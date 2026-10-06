@@ -21,9 +21,9 @@ import { useApiKeyCreation, useOauthAppCreation } from "@/lib/flags";
 import { getCurrentLegalVersions } from "@/lib/legal";
 import { getAcceptedPolicyVersions } from "@/lib/legal-acceptance";
 import { NEW_POLICY_REQUIRED_CODE } from "@/lib/security/policy-gate";
-import { getSignupRequirements } from "@/lib/signup";
 import { DEV_PORTS } from "@/lib/games/frontend-config";
 import { getCurrentGame } from "@/lib/games/current";
+import { getSignupRequirements } from "@/lib/signup";
 
 async function mirrorAvatarForSignup(
   rawUrl: string | null | undefined,

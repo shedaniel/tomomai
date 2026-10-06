@@ -7,9 +7,6 @@
     "discordPrompt": "Facing issues? Or have features or ideas to add to tomomai ともマイ?"
   },
   "db": {
-    "callout": {
-      "description": "tomomai ともマイ DB is a public database of maimai charts, arcades, and more."
-    },
     "songs": {
       "gameName": "maimai DX",
       "chartLabel": "maimai でらっくす {type, select, dx {DX} other {Standard}}",
@@ -17,9 +14,6 @@
         "viewDetails": "View Details on tomomai DB"
       }
     }
-  },
-  "consent": {
-    "title": "Welcome to tomomai"
   },
   "onboarding": {
     "title": "Welcome to tomomai!",

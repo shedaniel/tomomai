@@ -86,9 +86,9 @@
       "importData": "Import data directly from {net}",
       "analyzeProgress": "Analyse your progress over time"
     },
-    "signInTitle": "Sign in to tomomai",
+    "signInTitle": "Sign in to {brand}",
     "signInDescription": "Welcome back! Continue with the account you signed up with.",
-    "signUpTitle": "Create your tomomai account",
+    "signUpTitle": "Create your {brand} account",
     "signUpDescription": "Review our policies, then choose an account to sign up with.",
     "createAccount": "Create an account",
     "haveAccount": "Already have an account?",
@@ -96,7 +96,7 @@
     "inviteOnlyMessage": "New sign-ups currently need an invitation link from an existing user.",
     "errors": {
       "title": "Authentication error",
-      "noAccount": "There's no tomomai account for that login yet. Create one below to get started.",
+      "noAccount": "There's no {brand} account for that login yet. Create one below to get started.",
       "signupUnavailable": "We couldn't create your account. New sign-ups may be closed right now.",
       "inviteRequired": "An invitation is required to sign up right now. Open the invitation link you received and try again.",
       "inviteInvalid": "That invitation code isn't valid.",
@@ -106,7 +106,7 @@
       "accountNotLinked": "That provider account isn't linked to your user and couldn't be linked automatically.\n\nYou may already have an account using the same email.\n\nTry signing in with the provider you originally signed up with, then link this one from Settings → Account.",
       "emailMismatch": "That account's email doesn't match your current account.",
       "alreadyLinked": "That account is already linked to a different user.",
-      "emailMissing": "That account didn't share an email address, which tomomai needs to sign you in.",
+      "emailMissing": "That account didn't share an email address, which {brand} needs to sign you in.",
       "restart": "Your sign-in was interrupted or took too long. Please try again.",
       "provider": "We couldn't get your account details from the login provider. Please try again.",
       "banned": "This account has been suspended. If you think this is a mistake, contact us on Discord.",
@@ -1521,12 +1521,12 @@
     "youDescription": "You: {rating} Rating, {achievement}"
   },
   "landing": {
-    "headline": "Track your maimai DX scores",
-    "subheadline": "Import from maimai DX NET and see your rating, best scores, and history.",
-    "screenshotAlt": "The tomomai dashboard showing a player's best scores and rating charts",
+    "headline": "Track your {game} scores",
+    "subheadline": "Import from {net} and see your rating, best scores, and history.",
+    "screenshotAlt": "The {brand} dashboard showing a player's best scores and rating charts",
     "links": {
       "db": {
-        "title": "tomomai DB",
+        "title": "{brand} DB",
         "description": "Charts, arcades, and more"
       },
       "profile": {

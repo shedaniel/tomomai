@@ -7,17 +7,11 @@
     "discordPrompt": "何かお困りのことはありますか？ともチュウへのご意見・アイデアをぜひお聞かせください！"
   },
   "db": {
-    "callout": {
-      "description": "ともチュウ DB は、CHUNITHMの楽曲と譜面情報を集めた公開データベースです"
-    },
     "songs": {
       "detail": {
         "viewDetails": "ともチュウ DB で詳細を見る"
       }
     }
-  },
-  "consent": {
-    "title": "ともチュウへようこそ"
   },
   "onboarding": {
     "title": "ともチュウ へようこそ！",

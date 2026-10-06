@@ -83,9 +83,9 @@
       "importData": "{net}에서 데이터 가져오기",
       "analyzeProgress": "플레이 성과 및 성장 분석"
     },
-    "signInTitle": "tomomai에 로그인",
+    "signInTitle": "{brand}에 로그인",
     "signInDescription": "다시 오신 것을 환영합니다! 가입할 때 사용한 계정으로 계속하세요.",
-    "signUpTitle": "tomomai 계정 만들기",
+    "signUpTitle": "{brand} 계정 만들기",
     "signUpDescription": "정책을 확인한 뒤 가입에 사용할 계정을 선택하세요.",
     "createAccount": "계정 만들기",
     "haveAccount": "이미 계정이 있으신가요?",
@@ -93,7 +93,7 @@
     "inviteOnlyMessage": "현재 신규 가입에는 기존 사용자의 초대 링크가 필요합니다.",
     "errors": {
       "title": "인증 오류",
-      "noAccount": "이 로그인에 연결된 tomomai 계정이 아직 없습니다. 아래에서 새 계정을 만들어 시작하세요.",
+      "noAccount": "이 로그인에 연결된 {brand} 계정이 아직 없습니다. 아래에서 새 계정을 만들어 시작하세요.",
       "signupUnavailable": "계정을 만들 수 없습니다. 현재 신규 가입이 닫혀 있을 수 있습니다.",
       "inviteRequired": "현재 가입하려면 초대가 필요합니다. 받은 초대 링크를 연 뒤 다시 시도해 주세요.",
       "inviteInvalid": "유효하지 않은 초대 코드입니다.",
@@ -103,7 +103,7 @@
       "accountNotLinked": "이 계정은 사용자와 연결되어 있지 않으며 자동으로 연결할 수 없습니다.\n\n같은 이메일을 사용하는 계정이 이미 있을 수 있습니다.\n\n처음 가입한 방법으로 로그인한 뒤, 설정 → 계정에서 이 계정을 연결해 주세요.",
       "emailMismatch": "이 계정의 이메일이 현재 계정과 일치하지 않습니다.",
       "alreadyLinked": "이 계정은 이미 다른 사용자와 연결되어 있습니다.",
-      "emailMissing": "이 계정에서 이메일 주소를 받지 못했습니다. tomomai에 로그인하려면 이메일 주소가 필요합니다.",
+      "emailMissing": "이 계정에서 이메일 주소를 받지 못했습니다. {brand}에 로그인하려면 이메일 주소가 필요합니다.",
       "restart": "로그인이 중단되었거나 너무 오래 걸렸습니다. 다시 시도해 주세요.",
       "provider": "로그인 서비스에서 계정 정보를 가져오지 못했습니다. 다시 시도해 주세요.",
       "banned": "이 계정은 정지되었습니다. 잘못된 조치라고 생각되면 Discord로 문의해 주세요.",
@@ -1154,18 +1154,13 @@
     "clusterDescription": "Rating {ratingMin}–{ratingMax}, 달성률 {achievementMin}–{achievementMax}: 표본 {count}개",
     "youDescription": "나: Rating {rating}, 달성률 {achievement}"
   },
-  "profileMetadata": {
-    "title": "{username} | {brand}",
-    "descriptionRich": "{region} {game} 플레이어 {displayName} ({username}), 레이팅 {rating}. {brandName}에서 점수와 성장을 확인하세요.",
-    "description": "{brandName}에서 {username}의 {game} 프로필을 확인하세요."
-  },
   "landing": {
-    "headline": "maimai DX 스코어를 기록하세요",
-    "subheadline": "maimai DX NET에서 가져와 레이팅, 베스트 스코어, 기록을 확인할 수 있습니다.",
-    "screenshotAlt": "베스트 스코어와 레이팅 차트를 보여 주는 tomomai 대시보드",
+    "headline": "{game} 스코어를 기록하세요",
+    "subheadline": "{net}에서 가져와 레이팅, 베스트 스코어, 기록을 확인할 수 있습니다.",
+    "screenshotAlt": "베스트 스코어와 레이팅 차트를 보여 주는 {brand} 대시보드",
     "links": {
       "db": {
-        "title": "tomomai DB",
+        "title": "{brand} DB",
         "description": "채보, 오락실 정보 등"
       },
       "profile": {
@@ -1173,5 +1168,10 @@
         "description": "@shedaniel의 스코어 보기"
       }
     }
+  },
+  "profileMetadata": {
+    "title": "{username} | {brand}",
+    "descriptionRich": "{region} {game} 플레이어 {displayName} ({username}), 레이팅 {rating}. {brandName}에서 점수와 성장을 확인하세요.",
+    "description": "{brandName}에서 {username}의 {game} 프로필을 확인하세요."
   }
 }

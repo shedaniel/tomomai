@@ -16,6 +16,7 @@ export const chunithmDefinition = {
     icon: null,
     logos: null,
     og: null,
+    screenshot: null,
     sameAs: [],
     communityInviteUrl: "https://discord.gg/jZqQHr3UDq",
   },

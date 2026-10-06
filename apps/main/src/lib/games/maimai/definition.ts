@@ -24,6 +24,7 @@ export const maimaiDefinition = {
       },
     },
     og: { logo: "/icon-dark.webp", dbLogo: "/icon-db-dark.webp" },
+    screenshot: { src: "/posts/2026-03-26-ui-refinement/dashboard-new.webp", width: 2862, height: 1898 },
     sameAs: ["https://github.com/shedaniel/maimai-friends"],
     exampleProfile: { username: "shedaniel", region: "intl" },
     communityInviteUrl: "https://discord.gg/jZqQHr3UDq",

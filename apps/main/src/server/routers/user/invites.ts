@@ -7,7 +7,7 @@ import { usePasskey, useTwitterOauth } from '@/lib/flags';
 import { protectedProcedure, publicProcedure, router } from '@/lib/trpc';
 import { TRPCError } from '@trpc/server';
 import { nanoid } from 'nanoid';
-import { and, count, eq, isNull, lt, or } from 'drizzle-orm';
+import { and, eq, isNull, lt, or } from 'drizzle-orm';
 import { z } from 'zod';
 
 export const invitesRouter = router({

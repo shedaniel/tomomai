@@ -17,8 +17,8 @@ import { resolveBaseUrl } from '@/lib/base-url';
 import { siteJsonLd } from '@/lib/seo';
 import { SiteFooter } from '@/components/site-footer';
 import { PreMaintenanceBanner } from '@/components/pre-maintenance-banner';
-import { AuthDialogProvider } from '@/components/auth/auth-dialog-provider';
 import { GameProvider } from '@/components/providers/game-provider';
+import { AuthDialogProvider } from '@/components/auth/auth-dialog-provider';
 import { getCurrentGame } from '@/lib/games/current';
 import { brandTitle } from '@/lib/games/frontend';
 

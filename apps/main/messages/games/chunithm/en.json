@@ -7,9 +7,6 @@
     "discordPrompt": "Facing issues? Or have features or ideas to add to tomochu ともチュウ?"
   },
   "db": {
-    "callout": {
-      "description": "tomochu ともチュウ DB is a public database of CHUNITHM charts."
-    },
     "songs": {
       "gameName": "CHUNITHM",
       "chartLabel": "CHUNITHM",
@@ -17,9 +14,6 @@
         "viewDetails": "View Details on tomochu DB"
       }
     }
-  },
-  "consent": {
-    "title": "Welcome to tomochu"
   },
   "onboarding": {
     "title": "Welcome to tomochu!",

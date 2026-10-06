@@ -86,9 +86,9 @@
       "importData": "{net}からデータ取り込み",
       "analyzeProgress": "プレイ進捗の分析"
     },
-    "signInTitle": "tomomai にサインイン",
+    "signInTitle": "{brand} にサインイン",
     "signInDescription": "おかえりなさい！登録したアカウントで続けてください。",
-    "signUpTitle": "tomomai アカウントを作成",
+    "signUpTitle": "{brand} アカウントを作成",
     "signUpDescription": "ポリシーを確認して、登録に使うアカウントを選んでください。",
     "createAccount": "アカウントを作成",
     "haveAccount": "すでにアカウントをお持ちですか？",
@@ -96,7 +96,7 @@
     "inviteOnlyMessage": "現在、新規登録には既存ユーザーからの招待リンクが必要です。",
     "errors": {
       "title": "認証エラー",
-      "noAccount": "このログインに紐づく tomomai アカウントはまだありません。下から新しく作成してください。",
+      "noAccount": "このログインに紐づく {brand} アカウントはまだありません。下から新しく作成してください。",
       "signupUnavailable": "アカウントを作成できませんでした。現在、新規登録を受け付けていない可能性があります。",
       "inviteRequired": "現在、登録には招待が必要です。受け取った招待リンクを開いてから、もう一度お試しください。",
       "inviteInvalid": "この招待コードは無効です。",
@@ -106,7 +106,7 @@
       "accountNotLinked": "このアカウントはあなたのユーザーに連携されておらず、自動で連携できませんでした。\n\n同じメールアドレスのアカウントがすでにある可能性があります。\n\n最初に登録した方法でサインインしてから、設定 → アカウントでこのアカウントを連携してください。",
       "emailMismatch": "このアカウントのメールアドレスが現在のアカウントと一致しません。",
       "alreadyLinked": "このアカウントはすでに別のユーザーに連携されています。",
-      "emailMissing": "このアカウントからメールアドレスを取得できませんでした。tomomai へのサインインにはメールアドレスが必要です。",
+      "emailMissing": "このアカウントからメールアドレスを取得できませんでした。{brand} へのサインインにはメールアドレスが必要です。",
       "restart": "サインインが中断されたか、時間がかかりすぎました。もう一度お試しください。",
       "provider": "ログインサービスからアカウント情報を取得できませんでした。もう一度お試しください。",
       "banned": "このアカウントは停止されています。誤りだと思われる場合は Discord でお問い合わせください。",
@@ -1521,12 +1521,12 @@
     "youDescription": "あなた：Rating {rating}、達成率{achievement}"
   },
   "landing": {
-    "headline": "maimai DX のスコアを記録しよう",
-    "subheadline": "maimai DX NET から取り込んで、レート値・ベストスコア・履歴を確認できます。",
-    "screenshotAlt": "ベストスコアとレート値のグラフを表示した tomomai のダッシュボード",
+    "headline": "{game} のスコアを記録しよう",
+    "subheadline": "{net} から取り込んで、レート値・ベストスコア・履歴を確認できます。",
+    "screenshotAlt": "ベストスコアとレート値のグラフを表示した {brand} のダッシュボード",
     "links": {
       "db": {
-        "title": "tomomai DB",
+        "title": "{brand} DB",
         "description": "譜面、店舗情報など"
       },
       "profile": {

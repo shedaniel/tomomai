@@ -95,9 +95,9 @@
       "importData": "从 {net} 导入数据",
       "analyzeProgress": "分析你的游玩记录"
     },
-    "signInTitle": "登入 tomomai",
+    "signInTitle": "登入 {brand}",
     "signInDescription": "欢迎回来！请使用注册时的账号继续。",
-    "signUpTitle": "创建 tomomai 账号",
+    "signUpTitle": "创建 {brand} 账号",
     "signUpDescription": "请先阅读我们的政策，再选择用于注册的账号。",
     "createAccount": "创建账号",
     "haveAccount": "已经有账号了？",
@@ -105,7 +105,7 @@
     "inviteOnlyMessage": "目前注册新账号需要现有用户提供的邀请链接。",
     "errors": {
       "title": "验证错误",
-      "noAccount": "该登入方式还没有对应的 tomomai 账号，请在下方创建账号开始使用。",
+      "noAccount": "该登入方式还没有对应的 {brand} 账号，请在下方创建账号开始使用。",
       "signupUnavailable": "无法创建账号，目前可能暂停开放注册。",
       "inviteRequired": "目前注册需要邀请。请打开你收到的邀请链接后再试一次。",
       "inviteInvalid": "该邀请码无效。",
@@ -115,7 +115,7 @@
       "accountNotLinked": "该账号尚未关联到你的用户，且无法自动关联。\n\n你可能已经有一个使用相同邮箱的账号。\n\n请先使用最初注册时的方式登入，再到「设置 → 账号」关联该账号。",
       "emailMismatch": "该账号的邮箱与当前账号不一致。",
       "alreadyLinked": "该账号已关联到其他用户。",
-      "emailMissing": "该账号没有提供邮箱地址，而登入 tomomai 需要邮箱地址。",
+      "emailMissing": "该账号没有提供邮箱地址，而登入 {brand} 需要邮箱地址。",
       "restart": "登入过程被中断或超时，请重试。",
       "provider": "无法从登入服务获取你的账号信息，请重试。",
       "banned": "该账号已被封禁。如果你认为这是误判，请通过 Discord 联系我们。",
@@ -1521,12 +1521,12 @@
     "youDescription": "你：Rating {rating}，达成率 {achievement}"
   },
   "landing": {
-    "headline": "记录你的 maimai DX 成绩",
-    "subheadline": "从 maimai DX NET 导入，查看你的 R 值、最佳成绩与历史记录。",
-    "screenshotAlt": "显示玩家最佳成绩与 R 值图表的 tomomai 主页",
+    "headline": "记录你的 {game} 成绩",
+    "subheadline": "从 {net} 导入，查看你的 R 值、最佳成绩与历史记录。",
+    "screenshotAlt": "显示玩家最佳成绩与 R 值图表的 {brand} 主页",
     "links": {
       "db": {
-        "title": "tomomai DB",
+        "title": "{brand} DB",
         "description": "谱面、游戏中心等资料"
       },
       "profile": {

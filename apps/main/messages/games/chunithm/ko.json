@@ -7,17 +7,11 @@
     "discordPrompt": "문제나 제안 사항이 있으신가요? tomochu ともチュウ 디스코드에 참여하세요!"
   },
   "db": {
-    "callout": {
-      "description": "tomochu ともチュウ DB는 CHUNITHM의 채보를 모은 공개 데이터베이스입니다."
-    },
     "songs": {
       "detail": {
         "viewDetails": "tomochu DB에서 상세 보기"
       }
     }
-  },
-  "consent": {
-    "title": "Welcome to tomochu"
   },
   "acceptInvitation": {
     "title": "tomochu ともチュウ",

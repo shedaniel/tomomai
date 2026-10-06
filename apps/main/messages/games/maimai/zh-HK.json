@@ -7,18 +7,12 @@
     "discordPrompt": "遇到問題了嗎？抑或想對 tomomai ともマイ 提出建議？"
   },
   "db": {
-    "callout": {
-      "description": "tomomai ともマイ DB 是一個公開的 maimai 譜面、機舖及更多maimai資訊的資料庫"
-    },
     "songs": {
       "chartLabel": "maimai でらっくす {type, select, dx {DX} other {標準}}",
       "detail": {
         "viewDetails": "在 tomomai DB 查看詳細資訊"
       }
     }
-  },
-  "consent": {
-    "title": "歡迎來到 tomomai"
   },
   "onboarding": {
     "title": "歡迎來到 tomomai！",

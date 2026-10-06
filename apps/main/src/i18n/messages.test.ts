@@ -52,7 +52,7 @@ describe("per-game messages", () => {
   it.each(locales)("names each game's own brand in its shell copy in %s", async locale => {
     for (const game of CANONICAL_GAME_IDS) {
       const messages = await loadMessages(game, locale) as Messages;
-      const shell = strings(messages).filter(([key]) => ["dashboard.title", "consent.title", "userHeader.memberLabel"].includes(key));
+      const shell = strings(messages).filter(([key]) => ["dashboard.title", "onboarding.title", "userHeader.memberLabel"].includes(key));
       expect(shell.map(([, value]) => brandNames(game).test(value))).toEqual([true, true, true]);
     }
   });

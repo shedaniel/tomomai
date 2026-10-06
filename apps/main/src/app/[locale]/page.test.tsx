@@ -44,8 +44,7 @@ vi.mock("@/lib/posts", () => ({ getLatestPost: () => ({ slug: "2026-09-01-update
 vi.mock("@/i18n/locale-server", () => ({ getLocale: async () => "en" }));
 vi.mock("@/lib/base-url", () => ({ resolveBaseUrl: () => "https://site.test" }));
 vi.mock("@/components/player/dashboard", () => ({ Dashboard: () => null }));
-vi.mock("@/components/login-screen", () => ({ LoginScreen: () => null }));
-vi.mock("@/components/auth-handler", () => ({ AuthHandler: () => null }));
+vi.mock("@/components/landing-page", () => ({ LandingPage: () => null }));
 vi.mock("@/components/player/game-unavailable", () => ({ GameUnavailable: () => null }));
 
 import Home, { generateMetadata } from "./page";

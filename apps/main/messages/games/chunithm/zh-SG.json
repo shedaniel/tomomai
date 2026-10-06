@@ -7,17 +7,11 @@
     "discordPrompt": "遇到问题了吗？或想对 tomochu ともチュウ 提出功能或建议？"
   },
   "db": {
-    "callout": {
-      "description": "tomochu ともチュウ DB 是一个公开的 CHUNITHM 谱面数据库"
-    },
     "songs": {
       "detail": {
         "viewDetails": "在 tomochu DB 查看详情"
       }
     }
-  },
-  "consent": {
-    "title": "欢迎来到 tomochu"
   },
   "onboarding": {
     "title": "欢迎来到 tomochu！",
