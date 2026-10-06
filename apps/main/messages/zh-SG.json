@@ -823,6 +823,7 @@
     "tokenValidationError": "Cookies 必须以 \"clal=\" 开头，后面跟着字母和数字",
     "authenticationNote": "验证：",
     "segaCredentialsNote": "使用你的 SEGA 账户凭证来验证 {net}。",
+    "subscriptionNote": "获取 {game}（{region}）成绩需要有效的 {subscription} 服务订阅。",
     "credentialsSecureNote": "你的验证方式将被保存以供将来使用。",
     "savingCredentials": "保存验证方式中...",
     "saveCredentials": "保存验证方式",
@@ -1327,7 +1328,7 @@
   },
   "fetchToast": {
     "errors": {
-      "subscriptionRequired": "获取 {game} 日版成绩需要有效的 ゲキチュウマイ-NET 服务订阅。请购买或续订后重试。已保存的登入信息和现有数据均已保留。"
+      "subscriptionRequired": "获取 {game}（{region}）成绩需要有效的 {subscription} 服务订阅。请购买或续订后重试。已保存的登入信息和现有数据均已保留。"
     },
     "header": {
       "pending": "导入数据中...",

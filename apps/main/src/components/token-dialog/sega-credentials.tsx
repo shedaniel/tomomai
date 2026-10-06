@@ -1,13 +1,14 @@
 "use client";
 
 import { useGame } from "@/components/providers/game-provider";
+import type { Region } from "@/lib/games/ids";
 import { formatSegaAccount } from "@/lib/games/token-format";
 import { logger } from "@/lib/logger";
 import { useState } from "react";
 import { Button } from "@tomomai/ui";
 import { Input } from "@tomomai/ui";
 import { Label } from "@tomomai/ui";
-import { Eye, EyeOff, Key, Save } from "lucide-react";
+import { Eye, EyeOff, Info, Key, Save } from "lucide-react";
 import { useTranslations } from "next-intl";
 import {
   ResponsiveDialog,
@@ -18,6 +19,7 @@ import {
 } from "@tomomai/ui";
 
 interface SegaCredentialsDialogProps {
+  region: Region;
   isOpen: boolean;
   modal?: boolean;
   onOpenChange: (open: boolean) => void;
@@ -25,6 +27,7 @@ interface SegaCredentialsDialogProps {
 }
 
 export function SegaCredentialsDialog({
+  region,
   isOpen,
   modal = true,
   onOpenChange,
@@ -32,6 +35,7 @@ export function SegaCredentialsDialog({
 }: SegaCredentialsDialogProps) {
   const t = useTranslations();
   const game = useGame();
+  const subscription = game.fetchSubscriptions[region];
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -74,6 +78,12 @@ export function SegaCredentialsDialog({
         </ResponsiveDialogHeader>
 
         <div className="space-y-4">
+          {subscription && (
+            <div className="flex items-start gap-2 rounded-md border border-primary/40 bg-primary/5 p-3 text-sm">
+              <Info className="h-4 w-4 mt-0.5 flex-shrink-0 text-primary" />
+              <p>{t('tokenDialog.subscriptionNote', { game: game.brand.displayName, region: t(`regions.${region}`), subscription })}</p>
+            </div>
+          )}
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-4">
               <div className="space-y-2">

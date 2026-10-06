@@ -57,6 +57,7 @@ export function TokenDialog({
   if (methods.includes("sega-account")) {
     return (
       <SegaCredentialsDialog
+        region={region}
         isOpen={isOpen}
         onOpenChange={onOpenChange}
         onTokenUpdate={onTokenUpdate}

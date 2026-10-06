@@ -19,6 +19,7 @@ export interface NoteCounts {
 
 export interface FetchSession {
   id: string;
+  region: Region;
   status: "pending" | "completed" | "failed";
   startedAt: Date;
   completedAt?: Date;

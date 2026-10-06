@@ -544,6 +544,7 @@ export function SegaCookieWizardDialog({
       {/* Password Dialog - Nested */}
       {offerCredentials && (
         <SegaCredentialsDialog
+          region={region}
           isOpen={isPasswordDialogOpen}
           onOpenChange={setIsPasswordDialogOpen}
           modal={false}

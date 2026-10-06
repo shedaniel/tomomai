@@ -823,6 +823,7 @@
     "tokenValidationError": "Token must start with \"clal=\" followed by letters and numbers only",
     "authenticationNote": "Authentication:",
     "segaCredentialsNote": "Use your SEGA account credentials to authenticate with {net}.",
+    "subscriptionNote": "Fetching {game} ({region}) scores requires an active {subscription} subscription.",
     "credentialsSecureNote": "Your credentials will be stored for future fetches.",
     "savingCredentials": "Saving Credentials...",
     "saveCredentials": "Save Credentials",
@@ -1327,7 +1328,7 @@
   },
   "fetchToast": {
     "errors": {
-      "subscriptionRequired": "Fetching {game} JP scores requires an active ゲキチュウマイ-NET subscription. Purchase or renew it, then retry. Your saved login and existing data have been kept."
+      "subscriptionRequired": "Fetching {game} ({region}) scores requires an active {subscription} subscription. Purchase or renew it, then retry. Your saved login and existing data have been kept."
     },
     "header": {
       "pending": "Fetching data...",

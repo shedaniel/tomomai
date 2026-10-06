@@ -79,6 +79,7 @@ export function useFetchSession(onFetchComplete?: () => void, onTokenError?: () 
         if (result && result.id === sessionId) {
           const updatedSession: FetchSession = {
             id: result.id,
+            region,
             status: result.status,
             startedAt: result.startedAt,
             completedAt: result.completedAt || undefined,
@@ -164,6 +165,7 @@ export function useFetchSession(onFetchComplete?: () => void, onTokenError?: () 
       if (sessionPollingRegion) {
         const session: FetchSession = {
           id: currentSessionId,
+          region: sessionPollingRegion,
           status: "pending",
           startedAt: new Date(latestSessionData.startedAt),
         };
@@ -187,6 +189,7 @@ export function useFetchSession(onFetchComplete?: () => void, onTokenError?: () 
     onSuccess: (data, variables) => {
       const session: FetchSession = {
         id: data.sessionId,
+        region: variables.region,
         status: "pending",
         startedAt: new Date(),
       };
@@ -265,6 +268,7 @@ export function useFetchSession(onFetchComplete?: () => void, onTokenError?: () 
 
     return {
       id: currentSession.id,
+      region: currentSession.region,
       status: currentSession.status,
       statusStates: parseStatusStates(currentSession.statusStates ?? null),
       startedAt: currentSession.startedAt,

@@ -13,7 +13,7 @@ import {
   type FetchState,
 } from "@/lib/fetch-states";
 import { useGame } from "./providers/game-provider";
-import type { CanonicalGameId } from "@/lib/games/ids";
+import type { CanonicalGameId, Region } from "@/lib/games/ids";
 import { fetchErrorDetail, parseFetchErrorCode } from "@/lib/games/fetch-error-codes";
 import { getGameDifficulty } from "@/lib/games/presentation";
 import { useTranslations } from "next-intl";
@@ -22,6 +22,7 @@ export type FetchToastStatus = "pending" | "completed" | "failed";
 
 export interface FetchToastState {
   id: string;
+  region: Region;
   status: FetchToastStatus;
   statusStates: FetchState[];
   startedAt: Date;
@@ -93,7 +94,9 @@ function StatusLine({
 
 export function FetchToast({ state, onDismiss }: FetchToastProps) {
   const t = useTranslations("fetchToast");
-  const { id: game, brand } = useGame();
+  const tRegions = useTranslations("regions");
+  const { id: game, brand, fetchSubscriptions } = useGame();
+  const subscription = fetchSubscriptions[state.region];
   const { status, statusStates, startedAt, errorMessage } = state;
   const progress = status === "completed" ? 100 : status === "failed" ? 0 : getProgress(statusStates, game);
 
@@ -240,8 +243,8 @@ export function FetchToast({ state, onDismiss }: FetchToastProps) {
             >
               <XCircle className="h-3 w-3 text-destructive shrink-0 mt-0.5" />
               <span className="text-destructive">
-                {parseFetchErrorCode(errorMessage) === "SUBSCRIPTION_REQUIRED"
-                  ? t("errors.subscriptionRequired", { game: brand.displayName })
+                {parseFetchErrorCode(errorMessage) === "SUBSCRIPTION_REQUIRED" && subscription
+                  ? t("errors.subscriptionRequired", { game: brand.displayName, region: tRegions(state.region), subscription })
                   : fetchErrorDetail(errorMessage)}
               </span>
             </motion.div>

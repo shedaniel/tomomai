@@ -823,6 +823,7 @@
     "tokenValidationError": "Cookieは「clal=」で始まり、英数字のみを含む必要があります。",
     "authenticationNote": "認証：",
     "segaCredentialsNote": "SEGAアカウントのユーザー名とパスワードで {net} にログインします。",
+    "subscriptionNote": "{game}（{region}）のスコア取得には、有効な{subscription}利用権が必要です。",
     "credentialsSecureNote": "認証情報は保存され、今後の同期時に使用されます。",
     "savingCredentials": "認証情報保存中...",
     "saveCredentials": "認証情報を保存",
@@ -1327,7 +1328,7 @@
   },
   "fetchToast": {
     "errors": {
-      "subscriptionRequired": "{game}日本版のスコア取得には、有効なゲキチュウマイ-NET利用権が必要です。購入・更新後に再試行してください。保存済みのログイン情報と既存データは保持されています。"
+      "subscriptionRequired": "{game}（{region}）のスコア取得には、有効な{subscription}利用権が必要です。購入・更新後に再試行してください。保存済みのログイン情報と既存データは保持されています。"
     },
     "header": {
       "pending": "データ取得中...",

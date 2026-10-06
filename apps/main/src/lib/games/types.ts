@@ -274,6 +274,8 @@ export interface GameDefinition {
   fetchStages: readonly FetchState[];
   /** How players sign in to fetch scores in each region. A `sega-cookie` region's site must sign in through the gateway. */
   loginMethods: Partial<Record<Region, readonly LoginMethod[]>>;
+  /** The paid NET subscription, by the name players know it, that fetching a region's scores needs. */
+  fetchSubscriptions?: Partial<Record<Region, string>>;
   /** Regions whose catalog source reads the game site, so collecting their catalog needs a player token. */
   catalogTokenRegions: readonly Region[];
   /** The canonical form of a catalog song title, which every collected title must already be in. Without one the source titles stay. */

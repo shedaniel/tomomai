@@ -632,6 +632,7 @@
     "tokenValidationError": "쿠키는 \"clal=\"로 시작하고 영문과 숫자로만 구성되어야 합니다.",
     "authenticationNote": "인증:",
     "segaCredentialsNote": "SEGA 계정 정보로 {net}에 인증합니다.",
+    "subscriptionNote": "{game}({region}) 점수를 가져오려면 유효한 {subscription} 이용권이 필요합니다.",
     "credentialsSecureNote": "인증 정보는 향후 데이터 갱신을 위해 저장됩니다.",
     "savingCredentials": "인증 정보 저장 중...",
     "saveCredentials": "인증 정보 저장",
@@ -962,7 +963,7 @@
   },
   "fetchToast": {
     "errors": {
-      "subscriptionRequired": "{game} 일본판 점수를 가져오려면 유효한 ゲキチュウマイ-NET 이용권이 필요합니다. 구매 또는 갱신한 후 다시 시도하세요. 저장된 로그인 정보와 기존 데이터는 유지됩니다."
+      "subscriptionRequired": "{game}({region}) 점수를 가져오려면 유효한 {subscription} 이용권이 필요합니다. 구매 또는 갱신한 후 다시 시도하세요. 저장된 로그인 정보와 기존 데이터는 유지됩니다."
     },
     "header": {
       "pending": "데이터 가져오는 중...",

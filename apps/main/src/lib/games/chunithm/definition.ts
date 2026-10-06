@@ -65,5 +65,6 @@ export const chunithmDefinition = {
     "recent_songs",
   ],
   loginMethods: { intl: ["sega-cookie", "sega-account"], jp: ["sega-account"] },
+  fetchSubscriptions: { jp: "ゲキチュウマイ-NET" },
   catalogTokenRegions: [],
 } satisfies GameDefinition;
