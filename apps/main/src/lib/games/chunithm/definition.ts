@@ -26,6 +26,7 @@ export const chunithmDefinition = {
     theme: "gray-gold",
     screenshot: null,
     sameAs: [],
+    exampleProfile: { username: "shedaniel", region: "intl" },
     communityInviteUrl: "https://discord.gg/jZqQHr3UDq",
   },
   sites: {
