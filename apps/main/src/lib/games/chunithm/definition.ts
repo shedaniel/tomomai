@@ -12,7 +12,7 @@ export const chunithmDefinition = {
     japaneseName: "ともチュウ",
     displayName: "CHUNITHM",
     netName: "CHUNITHM-NET",
-    domain: "tomochu.app",
+    domain: "chu.tomochu.lol",
     icon: "/brand/chunithm/icon.png",
     logos: {
       width: 528,
