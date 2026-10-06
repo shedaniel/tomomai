@@ -1,4 +1,5 @@
 import type { FetchState } from "@/lib/fetch-states";
+import type { ThemeId } from "@/lib/themes";
 import type { CodeKey } from "./codes";
 import type { CanonicalGameId, Region } from "./ids";
 import type { VersionTable } from "./version-table";
@@ -217,6 +218,8 @@ export type GameBrand = {
   logos: { width: number; height: number; sections: Record<BrandSection, { light: string; dark: string }> } | null;
   /** Artwork drawn on OpenGraph images. Without it they set the brand as text. */
   og: { logo: string; dbLogo: string } | null;
+  /** The theme visitors see until they pick their own. */
+  theme: ThemeId;
   /** Dashboard screenshot for the signed-out landing page. Without it the page shows no picture. */
   screenshot: { src: string; width: number; height: number } | null;
   /** Profiles of the site elsewhere, for structured data. */

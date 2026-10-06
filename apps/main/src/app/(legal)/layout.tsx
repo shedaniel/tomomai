@@ -5,7 +5,6 @@ import { SiteFooter } from "@/components/site-footer";
 import { getCurrentGame } from "@/lib/games/current";
 import { brandTitle } from "@/lib/games/frontend";
 import {
-  DEFAULT_THEME_ID,
   getThemeOrDefault,
   getThemeStyleProperties,
   themeNoFlashScript,
@@ -39,7 +38,7 @@ export const metadata: Metadata = {
 // They reuse the site theme/fonts but skip the i18n + tRPC providers, since the
 // policy text is English-only and needs no client providers.
 export default function LegalLayout({ children }: { children: ReactNode }) {
-  const theme = getThemeOrDefault(DEFAULT_THEME_ID);
+  const theme = getThemeOrDefault(null, getCurrentGame().brand.theme);
 
   return (
     <html

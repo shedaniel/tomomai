@@ -12,7 +12,7 @@ import { notFound } from 'next/navigation';
 import localFont from "next/font/local";
 import { routing } from '@/i18n/routing';
 import type { Locale } from '@tomomai/i18n/locale';
-import { DEFAULT_THEME_ID, getThemeOrDefault, getThemeStyleProperties, themeNoFlashScript } from '@/lib/themes';
+import { getThemeOrDefault, getThemeStyleProperties, themeNoFlashScript } from '@/lib/themes';
 import { resolveBaseUrl } from '@/lib/base-url';
 import { siteJsonLd } from '@/lib/seo';
 import { SiteFooter } from '@/components/site-footer';
@@ -55,7 +55,7 @@ export async function generateMetadata({ params }: Pick<Props, "params">): Promi
     metadataBase: new URL(resolveBaseUrl()),
     title: brandTitle(brand),
     description: t("description", { game: brand.displayName }),
-    icons: brand.icon ? { apple: brand.icon } : undefined,
+    icons: { icon: { url: "/favicon.ico", sizes: "any" }, ...(brand.icon && { apple: brand.icon }) },
   };
 }
 
@@ -86,7 +86,7 @@ export default async function LocaleLayout({ children, params }: Props) {
   // SSR the default theme; the user's saved theme is applied pre-paint by
   // the blocking no-flash script below (cookie read happens in the browser,
   // so this stays static/cacheable instead of forcing the layout dynamic).
-  const theme = getThemeOrDefault(DEFAULT_THEME_ID);
+  const theme = getThemeOrDefault(null, game.brand.theme);
 
   const shouldInjectToolbar = process.env.NODE_ENV === "development";
 

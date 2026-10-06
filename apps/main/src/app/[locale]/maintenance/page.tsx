@@ -12,8 +12,7 @@ export const metadata = {
   title: `Maintenance - ${brandTitle(getCurrentGame().brand)}`,
 };
 
-// gray-pink theme: hue=0, contrast=0.9, darkness=0.7, lightness=2.5, saturation=0.7, dark=true
-const theme = getThemeOrDefault('gray-pink');
+const theme = getThemeOrDefault(null, getCurrentGame().brand.theme);
 const themeStyle = getThemeStyleProperties(theme);
 
 export default async function MaintenancePage({

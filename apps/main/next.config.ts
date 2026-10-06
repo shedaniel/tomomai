@@ -117,6 +117,14 @@ const nextConfig: NextConfig = {
   distDir: getFrontendDistDir(frontendGame, process.env.NODE_ENV === "development"),
   transpilePackages: ["@tomomai/ui", "@tomomai/i18n", "@tomomai/markdown"],
   env: { BUILD_STAMP, GIT_SHA, APP_VERSION_MINOR, FRONTEND_GAME: frontendGame },
+  async rewrites() {
+    // Browsers also ask for /favicon.ico without reading the page's icon link.
+    return { beforeFiles: [{ source: '/favicon.ico', destination: `/brand/${frontendGame}/favicon.ico` }] };
+  },
+  async redirects() {
+    // Old Discord webhook posts and cached structured data still point at the pre-brand-folder icon.
+    return [{ source: '/icon.png', destination: `/brand/${frontendGame}/icon.png`, permanent: true }];
+  },
   async headers() {
     return [
       {
