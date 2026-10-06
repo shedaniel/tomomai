@@ -29,7 +29,7 @@ const chartConfig = {
 };
 
 /** The tooltip's default row, which a formatter replaces as a whole. */
-export function RatingTooltipRow({ color, label, value }: { color?: string; label: string; value: string }) {
+function RatingTooltipRow({ color, label, value }: { color?: string; label: string; value: string }) {
   return (
     <>
       <div className="h-2.5 w-2.5 shrink-0 rounded-[2px]" style={{ backgroundColor: color }} />

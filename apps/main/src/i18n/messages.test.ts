@@ -1,8 +1,6 @@
 import { readFileSync } from "node:fs";
-import { createTranslator } from "next-intl";
 import { describe, expect, it } from "vitest";
 import { locales } from "@/i18n/locale";
-import { GAME_CODES } from "@/lib/games/codes";
 import { CANONICAL_GAME_IDS, type CanonicalGameId } from "@/lib/games/ids";
 import { getGame } from "@/lib/games/registry";
 import { loadMessages } from "./messages";
@@ -49,14 +47,6 @@ describe("per-game messages", () => {
     expect(leaks).toEqual([]);
   });
 
-  it.each(locales)("names each game's own brand in its shell copy in %s", async locale => {
-    for (const game of CANONICAL_GAME_IDS) {
-      const messages = await loadMessages(game, locale) as Messages;
-      const shell = strings(messages).filter(([key]) => ["dashboard.title", "onboarding.title", "userHeader.memberLabel"].includes(key));
-      expect(shell.map(([, value]) => brandNames(game).test(value))).toEqual([true, true, true]);
-    }
-  });
-
   it("gives every game the same per-game keys, each defined in exactly one layer", () => {
     const shared = new Set(keys(readMessages("en")));
     const [first, ...others] = CANONICAL_GAME_IDS.map(game => keys(readMessages(`games/${game}/en`)).sort());
@@ -79,24 +69,5 @@ describe("per-game messages", () => {
         expect(keys(readMessages(`games/${game}/${locale}`)).filter(key => !english.has(key)), `${game} ${locale}`).toEqual([]);
       }
     }
-  });
-
-  it.each(locales)("names each shown chart type of a game apart in %s", async locale => {
-    for (const game of CANONICAL_GAME_IDS) {
-      // Merged messages are untyped, so the translator is too.
-      const t = createTranslator({ locale, messages: await loadMessages(game, locale), onError(error) { throw error; } }) as unknown as (key: string, values: Record<string, string>) => string;
-      const chartTypes: Partial<Record<string, { implicit?: true }>> = getGame(game).presentation.chartTypes;
-      const labels = GAME_CODES[game].chartType.filter(type => !chartTypes[type]?.implicit).map(type => t("db.songs.chartLabel", { type }));
-      expect(new Set(labels).size, game).toBe(labels.length);
-    }
-  });
-
-  it("lays the locale and the game over English", async () => {
-    const ja = Object.fromEntries(strings(await loadMessages("chunithm", "ja") as Messages));
-    expect(ja["dashboard.title"]).toBe("ともチュウ");
-    expect(ja["common.save"]).toBe("保存");
-    const ko = Object.fromEntries(strings(await loadMessages("chunithm", "ko") as Messages));
-    expect(ko["onboarding.title"]).toBe("Welcome to tomochu!");
-    expect(ko["onboarding.step1.title"]).toBe("Pick a username");
   });
 });

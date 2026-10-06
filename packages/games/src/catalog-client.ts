@@ -31,11 +31,11 @@ function gameApiUrl(base: string, game: CodedGame): string {
   return `${base.replace(/\/+$/, "")}/api/v1/games/${game}`;
 }
 
-export function catalogVersionsUrl(base: string, game: CodedGame, region: string): string {
+function catalogVersionsUrl(base: string, game: CodedGame, region: string): string {
   return `${gameApiUrl(base, game)}/songs/versions?${new URLSearchParams({ region })}`;
 }
 
-export function catalogSliceUrl(base: string, game: CodedGame, region: string, gameVersion: number): string {
+function catalogSliceUrl(base: string, game: CodedGame, region: string, gameVersion: number): string {
   return `${gameApiUrl(base, game)}/songs?${new URLSearchParams({ region, gameVersion: String(gameVersion) })}`;
 }
 

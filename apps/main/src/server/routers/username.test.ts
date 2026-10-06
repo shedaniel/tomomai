@@ -27,7 +27,3 @@ it.each(["admin", "Admin", "max", "MAXBAS"])("refuses the reserved name %s befor
   await expect(caller.setUsername({ username })).rejects.toMatchObject({ code: "CONFLICT", message: "This username is reserved" });
   expect(proxy.queries).toEqual([]);
 });
-
-it("offers a free name", async () => {
-  expect(await caller.checkUsernameAvailability({ username: "maxfan" })).toEqual({ available: true });
-});

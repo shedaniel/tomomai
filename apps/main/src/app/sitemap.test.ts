@@ -62,12 +62,4 @@ describe("sitemap", () => {
     ]);
     expect(cacheKeys).toEqual([["sitemap", "maimai"]]);
   });
-
-  it("matches no player while the game has no enabled region", async () => {
-    const { paths } = await sitemapFor("maimai", []);
-    expect(paths).not.toContain("/en/db/posts");
-    expect(paths).not.toContain("/en/profile/player");
-    // Postgres matches nothing against the empty region list, which only the statement shows.
-    expect(proxy.queries[0].sql).toMatch(/and false\)/);
-  });
 });

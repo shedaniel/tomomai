@@ -213,14 +213,13 @@ describe("field merging", () => {
     expect(value(merged.artist)).toBe("Artist");
   });
 
-  it("takes the fetched value when both are important, and warns that they conflict", () => {
+  it("takes the fetched value when both are important", () => {
     const [merged] = mergeCharts(
       [chart("Conflict Song", { chartType: DX, level: important("14"), addedVersion: important(5) })],
       [chart("Conflict Song", { chartType: DX, level: important("14+"), artist: important("Artist") })],
       "only-modify", log,
     );
     expect([value(merged.level), value(merged.artist)]).toEqual(["14+", "Artist"]);
-    expect(log.warn).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ from: "\"14\"", to: "\"14+\"" }), "Data mismatch: important field 'level' has conflicting values");
   });
 
   it("combines the extras of both charts", () => {

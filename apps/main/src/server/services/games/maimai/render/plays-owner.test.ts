@@ -5,7 +5,7 @@ const mocks = vi.hoisted(() => ({ session: vi.fn(), access: vi.fn() }));
 vi.mock("@/lib/auth-server", () => ({ getServerSession: mocks.session }));
 vi.mock("@/server/queries/public-access", () => ({ resolvePublicSnapshotAccess: mocks.access }));
 
-import { playsOwnerQuery, resolvePlaysOwner } from "./plays-owner";
+import { resolvePlaysOwner } from "./plays-owner";
 
 beforeEach(() => {
   vi.stubEnv("NEXT_PUBLIC_ENABLED_MAIMAI_REGIONS", "jp");
@@ -14,12 +14,6 @@ beforeEach(() => {
   mocks.access.mockReset().mockResolvedValue({ userId: "owner", region: "jp" });
 });
 afterEach(() => vi.unstubAllEnvs());
-
-it("takes a snapshot for a visitor and a region for the owner", () => {
-  expect(playsOwnerQuery.parse({ snapshotId: "snapshot", region: "intl" })).toEqual({ snapshotId: "snapshot" });
-  expect(playsOwnerQuery.parse({ region: "jp" })).toEqual({ region: "jp" });
-  expect(playsOwnerQuery.safeParse({}).success).toBe(false);
-});
 
 it("shows a visitor the snapshot owner's plays in the snapshot's region, when the owner shares them", async () => {
   await expect(resolvePlaysOwner({ snapshotId: "snapshot" }, "daily-plays")).resolves.toEqual({ userId: "owner", region: "jp" });

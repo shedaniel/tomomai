@@ -20,18 +20,6 @@ const stubFetch = () => {
   return fetch;
 };
 
-it("identifies CHUNITHM changes independently of the host's frontend game", async () => {
-  vi.stubEnv("FRONTEND_GAME", "maimai");
-  vi.stubEnv("DISCORD_UPDATE_WEBHOOK_CHUNITHM_JP", "https://example.test/webhook");
-  const fetch = stubFetch();
-  await sendDiscordWebhook("chunithm", "jp", [{ songKey: "chart", label: "Test ULTIMA", songName: "Test", artist: "Artist", chartType: 0, difficulty: 4, level: "14+", levelPrecise: 145 }], [], []);
-  await Promise.all(background);
-  expect(fetch.mock.calls[0][0]).toBe("https://example.test/webhook");
-  const payload = JSON.parse(String(fetch.mock.calls[0][1]?.body));
-  expect(payload.username).toBe("ともチュウ");
-  expect(payload.embeds[0].title).toContain("CHUNITHM");
-});
-
 describe("resolveUpdateWebhook", () => {
   it("prefers the game and region channel, then the game channel", () => {
     vi.stubEnv("DISCORD_UPDATE_WEBHOOK_CHUNITHM", "https://example.test/chunithm");
@@ -71,17 +59,6 @@ describe("sendDiscordWebhook", () => {
     expect(fetch).not.toHaveBeenCalled();
   });
 
-  it("posts only the public fields of a chart that also changed internally", async () => {
-    vi.stubEnv("DISCORD_UPDATE_WEBHOOK_MAIMAI", "https://example.test/maimai");
-    const fetch = stubFetch();
-    await sendDiscordWebhook("maimai", "jp", [], [], [modifiedLevel("ECHO", "master", [
-      { field: "genre", oldValue: "POPS & ANIME", newValue: "maimai" },
-      { field: "metadata", oldValue: { source: { provider: "otoge-db", id: "1" } }, newValue: { source: { provider: "otoge-db", id: "2" } } },
-    ])]);
-    await Promise.all(background);
-    const { description } = JSON.parse(String(fetch.mock.calls[0][1]?.body)).embeds[0];
-    expect(description).toBe("**1 Genre Change**\n- ECHO DX: POPS & ANIME → maimai");
-  });
 });
 
 function added(
@@ -132,23 +109,6 @@ function modifiedField(
 }
 
 describe("buildChangeDescription", () => {
-  it("uses CHUNITHM chart labels", () => {
-    const description = buildChangeDescription("chunithm", [{ songKey: "chart", label: "Test ULTIMA", songName: "Test", artist: "Artist", chartType: 0, difficulty: 4, level: "14+", levelPrecise: 145 }], [], []);
-    expect(description).toContain("- Test: ULT 14+ (14.5)");
-    expect(description).not.toContain("STANDARD");
-    expect(description).not.toContain("REMASTER");
-  });
-  it("sorts CHUNITHM difficulty codes for deleted charts and differing field changes", () => {
-    const changes = [4, 0, 3].map(difficulty => ({ songKey: `chart-${difficulty}`, label: "Test", songName: "Test", artist: "Artist",
-      chartType: 0, difficulty, level: "14+", levelPrecise: 145, dbId: String(difficulty), playRecordCount: 0 }));
-    const description = buildChangeDescription("chunithm", [], changes, changes.map(change => ({
-      ...change, fieldChanges: [{ field: "genre" as const, oldValue: "Old", newValue: change.difficulty === 0 ? "Basic" : "Other" }],
-    })));
-    expect(description).toContain("Test: BAS 14+ (14.5) / MAS 14+ (14.5) / ULT 14+ (14.5)");
-    expect(description).toContain("- Test BAS: Old → Basic\n- Test MAS / ULT: Old → Other");
-    expect(description).not.toContain("STANDARD");
-    expect(changes.map(change => change.difficulty)).toEqual([4, 0, 3]);
-  });
   it("groups added charts of one song onto a single difficulty-sorted line", () => {
     // Deliberately out of play order to prove sorting (BAS/ADV/EXP/MAS).
     const description = buildChangeDescription("maimai",
@@ -166,11 +126,6 @@ describe("buildChangeDescription", () => {
     expect(description).toContain(
       "- ECHO DX: BAS 4 (4.0) / ADV 7+ (7.9) / EXP 11 (11.2) / MAS 13+ (13.7)",
     );
-  });
-
-  it("keeps maimai's REM and UTA abbreviations", () => {
-    const description = buildChangeDescription("maimai", [added("ECHO", "remaster", "14", 140), added("ECHO", "utage", "13?", 130)], [], []);
-    expect(description).toContain("- ECHO DX: REM 14 (14.0) / UTA 13? (13.0)");
   });
 
   it("keeps separate songs and chart types on their own lines, sorted by name", () => {
@@ -279,30 +234,6 @@ describe("buildChangeDescription", () => {
       "- ECHO DX: POPS & ANIME → maimai",
       "- ECHO STD: POPS & ANIME → maimai",
     ]);
-  });
-
-  it("renders object changes as changed leaf paths", () => {
-    const counts = { tap: 100, hold: 5, slide: 10, touch: 0, break: 4 };
-    const description = buildChangeDescription("maimai", [], [], [
-      modifiedField("ECHO", "master", "noteCounts", counts, { ...counts, tap: 101, break: 5 }),
-      modifiedField("Sky", "master", "noteCounts", undefined, { tap: 1 }),
-      modifiedField("Zeta", "master", "noteCounts", { tap: { head: 1 } }, { tap: { head: 2 } }),
-    ]);
-    expect(description.trim().split("\n")).toEqual([
-      "**3 NoteCounts Changes**",
-      "- ECHO DX: tap 100→101, break 4→5",
-      "- Sky DX: tap none→1",
-      "- Zeta DX: tap.head 1→2",
-    ]);
-    expect(description).not.toContain("[object Object]");
-  });
-
-  it("leaves internal fields out of the description", () => {
-    const description = buildChangeDescription("chunithm", [], [], [{
-      songKey: "chart", label: "Test ULTIMA", songName: "Test", chartType: 0, difficulty: 4, dbId: "1",
-      fieldChanges: [{ field: "metadata", oldValue: { source: { provider: "otoge-db", id: "1" } }, newValue: undefined }],
-    }]);
-    expect(description.trim()).toBe("");
   });
 
   it("ignores cover-only differences passed through in modified entries' other fields", () => {

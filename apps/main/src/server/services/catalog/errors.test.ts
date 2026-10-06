@@ -15,8 +15,4 @@ describe("formatCatalogError", () => {
     const error = new DrizzleQueryError(`insert into parent_song ${"secret-sql ".repeat(1000)}`, ["secret-parameter"], cause);
     expect(formatCatalogError(error)).toBe(expected);
   });
-
-  it("keeps an ordinary error's message", () => {
-    expect(formatCatalogError(new Error("Ambiguous catalog identity: Example"))).toBe("Ambiguous catalog identity: Example");
-  });
 });

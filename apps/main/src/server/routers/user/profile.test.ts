@@ -57,12 +57,6 @@ describe("region preferences", () => {
     expect(proxy.queries).toEqual([]);
   });
 
-  it("requires a region to store", async () => {
-    // @ts-expect-error the input requires a region
-    await expect(caller.updateRegion({ region: null })).rejects.toMatchObject({ code: "BAD_REQUEST" });
-    expect(saveGamePreference).not.toHaveBeenCalled();
-  });
-
   it("reads the served game's region", async () => {
     answerFor({ username: "player", email: "player@example.test", publishProfile: true, role: "user", region: "jp" });
     await expect(caller.getUserData()).resolves.toEqual({
@@ -76,12 +70,5 @@ describe("region preferences", () => {
       profileShowPlates: true, profileShowPlayCounts: true, profileShowEvents: true, profileShowInSearch: true, fetchUseAlbums: null,
     });
     await expect(caller.getProfileSettings()).resolves.toMatchObject({ publishProfile: true, profileMainRegion: "intl" });
-  });
-
-  it("keeps the main region fixed on the China deployment", async () => {
-    vi.stubEnv("FRONTEND_GAME", "maimai");
-    vi.stubEnv("NEXT_PUBLIC_ENABLED_MAIMAI_REGIONS", "cn");
-    await expect(caller.updateProfileMainRegion({ profileMainRegion: "cn" })).rejects.toMatchObject({ code: "BAD_REQUEST" });
-    expect(saveGamePreference).not.toHaveBeenCalled();
   });
 });

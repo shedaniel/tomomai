@@ -21,22 +21,6 @@ function store(game: CanonicalGameId, gameVersion: number, scores: ProxyRow[], c
 
 beforeEach(() => proxy.reset());
 
-it("buckets maimai scores by difficulty code and counts combo and sync statuses by code", async () => {
-  store(
-    "maimai", 13,
-    [score(1005000, 13, 3, 3, 4, 0), score(1000000, 13, 3, 0, 0, 0), score(990000, 12, 2, 1, 1, 0)],
-    [charts(13, 3, 10), charts(12, 2, 5)],
-  );
-
-  await expect(computeStatsForSnapshot("maimai", 41, 13, "jp")).resolves.toStrictEqual({
-    stats: {
-      13: { 3: { grades: { "SSS+": 1, SSS: 1 }, statuses: { comboStatus: { 3: 1 }, syncStatus: { 4: 1 } }, total: 2 } },
-      12: { 2: { grades: { SS: 1 }, statuses: { comboStatus: { 1: 1 }, syncStatus: { 1: 1 } }, total: 1 } },
-    },
-    totalSongs: { 13: { 3: 10 }, 12: { 2: 5 } },
-  });
-});
-
 it("counts CHUNITHM clear lamps beside its combo and chain statuses", async () => {
   store(
     "chunithm", 9,

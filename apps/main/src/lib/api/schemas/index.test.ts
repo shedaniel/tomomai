@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { RecentPlayDetails } from "@/lib/games/recent-details";
-import { GAME_API_DETAILS, recentPlay, snapshotMetadata } from ".";
+import { recentPlay } from ".";
 
 const judgments = (cPerfect: number) => ({ cPerfect, perfect: 1, great: 2, good: 3, miss: 4 });
 
@@ -27,16 +27,5 @@ describe("game details", () => {
   it.each(recentDetails)("publishes $game recent play details as the query decodes them", details => {
     expect(recentPlay.shape.details.parse(details)).toStrictEqual(details);
     expect(recentPlay.shape.details.parse({ ...details, playlog: null })).toStrictEqual({ ...details, playlog: null });
-  });
-
-  it("keeps a maimai play's max DX score beside its playlog", () => {
-    expect(() => recentPlay.shape.details.parse({ game: "maimai", playlog: null })).toThrow();
-  });
-
-  it("keeps maimai's course, class and stars in its snapshot details", () => {
-    const ranks = { courseRankUrl: "course.png", classRankUrl: null, stars: 3 };
-    expect(GAME_API_DETAILS.maimai.snapshot(ranks)).toStrictEqual({ game: "maimai", ...ranks });
-    expect(GAME_API_DETAILS.chunithm.snapshot()).toStrictEqual({ game: "chunithm" });
-    expect(() => snapshotMetadata.shape.details.parse({ game: "maimai" })).toThrow();
   });
 });

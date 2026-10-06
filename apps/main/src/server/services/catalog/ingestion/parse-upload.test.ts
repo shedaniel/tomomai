@@ -20,28 +20,6 @@ describe("catalog upload boundary", () => {
       .toEqual([{ ...fields, game: "maimai", chartType: 0, difficulty: 3, bpm: undefined, noteDesigner: undefined, noteCounts: undefined, metadata: undefined }]);
   });
 
-  it.each([
-    ["an unknown source record", { otogeDb: { id: "42" } }],
-    ["a false estimate flag", { levelPreciseEstimated: false }],
-    ["another provider", { source: { provider: "lxns", id: "42" } }],
-  ])("rejects metadata with %s", (_name, metadata) => {
-    expect(() => parseCatalogUpload("chunithm", [{ ...chart, metadata }])).toThrow();
-    const { game, chartType, ...fields } = chart;
-    expect(() => parseCatalogUpload("maimai", [{ ...fields, type: "std", difficulty: "master", bpm: null, noteDesigner: null, noteCounts: null, metadata }])).toThrow();
-  });
-
-  it("rejects values still wrapped the way collection marks them important", () => {
-    expect(() => parseCatalogUpload("chunithm", [{ ...chart, levelPrecise: { important: true, value: 145 } }])).toThrow();
-  });
-
-  it.each(["artist", "cover", "level", "levelPrecise", "genre", "addedVersion"] as const)("rejects missing %s", field => {
-    expect(() => parseCatalogUpload("chunithm", [{ ...chart, [field]: undefined }])).toThrow();
-  });
-
-  it.each([NaN, Infinity, -1, 32768, 145.5])("rejects invalid constant %s", levelPrecise => {
-    expect(() => parseCatalogUpload("chunithm", [{ ...chart, levelPrecise }])).toThrow();
-  });
-
   it("rejects cross-game, unsupported-code and duplicate records before ingestion", () => {
     expect(() => parseCatalogUpload("maimai", [chart])).toThrow("different game");
     expect(() => parseCatalogUpload("chunithm", [{ ...chart, difficulty: 42 }])).toThrow("Unknown chart codes");

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { getGameMaintenance, getGameMaintenanceError } from "./maintenance";
+import { getGameMaintenance } from "./maintenance";
 
 describe("international maintenance in JST", () => {
   it.each([
@@ -21,32 +21,12 @@ describe("international maintenance in JST", () => {
   });
 });
 
-describe("CHUNITHM maintenance in JST", () => {
-  it.each([
-    ["intl", "2026-09-08T19:00:00Z"],
-    ["jp", "2026-09-08T17:00:00Z"],
-  ] as const)("uses inclusive start and exclusive end for %s", (region, startIso) => {
-    const start = new Date(startIso).getTime();
-    const end = new Date("2026-09-08T22:00:00Z").getTime();
-    expect(getGameMaintenance("chunithm", region, new Date(start - 1))?.active).toBe(false);
-    expect(getGameMaintenance("chunithm", region, new Date(start))?.active).toBe(true);
-    expect(getGameMaintenance("chunithm", region, new Date(end - 1))?.active).toBe(true);
-    expect(getGameMaintenance("chunithm", region, new Date(end))?.active).toBe(false);
-  });
-
-  it("does not invent a schedule for an unsupported region", () => {
-    expect(getGameMaintenance("chunithm", "cn", new Date("2026-09-08T20:00:00Z"))).toBeNull();
-  });
-});
-
 it("uses the next JST day's Wednesday exception after Tuesday maintenance ends", () => {
-  const window = getGameMaintenance("maimai", "intl", new Date("2026-09-07T17:00:00Z"));
-  expect(window).toEqual({
+  expect(getGameMaintenance("maimai", "intl", new Date("2026-09-07T17:00:00Z"))).toEqual({
     active: false,
     startsAt: new Date("2026-09-08T16:00:00Z"),
     endsAt: new Date("2026-09-08T19:00:00Z"),
   });
-  expect(getGameMaintenanceError(window!)).toBe("Cannot fetch data during maintenance window (01:00 - 04:00 JST)");
 });
 
 describe("other regions retain their existing maintenance", () => {

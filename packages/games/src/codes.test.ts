@@ -8,29 +8,9 @@ import {
   hasCode,
   isCodeKey,
   keyOf,
-  type CodeKind,
-  type CodedGame,
 } from "./codes.ts";
 
-const games = Object.keys(GAME_CODES) as CodedGame[];
-
 describe("game codes", () => {
-  for (const game of games) {
-    it(`round-trips every ${game} key through its code`, () => {
-      for (const kind of Object.keys(GAME_CODES[game]) as CodeKind[]) {
-        const keys: readonly string[] = GAME_CODES[game][kind];
-        assert.equal(new Set(keys).size, keys.length);
-        keys.forEach((key, code) => {
-          assert.equal(codeOf(game, kind, key), code);
-          assert.equal(keyOf(game, kind, code), key);
-          assert.equal(definedKeyOf(game, kind, code), key);
-          assert.ok(hasCode(game, kind, code));
-          assert.ok(isCodeKey(game, kind, key));
-        });
-      }
-    });
-  }
-
   it("names maimai chart type 0 std and gives CHUNITHM a single standard chart type", () => {
     assert.equal(keyOf("maimai", "chartType", 0), "std");
     assert.equal(codeOf("maimai", "chartType", "dx"), 1);

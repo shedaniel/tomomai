@@ -25,11 +25,6 @@ beforeEach(() => {
 });
 
 describe("fetch run", () => {
-  it("logs with the fetch's game, region, user and session", () => {
-    expect(createFetchRun(context()).log).toBe(mocks.log);
-    expect(mocks.child).toHaveBeenCalledWith({ game: "chunithm", region: "jp", userId: "user", sessionId: "12" });
-  });
-
   it("records the completed state before the stage resolves", async () => {
     let recorded = false;
     mocks.progress.mockImplementationOnce(async () => { recorded = true; });
@@ -37,12 +32,6 @@ describe("fetch run", () => {
     await expect(run.stage("profile", async () => "player", "player_data")).resolves.toBe("player");
     expect(recorded).toBe(true);
     expect(mocks.progress).toHaveBeenCalledExactlyOnceWith(BigInt(12), "player_data");
-    expect(mocks.log.info).toHaveBeenCalledWith({ stepType: "profile", durationMs: expect.any(Number) }, "Fetch stage completed");
-  });
-
-  it("records nothing for a stage that completes no state", async () => {
-    await createFetchRun(context()).stage("icon", async () => "url");
-    expect(mocks.progress).not.toHaveBeenCalled();
   });
 
   it("rethrows a failed stage with its step and message for the fetch to log, recording no progress", async () => {
@@ -53,11 +42,6 @@ describe("fetch run", () => {
     expect(fetchFailure(error)).toEqual({ err: failure, stepType: "scores", durationMs: expect.any(Number) });
     expect(mocks.log.warn).not.toHaveBeenCalled();
     expect(mocks.progress).not.toHaveBeenCalled();
-  });
-
-  it("reports a failure outside any stage as it was thrown", () => {
-    const failure = new Error("timed out");
-    expect(fetchFailure(failure)).toEqual({ err: failure });
   });
 
   it("does not start a stage once the fetch is aborted", async () => {

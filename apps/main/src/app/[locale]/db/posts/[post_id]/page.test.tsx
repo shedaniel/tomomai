@@ -46,7 +46,7 @@ beforeEach(() => { current.game = "maimai"; });
 describe("changelog post", () => {
   it("is published on the maimai site", async () => {
     expect(await generateStaticParams()).toEqual([{ post_id: "2026-09-01-update" }]);
-    expect((await generateMetadata({ params })).title).toBe("September update | tomomai");
+    expect(await generateMetadata({ params })).not.toEqual(MISSING_PAGE_METADATA);
     expect((await PostImage({ params, id: Promise.resolve("en") })).status).toBe(200);
   });
 

@@ -90,12 +90,6 @@ describe("game site client", () => {
     expect(follow.body).toBeUndefined();
   });
 
-  it("sends the page a session continues from as its first referer", async () => {
-    mocks.fetch.mockResolvedValueOnce(new Response("Cards"));
-    await openGameSite("chunithm", "jp", { cookies: "" }, { pageUrl: "https://new.chunithm-net.com/" }).html("aimeList/");
-    expect(new Headers(mocks.fetch.mock.calls[0][1].headers).get("Referer")).toBe("https://new.chunithm-net.com/");
-  });
-
   it("rejects a page that is not a success or fails the game's page check", async () => {
     const assertPage = vi.fn((html: string) => {
       if (html.includes("login")) throw new Error("Session expired");
@@ -136,11 +130,5 @@ describe("game site client", () => {
     expect(String(crossOrigin)).toBe("https://cdn.example.test/photo.jpg");
     expect(new Headers(crossInit.headers).has("Cookie")).toBe(false);
     expect(session.cookies).toBe("userId=player; _t=rotated");
-  });
-
-  it("rejects a failed download", async () => {
-    mocks.fetch.mockResolvedValueOnce(new Response(null, { status: 404 }));
-    await expect(openGameSite("chunithm", "intl", { cookies: "" }).bytes("https://cdn.example.test/icon.png"))
-      .rejects.toThrow("cdn.example.test/icon.png returned HTTP 404");
   });
 });

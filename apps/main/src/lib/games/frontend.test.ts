@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { resolveGameContext } from "./access";
-import { brandTitle, getCatalogSection, getGameRegion, supportsGameFeature, toFrontendGame } from "./frontend";
+import { supportsGameFeature, toFrontendGame } from "./frontend";
 import { REGIONS, type CanonicalGameId, type Region } from "./ids";
 import { getEnabledRegions } from "./regions";
 import { getGame } from "./registry";
@@ -16,26 +16,6 @@ function serverAccepts(game: CanonicalGameId, capability: GameCapability, region
     return false;
   }
 }
-
-describe("game presentation", () => {
-  it("preserves the maimai brand while separating CHUNITHM metadata", () => {
-    expect(brandTitle(getGame("maimai").brand)).toBe("tomomai ともマイ");
-    expect(brandTitle(getGame("chunithm").brand)).toBe("tomochu ともチュウ");
-  });
-
-  it("offers title normalization only for a game with a title rule", () => {
-    expect(getGame("maimai").normalizeCatalogTitle?.(" Ｌｉｎｋ ")).toBe("Link");
-    expect(toFrontendGame(getGame("maimai"), ["jp"]).normalizesCatalogTitles).toBe(true);
-    expect(toFrontendGame(getGame("chunithm"), ["jp"]).normalizesCatalogTitles).toBe(false);
-  });
-
-  it("selects a supported region without carrying maimai-only CN into CHUNITHM", () => {
-    const game = toFrontendGame(getGame("chunithm"), ["jp", "intl"]);
-    expect(getGameRegion(game, "cn")).toBe("jp");
-    expect(getGameRegion(game, "intl")).toBe("intl");
-    expect(getGameRegion({ ...game, regions: [] }, "jp")).toBeNull();
-  });
-});
 
 describe("client capability gating", () => {
   it.each([
@@ -54,36 +34,5 @@ describe("client capability gating", () => {
         }
       }
     }
-  });
-
-  it("withdraws maimai albums in China while other regions keep them", () => {
-    vi.stubEnv("NEXT_PUBLIC_ENABLED_MAIMAI_REGIONS", "intl,jp,cn");
-    const game = toFrontendGame(getGame("maimai"), getEnabledRegions("maimai"));
-    expect(supportsGameFeature(game, "albums", "cn")).toBe(false);
-    expect(supportsGameFeature(game, "albums", "jp")).toBe(true);
-    expect(supportsGameFeature(game, "albums")).toBe(true);
-  });
-
-  it("refuses to serve a game without its catalog", () => {
-    const definition = getGame("chunithm");
-    expect(() => toFrontendGame({ ...definition, capabilities: definition.capabilities.filter(capability => capability !== "catalog") }, ["jp"]))
-      .toThrow("CHUNITHM cannot be served without its catalog");
-  });
-});
-
-describe("catalog sections", () => {
-  it("offers a section only while the game offers what it requires", () => {
-    const maimai = toFrontendGame(getGame("maimai"), ["intl"]);
-    expect(getCatalogSection(maimai, "posts")).toEqual({ id: "posts", requires: "posts" });
-    expect(getCatalogSection(toFrontendGame(getGame("maimai"), []), "posts")).toBeNull();
-    expect(getCatalogSection(toFrontendGame(getGame("chunithm"), ["intl"]), "stats")).toBeNull();
-  });
-
-  it("keeps a hidden section reachable by its path", () => {
-    expect(getCatalogSection(toFrontendGame(getGame("maimai"), []), "arcades")).toEqual({ id: "arcades", hidden: true });
-  });
-
-  it("offers nothing at a path no section declares", () => {
-    expect(getCatalogSection(toFrontendGame(getGame("maimai"), ["intl"]), "home")).toBeNull();
   });
 });

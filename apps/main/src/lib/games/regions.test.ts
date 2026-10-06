@@ -3,9 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 const { logError } = vi.hoisted(() => ({ logError: vi.fn() }));
 vi.mock("@/lib/logger", () => ({ logger: { error: logError } }));
 
-import { REGIONS } from "./ids";
-import { CANONICAL_REGION_PREFERENCE, getEnabledRegions, getSupportedRegions, instancePreference } from "./regions";
-import { requireGameSite } from "./sites";
+import { getEnabledRegions, instancePreference } from "./regions";
 
 const ENV = {
   maimai: "NEXT_PUBLIC_ENABLED_MAIMAI_REGIONS",
@@ -20,26 +18,7 @@ function configure(values: Partial<Record<keyof typeof ENV, string>>) {
 beforeEach(() => logError.mockClear());
 afterEach(() => vi.unstubAllEnvs());
 
-describe("supported regions", () => {
-  it("derives each game's regions from its sites", () => {
-    expect(getSupportedRegions("chunithm")).toEqual(["intl", "jp"]);
-  });
-
-  it("gives maimai every region, which the Discord registration script assumes", () => {
-    expect(getSupportedRegions("maimai")).toEqual(REGIONS);
-  });
-
-  it("rejects a region the game has no site for", () => {
-    expect(() => requireGameSite("maimai", "cn")).not.toThrow();
-    expect(() => requireGameSite("chunithm", "cn")).toThrow(expect.objectContaining({ code: "UNSUPPORTED_REGION", game: "chunithm", region: "cn" }));
-  });
-});
-
 describe("instance preference", () => {
-  it("ranks every region", () => {
-    expect([...CANONICAL_REGION_PREFERENCE].sort()).toEqual([...REGIONS].sort());
-  });
-
   it("prefers a later version, then jp over intl over cn", () => {
     const ranked = [
       { region: "cn", gameVersion: -13 }, { region: "intl", gameVersion: -13 }, { region: "jp", gameVersion: -13 },

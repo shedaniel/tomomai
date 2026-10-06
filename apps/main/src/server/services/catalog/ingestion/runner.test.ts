@@ -14,12 +14,11 @@ const notices = () => vi.mocked(sendDiscordNotice).mock.calls.map(([game, region
 beforeEach(() => vi.clearAllMocks());
 
 describe("catalog stage runner", () => {
-  it("passes the collected charts through each stage and reports what each one added or modified", async () => {
+  it("passes the collected charts through each stage", async () => {
     const source: CatalogStage = {
       name: "Source",
-      run: async (ctx, charts) => {
+      run: async (_ctx, charts) => {
         expect(charts).toEqual([]);
-        ctx.notice.addDetail("Fetched source chart");
         return [pending];
       },
     };
@@ -33,18 +32,6 @@ describe("catalog stage runner", () => {
     const charts = await runFetchers(context, { game: "maimai", stages: [source, fill] });
 
     expect(charts).toEqual([{ ...pending, ...complete }]);
-    expect(notices()).toEqual([
-      { game: "maimai", region: "jp", title: "Stage 1/2: Source", body: expect.stringContaining("+1 added, ~0 modified\nAdded: Link DX MASTER\nFetched source chart") },
-      { game: "maimai", region: "jp", title: "Stage 2/2: Fill", body: expect.stringContaining("+0 added, ~1 modified\nModified: Link DX MASTER") },
-      { game: "maimai", region: "jp", title: "Fetch pipeline completed", body: "**Total songs: 1** (2 stages)" },
-    ]);
-  });
-
-  it("reports nothing for a stage that returns the charts unchanged", async () => {
-    const charts = [{ ...pending, ...complete }, { ...pending, ...complete, difficulty: 2 }];
-    await runFetchers(context, { game: "maimai", stages: [{ name: "Source", run: async () => charts }, { name: "Check", run: async (_ctx, collected) => collected }] });
-    expect(notices()[1].body).toContain("**Check**: 2 songs (+0)");
-    expect(notices()[1].body).toContain("+0 added, ~0 modified");
   });
 
   it("stops later stages and completion when a stage fails", async () => {

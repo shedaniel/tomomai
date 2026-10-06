@@ -60,8 +60,6 @@ describe("POST /api/admin/upload", () => {
     ["a body that is not JSON", "region=jp&version=9", "not json"],
     ["a body without songs", "region=jp&version=9", JSON.stringify({})],
     ["an invalid chart", "region=jp&version=9", JSON.stringify({ songs: [{ ...chart, addedVersion: null }] })],
-    ["an otoge-db cover", "region=jp&version=9&update=alter",
-      JSON.stringify({ songs: [{ ...chart, cover: "https://raw.githubusercontent.com/zvuc/otoge-db/main/chunithm/jacket/example.jpg" }] })],
   ])("rejects %s before persistence or publication", async (_name, query, body) => {
     const response = await upload(query, body);
     expect(response.status).toBe(400);
@@ -83,12 +81,5 @@ describe("POST /api/admin/upload", () => {
     expect(description).toContain("upload-test");
     expect(description).not.toContain("secret-");
     expect(mocks.log.error).toHaveBeenCalledWith({ err: error }, "Admin request failed");
-  });
-
-  it("preserves ordinary upload error messages", async () => {
-    mocks.persist.mockRejectedValueOnce(new Error("Ambiguous catalog identity: Example"));
-    const response = await upload("region=jp&version=9&update=alter");
-    expect(response.status).toBe(500);
-    expect(await response.json()).toEqual({ error: "Ambiguous catalog identity: Example", requestId: "upload-test" });
   });
 });

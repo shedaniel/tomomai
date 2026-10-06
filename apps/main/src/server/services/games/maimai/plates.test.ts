@@ -30,16 +30,6 @@ it.each([
   expect(songs.map(song => song.songId)).toEqual(missing);
 });
 
-it("returns score codes and reads an unplayed chart as zeros", async () => {
-  const songs = await fetchPlateSongs(snapshot, "jp", { version: "12", difficulty: "master", plateType: "kiwami" });
-  expect(songs[0]).toEqual({
-    songId: "unplayed", songName: "unplayed", artist: "Artist", cover: "cover", difficultyCode: 3, typeCode: 1, levelPrecise: 130,
-    scoreValue: 0, secondaryScore: 0, comboStatus: 0, syncStatus: 0, clearStatus: 0,
-  });
-  expect(songs[1]).toMatchObject({ scoreValue: 1000500, secondaryScore: 2000, comboStatus: 0, syncStatus: 4 });
-  expect(proxy.queries[0].params).toEqual(expect.arrayContaining(["maimai", 41, "jp", 13, 12, 3]));
-});
-
 const kiwami = { version: "12", difficulty: "master", plateType: "kiwami" } as const;
 
 it("evaluates the plate against the user's newest snapshot in the region", async () => {

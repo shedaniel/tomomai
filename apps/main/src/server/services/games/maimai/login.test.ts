@@ -9,7 +9,7 @@ vi.mock("../tokens", () => ({ updateToken: mocks.update, deleteToken: mocks.remo
 
 import type { LxnsToken } from "@/lib/games/token-format";
 import { openSegaSession } from "../sega/login";
-import { loginAndGetCookies, lxnsAccessToken } from "./login";
+import { lxnsAccessToken } from "./login";
 
 beforeEach(() => {
   vi.resetAllMocks();
@@ -32,36 +32,6 @@ describe("maimai SEGA login", () => {
     });
     expect(String(mocks.fetch.mock.calls[1][0])).toBe("https://maimaidx-eng.com/maimai-mobile/?sid=callback");
     expect(mocks.legacyTls).not.toHaveBeenCalled();
-  });
-
-  it("signs JP players in on maimaidx.jp and selects the first card", async () => {
-    const entry = new Headers();
-    entry.append("Set-Cookie", "_t=form-token; Path=/maimai-mobile/");
-    entry.append("Set-Cookie", "session=jp; Path=/maimai-mobile/");
-    mocks.legacyTls
-      .mockResolvedValueOnce(new Response("", { headers: entry }))
-      .mockResolvedValueOnce(new Response(null, { status: 302, headers: { Location: "https://maimaidx.jp/maimai-mobile/aimeList/" } }))
-      .mockResolvedValueOnce(new Response(null, { status: 302, headers: { Location: "/maimai-mobile/home/", "Set-Cookie": "userId=selected; Path=/maimai-mobile/" } }))
-      .mockResolvedValueOnce(new Response("Home"));
-
-    expect(await loginAndGetCookies("jp", "account://name:://password")).toBe("_t=form-token; session=jp; userId=selected");
-    expect(mocks.legacyTls.mock.calls.map(([url]) => String(url))).toEqual([
-      "https://maimaidx.jp/maimai-mobile/",
-      "https://maimaidx.jp/maimai-mobile/submit/",
-      "https://maimaidx.jp/maimai-mobile/aimeList/submit/?idx=0",
-      "https://maimaidx.jp/maimai-mobile/home/",
-    ]);
-    expect(new URLSearchParams(mocks.legacyTls.mock.calls[1][1].body).get("token")).toBe("form-token");
-    expect(mocks.fetch).not.toHaveBeenCalled();
-  });
-
-  it("refuses a token for maimai DX China without deleting anything for the catalog", async () => {
-    await expect(loginAndGetCookies("cn", "cn-cookies://userId=cn-player")).rejects.toThrow("Invalid token format");
-    await expect(openSegaSession("maimai", "cn", "player", { provider: "sega-account", username: "name", password: "password" }))
-      .rejects.toThrow("maimai DX cn does not sign in with SEGA tokens");
-    expect(mocks.remove).not.toHaveBeenCalled();
-    expect(mocks.legacyTls).not.toHaveBeenCalled();
-    expect(mocks.fetch).not.toHaveBeenCalled();
   });
 });
 

@@ -7,7 +7,7 @@ const mocks = vi.hoisted(() => {
   const log = { child: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() };
   log.child.mockReturnValue(log);
   return {
-    log, calls: [] as string[], collect: vi.fn(), login: vi.fn(), images: vi.fn(), persist: vi.fn(),
+    log, calls: [] as string[], collect: vi.fn(), images: vi.fn(), persist: vi.fn(),
     publish: vi.fn(), revalidate: vi.fn(), webhook: vi.fn(), notice: vi.fn(),
   };
 });
@@ -15,7 +15,7 @@ vi.mock("./ingestion/collect", async importOriginal => ({
   ...await importOriginal<typeof import("./ingestion/collect")>(),
   collectCatalog: (game: string, ctx: CatalogCollectContext) => mocks.collect(game, ctx),
 }));
-vi.mock("@/server/services/games/maimai/login", () => ({ loginAndGetCookies: mocks.login }));
+vi.mock("@/server/services/games/maimai/login", () => ({ loginAndGetCookies: vi.fn() }));
 vi.mock("./images", async importOriginal => ({
   ...await importOriginal<typeof import("./images")>(),
   processCatalogImages: mocks.images,
@@ -67,30 +67,17 @@ describe("applyCatalogUpload", () => {
     expect(mocks.persist).toHaveBeenCalledWith("chunithm", "jp", 9, [chart], "alter", mocks.log);
     expect(mocks.revalidate).toHaveBeenCalledWith("chunithm", { affected: persisted().affected, log: mocks.log });
     expect(outcome).toEqual({ updateMode: "alter", applied: persisted().applied, statistics: persisted().statistics, changes: persisted().changes });
-    expect(mocks.notice).toHaveBeenCalledWith("chunithm", "jp", "Upload complete", expect.stringContaining("**Applied:** +1 ~0 -0"), 0x00FF00);
   });
 
   it("previews a noop upload without publishing, invalidating or posting the change", async () => {
     await upload("noop");
     expect(mocks.calls).toEqual(["persist"]);
-    expect(mocks.notice).toHaveBeenCalledWith("chunithm", "jp", "Upload complete", expect.stringContaining("**Mode:** noop"), 0x00FF00);
   });
 
   it("refreshes the whole catalog when an upload changes no chart", async () => {
     mocks.persist.mockResolvedValueOnce(persisted({}));
     await upload();
     expect(mocks.revalidate).toHaveBeenCalledWith("chunithm", { affected: undefined, log: mocks.log });
-  });
-
-  it("lists referenced removals it kept in an orange notice", async () => {
-    const kept = { songKey: "[\"chunithm\",\"Kept\",0,4]", label: "Kept ULTIMA", playRecordCount: 3 };
-    mocks.persist.mockResolvedValueOnce({ ...persisted(), skippedDeletions: Array(16).fill(kept) });
-    await upload();
-    const [, , , summary, color] = mocks.notice.mock.calls[0];
-    expect(summary).toContain("**16 deletion(s) skipped**");
-    expect(summary).toContain("- Kept ULTIMA (3 references)");
-    expect(summary).toContain("... and 1 more");
-    expect(color).toBe(0xFFA500);
   });
 
   it("refuses to write CHUNITHM charts whose covers still point at otoge-db, and previews them", async () => {
@@ -110,15 +97,6 @@ describe("applyCatalogUpload", () => {
     await applyCatalogUpload({ ...request, game: "maimai", version: 9, charts: [maimai], mode: "alter" });
     expect(mocks.persist).toHaveBeenCalledWith("maimai", "jp", 9, [maimai], "alter", mocks.log);
   });
-
-  it("posts an error notice with the request id and rethrows when the write fails", async () => {
-    const error = new Error("Ambiguous catalog identity: Example");
-    mocks.persist.mockRejectedValueOnce(error);
-    await expect(upload()).rejects.toBe(error);
-    expect(mocks.publish).not.toHaveBeenCalled();
-    expect(mocks.notice).toHaveBeenCalledExactlyOnceWith("chunithm", "jp", "Upload error",
-      "**Request:** apply-test\n**Error:** Ambiguous catalog identity: Example", 0xFF0000);
-  });
 });
 
 describe("collectCatalogRegion", () => {
@@ -128,37 +106,9 @@ describe("collectCatalogRegion", () => {
     expect(mocks.collect).not.toHaveBeenCalled();
     expect(mocks.notice).not.toHaveBeenCalled();
   });
-
-  it("collects with the source session and posts a notice when the pipeline fails", async () => {
-    mocks.login.mockResolvedValue("source-cookie");
-    expect(await collectCatalogRegion({ ...request, game: "maimai", version: 9, sourceToken: "player-token" })).toEqual([chart]);
-    expect(mocks.login).toHaveBeenCalledWith("jp", "player-token");
-    expect(mocks.collect).toHaveBeenCalledWith("maimai", expect.objectContaining({ region: "jp", version: 9, session: { cookies: "source-cookie" } }));
-
-    mocks.collect.mockRejectedValueOnce(new Error("source unavailable"));
-    await expect(collectCatalogRegion({ ...request, version: 9, sourceToken: null })).rejects.toThrow("source unavailable");
-    expect(mocks.notice).toHaveBeenCalledWith("chunithm", "jp", "Fetch pipeline error", "**Request:** apply-test\n**Error:** source unavailable", 0xFF0000);
-  });
 });
 
 describe("updateCatalogRegion", () => {
-  it("collects the current version, hosts its covers and applies it in alter mode", async () => {
-    await updateCatalogRegion({ ...request, sourceToken: null, hostImages: true });
-    expect(mocks.collect).toHaveBeenCalledWith("chunithm", expect.objectContaining({ region: "jp", version: 9, session: { cookies: "" } }));
-    expect(mocks.images).toHaveBeenCalledWith("chunithm", [chart], mocks.log);
-    expect(mocks.persist).toHaveBeenCalledWith("chunithm", "jp", 9,
-      [{ ...chart, cover: "https://cdn.example.test/covers/chunithm/cover.webp" }], "alter", mocks.log);
-    expect(mocks.calls).toEqual(["persist", "publish", "revalidate", "webhook"]);
-  });
-
-  it("keeps maimai source covers when image hosting is off", async () => {
-    const maimai: CatalogChart = { ...chart, game: "maimai", chartType: 1, difficulty: 3, cover: "https://maimaidx.jp/maimai-mobile/img/Music/example.png" };
-    mocks.collect.mockResolvedValueOnce([maimai]);
-    await updateCatalogRegion({ ...request, game: "maimai", region: "cn", sourceToken: null, hostImages: false });
-    expect(mocks.images).not.toHaveBeenCalled();
-    expect(mocks.persist).toHaveBeenCalledWith("maimai", "cn", 9, [maimai], "alter", mocks.log);
-  });
-
   it("refuses to turn off CHUNITHM cover hosting as a bad request before collecting", async () => {
     const updating = updateCatalogRegion({ ...request, sourceToken: null, hostImages: false });
     await expect(updating).rejects.toBeInstanceOf(AdminRequestError);

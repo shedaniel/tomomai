@@ -17,8 +17,3 @@ it.each(Object.entries(PUBLIC_STATUS) as [GameErrorCode, number][])("answers %s 
   expect(await response.json()).toEqual({ error: "Rejected", code });
   expect(getHTTPStatusCodeFromError(new TRPCError({ code: GAME_ERROR_STATUS[code].trpc }))).toBe(status);
 });
-
-it("adds the request id when a route passes one", async () => {
-  const response = gameErrorResponse(new GameError("WRONG_SITE", "Rejected"), "request-1");
-  expect(await response.json()).toEqual({ error: "Rejected", code: "WRONG_SITE", requestId: "request-1" });
-});

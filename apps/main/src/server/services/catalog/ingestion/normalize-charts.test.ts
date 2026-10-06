@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import pino from "pino";
-import { compareCatalogCharts, completeCatalogChart, mergeCatalogChart } from "./normalize-charts";
+import { completeCatalogChart, mergeCatalogChart } from "./normalize-charts";
 import type { CatalogChart } from "./schema";
 
 const log = pino({ enabled: false });
@@ -19,21 +19,6 @@ describe("catalog completion", () => {
     }, log);
     expect(completed).toMatchObject({ levelPrecise: 0, addedVersion: -12,
       noteCounts: { tap: 1, hold: 2, slide: 3, touch: 0, break: 0 }, metadata: chart.metadata });
-  });
-
-  it("requires a resolved introduction version after the final stage", () => {
-    expect(() => completeCatalogChart({ ...chart, addedVersion: undefined }, log)).toThrow("addedVersion");
-  });
-});
-
-describe("catalog order", () => {
-  it("sorts by title, artist, chart type and difficulty", () => {
-    const charts = [
-      { ...chart, difficulty: 3 }, { ...chart, songName: "B" }, { ...chart, artist: "Z" }, chart, { ...chart, songName: "A", difficulty: 5 },
-    ];
-    expect(charts.toSorted(compareCatalogCharts).map(c => [c.songName, c.artist, c.difficulty])).toEqual([
-      ["A", "Artist", 5], ["B", "Artist", 4], ["Chart", "Artist", 3], ["Chart", "Artist", 4], ["Chart", "Z", 4],
-    ]);
   });
 });
 

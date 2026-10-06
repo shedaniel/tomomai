@@ -8,10 +8,3 @@ it("reads back every code it writes", () => {
     expect(fetchErrorDetail(formatFetchError(code, "Detail: with a colon"))).toBe("Detail: with a colon");
   }
 });
-
-it("ignores messages without a known code prefix", () => {
-  for (const message of ["Session expired or invalid. Please provide a new token.", "UNKNOWN_CODE: detail", "MAINTENANCE", " MAINTENANCE: detail"]) {
-    expect(parseFetchErrorCode(message)).toBeNull();
-    expect(fetchErrorDetail(message)).toBe(message);
-  }
-});

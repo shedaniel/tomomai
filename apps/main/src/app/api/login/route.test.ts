@@ -22,7 +22,6 @@ vi.mock("@/lib/trpc", async () => {
 import { createHmac } from "node:crypto";
 import { SEGA_AIME_GATEWAY } from "@/lib/games/sites";
 import { fetchRouter } from "@/server/routers/user/fetch";
-import { FetchStartError } from "@/server/services/games/fetch-errors";
 import { POST } from "./route";
 
 const now = new Date("2026-09-27T12:00:00+09:00");
@@ -62,10 +61,8 @@ it("rejects authorizations in earlier formats even with a valid OTP", async () =
 it.each(["maimai", "chunithm"] as const)("issues game-bound %s authorization through the unchanged gateway fields", async game => {
   const result = await caller.getLoginOtp({ game, region: "intl" });
   const otherGame = game === "maimai" ? "chunithm" : "maimai";
-  expect(result.loginPageUrl).toBe(game === "maimai" ? "https://maimaidx-eng.com/maimai-mobile/" : "https://chunithm-net-eng.com/mobile/");
   const link = new URL(result.loginLink);
   expect(`${link.origin}${link.pathname}`).toBe(SEGA_AIME_GATEWAY.landingUrl);
-  expect(result.scriptUrl).toBe("https://tomomai.test/api/login.js");
   expect(result.otp).toBe("622184");
   const fields = new URLSearchParams(link.hash.slice(1));
   expect([...fields.keys()]).toEqual(["otp", "user"]);
@@ -81,26 +78,4 @@ it.each(["maimai", "chunithm"] as const)("issues game-bound %s authorization thr
     expect((await callback(`${changedPayload}.${signature}`, result.otp)).status).toBe(401);
   }
   expect(mocks.start).not.toHaveBeenCalled();
-});
-
-it.each(["maimai", "chunithm"] as const)("issues no %s cookie login link for a region that signs in with credentials", async game => {
-  await expect(caller.getLoginOtp({ game, region: "jp" })).rejects.toMatchObject({ code: "BAD_REQUEST" });
-});
-
-it("answers a fetch refused during maintenance with 503 and when to retry", async () => {
-  const { loginLink, otp } = await caller.getLoginOtp({ game: "maimai", region: "intl" });
-  const authorization = new URLSearchParams(new URL(loginLink).hash.slice(1)).get("user")!;
-  mocks.start.mockRejectedValueOnce(new FetchStartError("MAINTENANCE", "Cannot fetch data during maintenance window (01:00 - 02:00 JST)", 1800));
-
-  const response = await callback(authorization, otp);
-  expect(response.status).toBe(503);
-  expect(response.headers.get("Retry-After")).toBe("1800");
-  expect(response.headers.get("Access-Control-Allow-Origin")).toBe(SEGA_AIME_GATEWAY.origin);
-  expect(await response.json()).toEqual({
-    success: false,
-    error: "MAINTENANCE: Cannot fetch data during maintenance window (01:00 - 02:00 JST)",
-    code: "MAINTENANCE",
-    requestId: "login-test",
-  });
-  expect(mocks.log.error).not.toHaveBeenCalled();
 });

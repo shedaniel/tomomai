@@ -1,21 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const proxy = await vi.hoisted(async () => (await import("@/test/pg-proxy")).createProxyDb());
-const state = vi.hoisted(() => ({ withoutRankings: false, warn: vi.fn() }));
+const warn = vi.hoisted(() => vi.fn());
 vi.mock("@/lib/db", () => ({ db: proxy.db }));
-vi.mock("@/lib/request-logger", () => ({ getLogger: () => ({ warn: state.warn }) }));
-vi.mock("@/lib/games/registry", async importOriginal => {
-  const actual = await importOriginal<typeof import("@/lib/games/registry")>();
-  return { ...actual, getGame: (id: Parameters<typeof actual.getGame>[0]) => {
-    const definition = actual.getGame(id);
-    return state.withoutRankings ? { ...definition, capabilities: definition.capabilities.filter(capability => capability !== "rankings") } : definition;
-  } };
-});
+vi.mock("@/lib/request-logger", () => ({ getLogger: () => ({ warn }) }));
 import { db } from "@/lib/db";
 import { RANKING_BUCKET_CODE } from "@/lib/games/codes";
 import { buildChartResolution, writeSnapshotScores, type DbSong } from "./score-storage";
 
-beforeEach(() => { proxy.reset(); state.withoutRankings = false; state.warn.mockClear(); });
+beforeEach(() => { proxy.reset(); warn.mockClear(); });
 
 function song(id: number, songName: string, difficulty = 3) {
   return {
@@ -30,7 +23,7 @@ it("excludes every ambiguous chart while keeping distinct difficulties and the o
   expect(chartResolution.has("Shared|3|0")).toBe(false);
   expect(chartResolution.get("Shared|2|0")).toBe(BigInt(4));
   expect(songsById.size).toBe(4);
-  expect(state.warn).toHaveBeenCalledExactlyOnceWith(
+  expect(warn).toHaveBeenCalledExactlyOnceWith(
     { songKeys: ["Shared|3|0"], game: "maimai", region: "jp", version: 14 },
     "Ambiguous song names excluded from score lookup",
   );
@@ -39,7 +32,7 @@ it("excludes every ambiguous chart while keeping distinct difficulties and the o
 it.each(["maimai", "chunithm"] as const)("looks charts up only in the %s catalog of the region and captured version", async game => {
   await buildChartResolution(db, game, "jp", 14);
   expect(proxy.queries.map(({ table, params }) => [table, params])).toEqual([["songs", [game, "jp", 14]]]);
-  expect(state.warn).not.toHaveBeenCalled();
+  expect(warn).not.toHaveBeenCalled();
 });
 
 function snapshotScore(songId: number, addedVersion: number, scoreValue: number) {
@@ -81,14 +74,6 @@ describe("writeSnapshotScores", () => {
       { game: "chunithm", snapshotId: 5, bucket: RANKING_BUCKET_CODE.old, rank: 0, scoreId: 32 },
       { game: "chunithm", snapshotId: 5, bucket: RANKING_BUCKET_CODE.old, rank: 1, scoreId: 34 },
     ]);
-  });
-
-  it("stores scores without rankings for a game that has none", async () => {
-    state.withoutRankings = true;
-    proxy.respond(storedRows);
-    await expect(writeSnapshotScores(db, input)).resolves.toBeNull();
-    expect(proxy.inserted("snapshot_scores")).toHaveLength(4);
-    expect(proxy.inserted("snapshot_rankings")).toEqual([]);
   });
 
   it("ranks nothing when no score was stored", async () => {

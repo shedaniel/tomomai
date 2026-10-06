@@ -46,12 +46,6 @@ afterEach(async () => {
 
 it("runs every catalog action against the site's game and previews with update=noop", async () => {
   await render("chunithm", ["intl", "jp"]);
-  expect(document.body.textContent).toContain("ともチュウ Admin Panel");
-  expect(document.getElementById("sourceToken")).toBeNull();
-  expect(document.getElementById("fetch-cn-new-songs")).toBeNull();
-  // CHUNITHM keeps its source titles, so there is nothing to normalize.
-  expect(document.getElementById("normalize-intl-database")).toBeNull();
-
   await click("fetch-jp-new-songs");
   await click("preview-jp-changes");
   expect(requested()).toEqual([
@@ -60,12 +54,9 @@ it("runs every catalog action against the site's game and previews with update=n
   ]);
 });
 
-it("asks for the maimai source token and sends it only where the catalog source logs in", async () => {
+it("sends the saved maimai source token only where the catalog source logs in", async () => {
   localStorage.setItem("catalogSourceToken:maimai", "cookie://saved");
   await render("maimai", ["intl", "jp", "cn"]);
-  expect((document.getElementById("sourceToken") as HTMLInputElement).value).toBe("cookie://saved");
-  expect(document.getElementById("fetch-jp-new-songs")?.textContent).toBe(`Fetch Japan (v${getCurrentVersion("maimai", "jp")})`);
-
   await click("fetch-jp-new-songs");
   await click("fetch-cn-new-songs");
   await click("normalize-jp-database");

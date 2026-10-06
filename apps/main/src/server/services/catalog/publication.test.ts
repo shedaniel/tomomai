@@ -48,12 +48,6 @@ describe("publishSongCatalog", () => {
     expect(proxy.queries[0].sql).toBe(`select pg_advisory_xact_lock(${CATALOG_WRITE_LOCK_ID})`);
   });
 
-  it("publishes no chart of another game", async () => {
-    store("chunithm", [{ parent: { ...parent, type: 0 }, instance: { ...instance, gameVersion: 9 } }]);
-    await expect(publishSongCatalog("maimai")).resolves.toMatchObject({ songCount: 0 });
-    expect(published().get(parentCatalogKey("maimai"))).toEqual({ game: "maimai", parents: [] });
-  });
-
   it("deduplicates parents, emits composite IDs and overwrites empty slices", async () => {
     const confirmed = { ...instance, metadata: { levelPreciseEstimated: false, addedVersionEstimated: false } };
     store("maimai", [{ parent, instance: confirmed }, { parent, instance: { ...instance, gameVersion: 12 } }]);

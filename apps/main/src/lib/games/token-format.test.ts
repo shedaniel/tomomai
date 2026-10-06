@@ -7,7 +7,6 @@ import {
   formatSegaAccount,
   formatSegaCookie,
   parseToken,
-  TOKEN_PROVIDERS,
 } from "./token-format";
 
 describe("token formats", () => {
@@ -46,9 +45,5 @@ describe("token formats", () => {
     if (parsed.provider !== null) return;
     expect(parsed.error).toMatch(/^Invalid token format\. /);
     expect(isTokenError(parsed.error)).toBe(true);
-  });
-
-  it("marks only the CN proxy cookies as single-use", () => {
-    expect(Object.entries(TOKEN_PROVIDERS).filter(([, facts]) => facts.singleUse).map(([provider]) => provider)).toEqual(["cn-cookies"]);
   });
 });

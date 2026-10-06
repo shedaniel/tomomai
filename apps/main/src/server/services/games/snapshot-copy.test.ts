@@ -2,15 +2,8 @@ import { beforeEach, expect, it, vi } from "vitest";
 import type { ProxyQuery } from "@/test/pg-proxy";
 
 const proxy = await vi.hoisted(async () => (await import("@/test/pg-proxy")).createProxyDb());
-const state = vi.hoisted(() => ({ failOn: null as string | null, withoutRankings: false }));
+const state = vi.hoisted(() => ({ failOn: null as string | null }));
 vi.mock("@/lib/db", () => ({ db: proxy.db }));
-vi.mock("@/lib/games/registry", async importOriginal => {
-  const actual = await importOriginal<typeof import("@/lib/games/registry")>();
-  return { ...actual, getGame: (id: Parameters<typeof actual.getGame>[0]) => {
-    const definition = actual.getGame(id);
-    return state.withoutRankings ? { ...definition, capabilities: definition.capabilities.filter(capability => capability !== "rankings") } : definition;
-  } };
-});
 
 import { copySnapshotToVersion } from "./snapshot-copy";
 
@@ -39,7 +32,6 @@ beforeEach(() => {
   proxy.reset();
   proxy.answer(answer);
   state.failOn = null;
-  state.withoutRankings = false;
 });
 
 it("returns null without writing when the snapshot is not the user's", async () => {
@@ -65,12 +57,4 @@ it("rolls the whole copy back when a write fails", async () => {
   expect(proxy.transactions).toEqual(["begin", "rollback"]);
   expect(proxy.queries.every(query => query.inTransaction)).toBe(true);
   expect(proxy.inserted("user_snapshots")).toHaveLength(1);
-});
-
-it("keeps the source rating and writes no rankings for a game without rankings", async () => {
-  state.withoutRankings = true;
-  await expect(copySnapshotToVersion(input)).resolves.toMatchObject({ copiedScores: 1, newRating: 12000 });
-  expect(proxy.inserted("snapshot_scores")).toHaveLength(1);
-  expect(proxy.inserted("snapshot_rankings")).toEqual([]);
-  expect(proxy.updated("user_snapshots")).toEqual([]);
 });

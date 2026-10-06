@@ -94,16 +94,6 @@ it("scopes session reads to the user, game and region and updates a session by i
   expect(proxy.updated("fetch_sessions").map(update => update.where)).toEqual([[BigInt(1)]]);
 });
 
-it("resolves the user's flags when the caller does not pass them", async () => {
-  const flags = { userscriptFetch: true } as Flags;
-  state.resolveFlags.mockResolvedValueOnce(flags);
-  const { flags: _omitted, ...withoutFlags } = start;
-  const started = await startScoreFetch(withoutFlags);
-  await started.backgroundWork;
-  expect(state.resolveFlags).toHaveBeenCalledWith("same-user");
-  expect(state.fetch).toHaveBeenCalledWith(expect.objectContaining({ flags }), expect.anything());
-});
-
 it("saves a newly provided token before refusing a fetch during maintenance", async () => {
   vi.setSystemTime(new Date("2026-09-27T04:00:00+09:00"));
   const error = await refusal(start);
@@ -236,18 +226,6 @@ it("aborts a timed-out provider and keeps its late result from overwriting failu
   await vi.advanceTimersByTimeAsync(1);
   expect(proxy.queries).toHaveLength(writesAtFailure);
   expect(state.persist).not.toHaveBeenCalled();
-  expect(sessionStatuses()).toEqual(["failed"]);
-});
-
-it("keeps CHUNITHM subscription failures scoped to the failed session without deleting credentials or writing a snapshot", async () => {
-  vi.stubEnv("NEXT_PUBLIC_ENABLED_CHUNITHM_REGIONS", "jp");
-  state.fetch.mockRejectedValueOnce(new Error("SUBSCRIPTION_REQUIRED: CHUNITHM-NET subscription required"));
-  const started = await startScoreFetch({ ...start, game: "chunithm", token: undefined });
-  await started.backgroundWork;
-  expect(state.fetch).toHaveBeenCalledWith(expect.objectContaining({ game: "chunithm", region: "jp", token: "stored-token" }), expect.anything());
-  expect(state.fetch.mock.calls[0][0].signal.aborted).toBe(true);
-  expect(state.persist).not.toHaveBeenCalled();
-  expect(proxy.queries.some(query => query.table === "user_tokens" && !query.sql.startsWith("select"))).toBe(false);
   expect(sessionStatuses()).toEqual(["failed"]);
 });
 

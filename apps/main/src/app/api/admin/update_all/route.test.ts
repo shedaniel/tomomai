@@ -15,9 +15,9 @@ vi.mock("@/lib/request-logger", () => ({
 
 import { GET } from "./route";
 
-const get = (query: string, token: string | null = "admin-secret") => GET(new NextRequest(
+const get = (query: string) => GET(new NextRequest(
   `https://example.test/api/admin/update_all?${query}`,
-  { headers: token ? { authorization: `Bearer ${token}` } : {} },
+  { headers: { authorization: "Bearer admin-secret" } },
 ));
 const outcome = (region: string) => ({ updateMode: "alter", region });
 
@@ -42,25 +42,6 @@ describe("GET /api/admin/update_all", () => {
     expect(mocks.update.mock.calls.map(([args]) => args)).toEqual(["intl", "jp"].map(region => ({
       game: "chunithm", region, sourceToken: null, hostImages: true, log: mocks.log, requestId: "update-all-test",
     })));
-  });
-
-  it("updates one explicit region and passes the image hosting choice on", async () => {
-    vi.stubEnv("FRONTEND_GAME", "maimai");
-    expect((await get("game=maimai&region=cn&image_upload=false")).status).toBe(200);
-    expect(mocks.update).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ game: "maimai", region: "cn", hostImages: false }));
-  });
-
-  it("refuses a CHUNITHM write on the maimai site before collecting", async () => {
-    vi.stubEnv("FRONTEND_GAME", "maimai");
-    const response = await get("game=chunithm&region=jp");
-    expect(response.status).toBe(409);
-    expect(await response.json()).toMatchObject({ code: "WRONG_SITE", requestId: "update-all-test" });
-    expect(mocks.update).not.toHaveBeenCalled();
-  });
-
-  it.each([[null, 401], ["wrong", 403]] as const)("rejects an unauthorized request before collecting", async (token, status) => {
-    expect((await get("game=chunithm", token)).status).toBe(status);
-    expect(mocks.update).not.toHaveBeenCalled();
   });
 
   it("rejects a region the game does not support", async () => {

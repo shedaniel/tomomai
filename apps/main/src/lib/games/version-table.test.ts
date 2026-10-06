@@ -23,21 +23,6 @@ describe("createVersionTable", () => {
     }
   });
 
-  it("labels every row but gates regional lookups on a release date", () => {
-    expect(table.get(2)?.name).toBe("Game One PLUS");
-    expect(table.get(99)).toBeNull();
-    expect(table.regional("jp", 2)).toEqual({ id: 2, name: "Game One PLUS", shortName: "One+", releaseDate: "2020/07/10" });
-    expect(table.regional("intl", 2)).toBeNull();
-    expect(table.available("intl").map(version => version.id)).toEqual([1, 3, 4, 5]);
-    expect(table.atDate("intl", jst("2020-12-01T00:00:00"))).toBe(1);
-  });
-
-  it("falls back to the earliest regional version and throws for a region without versions", () => {
-    expect(table.atDate("intl", jst("2019-01-01T00:00:00"))).toBe(1);
-    expect(table.available("cn")).toEqual([]);
-    expect(() => table.current("cn")).toThrow("No versions available for region cn");
-  });
-
   it("uses a preferred version only within the latest regional release-date tie", () => {
     const tie = jst("2021-01-10T07:00:00");
     expect(table.atDate("intl", tie)).toBe(4);

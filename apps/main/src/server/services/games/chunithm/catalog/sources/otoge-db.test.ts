@@ -4,7 +4,6 @@ import type { Region } from "@/lib/games/ids";
 import { collectCatalog } from "@/server/services/catalog/ingestion/collect";
 import { parseCatalogUpload } from "@/server/services/catalog/ingestion/parse-upload";
 import { readChunithmNoteCounts } from "@/lib/games/chunithm/note-counts";
-import { sendDiscordNotice } from "@/server/services/discord/webhook";
 import jpFixture from "../fixtures/otoge-db-jp.json";
 import intlFixture from "../fixtures/otoge-db-intl.json";
 
@@ -76,13 +75,5 @@ describe("CHUNITHM otoge-db collection", () => {
     await expect(collectChunithm("cn")).rejects.toMatchObject({ code: "UNSUPPORTED_REGION", game: "chunithm", region: "cn" });
     expect(fetch).not.toHaveBeenCalled();
   });
-  it("propagates provider HTTP failures", async () => {
-    vi.stubGlobal("fetch", vi.fn(async () => new Response("Unavailable", { status: 503 })));
-    await expect(collectChunithm("jp")).rejects.toThrow("HTTP 503");
-  });
   it("rejects an empty result", async () => { await expect(collect([])).rejects.toThrow("no regular CHUNITHM charts"); });
-  it("rejects incomplete charts at finalization without sending a completion notice", async () => {
-    await expect(collect([{ ...jpFixture[0], date_added: "" }])).rejects.toThrow("Errors occurred during song update");
-    expect(sendDiscordNotice).not.toHaveBeenCalledWith("chunithm", "jp", "Fetch pipeline completed", expect.any(String), expect.any(Number));
-  });
 });

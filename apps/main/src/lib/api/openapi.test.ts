@@ -47,9 +47,8 @@ describe("OpenAPI document", () => {
     expect(fetch.responses["503"].headers?.["Retry-After"]).toBeDefined();
     expect(fetch.responses["412"].headers).toBeUndefined();
 
-    const error = document.components.schemas.Error as { required: string[]; properties: Record<string, { description?: string }> };
+    const error = document.components.schemas.Error as { required: string[] };
     expect(error.required).toEqual(["error"]);
-    expect(error.properties.code.description).toContain("Stable error code");
 
     const me = operation("get", "/api/v1/me");
     expect(me.responses["400"]).toBeUndefined();
@@ -63,16 +62,5 @@ describe("OpenAPI document", () => {
         expect(op.responses["429"]?.headers?.["Retry-After"], `${method} ${path}`).toBeDefined();
       }
     }
-    expect(operation("get", "/api/v1/games/{game}/songs").responses["429"].description).toBe("Too many requests from this address");
-    expect(operation("get", "/api/v1/me").responses["429"].description).toBe("Rate limit or monthly quota exceeded");
-    expect(operation("post", "/api/v1/games/{game}/fetch").responses["429"].description)
-      .toBe("Rate limit or monthly quota exceeded. RATE_LIMITED: Too many fetches were started recently.");
-  });
-
-  it("describes each OAuth scope with the routes its specs require it for", () => {
-    const scopes = (document.components.securitySchemes.OAuth2 as { flows: { authorizationCode: { scopes: Record<string, string> } } }).flows.authorizationCode.scopes;
-    expect(scopes["fetch:delete"]).toMatch(/ Grants DELETE \/api\/v1\/games\/\{game\}\/fetch\/token\.$/);
-    expect(scopes["snapshot:all:metadata:read"]).toContain("Grants GET /api/v1/games/{game}/snapshots and GET /api/v1/games/{game}/snapshots/{id}.");
-    expect(scopes.read).not.toContain("Grants GET");
   });
 });

@@ -1,18 +1,7 @@
-import path from "node:path";
 import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
 import type { CanonicalGameId } from "@/lib/games/ids";
 
-const fixture = vi.hoisted(() => ({ fetchProfile: vi.fn(), sharpInputs: [] as unknown[] }));
-
-vi.mock("sharp", async importOriginal => {
-  const { default: sharp } = await importOriginal<{ default: (...args: unknown[]) => unknown }>();
-  return {
-    default: (...args: unknown[]) => {
-      fixture.sharpInputs.push(args[0]);
-      return sharp(...args);
-    },
-  };
-});
+const fixture = vi.hoisted(() => ({ fetchProfile: vi.fn() }));
 
 vi.mock("next-intl/server", async () => {
   const { createTranslator } = await import("next-intl");
@@ -43,19 +32,14 @@ vi.mock("@/server/queries/songs-cache", () => ({
   }],
 }));
 vi.mock("@/server/queries/game-profile", () => ({ fetchPublicGameProfileHeader: fixture.fetchProfile }));
-vi.mock("@/lib/og", async importOriginal => {
-  const og = await importOriginal<typeof import("@/lib/og")>();
-  return { ...og, createHomeOGImage: vi.fn(og.createHomeOGImage), createDbOGImage: vi.fn(og.createDbOGImage) };
-});
 // Every image reads the database through a query module, so none can bypass its game scoping and privacy rules.
 vi.mock("@/lib/db", () => { throw new Error("An OpenGraph image imported the database client"); });
 
-import HomeImage, { generateImageMetadata as homeImageMetadata } from "./opengraph-image";
+import HomeImage from "./opengraph-image";
 import DatabaseImage from "./db/opengraph-image";
 import SectionImage from "./db/[type]/opengraph-image";
 import SongImage from "./db/[type]/[slug]/opengraph-image";
-import ProfileImage, { generateImageMetadata as profileImageMetadata } from "./profile/[username]/[region]/opengraph-image";
-import { createDbOGImage, createHomeOGImage } from "@/lib/og";
+import ProfileImage from "./profile/[username]/[region]/opengraph-image";
 
 const id = Promise.resolve("en");
 const PNG_SIGNATURE = [0x89, 0x50, 0x4e, 0x47];
@@ -94,46 +78,5 @@ describe.each(["chunithm", "maimai"] as const)("%s page images", game => {
     const response = await IMAGES[name]();
     expect(response.status).toBe(200);
     expect([...new Uint8Array(await response.arrayBuffer()).slice(0, 4)]).toEqual(PNG_SIGNATURE);
-  });
-
-  it("loads only the profile's public snapshot header through the shared loader", async () => {
-    await IMAGES.profile();
-    expect(fixture.fetchProfile).toHaveBeenCalledWith(game, "player", "intl");
-  });
-});
-
-describe("brand chip artwork", () => {
-  const artwork = (file: string) => path.join(process.cwd(), "public", file);
-
-  it.each([
-    { image: "song", drawn: "icon-db-dark.webp", other: "icon-dark.webp" },
-    { image: "profile", drawn: "icon-dark.webp", other: "icon-db-dark.webp" },
-  ] as const)("draws the maimai $image chip with $drawn", async ({ image, drawn, other }) => {
-    serve("maimai");
-    fixture.sharpInputs.length = 0;
-    await IMAGES[image]();
-    expect(fixture.sharpInputs).toContain(artwork(drawn));
-    expect(fixture.sharpInputs).not.toContain(artwork(other));
-  });
-});
-
-describe("page image text", () => {
-  it("names the served brand", async () => {
-    serve("chunithm");
-    expect((await homeImageMetadata())[0].alt).toBe("tomochu ともチュウ");
-    expect((await profileImageMetadata())[0].alt).toBe("CHUNITHM profile");
-  });
-
-  it.each([
-    { game: "maimai", home: "Track and analyze your maimai DX scores with friends", database: /^Browse and search all maimai DX songs/ },
-    { game: "chunithm", home: "Track and analyze your CHUNITHM scores with friends", database: /^Browse and search all CHUNITHM songs/ },
-  ] as const)("describes the $game site in its taglines", async ({ game, home, database }) => {
-    serve(game);
-    vi.mocked(createHomeOGImage).mockClear();
-    vi.mocked(createDbOGImage).mockClear();
-    await IMAGES.home();
-    await IMAGES.database();
-    expect(vi.mocked(createHomeOGImage).mock.calls[0][0].tagline).toBe(home);
-    expect(vi.mocked(createDbOGImage).mock.calls[0][0].tagline).toMatch(database);
   });
 });

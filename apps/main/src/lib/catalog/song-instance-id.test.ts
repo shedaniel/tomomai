@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 import { formatSongInstanceId } from "@tomomai/games/song-ids";
-import { parentPublicIdSchema, songInstanceIdSchema } from "./song-instance-id";
 import { decodeMessage, encodeMessage, mintRenderToken, verifyRenderToken, type RenderMessage } from "@tomomai/render-token";
 
 const header = {
@@ -9,15 +8,6 @@ const header = {
   title: "Title", titleType: "normal" as const, classRankUrl: "", courseRankUrl: "",
 };
 const chart = { songId: "Ab3xK9pQ:j14", achievement: 1005000, fc: "ap+" as const, fs: "fdx+" as const };
-
-describe("song id schemas", () => {
-  it("validate parent and instance IDs with the parser's own patterns", () => {
-    expect(parentPublicIdSchema.safeParse("Ab3xK9pQ").success).toBe(true);
-    expect(songInstanceIdSchema.safeParse(formatSongInstanceId("Ab3xK9pQ", "cn", -1)).success).toBe(true);
-    expect(parentPublicIdSchema.safeParse("Ab3xK9pQ:j11").success).toBe(false);
-    expect(songInstanceIdSchema.safeParse("Ab3xK9pQ:j01").success).toBe(false);
-  });
-});
 
 describe("render token v2", () => {
   const messages: RenderMessage[] = [

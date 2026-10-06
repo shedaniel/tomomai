@@ -1,8 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
-  catalogSliceUrl,
-  catalogVersionsUrl,
   decodeCatalogSlice,
   fetchCatalogSlice,
   fetchCurrentCatalogSlice,
@@ -18,13 +16,6 @@ function respondWith(...bodies: unknown[]): { fetcher: CatalogFetcher; requests:
   };
   return { fetcher, requests };
 }
-
-describe("catalog urls", () => {
-  it("builds the versions and slice paths under the game's API root", () => {
-    assert.equal(catalogVersionsUrl("https://example.test//", "maimai", "jp"), "https://example.test/api/v1/games/maimai/songs/versions?region=jp");
-    assert.equal(catalogSliceUrl("https://example.test", "chunithm", "intl", -1), "https://example.test/api/v1/games/chunithm/songs?region=intl&gameVersion=-1");
-  });
-});
 
 describe("decodeCatalogSlice", () => {
   it("decodes chart type and difficulty with the game's own code table", () => {

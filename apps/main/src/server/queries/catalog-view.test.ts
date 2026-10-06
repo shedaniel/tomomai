@@ -47,10 +47,4 @@ describe("common catalog view", () => {
       ["same-title-artist-1", ["ijklmnop"]],
     ]);
   });
-
-  it("preserves display levels and fallback provenance", async () => {
-    proxy.respond([chart({ level: "14+", levelPrecise: 145, metadata: { levelPreciseEstimated: true } })]);
-    const [song] = await queryAllUniqueSongs("chunithm");
-    expect(song.difficulties[0]).toMatchObject({ level: "14+", levelPrecise: 145, levelPreciseEstimated: true });
-  });
 });

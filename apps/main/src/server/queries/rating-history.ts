@@ -32,7 +32,7 @@ function dailySnapshots(snapshots: HistorySnapshot[]) {
 }
 
 /** `scores` are each snapshot's stored ranking rows, in bucket and rank order. */
-export function buildRatingHistory(game: CanonicalGameId, snapshots: HistorySnapshot[], scores: HistoryScore[]) {
+function buildRatingHistory(game: CanonicalGameId, snapshots: HistorySnapshot[], scores: HistoryScore[]) {
   const bySnapshot = new Map<number, HistoryScore[]>();
   for (const score of scores) {
     const entries = bySnapshot.get(score.snapshotId) ?? [];
