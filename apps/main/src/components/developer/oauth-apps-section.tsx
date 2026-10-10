@@ -427,7 +427,8 @@ function EditOAuthAppDialog({
     policy: app.policy ?? "",
     tos: app.tos ?? "",
     redirectUris: app.redirectUris ?? [],
-    scopes: app.scopes ?? [],
+    // offline_access is stored on every app but is not a selectable data scope.
+    scopes: (app.scopes ?? []).filter((s) => s in API_SCOPES),
   });
 
   const updateMutation = trpc.developer.updateOAuthApp.useMutation({
@@ -690,10 +691,10 @@ export function OAuthAppsSection() {
                     <p className="text-xs text-muted-foreground mb-1">{t("oauthApps.scopes")}</p>
                     <div className="flex flex-wrap gap-1">
                       {app.scopes!
-                        .filter((s: string) => s in API_SCOPES)
+                        .filter((s: string) => s in API_SCOPES && s !== "ready")
                         .map((s: string) => (
                           <Badge key={s} variant="outline" className="text-xs">
-                            {API_SCOPES[s as ScopeKey]?.name ?? s}
+                            {t(`scopes.${s}.name`)}
                           </Badge>
                         ))}
                     </div>

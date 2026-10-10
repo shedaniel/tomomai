@@ -152,6 +152,58 @@
     "deleteDescription": "このパスキーは削除されます。今後、このパスキーでサインインできなくなります。",
     "reauthRequired": "パスキーを管理する前にもう一度サインインしてください。"
   },
+  "oauthConsent": {
+    "loading": "読み込み中",
+    "title": "{app} が <nb>tomomai アカウント</nb>へのアクセスを求めています",
+    "signedOutTitle": "サインインして {app} に進む",
+    "signedOutDescription": "{app} が tomomai アカウントへのアクセスを求めています。サインインしてリクエストを確認してください。",
+    "signedInAs": "{name} としてサインイン中",
+    "switchAccount": "別のアカウントに切り替える",
+    "basicAccess": "アカウントと連携していることの確認",
+    "offlineAccess": {"name": "接続を維持", "description": "取り消すまで、{app} は再確認なしでアクセスを続けられます"},
+    "sensitive": "機密",
+    "redirectNotice": "完了すると {host} に戻ります",
+    "trustNotice": "{app} は tomomai が運営するアプリではありません。信頼できる場合のみ続行してください。",
+    "revokeNotice": "アクセスはいつでも<link>設定</link>から取り消せます。",
+    "appTerms": "利用規約",
+    "appPrivacy": "プライバシーポリシー",
+    "deny": "拒否",
+    "authorize": "許可する",
+    "signIn": "サインインして続行",
+    "errorTitle": "続行できません",
+    "missingClient": "この認可リンクは不完全です。アプリに戻ってもう一度お試しください。",
+    "loadFailed": "このリクエストは期限切れか、アプリが利用できなくなっています。アプリに戻ってもう一度お試しください。",
+    "errors": {
+      "redirect": {
+        "title": "このアプリの戻り先が登録されていません",
+        "body": "アプリが tomomai に登録していないアドレスへ戻ろうとしたため、アカウント保護のためリクエストを停止しました。このリンクからサインインせず、アプリの開発者に知らせてください。"
+      },
+      "unavailable": {
+        "title": "このアプリは利用できません",
+        "body": "開発者によって削除または無効化された可能性があります。"
+      },
+      "badRequest": {
+        "title": "このリンクは使用できません",
+        "body": "アプリが tomomai の対応していないリクエストを送りました。アプリに戻ってもう一度お試しいただくか、開発者に問い合わせてください。"
+      },
+      "tampered": {
+        "title": "このリンクは改変されています",
+        "body": "この認可リンクの一部が変更されているため、信頼できません。アプリに戻って最初からやり直してください。"
+      }
+    },
+    "genericError": "問題が発生しました。もう一度お試しください。",
+    "unknownScopesTitle": "認識できない権限",
+    "unknownScopesBody": "{app} が存在しない権限（{scopes}）を求めています。アプリ側でリクエストが修正されるまで許可できません。",
+    "backHome": "tomomai に戻る",
+    "defaultAppName": "このアプリ",
+    "changeHeading": "データの変更",
+    "readHeading": "データの読み取り",
+    "showDetails": "詳細を表示",
+    "hideDetails": "詳細を隠す",
+    "scrollToEnd": "末尾までスクロール",
+    "scrollHint": "スクロールしてすべての権限を確認",
+    "groupCount": "{count} 件の権限"
+  },
   "consent": {
     "title": "ともマイへようこそ",
     "description": "アカウント作成にあたり、以下の規約およびポリシーをご確認の上、同意をお願いいたします。",
@@ -411,112 +463,112 @@
       },
       "scopes": {
         "ready": {
-          "name": "Ready",
-          "description": "基本アクセス。GET /api/v1/ok を許可します。デフォルトで含まれます。"
+          "name": "基本アクセス",
+          "description": "アプリがアカウントと連携していることの確認"
         },
         "user:metadata:read": {
-          "name": "ユーザーメタデータ（読み取り）",
-          "description": "ユーザー名、地域、プロフィール公開設定、ロールを読み取ります。GET /api/v1/me を許可します。"
+          "name": "アカウント情報",
+          "description": "ユーザー名、地域、プロフィールの公開設定、ロール"
         },
         "snapshot:latest:metadata:read": {
-          "name": "最新スナップショットのメタデータ（読み取り）",
-          "description": "最新スナップショットのメタデータ（Rating、表示名、プレイ回数など）を読み取ります。GET /api/v1/snapshots/latest を許可します。"
+          "name": "最新のスナップショット概要",
+          "description": "レーティング、表示名、プレイ回数"
         },
         "snapshot:latest:songs:b50:read": {
-          "name": "最新スナップショットのB50楽曲（読み取り）",
-          "description": "最新スナップショットのB50スコアを読み取ります。"
+          "name": "最新のベスト50",
+          "description": "現在のレーティング対象スコア"
         },
         "snapshot:latest:songs:read": {
-          "name": "最新スナップショットの全楽曲（読み取り）",
-          "description": "最新スナップショットの全スコアを読み取ります。"
+          "name": "最新のスコア",
+          "description": "最新スナップショットの全楽曲スコア"
         },
         "snapshot:latest:events:read": {
-          "name": "最新スナップショットのちほー（読み取り）",
-          "description": "最新スナップショットのちほー進行状況を読み取ります。"
+          "name": "最新のイベント進捗",
+          "description": "現在のイベント進捗"
         },
         "snapshot:latest:icon:read": {
-          "name": "最新スナップショットのアイコン（読み取り）",
-          "description": "最新スナップショットのプロフィールアイコンURL（Discordアバター）を読み取ります。機密：ソーシャルIDが公開される可能性があります。"
+          "name": "最新のプロフィールアイコン",
+          "description": "現在のプロフィールアイコン（SNSアカウントが分かる可能性があります）"
         },
         "snapshot:all:metadata:read": {
-          "name": "全スナップショットのメタデータ（読み取り）",
-          "description": "全スナップショットを一覧表示し、メタデータを読み取ります。GET /api/v1/snapshots と GET /api/v1/snapshots/:id を許可します。"
+          "name": "スナップショット履歴",
+          "description": "すべてのスナップショットのレーティング、表示名、プレイ回数"
         },
         "snapshot:all:songs:b50:read": {
-          "name": "全スナップショットのB50楽曲（読み取り）",
-          "description": "任意のスナップショットからB50の楽曲スコアを読み取ります。"
+          "name": "ベスト50の履歴",
+          "description": "すべてのスナップショットのレーティング対象スコア"
         },
         "snapshot:all:songs:read": {
-          "name": "全スナップショットの全楽曲（読み取り）",
-          "description": "任意のスナップショットの全スコアを読み取ります。"
+          "name": "スコア履歴",
+          "description": "すべてのスナップショットの全楽曲スコア"
         },
         "snapshot:all:events:read": {
-          "name": "全スナップショットのちほー（読み取り）",
-          "description": "任意のスナップショットからちほーの進行状況を読み取ります。"
+          "name": "イベント進捗の履歴",
+          "description": "すべてのスナップショットのイベント進捗"
         },
         "snapshot:all:icon:read": {
-          "name": "全スナップショットのアイコン（読み取り）",
-          "description": "任意のスナップショットのプロフィールアイコンURL（Discordアバター）を読み取ります。機密：ソーシャルIDが公開される可能性があります。"
+          "name": "プロフィールアイコンの履歴",
+          "description": "すべてのスナップショットのプロフィールアイコン（SNSアカウントが分かる可能性があります）"
         },
         "recent:read": {
-          "name": "最近のプレイ（読み取り）",
-          "description": "楽曲情報、達成度、コンボ/シンクを含む最近のプレイ履歴を読み取ります。GET /api/v1/recents を許可します。"
+          "name": "最近のプレイ",
+          "description": "スコアやコンボ状況を含むプレイ履歴"
         },
         "recent:detailed:read": {
-          "name": "最近のプレイ（詳細・読み取り）",
-          "description": "最近のプレイ結果に、店舗情報とノートタイプ別の詳細な内訳を追加します。"
+          "name": "プレイの詳細",
+          "description": "各プレイの店舗とノーツ種別ごとの内訳"
         },
         "stats:read": {
-          "name": "統計（読み取り）",
-          "description": "グレード/FC/FS分布統計を読み取ります。GET /api/v1/stats を許可します。"
+          "name": "統計",
+          "description": "グレード、FC、FSの集計"
         },
         "album:read": {
-          "name": "アルバム（読み取り）",
-          "description": "アーケード写真アルバムのエントリ（メタデータのみ）を読み取ります。GET /api/v1/albums を許可します。"
+          "name": "フォトアルバム",
+          "description": "アルバムの記録（写真は含みません）"
         },
         "album:images:read": {
-          "name": "アルバム画像（読み取り）",
-          "description": "アルバムレスポンスに画像URLを追加します。機密：写真に人物が含まれる場合があります。"
+          "name": "アルバムの写真",
+          "description": "人物が写っている可能性のある写真そのもの"
         },
         "plate:read": {
-          "name": "プレート（読み取り）",
-          "description": "各プレートで未クリア／FC／APの楽曲を取得します。GET /api/v1/plates を許可します。"
+          "name": "プレートの進捗",
+          "description": "各プレートに残っている楽曲"
         },
         "user:settings:read": {
-          "name": "ユーザー設定（読み取り）",
-          "description": "プロフィール公開やスコア表示などのプライバシー・表示設定を読み取ります。GET /api/v1/me/settings を許可します。"
+          "name": "プロフィール設定",
+          "description": "プライバシーとプロフィール表示の設定"
         },
         "snapshot:all:delete": {
-          "name": "スナップショット（削除）",
-          "description": "任意のスナップショットを削除します。DELETE /api/v1/snapshots/:id を許可します。破壊的——明示的にリクエストする必要があり、包括的スコープでも自動付与されません。"
+          "name": "スナップショットの削除",
+          "description": "スナップショットを完全に削除します"
         },
         "snapshot:submit": {
-          "name": "スナップショット（送信）",
-          "description": "新しいスナップショットを送信します。内部用 — 管理者のみ。"
+          "name": "スナップショットの送信",
+          "description": "アカウントに新しいスナップショットをアップロードします"
         },
         "fetch:read": {
-          "name": "フェッチ状態（読み取り）",
-          "description": "進行中または直近のmaimaiデータフェッチの状態を取得します。GET /api/v1/fetch/status を許可します。"
+          "name": "フェッチ状態",
+          "description": "データのフェッチが実行中かどうかとその結果"
         },
         "fetch:start": {
-          "name": "フェッチ開始",
-          "description": "保存済みのアップストリームトークンで新しいmaimaiデータフェッチを開始します。POST /api/v1/fetch を許可します。破壊的——アップストリームAPIの予算を消費し新しいスナップショットを書き込みます。"
+          "name": "フェッチの開始",
+          "description": "保存済みの maimai トークンで新しいデータを取得し、スナップショットを追加します"
         },
         "fetch:delete": {
-          "name": "フェッチトークン（削除）",
-          "description": "保存済みのアップストリームmaimai認証トークンを削除します。DELETE /api/v1/fetch/token を許可します。破壊的かつ機密——再認証するまでアプリ内およびAPI経由のフェッチが停止します。"
+          "name": "保存済み maimai トークンの削除",
+          "description": "maimai に再度ログインするまでフェッチできなくなります"
         },
         "snapshot:latest:read": {
-          "name": "最新スナップショット（読み取り）",
-          "description": "最新スナップショットのみのメタデータ・全楽曲・ちほーを含みます。アイコンは除外（プライバシー上のオプトイン）。"
+          "name": "最新のスナップショット",
+          "description": "最新スナップショットの概要、スコア、イベントの進捗"
         },
         "snapshot:all:read": {
-          "name": "全スナップショット（読み取り）",
-          "description": "最新を含む全スナップショットのメタデータ・全楽曲・ちほーを含みます。アイコンは除外（プライバシー上のオプトイン）。"
+          "name": "すべてのスナップショット",
+          "description": "すべてのスナップショットの概要、スコア、イベントの進捗"
         },
         "read": {
-          "name": "読み取り（機密以外すべて）",
-          "description": "広範な読み取りアクセス：ユーザーメタデータ、全スナップショット、最近のプレイ、統計、アルバム。アイコンとアルバム画像URLは除外されます。個人データへの広範なアクセスのため機密扱い。"
+          "name": "すべて読み取り（機密情報を除く）",
+          "description": "アカウント情報、設定、スナップショット、プレイ、統計、アルバム、プレート、フェッチ状態（機密性の高い項目を除く）"
         }
       },
       "oauthApps": {

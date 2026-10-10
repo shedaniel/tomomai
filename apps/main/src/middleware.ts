@@ -4,6 +4,7 @@ import { getCachedEdgeConfig } from './lib/edge-config-cache';
 import { nanoid } from 'nanoid';
 import { securityMiddleware } from './lib/security/middleware';
 import { locales, defaultLocale, type Locale } from './i18n/locale';
+import { readOAuthAuthorizeError } from './lib/oauth-errors';
 
 // Path prefixes that must NOT be locale-prefixed.
 function isUnlocalizable(pathname: string): boolean {
@@ -89,6 +90,21 @@ export async function middleware(request: NextRequest) {
     } catch {
       // Edge config unavailable, continue normally
     }
+  }
+
+  // OAuth authorize errors that Better Auth cannot send back to the app land on the site root.
+  // Show them on the consent page, where the user was headed, instead of the landing page.
+  const segments = pathname.split('/').filter(Boolean);
+  const isRoot = segments.length === 0 || (segments.length === 1 && isLocalized(pathname));
+  if (isRoot && readOAuthAuthorizeError(request.nextUrl.searchParams)) {
+    const locale = segments.length === 1 ? (segments[0] as Locale) : negotiateLocale(request);
+    const url = request.nextUrl.clone();
+    url.pathname = `/${locale}/oauth/consent`;
+    url.search = new URLSearchParams({
+      error: request.nextUrl.searchParams.get('error')!,
+      error_description: request.nextUrl.searchParams.get('error_description')!,
+    }).toString();
+    return stamp(NextResponse.redirect(url, { status: 307 }));
   }
 
   // Locale routing: redirect bare paths to `/{locale}...`.

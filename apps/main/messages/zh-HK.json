@@ -152,6 +152,58 @@
     "deleteDescription": "此 Passkey 將被刪除，你將無法再使用它登入。",
     "reauthRequired": "管理 Passkey 前請重新登入。"
   },
+  "oauthConsent": {
+    "loading": "載入中",
+    "title": "{app} 要求存取你的 <nb>tomomai 帳戶</nb>",
+    "signedOutTitle": "登入以繼續使用 {app}",
+    "signedOutDescription": "{app} 要求存取你的 tomomai 帳戶。請登入後查看此要求。",
+    "signedInAs": "目前登入：{name}",
+    "switchAccount": "不是你？切換帳戶",
+    "basicAccess": "確認已與你的帳戶連結",
+    "offlineAccess": {"name": "保持連線", "description": "在你撤銷之前，{app} 無需再次詢問即可持續存取"},
+    "sensitive": "敏感",
+    "redirectNotice": "完成後將返回 {host}",
+    "trustNotice": "{app} 並非由 tomomai 營運。請僅在信任此應用程式時繼續。",
+    "revokeNotice": "你可以隨時在<link>設定</link>中撤銷存取權。",
+    "appTerms": "服務條款",
+    "appPrivacy": "私隱政策",
+    "deny": "拒絕",
+    "authorize": "授權",
+    "signIn": "登入以繼續",
+    "errorTitle": "無法繼續",
+    "missingClient": "此授權連結不完整。請返回應用程式重試。",
+    "loadFailed": "此要求已過期或此應用程式已無法使用。請返回應用程式重試。",
+    "errors": {
+      "redirect": {
+        "title": "此應用程式的返回地址未登記",
+        "body": "該應用程式嘗試將你送回一個未在 tomomai 登記的地址，為保護你的帳戶，要求已被阻止。請勿透過此連結登入，並告知應用程式開發者。"
+      },
+      "unavailable": {
+        "title": "此應用程式無法使用",
+        "body": "它可能已被開發者刪除或停用。"
+      },
+      "badRequest": {
+        "title": "此連結無法使用",
+        "body": "該應用程式發送了 tomomai 不支援的要求。請返回應用程式重試，或聯絡其開發者。"
+      },
+      "tampered": {
+        "title": "此連結已被修改",
+        "body": "此授權連結的部分內容已被修改，無法信任。請返回應用程式重新開始。"
+      }
+    },
+    "genericError": "發生問題，請重試。",
+    "unknownScopesTitle": "無法辨識的權限",
+    "unknownScopesBody": "{app} 要求了不存在的權限（{scopes}）。在應用程式修正要求前無法授權。",
+    "backHome": "返回 tomomai",
+    "defaultAppName": "此應用程式",
+    "changeHeading": "可以修改你的資料",
+    "readHeading": "可以讀取你的資料",
+    "showDetails": "顯示詳情",
+    "hideDetails": "隱藏詳情",
+    "scrollToEnd": "捲動到底部",
+    "scrollHint": "捲動查看所有權限",
+    "groupCount": "{count} 項權限"
+  },
   "consent": {
     "title": "歡迎來到 tomomai",
     "description": "在建立帳戶前，請先閱讀並同意我們的政策。",
@@ -411,112 +463,112 @@
       },
       "scopes": {
         "ready": {
-          "name": "Ready",
-          "description": "基礎存取權限。授予 GET /api/v1/ok。預設包含。"
+          "name": "基本存取",
+          "description": "確認應用程式已與你的帳戶連結"
         },
         "user:metadata:read": {
-          "name": "用戶元資料（唯讀）",
-          "description": "讀取你的用戶名稱、地區、個人檔案可見性和角色。授予 GET /api/v1/me。"
+          "name": "帳戶資料",
+          "description": "用戶名稱、地區、個人資料公開狀態和角色"
         },
         "snapshot:latest:metadata:read": {
-          "name": "最新快照元資料（唯讀）",
-          "description": "讀取最新快照的元資料（Rating、顯示名稱、遊玩次數等）。授予 GET /api/v1/snapshots/latest。"
+          "name": "最新快照概要",
+          "description": "Rating、顯示名稱和遊玩次數"
         },
         "snapshot:latest:songs:b50:read": {
-          "name": "最新快照 B50 歌曲（唯讀）",
-          "description": "讀取最新快照中的 B50 歌曲分數。"
+          "name": "最新 B50",
+          "description": "目前計入 Rating 的成績"
         },
         "snapshot:latest:songs:read": {
-          "name": "最新快照全部歌曲（唯讀）",
-          "description": "讀取最新快照中的全部分數。"
+          "name": "最新成績",
+          "description": "最新快照中的全部歌曲成績"
         },
         "snapshot:latest:events:read": {
-          "name": "最新快照活動（唯讀）",
-          "description": "讀取最新快照中的活動進度資料。"
+          "name": "最新活動進度",
+          "description": "目前的活動進度"
         },
         "snapshot:latest:icon:read": {
-          "name": "最新快照圖示（唯讀）",
-          "description": "讀取最新快照的頭像 URL（Discord 頭像）。敏感——可能洩露社交身份。"
+          "name": "最新頭像",
+          "description": "目前的頭像，可能會洩露你的社交帳戶"
         },
         "snapshot:all:metadata:read": {
-          "name": "全部快照元資料（唯讀）",
-          "description": "列出所有快照並讀取其元資料。授予 GET /api/v1/snapshots 和 GET /api/v1/snapshots/:id。"
+          "name": "快照紀錄",
+          "description": "所有快照的 Rating、顯示名稱和遊玩次數"
         },
         "snapshot:all:songs:b50:read": {
-          "name": "全部快照 B50 歌曲（唯讀）",
-          "description": "讀取任意快照中的 B50 歌曲分數。"
+          "name": "B50 紀錄",
+          "description": "所有快照中計入 Rating 的成績"
         },
         "snapshot:all:songs:read": {
-          "name": "全部快照全部歌曲（唯讀）",
-          "description": "讀取任意快照中的全部分數。"
+          "name": "成績紀錄",
+          "description": "所有快照中的全部歌曲成績"
         },
         "snapshot:all:events:read": {
-          "name": "全部快照活動（唯讀）",
-          "description": "讀取任意快照中的活動進度資料。"
+          "name": "活動進度紀錄",
+          "description": "所有快照中的活動進度"
         },
         "snapshot:all:icon:read": {
-          "name": "全部快照圖示（唯讀）",
-          "description": "讀取任意快照的頭像 URL（Discord 頭像）。敏感——可能洩露社交身份。"
+          "name": "頭像紀錄",
+          "description": "所有快照中的頭像，可能會洩露你的社交帳戶"
         },
         "recent:read": {
-          "name": "最近遊玩記錄（唯讀）",
-          "description": "讀取包含歌曲資訊、達成率和連擊/同步狀態的最近遊玩歷史。授予 GET /api/v1/recents。"
+          "name": "最近遊玩",
+          "description": "包含成績和連擊狀態的遊玩紀錄"
         },
         "recent:detailed:read": {
-          "name": "最近遊玩記錄（詳細·唯讀）",
-          "description": "在最近遊玩紀錄中追加場地資訊和每種音符類型的詳細分類。"
+          "name": "遊玩詳情",
+          "description": "每次遊玩的場地和各類音符明細"
         },
         "stats:read": {
-          "name": "統計資料（唯讀）",
-          "description": "讀取評級/FC/FS 分佈統計。授予 GET /api/v1/stats。"
+          "name": "統計",
+          "description": "評級、FC 和 FS 統計"
         },
         "album:read": {
-          "name": "相簿（唯讀）",
-          "description": "讀取街機照片相簿條目（僅元資料，不含圖片 URL）。授予 GET /api/v1/albums。"
+          "name": "相簿",
+          "description": "機舖相簿紀錄（不含相片）"
         },
         "album:images:read": {
-          "name": "相簿圖片（唯讀）",
-          "description": "在相簿回應中新增圖片 URL。敏感——照片可能包含人物圖像。"
+          "name": "相簿相片",
+          "description": "相片本身，可能拍到其他人"
         },
         "plate:read": {
-          "name": "牌子（唯讀）",
-          "description": "讀取你的牌子完成資料（每個牌子尚需哪些歌曲達成 Clear / FC / AP）。授予 GET /api/v1/plates。"
+          "name": "牌子進度",
+          "description": "每個牌子尚需完成的歌曲"
         },
         "user:settings:read": {
-          "name": "用戶設定（唯讀）",
-          "description": "讀取你的私隱和資料顯示設定（是否公開資料、是否顯示分數、是否顯示牌子等）。授予 GET /api/v1/me/settings。"
+          "name": "個人資料設定",
+          "description": "私隱和個人資料顯示設定"
         },
         "snapshot:all:delete": {
-          "name": "快照（刪除）",
-          "description": "刪除你的任何快照。授予 DELETE /api/v1/snapshots/:id。破壞性——必須明確申請，絕不會被任何包含性範圍隱含授予。"
+          "name": "刪除快照",
+          "description": "永久刪除你的任何快照"
         },
         "snapshot:submit": {
-          "name": "快照（提交）",
-          "description": "提交新快照。內部使用——僅限管理員。"
+          "name": "提交快照",
+          "description": "向你的帳戶上載新快照"
         },
         "fetch:read": {
-          "name": "同步狀態（唯讀）",
-          "description": "讀取你進行中或最近一次 maimai 資料同步的狀態。授予 GET /api/v1/fetch/status。"
+          "name": "同步狀態",
+          "description": "資料同步是否進行中以及結果"
         },
         "fetch:start": {
           "name": "開始同步",
-          "description": "使用已儲存的上游令牌觸發一次新的 maimai 資料同步。授予 POST /api/v1/fetch。破壞性——消耗上游 API 配額並寫入新快照。"
+          "description": "使用已儲存的 maimai 令牌同步新資料，並新增一個快照"
         },
         "fetch:delete": {
-          "name": "同步令牌（刪除）",
-          "description": "刪除你已儲存的上游 maimai 認證令牌。授予 DELETE /api/v1/fetch/token。破壞性且敏感——重新認證前會中斷站內和 API 觸發的同步流程。"
+          "name": "刪除已儲存的 maimai 令牌",
+          "description": "重新登入 maimai 前將無法同步"
         },
         "snapshot:latest:read": {
-          "name": "最新快照（唯讀）",
-          "description": "僅包含最新快照的元資料、全部歌曲和活動。排除圖示（出於私隱，需單獨授權）。"
+          "name": "最新快照",
+          "description": "最新快照的概要、成績和活動進度"
         },
         "snapshot:all:read": {
-          "name": "全部快照（唯讀）",
-          "description": "包含所有快照（包含最新）的元資料、全部歌曲和活動。排除圖示（出於私隱，需單獨授權）。"
+          "name": "全部快照",
+          "description": "所有快照的概要、成績和活動進度"
         },
         "read": {
-          "name": "唯讀（所有非敏感資料）",
-          "description": "廣泛的唯讀存取權限：用戶元資料、所有快照、最近遊玩、統計和相簿。排除圖示和相簿圖片 URL。因涉及廣泛個人資料，標記為敏感。"
+          "name": "讀取全部（不含敏感資料）",
+          "description": "帳戶資料、設定、快照、遊玩紀錄、統計、相簿、牌子和同步狀態，不含敏感項目"
         }
       },
       "oauthApps": {
