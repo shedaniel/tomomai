@@ -1,29 +1,19 @@
-import { NextRequest, NextResponse } from "next/server";
-import { consumePending } from "@/server/services/admin/pending-confirmation";
+import { consumePending } from "@/server/services/pending-confirmation";
+import { adminRoute } from "../../../admin-route";
 import { db } from "@/lib/db";
 import { tourEvents, tourEventSteps } from "@/lib/db/schema-pg";
 import { inArray, sql } from "drizzle-orm";
 
-import { norm, normType, type EventsPendingPayload } from "@/server/services/admin/event-diff";
+import type { EventsPendingPayload } from "@/server/services/games/maimai/events/diff";
+import { norm, normType } from "@/lib/games/maimai/events";
 
-export async function GET(
-  _request: NextRequest,
-  { params }: { params: Promise<{ nanoid: string }> },
-) {
-  const { nanoid } = await params;
-
-  const pending = await consumePending<EventsPendingPayload>(nanoid);
+export const GET = adminRoute<{ nanoid: string }>("admin/events/confirm", async ({ params, requestId }) => {
+  const pending = await consumePending<EventsPendingPayload>(params.nanoid);
   if (!pending) {
-    return NextResponse.json(
-      { error: "Confirmation not found or expired" },
-      { status: 404 },
-    );
+    return Response.json({ error: "Confirmation not found or expired", requestId }, { status: 404 });
   }
   if (pending.type !== "events") {
-    return NextResponse.json(
-      { error: "Invalid confirmation type" },
-      { status: 400 },
-    );
+    return Response.json({ error: "Invalid confirmation type", requestId }, { status: 400 });
   }
 
   const events = pending.data.events;
@@ -31,7 +21,6 @@ export async function GET(
   await db.transaction(async (tx) => {
     const batchSize = 1000;
 
-    // Fetch existing events + steps
     const existingEvents = await tx.select().from(tourEvents);
     const existingSteps = await tx.select().from(tourEventSteps);
 
@@ -84,7 +73,6 @@ export async function GET(
       }
     }
 
-    // Batch upsert changed events
     const upsertedRows: { id: number; name: string }[] = [];
     for (let i = 0; i < changedEvents.length; i += batchSize) {
       const batch = changedEvents.slice(i, i + batchSize);
@@ -102,7 +90,6 @@ export async function GET(
       upsertedRows.push(...rows);
     }
 
-    // Build name → id map
     const nameToId = new Map(upsertedRows.map((r) => [r.name, r.id]));
 
     // Batch delete old steps only for changed events
@@ -129,8 +116,8 @@ export async function GET(
     }
   });
 
-  return NextResponse.json({
+  return Response.json({
     success: true,
     eventsUpserted: events.length,
   });
-}
+}, { auth: "none" });

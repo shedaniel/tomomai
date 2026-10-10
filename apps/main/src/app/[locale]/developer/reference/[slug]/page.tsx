@@ -1,10 +1,11 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { Link } from "@/i18n/navigation"
-import { findRouteBySlug, getRegistry, routeSlug } from "@/lib/api/specs";
+import { findRouteBySlug, getRegistry, requiredScopes, routeSlug } from "@/lib/api/specs";
 import { resolveBaseUrl } from "@/lib/base-url";
 import { ScopeBadge } from "@/components/developer/scope-badge";
 import { ParamTable } from "@/components/developer/param-table";
+import { ErrorTable } from "@/components/developer/error-table";
 import { ResponseTree } from "@/components/developer/response-tree";
 import { ChevronRight, Terminal } from "lucide-react";
 import { Badge } from "@tomomai/ui";
@@ -15,10 +16,7 @@ import type { RouteSpec } from "@/lib/api/registry";
 function buildExampleUrl(spec: RouteSpec, baseUrl: string): string {
   let path = spec.path.replace(/\{(\w+)\}/g, (_, name) => `<${name}>`);
   const qs: string[] = [];
-  if (spec.query) {
-    const shape = (spec.query as unknown as { shape?: Record<string, unknown> }).shape;
-    if (shape && "region" in shape) qs.push("region=intl");
-  }
+  if (spec.query && "region" in spec.query.shape) qs.push("region=intl");
   return `${baseUrl}${path}${qs.length ? "?" + qs.join("&") : ""}`;
 }
 
@@ -54,8 +52,7 @@ export default async function ReferenceEndpointPage({
     process.env.BETTER_AUTH_URL ??
     resolveBaseUrl();
 
-  const scopes =
-    spec.scope === "public" ? [] : Array.isArray(spec.scope) ? spec.scope : [spec.scope];
+  const scopes = requiredScopes(spec);
 
   const exampleUrl = buildExampleUrl(spec, baseUrl);
 
@@ -163,6 +160,15 @@ export default async function ReferenceEndpointPage({
           </h2>
           <ResponseTree schema={spec.response} />
         </section>
+
+        {spec.errors?.length ? (
+          <section className="space-y-3">
+            <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+              Errors
+            </h2>
+            <ErrorTable errors={spec.errors} />
+          </section>
+        ) : null}
 
         {spec.examples?.length ? (
           <section className="space-y-3">

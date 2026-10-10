@@ -71,8 +71,10 @@ Identifiers & domain:
 | `snapshotId`     | Public snapshot id.                                                | `snapshot`, `snap_id`                      |
 | `sessionId`      | Fetch session id.                                                  | `session`                                  |
 | `songId` / `masterSongId` | Numeric song row id(s).                                   | —                                          |
-| `songKey`        | Single `name@type@difficulty` key.                                | `song` (never log the whole object)        |
-| `songKeys`       | Array of song keys (array of strings = 1 field).                  | `songs` (never log the array of objects)   |
+| `songKey`        | Single chart key.                                                 | `song` (never log the whole object)        |
+| `songKeys`       | Array of song keys (array of strings = 1 field). Catalog code logs `catalogChartKey`. | `songs` (never log the array of objects)   |
+| `chartLabel`     | A chart's readable name from `formatChartLabel` (`Song DX MASTER`). Per-chart catalog lines log it. | a key when a person reads the line |
+| `game` | Canonical game ID (`maimai` or `chunithm`). | — |
 | `region`         | `"intl"` / `"jp"` / `"cn"`.                                        | `country`, `locale`                        |
 | `version` / `addedVersion` | Game / chart version (number).                          | —                                          |
 | `difficulty`     | Difficulty name or enum.                                          | `diff`                                     |
@@ -112,8 +114,11 @@ Aggregate namespaces (intentional nested objects — **bounded, fixed keys**; do
 > `playerName`, `index`, `batchIndex`, `progress`, `from`, `to`, `profile`,
 > `addedDate`, `optional`, `modelId`, `uniqueCovers`, `existingR2Covers`,
 > `toDownload`, `skipped`, `duplicateIds`, `urls`, `totalDuplicatesMerged`,
-> `totalMasterNamesNormalized`, `originalName`, `ttlSec`, `scope`) are also registered — keep this
-> list current when you add one.
+> `totalMasterNamesNormalized`, `originalName`, `ttlSec`, `scope`, `value`, `state`, `issues`) are also registered — keep this
+> list current when you add one. `value` is a raw input value as it was given, such as an environment variable
+> or scraped page text that did not parse.
+> `issues` is an array of `path: message` strings from a failed schema check.
+> `state` is a fetch progress state, such as `song_data:master`.
 
 Browser recommendation diagnostics (temporary, scalar fields):
 `userRating`, `percentileEnabled`, `potentialEnabled`, `fetchStatus`,
@@ -173,8 +178,14 @@ export async function GET(request: NextRequest) {
 > Note: a cached/static response keeps the `x-request-id` of the request that
 > populated the cache — it's most meaningful on dynamic (API) responses.
 
-Reference implementations: `src/app/api/admin/update_all/route.ts`,
-`src/app/api/admin/upload/route.ts`, `src/app/api/admin/update/route.ts`.
+Pages and server components receive no `NextRequest`. Build their logger with
+`await pageLogger("home")`, which reads the same `x-request-id` header. It is not
+bound as the ambient logger, because the components of one request render
+concurrently.
+
+Admin routes get all of this from `adminRoute` in `src/app/api/admin/admin-route.ts`,
+which builds the request logger, adds `game` to it, answers failures with the
+`requestId` and flushes in `finally`.
 
 ### Why a child logger?
 
@@ -200,8 +211,10 @@ so it's always safe to call.
 
 The ambient logger is bound automatically for:
 - any route that calls `requestLogger(request, route)`,
+- every admin route (`adminRoute` in `src/app/api/admin/admin-route.ts`, with `game` bound once resolved),
 - every tRPC procedure (middleware in `src/lib/trpc.ts`, `route: "trpc/<path>"`),
-- every v1 API handler (`withApiKey` in `src/lib/api/protect.ts`).
+- every v1 API handler (`runApiRequest` in `src/lib/api/route.ts`, which `withApiKey`,
+  `defineGameHandler` and `definePublicGameHandler` run through).
 
 Prefer explicit `log` threading when a helper is part of one request flow and
 already takes a context (e.g. the admin fetcher pipeline's `context.log`);

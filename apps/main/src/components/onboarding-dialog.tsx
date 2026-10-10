@@ -10,10 +10,11 @@ import {
 import { Input } from "@tomomai/ui";
 import { Label } from "@tomomai/ui";
 import { Switch } from "@tomomai/ui";
+import { useGame } from "@/components/providers/game-provider";
 import { resolveBaseUrl } from "@/lib/base-url";
-import { getEnabledRegions, isCNExclusive } from "@/lib/enabled-regions";
+import { isGameCnExclusive } from "@/lib/games/frontend";
 import { trpc } from "@/lib/trpc-client";
-import type { Region } from "@/lib/types";
+import type { Region } from "@/lib/games/ids";
 import { cn } from "@/lib/utils";
 import {
   AtSign,
@@ -30,7 +31,7 @@ import {
 import { AnimatePresence, motion } from "motion/react";
 import { useTranslations } from "next-intl";
 import Image from "next/image";
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
 interface OnboardingDialogProps {
@@ -39,7 +40,6 @@ interface OnboardingDialogProps {
   initialRegion: Region;
   initialUsername?: string | null;
   initialPublishProfile?: boolean;
-  testMode?: boolean;
 }
 
 type Step = 1 | 2 | 3;
@@ -49,7 +49,6 @@ const USERNAME_REGEX = /^[a-zA-Z0-9_-]{1,32}$/;
 type RegionTheme = {
   /** Public path to a Twemoji SVG (CC-BY 4.0, see /public/flags/). */
   flagSrc: string;
-  tagline: string;
   /** Chart token used as the region's selected accent (border + tint + check badge). */
   borderClass: string;
   bgClass: string;
@@ -59,21 +58,18 @@ type RegionTheme = {
 const REGION_THEMES: Record<Region, RegionTheme> = {
   intl: {
     flagSrc: "/flags/intl.svg",
-    tagline: "Asia / International",
     borderClass: "border-blue-700 dark:border-blue-200",
     bgClass: "bg-blue-300/20",
     textClass: "text-blue-700 dark:text-blue-200",
   },
   jp: {
     flagSrc: "/flags/jp.svg",
-    tagline: "maimai でらっくす",
     borderClass: "border-red-700 dark:border-red-200",
     bgClass: "bg-red-300/20",
     textClass: "text-red-700 dark:text-red-200",
   },
   cn: {
     flagSrc: "/flags/cn.svg",
-    tagline: "舞萌 DX",
     borderClass: "border-yellow-700 dark:border-yellow-200",
     bgClass: "bg-yellow-300/20",
     textClass: "text-yellow-700 dark:text-yellow-200",
@@ -90,11 +86,11 @@ export function OnboardingDialog({
   initialRegion,
   initialUsername,
   initialPublishProfile,
-  testMode = false,
 }: OnboardingDialogProps) {
   const t = useTranslations();
-  const cnOnly = isCNExclusive();
-  const enabledRegions = getEnabledRegions();
+  const game = useGame();
+  const cnOnly = isGameCnExclusive(game);
+  const enabledRegions = game.regions;
 
   const [step, setStep] = useState<Step>(1);
   const [direction, setDirection] = useState<1 | -1>(1);
@@ -540,7 +536,7 @@ export function OnboardingDialog({
                   className="space-y-5"
                 >
                   <p className="text-sm text-muted-foreground text-center max-w-md mx-auto leading-relaxed">
-                    {t("onboarding.step2.description")}
+                    {t("onboarding.step2.description", { game: game.brand.displayName })}
                   </p>
                   <div
                     className={cn(
@@ -629,7 +625,7 @@ export function OnboardingDialog({
                               "text-[10px] leading-tight text-muted-foreground",
                               isSelected && theme.textClass
                             )}>
-                              {theme.tagline}
+                              {t(`onboarding.regionTaglines.${region}`)}
                             </p>
                           </div>
                         </motion.button>

@@ -2,7 +2,8 @@
 
 import { LocaleProvider as BaseLocaleProvider } from "@tomomai/i18n/client";
 import type { Locale } from "@tomomai/i18n/locale";
-import { isCNExclusive } from "@/lib/enabled-regions";
+import { isGameCnExclusive } from "@/lib/games/frontend";
+import { useGame } from "./game-provider";
 
 export { useLocale } from "@tomomai/i18n/client";
 
@@ -15,7 +16,7 @@ export function LocaleProvider({ children, initialLocale }: LocaleProviderProps)
   // CN-exclusive deployments are single-locale; pinning here lets every
   // `useLocale()` consumer return 'zh-CN' with a no-op `setLocale` without
   // each one having to import the region check itself.
-  const forcedLocale: Locale | undefined = isCNExclusive() ? "zh-CN" : undefined;
+  const forcedLocale: Locale | undefined = isGameCnExclusive(useGame()) ? "zh-CN" : undefined;
   return (
     <BaseLocaleProvider initialLocale={initialLocale} forcedLocale={forcedLocale}>
       {children}

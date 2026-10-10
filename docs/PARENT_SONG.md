@@ -119,3 +119,11 @@ Tests cover collision resolution, upload matching, supported versions, public
 IDs, API lookup predicates, catalog publication/retry, percentile results,
 ambiguous score ingestion, render-token round trips and render slice caching.
 No schema-application commands were run during development.
+
+## Multi-game publication
+
+Parent and instance rows carry their canonical game, and composite foreign keys keep every link inside one game. Parent identity matching and upload candidates are restricted to the uploaded game, and parent public IDs and composite instance IDs keep the format above. Both games are configured and publish through the same pipeline, with artist reservation, preferred instance metadata, deletion guards and the shared publication advisory lock.
+
+The public catalog now lives in the game namespace: `GET /api/v1/games/{game}/parents`, `/songs`, `/songs/versions` and `/songs/{id}`. A bare parent ID resolves the latest version, then JP over International over China (`instancePreference` in `lib/games/regions.ts`). Published JSON carries `game`, and chart type and difficulty are the game's numeric codes. The objects live under the `catalog/v2/{game}` R2 prefix, as `parents` and `songs/{region}/{gameVersion}`. The `v2` segment is `CATALOG_FORMAT_VERSION` in `lib/api/catalog-location.ts`, and it is bumped whenever the published JSON changes shape. Query and cache keys include the game, and the cache tags come from `catalogTags(game)` in `lib/cache-tags.ts`.
+
+Every admin catalog route requires an explicit `game`. Each deployment serves one game's frontend, so catalog writes run on the game's own deployment and any other deployment answers 409 (see [MULTI_GAME.md](MULTI_GAME.md#rollout-and-deployment)). Publish a game's objects on its deployment with `POST /api/admin/catalog/publish?game=<game>`. Re-running publication rebuilds every slice and is safe after a partial R2 failure. The render and guess apps read slices through `@tomomai/games/catalog-client`, which decodes the game's codes at their boundary.

@@ -4,32 +4,51 @@ description: Status codes you can expect and how to react to each.
 order: 4
 ---
 
-All `/api/v1/*` errors return JSON of the shape `{ "error": "..." }`.
+Every `/api/v1` error is JSON of the shape `{ "error": "...", "code": "..." }`.
+`error` is a message for people. `code` is present when the cause is stable,
+and it is what a client should branch on. A moved path also carries
+`location`.
 
 | Status | Meaning | What to do |
 |---|---|---|
-| `400` | Bad request — usually a missing or invalid query parameter (e.g. `?region=`). | Read the error message; fix the request. |
-| `401` | Missing API key — no `Authorization` / `x-api-key` header. | Add a token. |
-| `403` | Token is malformed, revoked, expired, or doesn't hold a required scope. | Re-auth (OAuth) or rotate the key (API key). |
-| `404` | Resource not found (e.g. snapshot ID doesn't belong to you). | Don't retry; double-check the path. |
-| `500` | Server error. | Retry with exponential backoff. If persistent, file an issue. |
+| `400` | A path or query parameter is invalid, or the game or region is not served. | Read the error message and fix the request. |
+| `401` | No API key or token was sent in `Authorization` or `x-api-key`. | Add a token. |
+| `403` | The token is malformed, revoked or expired, or lacks a required scope. | Authorize again (OAuth) or create a new key (API key). |
+| `404` | The resource does not exist, for example a snapshot ID that is not yours. | Don't retry. Check the path. |
+| `409` | A fetch is already running for this region. | Poll the fetch status instead of starting another. |
+| `410` | The path moved under `/api/v1/games/{game}`. | Send the request to `location` and apply the [changelog](/developer/guides/changelog)'s field changes. |
+| `412` | A fetch needs something only the app can supply, such as a stored upstream token or an album preference. | Ask the user to finish it in the app. |
+| `422` | The game is not enabled on this deployment, or does not offer this endpoint. | Don't retry. The endpoint reference lists the games each endpoint serves. |
+| `429` | A rate limit or the monthly quota was exceeded, or fetches were started too often. | Wait the `Retry-After` seconds before retrying. |
+| `500` | Server error. | Retry with exponential backoff. If it persists, file an issue. |
+| `503` | The game site is in its maintenance window. | Wait the `Retry-After` seconds before retrying. |
+
+## Error codes
+
+These codes can come from any endpoint:
+
+<ErrorCodes />
+
+These endpoints also refuse requests with their own codes, which their
+reference pages list too:
+
+<RouteErrorCodes />
 
 ## OAuth-specific errors
 
 OAuth errors come from `/api/auth/oauth2/*` and follow
 [RFC 6749 §5.2](https://datatracker.ietf.org/doc/html/rfc6749#section-5.2)
-(`invalid_request`, `invalid_client`, `invalid_grant`, etc.). The
+(`invalid_request`, `invalid_client`, `invalid_grant` and so on). The
 authorization server redirects errors back to your `redirect_uri` with
 `?error=…&error_description=…`.
 
 ## Rate limiting
 
-tomomai applies a three-layer rate-limit model to `/api/v1/*` (per-key
-burst, per-user umbrella burst, and a monthly quota), plus a coarse per-IP
-limit on all `/api/*` traffic. A blocked request returns
-`429 Too Many Requests` with a `Retry-After` header — wait at least that
-many seconds before retrying.
+tomomai meters `/api/v1` traffic in three layers (a per-key burst, a per-user
+burst and a monthly quota), plus a coarse per-IP limit on all `/api` traffic.
+A blocked request returns `429 Too Many Requests` with a `Retry-After` header.
+Wait at least that many seconds before retrying.
 
 See the [Rate limits guide](/developer/guides/rate-limits) for the limits,
-the response headers you can read to self-throttle, and per-endpoint cost
-units.
+the response headers you can read to self-throttle, and the cost of each
+endpoint.

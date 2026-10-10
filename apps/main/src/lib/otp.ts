@@ -1,5 +1,9 @@
 import { totp } from "otplib";
-import { createHmac, timingSafeEqual } from "crypto";
+import { createHmac } from "crypto";
+import { z } from "zod";
+import { gameIdSchema, regionSchema } from "./games/schema";
+import type { CanonicalGameId, Region } from "./games/ids";
+import { sign, verify } from "./signed-token";
 
 const OTP_PERIOD_SECONDS = 600;
 const OTP_DIGITS = 6;
@@ -10,9 +14,9 @@ const configuredTotp = totp.clone({
 });
 
 function getMasterSecret(): string {
-  const secret = process.env.MAIMAI_TOTP_SECRET;
+  const secret = process.env.LOGIN_TOKEN_SECRET || process.env.MAIMAI_TOTP_SECRET;
   if (!secret) {
-    throw new Error("MAIMAI_TOTP_SECRET environment variable is not set");
+    throw new Error("LOGIN_TOKEN_SECRET environment variable is not set");
   }
   return secret;
 }
@@ -21,39 +25,18 @@ function deriveUserKey(userId: string): string {
   return createHmac("sha256", getMasterSecret()).update(userId).digest("hex");
 }
 
-export function createOpaqueUserId(userId: string): string {
-  const payload = Buffer.from(userId, "utf8").toString("base64url");
-  const signature = createHmac("sha256", getMasterSecret())
-    .update(userId)
-    .digest("base64url");
-  return `${payload}.${signature}`;
+export type LoginAuthorization = { userId: string; game: CanonicalGameId; region: Region };
+
+const loginAuthorizationSchema = z.strictObject({ userId: z.string().min(1), game: gameIdSchema, region: regionSchema, exp: z.number() });
+
+/** Names who a gateway cookie login is for. It lives as long as an OTP period. */
+export function createLoginAuthorization(authorization: LoginAuthorization): string {
+  return sign(authorization, { secret: getMasterSecret(), ttlSeconds: OTP_PERIOD_SECONDS });
 }
 
-export function decodeOpaqueUserId(opaque: string): string | null {
-  const [payload, signature] = opaque.split(".");
-  if (!payload || !signature) {
-    return null;
-  }
-
-  let userId: string;
-  try {
-    userId = Buffer.from(payload, "base64url").toString("utf8");
-  } catch {
-    return null;
-  }
-
-  const expectedSignature = createHmac("sha256", getMasterSecret())
-    .update(userId)
-    .digest("base64url");
-
-  const provided = Buffer.from(signature, "base64url");
-  const expected = Buffer.from(expectedSignature, "base64url");
-
-  if (provided.length !== expected.length || !timingSafeEqual(provided, expected)) {
-    return null;
-  }
-
-  return userId;
+export function decodeLoginAuthorization(token: string): LoginAuthorization | null {
+  const claims = verify(token, loginAuthorizationSchema, { secret: getMasterSecret() });
+  return claims && { userId: claims.userId, game: claims.game, region: claims.region };
 }
 
 export function generateUserOtp(userId: string): string {

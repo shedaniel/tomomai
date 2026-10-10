@@ -32,6 +32,8 @@ export interface NoteCounts {
 
 // ---- Enum orderings (MUST match the binary spec — indexes are wire values) ----
 
+// Kept apart from apps/main's REGIONS, which cannot be imported here. apps/main assigns its Region to
+// RenderHeader.region, so a region the token cannot encode fails the site's typecheck.
 export const REGIONS: readonly Region[] = ["intl", "jp", "cn"];
 export const DIFFICULTIES: readonly Difficulty[] = [
   "basic",

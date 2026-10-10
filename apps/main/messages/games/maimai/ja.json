@@ -1,0 +1,34 @@
+{
+  "dashboard": {
+    "title": "ともマイ"
+  },
+  "userHeader": {
+    "memberLabel": "ともマイのメンバー",
+    "discordPrompt": "何かお困りのことはありますか？ともマイへのご意見・アイデアをぜひお聞かせください！"
+  },
+  "db": {
+    "songs": {
+      "gameName": "maimai でらっくす",
+      "chartLabel": "maimai でらっくす {type, select, dx {DX} other {スタンダード}}",
+      "detail": {
+        "viewDetails": "ともマイ DB で詳細を見る"
+      }
+    }
+  },
+  "onboarding": {
+    "title": "ともマイ へようこそ！",
+    "step1": {
+      "description": "ユーザー名は ともマイ でのあなたのハンドルです。公開を選ぶと、公開プロフィールのURLにも使われます。"
+    },
+    "regionTaglines": {
+      "intl": "Asia / International",
+      "jp": "maimai でらっくす",
+      "cn": "舞萌 DX"
+    }
+  },
+  "acceptInvitation": {
+    "title": "ともマイ",
+    "subtitle": "ともマイコミュニティに招待されました！",
+    "invitedBy": "{name}があなたをともマイに招待しました"
+  }
+}

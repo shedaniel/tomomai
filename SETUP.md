@@ -1,5 +1,21 @@
 # Setup
 
+## Running Locally
+
+Use Node.js 22.18 or later. `apps/main/eslint.config.mjs`, `apps/main/scripts/register-discord-commands.js` and the `@tomomai/games` tests load TypeScript files through Node's built-in type stripping, which older versions do not have.
+
+Each process serves one game, chosen by `FRONTEND_GAME` (see [App Configuration](#app-configuration)). Run these from the repository root, in separate terminals to run them together:
+
+| Command | Serves | Port |
+|---|---|---|
+| `pnpm dev:mai` | maimai DX | 3000 |
+| `pnpm dev:chu` | CHUNITHM | 3001 |
+| `pnpm guess:dev` | The guess app | 3002 |
+
+`pnpm dev:mai` and `pnpm dev:chu` set `FRONTEND_GAME` and `PORT`. For another port, set `PORT` rather than appending `--port` to the dev script. In development CHUNITHM builds into `.next-chunithm` instead of `.next`, so the two servers share no locks, output or caches. Browser cookies are shared across localhost ports, so both local sites see the same session.
+
+The game is fixed per build. Set `FRONTEND_GAME` when building, start the build with the same value, and build each game's production output separately rather than concurrently in one checkout. [docs/MULTI_GAME.md](docs/MULTI_GAME.md) explains how the app keeps the games apart.
+
 ## Environment Variables
 
 ### Database
@@ -50,7 +66,10 @@ When enabled, the widget must have [pre-clearance enabled](https://developers.cl
 | `DISCORD_PUBLIC_KEY` | Yes | Discord application public key for interaction verification |
 | `NEXT_PUBLIC_DISCORD_APPLICATION_ID` | Yes | Discord application ID (public, used client-side) |
 | `DISCORD_BOT_TOKEN` | Scripts | Bot token for registering slash commands |
-| `DISCORD_UPDATE_WEBHOOK` | No | Webhook URL for posting update notifications |
+| `DISCORD_UPDATE_WEBHOOK_<GAME>_<REGION>` | No | Public catalog update channel for one game and region, such as `DISCORD_UPDATE_WEBHOOK_CHUNITHM_JP`. It takes precedence over every other update variable |
+| `DISCORD_UPDATE_WEBHOOK_<GAME>` | No | Public catalog update channel for every region of one game (`MAIMAI` or `CHUNITHM`) |
+| `DISCORD_UPDATE_WEBHOOK_<REGION>` | No | Legacy maimai update channel for one region (`JP`, `INTL` or `CN`). maimai reads it only when neither maimai variable is set, and CHUNITHM never reads it |
+| `DISCORD_UPDATE_WEBHOOK` | No | Legacy maimai update channel for every region, read last. CHUNITHM never reads it |
 | `DISCORD_UPDATE_WEBHOOK_NOTICE` | No | Webhook URL for posting update notices. The channel should never be publicly accessible as it contains admin confirmation buttons |
 
 ### Cloudflare R2
@@ -67,14 +86,15 @@ When enabled, the widget must have [pre-clearance enabled](https://developers.cl
 
 | Variable | Required | Description |
 |---|---|---|
-| `ADMIN_UPDATE_TOKEN` | Yes | Bearer token for admin API routes. Generate with `openssl rand -base64 32` |
+| `ADMIN_UPDATE_TOKEN` | Yes | Bearer token for admin API routes. Generate with `openssl rand -base64 32`. Every game's deployment needs the same value when `CATALOG_PEER_ORIGINS` is set |
+| `CATALOG_PEER_ORIGINS` | No | Comma-separated origins of the other games' deployments, such as `https://chunithm.example.com`. After a catalog write, this site asks each peer to drop its cached copy of that game's public API data. Leave it unset for a single deployment |
 
 ### Crypto / Tokens
 
 | Variable | Required | Description |
 |---|---|---|
 | `TOKEN_SECRET` | Yes | Secret for encrypting/decrypting user tokens. Generate with `openssl rand -base64 32` |
-| `MAIMAI_TOTP_SECRET` | Yes | Secret for TOTP code generation. Generate with `openssl rand -hex 32` |
+| `LOGIN_TOKEN_SECRET` | Yes | Secret for the gateway login OTP codes and the signed login authorization. The former name `MAIMAI_TOTP_SECRET` is still read when this is unset. Generate with `openssl rand -hex 32` |
 | `FLAGS_SECRET` | Yes | Secret for feature flags. Generate with `node -e "console.log(crypto.randomBytes(32).toString('base64url'))"` |
 
 ### Render Service
@@ -113,9 +133,13 @@ that service.
 
 | Variable | Required | Description |
 |---|---|---|
-| `NEXT_PUBLIC_APP_URL` | No | Public app URL (defaults to `http://localhost:3000`) |
+| `FRONTEND_GAME` | No | The game this process serves: `maimai` (the default) or `chunithm`. Any other value fails startup. Set it when building and use the same value when starting that build |
+| `PORT` | No | Port of the local server (defaults to `3000`). Without a deployment URL, local canonical links and the development auth origins use `http://localhost:<PORT>` |
+| `NEXT_PUBLIC_APP_URL` | No | Public app URL. Without it, invite links and the API reference use the site's base URL, and the CORS allowlist uses `http://localhost:3000` |
 | `NEXT_PUBLIC_ACCOUNT_SIGNUP_TYPE` | No | Signup mode: `disabled`, `invite-only`, or `enabled` (defaults to `disabled`). Set to `enabled` to allow account registration |
-| `NEXT_PUBLIC_ENABLED_REGIONS` | No | Comma-separated list of enabled regions |
+| `NEXT_PUBLIC_ENABLED_MAIMAI_REGIONS` | No | Comma-separated maimai regions (`intl,jp` by default). An empty value disables maimai player features, and its catalog stays readable. A value that names no maimai region is logged as an error and disables them too |
+| `NEXT_PUBLIC_ENABLED_CHUNITHM_REGIONS` | No | Comma-separated CHUNITHM regions (`intl,jp` by default). An empty value disables CHUNITHM player features, and its catalog stays readable. A value that names no CHUNITHM region is logged as an error and disables them too |
+| `NEXT_PUBLIC_ENABLED_REGIONS` | No | Legacy maimai fallback when `NEXT_PUBLIC_ENABLED_MAIMAI_REGIONS` is unset. An empty value counts as unset |
 | `DEMO_FETCH` | No | Set to `true` to use demo data for fetching |
 | `TRUSTED_ORIGINS` | No | Comma-separated list of additional origins (e.g. `https://tomomai.lol,https://cn.tomomai.lol`). Read by Better Auth (`trustedOrigins`) and the CORS allowlist. Required when fronting the app with the [`cn/` reverse proxy](#cn-reverse-proxy-hk-cn2) so the proxy hostname is accepted for OAuth callbacks and CORS. |
 | `AUTH_COOKIE_DOMAIN` | No | Cookie domain for cross-subdomain Better Auth sessions (e.g. `.tomomai.lol`). Set this when serving the same app under multiple hostnames (apex + `cn.` proxy) so a session set on one is valid on the other. Omit for single-hostname deployments. |
@@ -145,7 +169,7 @@ Used by the WeChat OAuth → HTTP-proxy flow. The proxy itself lives in `proxy/`
 |---|---|---|
 | `CN_PROXY_HOST` (or `NEXT_PUBLIC_CN_PROXY_HOST`) | For HTTP proxy | Hostname/IP the user's phone should set as its HTTP proxy (displayed in the dialog) |
 | `CN_PROXY_PORT` (or `NEXT_PUBLIC_CN_PROXY_PORT`) | No | Proxy port displayed in the dialog (defaults to `2560`) |
-| `CN_PROXY_TOKEN_SECRET` | For HTTP proxy | HMAC secret for signing the JWT embedded in the WeChat OAuth link; the proxy forwards it back so the webhook can identify the user. Generate with `openssl rand -base64 32` |
+| `CN_PROXY_TOKEN_SECRET` | For HTTP proxy | HMAC secret for signing the expiring token embedded in the WeChat OAuth link. The proxy forwards it back so the webhook can identify the user. Generate with `openssl rand -base64 32` |
 | `DEBUG_CN_FETCH` | No | When set (any truthy value), the `/api/cn-proxy/callback` webhook skips the server-side cookie capture and just logs the `maimai-mobile/?t=…` link so you can open it manually in a browser to inspect CSS/HTML. No fetch session is started while this is on. |
 
 The proxy process itself reads its own env vars (`PROXY_PORT`, `WEBHOOK_URL`, `RESULT_URL`) — see `proxy/README.md`.
@@ -184,37 +208,48 @@ The proxy is generalisable to any deployment — none of `Caddyfile.tmpl` or `de
 
 ## Populating Songs Data
 
-After setting up the database and environment variables, you need to populate the songs database. Run the following curl commands for each region individually:
+After setting up the database and environment variables, populate each game's song catalog. Catalog writes must run on the game's own deployment, the one whose `FRONTEND_GAME` is that game. Any other deployment answers `409`.
+
+maimai DX reads its International and JP catalogs from maimai DX NET, so those regions need a SEGA account token. On the maimai deployment, update each region:
 
 ```bash
 # Update JP songs
-curl -X POST "https://yourdomain.com/api/admin/update_all?region=jp&token=account://<sega-username>:://<sega-password>" \
+curl "https://yourdomain.com/api/admin/update_all?game=maimai&region=jp&token=account://<sega-username>:://<sega-password>" \
   -H "Authorization: Bearer $ADMIN_UPDATE_TOKEN"
 
 # Update INTL songs
-curl -X POST "https://yourdomain.com/api/admin/update_all?region=intl&token=account://<sega-username>:://<sega-password>" \
+curl "https://yourdomain.com/api/admin/update_all?game=maimai&region=intl&token=account://<sega-username>:://<sega-password>" \
   -H "Authorization: Bearer $ADMIN_UPDATE_TOKEN"
 ```
 
-Replace `<sega-username>` and `<sega-password>` with your SEGA account credentials for the respective region. Each region must be updated separately.
+Replace `<sega-username>` and `<sega-password>` with your SEGA account credentials for the respective region.
 
 For INTL, you can also use a cookie token instead of account credentials:
 
 ```bash
-curl -X POST "https://yourdomain.com/api/admin/update_all?region=intl&token=cookie://<cookie-value>" \
+curl "https://yourdomain.com/api/admin/update_all?game=maimai&region=intl&token=cookie://<cookie-value>" \
   -H "Authorization: Bearer $ADMIN_UPDATE_TOKEN"
 ```
+
+CHUNITHM reads its catalog from otoge-db and needs no token. Without `region`, `update_all` updates every enabled region. On the CHUNITHM deployment:
+
+```bash
+curl "https://your-chunithm-domain.com/api/admin/update_all?game=chunithm" \
+  -H "Authorization: Bearer $ADMIN_UPDATE_TOKEN"
+```
+
+When both games are deployed, list each deployment's origin in the other's `CATALOG_PEER_ORIGINS` and give both the same `ADMIN_UPDATE_TOKEN`, so a catalog write on one also refreshes the other's cached API data. [docs/CHUNITHM_CATALOG.md](docs/CHUNITHM_CATALOG.md) describes the CHUNITHM source and its admin requests.
 
 ## Preparing a New Game Version
 
-When a new maimai DX version is released, you need to copy the existing songs data to the new version. For example, to prepare version 13 (CiRCLE PLUS) for JP by copying all songs from version 12 (CiRCLE):
+When a new maimai DX version is released, copy the existing songs data to the new version. For example, to prepare version 13 (CiRCLE PLUS) for JP by copying all songs from version 12 (CiRCLE), run this on the maimai deployment:
 
 ```bash
-curl "https://yourdomain.com/api/admin/import?from=version<=12@jp-12&to=jp-13" \
+curl "https://yourdomain.com/api/admin/import?game=maimai&from=version<=12@jp-12&to=jp-13" \
   -H "Authorization: Bearer $ADMIN_UPDATE_TOKEN"
 ```
 
-This copies all songs where `addedVersion <= 12` from `jp-12` to `jp-13`. The `from` parameter format is `version[<=|>=|=]NUMBER@[intl|jp]-VERSION_ID` and the `to` parameter format is `[intl|jp]-VERSION_ID`.
+This copies all songs where `addedVersion <= 12` from `jp-12` to `jp-13`. The `from` parameter format is `version[<=|>=|=]NUMBER@REGION-VERSION_ID` and the `to` parameter format is `REGION-VERSION_ID`, where `REGION` is one of the game's regions (`intl`, `jp` or `cn` for maimai DX).
 
 After importing, run the [songs update](#populating-songs-data) for that region to pull in any new songs added in the new version.
 

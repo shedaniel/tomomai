@@ -1,8 +1,8 @@
 import { type ApiKeyInfo, keyHasScope } from "@/lib/api/protect";
 import { type ScopeKey } from "@/lib/api/scopes";
-import { splitSongs } from "@/lib/rating-calculator";
-import type { VersionId } from "@/lib/metadata";
-import type { fetchSnapshotData } from "@/server/queries/snapshots";
+import type { z } from "zod";
+import { GAME_API_DETAILS, type snapshotDetail } from "./schemas";
+import { fetchSnapshotRankings, type fetchSnapshotData } from "@/server/queries/snapshots";
 
 type SnapshotData = NonNullable<Awaited<ReturnType<typeof fetchSnapshotData>>>;
 
@@ -10,7 +10,7 @@ type SnapshotData = NonNullable<Awaited<ReturnType<typeof fetchSnapshotData>>>;
  * Build the JSON response for a snapshot detail endpoint.
  * `scopePrefix` is either "latest" or "all", used to resolve the correct scope keys.
  */
-export function buildSnapshotPayload(
+export async function buildSnapshotPayload(
   { snapshot, songs, events }: SnapshotData,
   key: ApiKeyInfo,
   scopePrefix: "latest" | "all",
@@ -22,65 +22,30 @@ export function buildSnapshotPayload(
   const hasEventsRead = keyHasScope(key, scope("events:read"));
   const hasIconRead = keyHasScope(key, scope("icon:read"));
 
-  type SongPayload = {
-    songId: string;
-    songName: string;
-    artist: string;
-    cover: string | null;
-    difficulty: string;
-    level: string;
-    levelPrecise: number;
-    type: string;
-    genre: string;
-    addedVersion: number;
-    achievement: number;
-    dxScore: number;
-    fc: string;
-    fs: string;
-    rating?: number;
-  };
+  type SongPayload = NonNullable<z.infer<typeof snapshotDetail>["songs"]>[number];
+  const songPayload = (s: SnapshotData["songs"][number]): SongPayload => ({
+    songId: s.songId,
+    songName: s.songName,
+    artist: s.artist,
+    cover: s.cover,
+    difficulty: s.difficultyCode,
+    level: s.level,
+    levelPrecise: s.levelPrecise,
+    type: s.typeCode,
+    genre: s.genre,
+    addedVersion: s.addedVersion,
+    scoreValue: s.scoreValue,
+    secondaryScore: s.secondaryScore,
+    comboStatus: s.comboStatus,
+    syncStatus: s.syncStatus,
+    clearStatus: s.clearStatus,
+  });
   let songsPayload: SongPayload[] | null = null;
   if (hasSongsRead) {
-    songsPayload = songs.map((s) => ({
-      songId: s.songId,
-      songName: s.songName,
-      artist: s.artist,
-      cover: s.cover,
-      difficulty: s.difficulty,
-      level: s.level,
-      levelPrecise: s.levelPrecise,
-      type: s.type,
-      genre: s.genre,
-      addedVersion: s.addedVersion,
-      achievement: s.achievement,
-      dxScore: s.dxScore,
-      fc: s.fc,
-      fs: s.fs,
-    }));
+    songsPayload = songs.map(songPayload);
   } else if (hasSongsB50Read) {
-    // splitSongs expects raw DB levelPrecise (×10 integer)
-    const { newSongsB15, oldSongsB35 } = splitSongs(
-      songs,
-      snapshot.gameVersion as VersionId,
-    );
-    const b50 = [...newSongsB15, ...oldSongsB35];
-    songsPayload = b50.map((s) => ({
-      songId: s.songId,
-      songName: s.songName,
-      artist: s.artist,
-      cover: s.cover,
-      difficulty: s.difficulty,
-      level: s.level,
-      levelPrecise: s.levelPrecise,
-      type: s.type,
-      genre: s.genre,
-      addedVersion: s.addedVersion,
-      achievement: s.achievement,
-      dxScore: s.dxScore,
-      fc: s.fc,
-      fs: s.fs,
-      rating: Math.floor(s.rating),
-    }));
+    const { newScores, oldScores } = await fetchSnapshotRankings(snapshot.game, key.userId, snapshot);
+    songsPayload = [...newScores, ...oldScores].map(s => ({ ...songPayload(s), rating: s.rating }));
   }
 
   return {
@@ -89,11 +54,9 @@ export function buildSnapshotPayload(
     rating: snapshot.rating,
     displayName: snapshot.displayName,
     gameVersion: snapshot.gameVersion,
-    courseRankUrl: snapshot.courseRankUrl,
-    classRankUrl: snapshot.classRankUrl,
-    stars: snapshot.stars,
     versionPlayCount: snapshot.versionPlayCount,
     totalPlayCount: snapshot.totalPlayCount,
+    details: GAME_API_DETAILS[snapshot.game].snapshot(snapshot),
     iconUrl: hasIconRead ? snapshot.iconUrl : null,
     songs: songsPayload,
     events: hasEventsRead

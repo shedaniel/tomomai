@@ -1,9 +1,7 @@
-import { db } from '@/lib/db';
-import { account, user } from '@/lib/db/schema-pg';
+import { userSnapshots } from '@/lib/db/schema-pg';
 import { getLogger } from '@/lib/request-logger';
 import { waitUntil } from '@vercel/functions';
-import { and, eq } from 'drizzle-orm';
-import type { Region } from '@/lib/types';
+import type { Region } from '@/lib/games/ids';
 import {
   createDeferredResponse,
   createErrorResponse,
@@ -12,7 +10,7 @@ import {
   editDiscordMessage,
 } from '../responses';
 import { resolveRegion } from '../region';
-import { t } from '../i18n';
+import { regionDisplayName, t } from '../i18n';
 import { runFetchSession } from './fetch';
 import { executeProfileCommand } from './profile';
 import { executeRecentsCommand } from './recents';
@@ -23,28 +21,13 @@ import {
   isStale,
   type StaleCommand,
 } from '../staleness';
-import { getLatestSnapshotFetchedAt } from '@/server/queries/snapshots';
-
-interface ResolvedUser {
-  id: string;
-  name: string;
-  username: string | null;
-  region: Region | null;
-}
-
-async function resolveDbUser(discordUserId: string): Promise<ResolvedUser | null> {
-  const [dbUser] = await db
-    .select({ id: user.id, name: user.name, username: user.username, region: user.region })
-    .from(user)
-    .innerJoin(account, eq(account.userId, user.id))
-    .where(and(eq(account.accountId, discordUserId), eq(account.providerId, 'discord')))
-    .limit(1);
-  return dbUser ?? null;
-}
+import { latestSnapshot } from '@/server/queries/latest-snapshot';
+import { DISCORD_GAME } from '../game';
+import { findDiscordUser, type DiscordUser } from '../user';
 
 async function runCommand(
   command: StaleCommand,
-  dbUser: ResolvedUser,
+  dbUser: DiscordUser,
   region: Region,
   discordUserId: string,
   applicationId: string,
@@ -70,7 +53,7 @@ async function runCommand(
 
 export interface ApplyStalenessGateOptions {
   command: StaleCommand;
-  dbUser: ResolvedUser;
+  dbUser: DiscordUser;
   region: Region;
   discordUserId: string;
   forceFetch?: boolean;
@@ -112,9 +95,8 @@ export async function applyStalenessGate({
   }
 
   try {
-    const lastFetchedAt = await getLatestSnapshotFetchedAt(dbUser.id, region);
+    const lastFetchedAt = (await latestSnapshot(DISCORD_GAME, dbUser.id, region, { fetchedAt: userSnapshots.fetchedAt }))?.fetchedAt;
     if (lastFetchedAt && isStale(lastFetchedAt)) {
-      const { regionDisplayName } = await import('../region');
       return getStalePromptResponse({
         command,
         discordUserId,
@@ -134,7 +116,7 @@ export async function applyStalenessGate({
 
 export interface RunRefetchThenCommandOptions {
   command: StaleCommand;
-  dbUser: ResolvedUser;
+  dbUser: DiscordUser;
   region: Region;
   discordUserId: string;
   applicationId: string;
@@ -161,7 +143,6 @@ export function runRefetchThenCommand({
   const deferredResponse = createDeferredResponse();
 
   const backgroundTask = (async () => {
-    const { regionDisplayName } = await import('../region');
     const regionName = regionDisplayName(region, locale);
     try {
       await editDiscordMessage(applicationId, interactionToken, {
@@ -235,15 +216,16 @@ export async function handleStalenessChoice({
   locale,
 }: HandleStalenessChoiceOptions): Promise<DiscordResponse> {
   if (!discordUserId) {
-    return createErrorResponse(t(locale, 'common.error.unableToIdentifyShort'), locale);
+    return createErrorResponse(t(locale, 'common.error.unableToIdentifyShort'));
   }
 
-  const dbUser = await resolveDbUser(discordUserId);
+  const dbUser = await findDiscordUser(discordUserId);
   if (!dbUser) {
-    return createErrorResponse(t(locale, 'common.error.generic'), locale);
+    return createErrorResponse(t(locale, 'common.error.generic'));
   }
 
   const resolvedRegion = resolveRegion(region, dbUser.region);
+  if (!resolvedRegion) return createErrorResponse(t(locale, 'common.error.noRegion'));
   const day = command === 'daily' && payload ? payload : undefined;
 
   if (refetch) {

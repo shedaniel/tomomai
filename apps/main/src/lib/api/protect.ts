@@ -1,17 +1,17 @@
 import { type NextRequest } from "next/server";
+import type { z } from "zod";
 import { createHash } from "crypto";
-import { requestLogger } from "@/lib/request-logger";
 import { auth } from "@/lib/auth";
 import { verifyAccessToken } from "better-auth/oauth2";
 import { type ScopeKey, scopesToPermissions } from "@/lib/api/scopes";
+import { requiredScopes, type GameRouteSpec, type RouteScope, type RouteSpec } from "@/lib/api/registry";
+import { bindGameRoute, runApiRequest, type GameHandler, type RouteContext } from "@/lib/api/route";
 import { resolveBaseUrl } from "@/lib/base-url";
 import { db } from "@/lib/db";
 import { oauthAccessToken } from "@/lib/db/schema-pg";
 import { eq } from "drizzle-orm";
-import { findRouteByRequest } from "@/lib/api/registry";
 import { apiKeyLimiter, apiUserLimiter } from "@/lib/security/redis-rate-limit";
 import { consumeMonthly, peekMonthly, refundMonthly } from "@/lib/api/quota";
-import { logger } from "@/lib/logger";
 
 export interface ApiKeyInfo {
   userId: string;
@@ -39,7 +39,7 @@ function jwtSurrogateId(token: string): string {
 
 async function verifyOAuthToken(
   token: string,
-  requiredScopes: ScopeKey[],
+  scopes: ScopeKey[],
 ): Promise<ApiKeyInfo | null> {
   // ── JWT fast-path ──────────────────────────────────────────────────────
   if ((token.match(/\./g) ?? []).length === 2) {
@@ -50,7 +50,7 @@ async function verifyOAuthToken(
       const payload = await verifyAccessToken(token, {
         jwksUrl: `${issuer}/jwks`,
         verifyOptions: { issuer, audience: baseUrl },
-        scopes: requiredScopes as string[],
+        scopes: scopes as string[],
       });
       if (payload.sub) {
         const scopeList = (typeof payload.scope === "string" ? payload.scope : "")
@@ -83,7 +83,7 @@ async function verifyOAuthToken(
 
   if (!row || !row.userId) return null;
   if (row.expiresAt.getTime() <= Date.now()) return null;
-  for (const required of requiredScopes) {
+  for (const required of scopes) {
     if (!row.scopes.includes(required)) return null;
   }
 
@@ -123,138 +123,129 @@ function applyV1Headers(res: Response, state: RateState): Response {
   return res;
 }
 
-export interface RouteContext {
-  params: Promise<Record<string, string | string[]>>;
-}
+type KeyedScope = Exclude<RouteScope, "public">;
+type KeyedRouteSpec = RouteSpec & { scope: KeyedScope };
 
 export function withApiKey(
-  requiredScopes: ScopeKey[],
+  spec: KeyedRouteSpec,
   handler: (req: NextRequest, key: ApiKeyInfo, ctx: RouteContext) => Promise<Response>
 ) {
-  return async (req: NextRequest, context: RouteContext) => {
-    // Bind the ambient request logger for all v1 handlers and the lib code
-    // they call (see request-logger.ts).
-    const { log } = requestLogger(req, req.nextUrl.pathname.replace(/^\/api\//, ""));
+  const scopes = requiredScopes(spec);
+  return (req: NextRequest, context: RouteContext) => runApiRequest(req, async () => {
+    const key = await authenticate(req, scopes);
+    if (key instanceof Response) return key;
+    return meter(key, spec.cost, () => handler(req, key, context));
+  });
+}
 
-    const authHeader = req.headers.get("authorization");
-    const rawKey =
-      req.headers.get("x-api-key") ??
-      (authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : undefined);
+/**
+ * Serves a keyed game route from its spec. The key is authenticated and metered before the game, its
+ * capability and the request are checked, so an anonymous request is always a 401.
+ */
+export function defineGameHandler<Q extends z.ZodObject | undefined, R extends z.ZodObject, P extends z.ZodObject, S extends KeyedScope>(
+  spec: GameRouteSpec<Q, R, P, S>,
+  handler: GameHandler<NoInfer<Q>, NoInfer<R>, NoInfer<P>, { key: ApiKeyInfo }>,
+) {
+  const serve = bindGameRoute(spec, handler);
+  return withApiKey(spec, (req, key, context) => serve(req, context, { key }));
+}
 
-    if (!rawKey) {
-      return Response.json({ error: "Missing API key" }, { status: 401 });
-    }
+async function authenticate(req: NextRequest, scopes: ScopeKey[]): Promise<ApiKeyInfo | Response> {
+  const authHeader = req.headers.get("authorization");
+  const rawKey =
+    req.headers.get("x-api-key") ??
+    (authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : undefined);
 
-    try {
-      let key: ApiKeyInfo | null = null;
-      if (!rawKey.startsWith("tmk_")) {
-        key = await verifyOAuthToken(rawKey, requiredScopes);
-        if (!key) {
-          return Response.json({ error: "Invalid or expired token" }, { status: 403 });
-        }
-      } else {
-        const result = await auth.api.verifyApiKey({
-          body: { key: rawKey, permissions: scopesToPermissions(requiredScopes) },
-        });
-        if (!result.valid || !result.key) {
-          return Response.json(
-            { error: result.error?.message ?? "Forbidden" },
-            { status: 403 }
-          );
-        }
-        key = {
-          userId: result.key.referenceId,
-          keyId: result.key.id,
-          permissions: result.key.permissions ?? {},
-          name: result.key.name,
-          expiresAt: result.key.expiresAt,
-        };
-      }
+  if (!rawKey) {
+    return Response.json({ error: "Missing API key" }, { status: 401 });
+  }
 
-      // Resolve cost from the registry. Fail closed if no spec is
-      // registered — every protected route must declare its cost, otherwise
-      // an unregistered handler would silently bypass quota accounting.
-      const pathname = new URL(req.url).pathname;
-      const spec = findRouteByRequest(req.method, pathname);
-      if (!spec) {
-        logger.error(
-          { method: req.method, pathname },
-          "withApiKey: no RouteSpec registered for protected route",
-        );
-        return Response.json(
-          { error: "Internal server error" },
-          { status: 500 },
-        );
-      }
-      const cost = spec.cost;
+  if (!rawKey.startsWith("tmk_")) {
+    const key = await verifyOAuthToken(rawKey, scopes);
+    return key ?? Response.json({ error: "Invalid or expired token" }, { status: 403 });
+  }
 
-      // Layered rate-limit check. Consume in order; refund earlier consumes
-      // if a later limiter rejects. The race window is small and never grants
-      // extra budget — it only briefly over-counts during contention.
-      const perKey = await apiKeyLimiter.check(key.keyId, cost);
-      if (perKey.limited) {
-        const quota = await peekMonthly(key.userId);
-        return finalize429(perKey.retryAfter, "Per-key rate limit exceeded", {
-          cost,
-          perKey: { limit: perKey.limit, remaining: perKey.remaining, retryAfter: perKey.retryAfter },
-          perUser: { limit: 0, remaining: 0, retryAfter: 0 },
-          quota,
-        }, /*headersFromLimiter*/ true);
-      }
-
-      const perUser = await apiUserLimiter.check(key.userId, cost);
-      if (perUser.limited) {
-        await apiKeyLimiter.reward(key.keyId, cost);
-        const quota = await peekMonthly(key.userId);
-        return finalize429(perUser.retryAfter, "Per-user rate limit exceeded", {
-          cost,
-          perKey: { limit: perKey.limit, remaining: perKey.remaining + cost, retryAfter: perKey.retryAfter },
-          perUser: { limit: perUser.limit, remaining: perUser.remaining, retryAfter: perUser.retryAfter },
-          quota,
-        }, true);
-      }
-
-      const quota = await consumeMonthly(key.userId, cost);
-      if (!quota.ok) {
-        await apiKeyLimiter.reward(key.keyId, cost);
-        await apiUserLimiter.reward(key.userId, cost);
-        const retryAfter = Math.max(
-          1,
-          Math.floor((quota.resetAt.getTime() - Date.now()) / 1000),
-        );
-        return finalize429(retryAfter, "Monthly quota exceeded", {
-          cost,
-          perKey: { limit: perKey.limit, remaining: perKey.remaining + cost, retryAfter: perKey.retryAfter },
-          perUser: { limit: perUser.limit, remaining: perUser.remaining + cost, retryAfter: perUser.retryAfter },
-          quota,
-        }, true);
-      }
-
-      const state: RateState = {
-        cost,
-        perKey: { limit: perKey.limit, remaining: perKey.remaining, retryAfter: perKey.retryAfter },
-        perUser: { limit: perUser.limit, remaining: perUser.remaining, retryAfter: perUser.retryAfter },
-        quota,
-      };
-
-      let response: Response;
-      try {
-        response = await handler(req, key, context);
-      } catch (err) {
-        // If the handler itself throws, refund — the request didn't succeed.
-        await Promise.all([
-          apiKeyLimiter.reward(key.keyId, cost),
-          apiUserLimiter.reward(key.userId, cost),
-          refundMonthly(key.userId, cost),
-        ]);
-        throw err;
-      }
-      return applyV1Headers(response, state);
-    } catch (err) {
-      log.error({ err }, "API handler error");
-      return Response.json({ error: "Internal server error" }, { status: 500 });
-    }
+  const result = await auth.api.verifyApiKey({
+    body: { key: rawKey, permissions: scopesToPermissions(scopes) },
+  });
+  if (!result.valid || !result.key) {
+    return Response.json(
+      { error: result.error?.message ?? "Forbidden" },
+      { status: 403 }
+    );
+  }
+  return {
+    userId: result.key.referenceId,
+    keyId: result.key.id,
+    permissions: result.key.permissions ?? {},
+    name: result.key.name,
+    expiresAt: result.key.expiresAt,
   };
+}
+
+async function meter(key: ApiKeyInfo, cost: number, run: () => Promise<Response>): Promise<Response> {
+  // Layered rate-limit check. Consume in order; refund earlier consumes
+  // if a later limiter rejects. The race window is small and never grants
+  // extra budget — it only briefly over-counts during contention.
+  const perKey = await apiKeyLimiter.check(key.keyId, cost);
+  if (perKey.limited) {
+    const quota = await peekMonthly(key.userId);
+    return finalize429(perKey.retryAfter, "Per-key rate limit exceeded", {
+      cost,
+      perKey: { limit: perKey.limit, remaining: perKey.remaining, retryAfter: perKey.retryAfter },
+      perUser: { limit: 0, remaining: 0, retryAfter: 0 },
+      quota,
+    }, /*headersFromLimiter*/ true);
+  }
+
+  const perUser = await apiUserLimiter.check(key.userId, cost);
+  if (perUser.limited) {
+    await apiKeyLimiter.reward(key.keyId, cost);
+    const quota = await peekMonthly(key.userId);
+    return finalize429(perUser.retryAfter, "Per-user rate limit exceeded", {
+      cost,
+      perKey: { limit: perKey.limit, remaining: perKey.remaining + cost, retryAfter: perKey.retryAfter },
+      perUser: { limit: perUser.limit, remaining: perUser.remaining, retryAfter: perUser.retryAfter },
+      quota,
+    }, true);
+  }
+
+  const quota = await consumeMonthly(key.userId, cost);
+  if (!quota.ok) {
+    await apiKeyLimiter.reward(key.keyId, cost);
+    await apiUserLimiter.reward(key.userId, cost);
+    const retryAfter = Math.max(
+      1,
+      Math.floor((quota.resetAt.getTime() - Date.now()) / 1000),
+    );
+    return finalize429(retryAfter, "Monthly quota exceeded", {
+      cost,
+      perKey: { limit: perKey.limit, remaining: perKey.remaining + cost, retryAfter: perKey.retryAfter },
+      perUser: { limit: perUser.limit, remaining: perUser.remaining + cost, retryAfter: perUser.retryAfter },
+      quota,
+    }, true);
+  }
+
+  const state: RateState = {
+    cost,
+    perKey: { limit: perKey.limit, remaining: perKey.remaining, retryAfter: perKey.retryAfter },
+    perUser: { limit: perUser.limit, remaining: perUser.remaining, retryAfter: perUser.retryAfter },
+    quota,
+  };
+
+  let response: Response;
+  try {
+    response = await run();
+  } catch (err) {
+    // If the handler itself throws, refund — the request didn't succeed.
+    await Promise.all([
+      apiKeyLimiter.reward(key.keyId, cost),
+      apiUserLimiter.reward(key.userId, cost),
+      refundMonthly(key.userId, cost),
+    ]);
+    throw err;
+  }
+  return applyV1Headers(response, state);
 }
 
 function finalize429(

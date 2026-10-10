@@ -7,11 +7,12 @@ import { useTranslations } from "next-intl";
 import { ArrowUpRight, Database, UserRound } from "lucide-react";
 import { Button } from "@tomomai/ui";
 import { Header } from "@/components/header";
-import { MinigameCards } from "@/components/minigame-cards";
+import { MinigameCards } from "@/components/games/maimai/minigame-cards";
 import { useAuthDialog } from "@/components/auth/auth-dialog-provider";
+import { useGame } from "@/components/providers/game-provider";
 import { Link } from "@/i18n/navigation";
 import { getTransition } from "@/lib/animation-constants";
-import { isCNExclusive } from "@/lib/enabled-regions";
+import { isGameCnExclusive, supportsGameFeature } from "@/lib/games/frontend";
 import type { SignupRequirements } from "@/lib/signup";
 import { trpc } from "@/lib/trpc-client";
 
@@ -46,7 +47,9 @@ export function LandingPage({ signInOptions }: LandingPageProps) {
   const t = useTranslations();
   const utils = trpc.useUtils();
   const { openAuthDialog } = useAuthDialog();
-  const cnMode = isCNExclusive();
+  const game = useGame();
+  const { brand } = game;
+  const cnMode = isGameCnExclusive(game);
 
   useEffect(() => {
     utils.user.getSignInOptions.setData(undefined, signInOptions);
@@ -70,9 +73,9 @@ export function LandingPage({ signInOptions }: LandingPageProps) {
           animate={{ opacity: 1, y: 0 }}
           transition={getTransition({ duration: 0.5, ease: [0.4, 0, 0.2, 1] })}
         >
-          <h1 className="text-3xl font-bold tracking-tight text-balance md:text-4xl">{t("landing.headline")}</h1>
+          <h1 className="text-3xl font-bold tracking-tight text-balance md:text-4xl">{t("landing.headline", { game: brand.displayName })}</h1>
           <p className="mt-3 max-w-md text-pretty text-muted-foreground md:text-lg">
-            {cnMode ? "从舞萌 DX 导入成绩，查看你的 Rating、最佳成绩与历史记录。" : t("landing.subheadline")}
+            {cnMode ? "从舞萌 DX 导入成绩，查看你的 Rating、最佳成绩与历史记录。" : t("landing.subheadline", { net: brand.netName })}
           </p>
           <div className="mt-6 flex flex-wrap gap-3">
             <Button size="lg" className="rounded-full px-6" onClick={() => openAuthDialog()}>
@@ -87,35 +90,39 @@ export function LandingPage({ signInOptions }: LandingPageProps) {
               <ExploreCard
                 href="/db"
                 icon={<Database className="size-3" />}
-                title={t("landing.links.db.title")}
+                title={t("landing.links.db.title", { brand: brand.productName })}
                 description={t("landing.links.db.description")}
               />
-              <ExploreCard
-                href="/profile/shedaniel/intl"
-                icon={<UserRound className="size-3" />}
-                title={t("landing.links.profile.title")}
-                description={t("landing.links.profile.description")}
-              />
+              {brand.exampleProfile && (
+                <ExploreCard
+                  href={`/profile/${encodeURIComponent(brand.exampleProfile.username)}/${brand.exampleProfile.region}`}
+                  icon={<UserRound className="size-3" />}
+                  title={t("landing.links.profile.title")}
+                  description={t("landing.links.profile.description")}
+                />
+              )}
             </div>
-            <MinigameCards />
+            {supportsGameFeature(game, "minigames") && <MinigameCards />}
           </div>
         </motion.div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={getTransition({ duration: 0.6, delay: 0.1, ease: [0.4, 0, 0.2, 1] })}
-        >
-          <Image
-            src="/posts/2026-03-26-ui-refinement/dashboard-new.webp"
-            alt={t("landing.screenshotAlt")}
-            width={2862}
-            height={1898}
-            priority
-            sizes="(min-width: 1200px) 700px, (min-width: 1024px) 58vw, 100vw"
-            className="h-auto w-full"
-          />
-        </motion.div>
+        {brand.screenshot && (
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={getTransition({ duration: 0.6, delay: 0.1, ease: [0.4, 0, 0.2, 1] })}
+          >
+            <Image
+              src={brand.screenshot.src}
+              alt={t("landing.screenshotAlt", { brand: brand.productName })}
+              width={brand.screenshot.width}
+              height={brand.screenshot.height}
+              priority
+              sizes="(min-width: 1200px) 700px, (min-width: 1024px) 58vw, 100vw"
+              className="h-auto w-full"
+            />
+          </motion.div>
+        )}
       </section>
     </div>
   );

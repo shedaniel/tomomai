@@ -1,6 +1,8 @@
 import { z } from "zod";
+import { API_ERROR_CODES } from "./error-codes";
 import { API_SCOPES, isInternalScope, type ScopeKey } from "./scopes";
-import { getRegistry, type RouteSpec } from "./registry";
+import { getRegistry, isGameRoute, requiredScopes, routesByScope, type RouteSpec } from "./registry";
+import { errorResponse } from "./schemas";
 import "./specs";
 
 /**
@@ -11,6 +13,7 @@ import "./specs";
  */
 export function buildOpenApiDocument(baseUrl: string) {
   const routes = getRegistry().filter((r) => !r.internal);
+  const scopeRoutes = routesByScope();
 
   const securitySchemes = {
     BearerApiKey: {
@@ -32,7 +35,7 @@ export function buildOpenApiDocument(baseUrl: string) {
           scopes: Object.fromEntries(
             (Object.keys(API_SCOPES) as ScopeKey[])
               .filter((s) => !isInternalScope(s))
-              .map((s) => [s, API_SCOPES[s].description]),
+              .map((s) => [s, describeScope(s, scopeRoutes[s])]),
           ),
         },
       },
@@ -61,11 +64,7 @@ export function buildOpenApiDocument(baseUrl: string) {
     components: {
       securitySchemes,
       schemas: {
-        Error: {
-          type: "object",
-          required: ["error"],
-          properties: { error: { type: "string" } },
-        },
+        Error: safeJsonSchema(errorResponse),
       },
     },
     paths,
@@ -88,43 +87,21 @@ function buildOperation(route: RouteSpec) {
   if (route.scope === "public") {
     operation.security = [];
   } else {
-    const scopes = Array.isArray(route.scope) ? route.scope : [route.scope];
+    const scopes = requiredScopes(route);
     operation.security = [
       { BearerApiKey: scopes },
       { OAuth2: scopes },
     ];
   }
 
-  // Parameters
-  const parameters: unknown[] = [];
-  if (route.params) {
-    for (const [name, schema] of paramEntries(route.params)) {
-      parameters.push({
-        name,
-        in: "path",
-        required: true,
-        description: extractDescription(schema),
-        schema: safeJsonSchema(schema),
-      });
-    }
-  }
-  if (route.query) {
-    for (const [name, schema] of paramEntries(route.query)) {
-      parameters.push({
-        name,
-        in: "query",
-        required: !isOptional(schema),
-        description: extractDescription(schema),
-        schema: safeJsonSchema(schema),
-      });
-    }
-  }
+  const parameters = [...parameterDocs(route.params, "path"), ...parameterDocs(route.query, "query")];
   if (parameters.length) operation.parameters = parameters;
 
   // Responses
+  const redirect = isGameRoute(route) && route.redirect;
   const responses: Record<string, unknown> = {
     "200": {
-      description: "Successful response",
+      description: redirect ? "The published object the redirect points to" : "Successful response",
       content: {
         "application/json": {
           schema: safeJsonSchema(route.response),
@@ -136,10 +113,41 @@ function buildOperation(route: RouteSpec) {
     responses["401"] = errorRef("Missing API key");
     responses["403"] = errorRef("Invalid or expired token, or missing required scope");
   }
+  if (isGameRoute(route)) {
+    responses["400"] = errorRef(`Invalid game, region, path, or query parameter (${apiErrorCodes(400).join(" or ")})`);
+    responses["422"] = errorRef(`Game or capability unavailable (${apiErrorCodes(422).join(" or ")})`);
+    if (redirect) {
+      responses["302"] = { description: "Redirect to this game's published catalog object", headers: { Location: { schema: { type: "string", format: "uri" } } } };
+    }
+  }
+  // Every /api route is limited per address, and keyed routes also per key, per user and per month.
+  responses["429"] = {
+    ...errorRef(route.scope === "public" ? "Too many requests from this address" : "Rate limit or monthly quota exceeded"),
+    headers: RETRY_AFTER,
+  };
+  for (const [status, errors] of Map.groupBy(route.errors ?? [], error => error.status)) {
+    const shared = responses[String(status)] as { description: string; headers?: typeof RETRY_AFTER } | undefined;
+    const headers = shared?.headers ?? (errors.some(error => error.retryAfter) ? RETRY_AFTER : undefined);
+    responses[String(status)] = {
+      ...errorRef([shared && `${shared.description}.`, ...errors.map(error => `${error.code}: ${error.description}`)].filter(Boolean).join(" ")),
+      ...(headers && { headers }),
+    };
+  }
   responses["500"] = errorRef("Internal server error");
   operation.responses = responses;
 
   return operation;
+}
+
+const RETRY_AFTER = { "Retry-After": { description: "Seconds to wait before retrying.", schema: { type: "integer" } } };
+
+function apiErrorCodes(status: number): string[] {
+  return API_ERROR_CODES.filter(error => error.status === status).map(error => error.code);
+}
+
+function describeScope(scope: ScopeKey, routes: string[] = []): string {
+  const { description } = API_SCOPES[scope];
+  return routes.length ? `${description} Grants ${new Intl.ListFormat("en").format(routes)}.` : description;
 }
 
 function errorRef(description: string) {
@@ -151,24 +159,26 @@ function errorRef(description: string) {
   };
 }
 
-function paramEntries(schema: z.ZodTypeAny): [string, z.ZodTypeAny][] {
-  // We only ever pass ZodObjects for params/query. Other shapes fall through.
-  const obj = schema as unknown as { shape?: Record<string, z.ZodTypeAny> };
-  if (obj.shape) {
-    return Object.entries(obj.shape);
-  }
-  return [];
+export type ParameterDoc = {
+  name: string;
+  in: "path" | "query";
+  required: boolean;
+  description: string | undefined;
+  schema: Record<string, unknown>;
+};
+
+/** A route's path or query parameters as OpenAPI parameter objects. The reference pages render the same objects. */
+export function parameterDocs(schema: z.ZodObject | undefined, location: ParameterDoc["in"]): ParameterDoc[] {
+  return Object.entries(schema?.shape ?? {}).map(([name, param]) => ({
+    name,
+    in: location,
+    required: location === "path" || !param.safeParse(undefined).success,
+    description: param.description,
+    schema: safeJsonSchema(param),
+  }));
 }
 
-function isOptional(schema: z.ZodTypeAny): boolean {
-  return schema.safeParse(undefined).success;
-}
-
-function extractDescription(schema: z.ZodTypeAny): string | undefined {
-  return (schema as unknown as { description?: string }).description;
-}
-
-function safeJsonSchema(schema: z.ZodTypeAny): unknown {
+function safeJsonSchema(schema: z.ZodType): Record<string, unknown> {
   try {
     return z.toJSONSchema(schema, { target: "draft-2020-12" });
   } catch {

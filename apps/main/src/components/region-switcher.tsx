@@ -4,10 +4,10 @@ import { Flag, Ship } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "@/i18n/navigation";
 
-import { Region } from "@/lib/types";
+import type { Region } from "@/lib/games/ids";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@tomomai/ui/select-friendly";
 import { cn } from "@/lib/utils";
-import { getEnabledRegions } from "@/lib/enabled-regions";
+import { useGame } from "@/components/providers/game-provider";
 
 interface RegionSwitcherProps {
   header?: boolean;
@@ -23,6 +23,7 @@ const regionIcons: Record<Region, React.ReactNode> = {
 
 export function RegionSwitcher({ header = false, value, onChange }: RegionSwitcherProps) {
   const t = useTranslations();
+  const game = useGame();
   return (
     <Select value={value} onValueChange={onChange}>
       <SelectTrigger variant="secondary" size="sm" className={cn(header && "bg-background")}>
@@ -34,7 +35,7 @@ export function RegionSwitcher({ header = false, value, onChange }: RegionSwitch
         </SelectValue>
       </SelectTrigger>
       <SelectContent align="end">
-        {getEnabledRegions().map((region) => (
+        {game.regions.map((region) => (
           <SelectItem key={region} value={region}>
             <div className="flex items-center justify-between gap-2 whitespace-nowrap">
               {regionIcons[region]}

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { AlertTriangle, CheckCircle2 } from "lucide-react";
 import { Badge } from "@tomomai/ui";
 import { API_SCOPES, SCOPE_EXPANSIONS, SCOPE_IMPLIES, type ScopeKey } from "@/lib/api/scopes";
+import { routesByScope } from "@/lib/api/specs";
 import { slugifyScope } from "@/components/developer/scope-badge";
 
 export const metadata: Metadata = {
@@ -29,6 +30,7 @@ const GROUPS: { title: string; match: (s: ScopeKey) => boolean }[] = [
 
 export default function ScopesPage() {
   const allScopes = Object.keys(API_SCOPES) as ScopeKey[];
+  const scopeRoutes = routesByScope();
   return (
     <div className="space-y-10">
       <header className="space-y-3">
@@ -54,6 +56,7 @@ export default function ScopesPage() {
                 const meta = API_SCOPES[scope];
                 const expansion = SCOPE_EXPANSIONS[scope];
                 const implies = SCOPE_IMPLIES[scope];
+                const routes = scopeRoutes[scope];
                 return (
                   <li
                     key={scope}
@@ -85,6 +88,19 @@ export default function ScopesPage() {
                       <span className="text-xs text-muted-foreground">{meta.name}</span>
                     </div>
                     <p className="mt-2 text-sm text-muted-foreground">{meta.description}</p>
+                    {routes ? (
+                      <div className="mt-3 text-xs text-muted-foreground flex flex-wrap gap-1">
+                        <span className="font-medium text-foreground/80">Endpoints:</span>{" "}
+                        {routes.map((route) => (
+                          <code
+                            key={route}
+                            className="rounded-sm bg-muted px-2 py-0.5 font-mono text-[11px]"
+                          >
+                            {route}
+                          </code>
+                        ))}
+                      </div>
+                    ) : null}
                     {expansion ? (
                       <div className="mt-3 text-xs text-muted-foreground flex flex-wrap gap-1">
                         <span className="font-medium text-foreground/80">Expands to:</span>{" "}

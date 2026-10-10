@@ -1,5 +1,11 @@
 import { fetch } from 'undici';
 import { config } from 'dotenv';
+import pino from 'pino';
+import { resolveEnabledRegions } from '@tomomai/utils/regions';
+import { REGIONS } from '../src/lib/games/ids.ts';
+import discordMessages from '../messages/discord/en-US.json' with { type: 'json' };
+
+const log = pino(pino.destination({ sync: true })).child({ context: 'register-discord-commands' });
 
 config({ path: ".env.local" });
 
@@ -7,21 +13,12 @@ config({ path: ".env.local" });
 const APPLICATION_ID = process.env.NEXT_PUBLIC_DISCORD_APPLICATION_ID;
 const BOT_TOKEN = process.env.DISCORD_BOT_TOKEN;
 
-// Mirror of getEnabledRegions() from src/lib/enabled-regions.ts (this is a
-// plain Node script and cannot import the TS module).
-const REGION_LABELS = { intl: 'International', jp: 'Japan', cn: 'China' };
-
-function getEnabledRegions() {
-  const envValue = process.env.NEXT_PUBLIC_ENABLED_REGIONS;
-  if (!envValue) return ['intl', 'jp'];
-  const regions = envValue
-    .split(',')
-    .map(r => r.trim())
-    .filter(r => r === 'intl' || r === 'jp' || r === 'cn');
-  return regions.length === 0 ? ['intl', 'jp'] : regions;
-}
-
-const enabledRegions = getEnabledRegions();
+// Reads the same variables as getEnabledRegions('maimai') in src/lib/games/regions.ts. The game
+// definitions are not loadable from plain Node, and maimai has a site in every region.
+const { regions: enabledRegions } = resolveEnabledRegions(
+  process.env.NEXT_PUBLIC_ENABLED_MAIMAI_REGIONS ?? (process.env.NEXT_PUBLIC_ENABLED_REGIONS || undefined),
+  REGIONS,
+);
 
 // Shared optional `region` option. Defaults to the user's selected region.
 const regionOption = {
@@ -29,7 +26,7 @@ const regionOption = {
   name: 'region',
   description: 'Region to use. Defaults to your selected region.',
   required: false,
-  choices: enabledRegions.map(r => ({ name: REGION_LABELS[r] ?? r, value: r })),
+  choices: enabledRegions.map(region => ({ name: discordMessages.regions[region], value: region })),
 };
 
 // Shared optional `fetch` option. When true, force a refetch before running.
@@ -85,14 +82,15 @@ const commands = [
 
 async function registerCommands() {
   if (!APPLICATION_ID || !BOT_TOKEN) {
-    console.error('❌ Missing Discord environment variables');
-    console.error('Please set NEXT_PUBLIC_DISCORD_APPLICATION_ID and DISCORD_BOT_TOKEN in your .env file');
+    log.error('❌ Missing Discord environment variables');
+    log.error('Please set NEXT_PUBLIC_DISCORD_APPLICATION_ID and DISCORD_BOT_TOKEN in your .env file');
     process.exit(1);
   }
 
   try {
-    console.log(`🌏 Region choices: ${enabledRegions.join(', ')}${process.env.NEXT_PUBLIC_ENABLED_REGIONS ? '' : ' (default — NEXT_PUBLIC_ENABLED_REGIONS not set)'}`);
-    console.log('🔄 Registering Discord slash commands...');
+    if (enabledRegions.length === 0) throw new Error('No maimai regions are enabled');
+    log.info({ regions: enabledRegions }, 'Region choices');
+    log.info('🔄 Registering Discord slash commands...');
 
     const response = await fetch(
       `https://discord.com/api/v10/applications/${APPLICATION_ID}/commands`,
@@ -112,17 +110,17 @@ async function registerCommands() {
 
     if (response.ok) {
       const data = await response.json();
-      console.log('✅ Successfully registered commands:');
+      log.info('✅ Successfully registered commands:');
       data.forEach(command => {
-        console.log(`   • /${command.name} - ${command.description}`);
+        log.info(`   • /${command.name} - ${command.description}`);
       });
     } else {
       const errorText = await response.text();
-      console.error('❌ Error registering commands:', response.status, errorText);
+      log.error({ status: response.status, err: new Error(errorText) }, 'Error registering commands');
       process.exit(1);
     }
   } catch (error) {
-    console.error('❌ Failed to register commands:', error.message);
+    log.error({ err: error }, 'Failed to register commands');
     process.exit(1);
   }
 }

@@ -1,5 +1,4 @@
 import type { Metadata, Viewport } from "next";
-import { Link } from "@/i18n/navigation"
 import { notFound } from "next/navigation";
 import { FileCode2, TriangleAlert } from "lucide-react";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@tomomai/ui/shadcn-sidebar";

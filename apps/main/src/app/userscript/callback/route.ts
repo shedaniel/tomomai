@@ -1,8 +1,10 @@
 import { NextRequest } from "next/server";
 import { USERSCRIPT_ALLOWED_ORIGINS } from "@/lib/userscript/allowed-origins";
 import { useUserscriptFetch } from "@/lib/flags";
+import { requireFrontendGame } from "@/lib/games/current";
 
 export async function GET(request: NextRequest) {
+  requireFrontendGame("maimai");
   if (!(await useUserscriptFetch())) return new Response("Not Found", { status: 404 });
   const { searchParams } = request.nextUrl;
   const code = searchParams.get("code");

@@ -1,29 +1,38 @@
-import { songInstanceId } from "@/lib/db/song-instance-id";
-import { SongDetailChart, SongDetailHistoricalChart, SongDetails } from "@/components/db/songs/types";
+import { codeOf, definedKeyOf, keyOf } from "@/lib/games/codes";
+import type { CanonicalGameId, Region } from "@/lib/games/ids";
+import { chartEstimates } from "@/lib/catalog/chart-metadata";
+import { SongDetailChart, SongDetailHistoricalChart, SongDetails, UniqueSong, UniqueSongDifficulty } from "@/components/db/songs/types";
 import { db } from "@/lib/db";
 import { parentSong, scoreData, snapshotScores, songs, userSnapshots } from "@/lib/db/schema-pg";
-import { VersionId } from "@/lib/metadata";
-import { getSongSlugs } from "@/lib/song-slug";
-import { Region, SongType } from "@/lib/types";
+import { formatSongSlug, getSongSlugs } from "@/lib/song-slug";
+import { instancePreference } from "@/lib/games/regions";
 import { maxBy } from "@/lib/utils";
 import { TRPCError } from "@trpc/server";
-import { and, desc, eq, inArray } from "drizzle-orm";
+import { and, desc, eq, inArray, sql } from "drizzle-orm";
 import { unstable_cache } from "next/cache";
+import { catalogTags } from "@/lib/cache-tags";
 import { Optional } from "utility-types";
-import { DIFFICULTY_ENUM } from "@/lib/db/types";
-import { UniqueSong, UniqueSongDifficulty } from "@/components/db/songs/types";
 
-export async function querySongScores(
-  songName: string,
-  type: SongType,
-  userId: string,
-  artist?: string
-): Promise<SongDetails["userScores"]> {
+/** One song of a game: its title and chart type, narrowed by artist or chart IDs where titles collide. */
+export type SongQuery = {
+  game: CanonicalGameId;
+  songName: string;
+  type: string;
+  artist?: string;
+  parentIds?: string[];
+};
+
+export async function querySongScores({ game, songName, type, artist, parentIds, userId }: SongQuery & { userId: string }): Promise<SongDetails["userScores"]> {
   if (artist === undefined) {
     const artists = await db.selectDistinct({ artist: parentSong.artist })
       .from(parentSong)
       .innerJoin(songs, eq(songs.parentId, parentSong.id))
-      .where(and(eq(parentSong.songName, songName), eq(parentSong.type, type)))
+      .where(and(
+        eq(parentSong.game, game),
+        eq(parentSong.songName, songName),
+        eq(parentSong.type, codeOf(game, "chartType", type)),
+        parentIds ? inArray(parentSong.publicId, parentIds) : undefined,
+      ))
       .limit(2);
     if (artists.length > 1) {
       throw new TRPCError({ code: "BAD_REQUEST", message: "Artist is required for songs with the same name" });
@@ -34,10 +43,11 @@ export async function querySongScores(
     .select({
       region: songs.region,
       artist: parentSong.artist,
-      difficulty: parentSong.difficulty,
-      achievement: scoreData.achievement,
-      fc: scoreData.fc,
-      fs: scoreData.fs,
+      difficulty: sql`${parentSong.difficulty}`.mapWith(value => keyOf(game, "difficulty", Number(value))).as("difficulty"),
+      scoreValue: scoreData.scoreValue,
+      comboStatus: scoreData.comboStatus,
+      syncStatus: scoreData.syncStatus,
+      clearStatus: scoreData.clearStatus,
     })
     .from(snapshotScores)
     .innerJoin(scoreData, eq(snapshotScores.scoreId, scoreData.id))
@@ -45,15 +55,17 @@ export async function querySongScores(
     .innerJoin(parentSong, eq(songs.parentId, parentSong.id))
     .where(
       and(
+        eq(parentSong.game, game),
         eq(parentSong.songName, songName),
-        eq(parentSong.type, type),
+        eq(parentSong.type, codeOf(game, "chartType", type)),
         artist !== undefined ? eq(parentSong.artist, artist) : undefined,
+        parentIds ? inArray(parentSong.publicId, parentIds) : undefined,
         inArray(
           snapshotScores.snapshotId,
           db
             .selectDistinctOn([userSnapshots.region], { id: userSnapshots.id })
             .from(userSnapshots)
-            .where(eq(userSnapshots.userId, userId))
+            .where(and(eq(userSnapshots.game, game), eq(userSnapshots.userId, userId)))
             .orderBy(userSnapshots.region, desc(userSnapshots.fetchedAt))
         )
       )
@@ -70,30 +82,28 @@ export async function querySongScores(
       userScores[score.region] = {};
     }
     userScores[score.region][score.difficulty] = {
-      achievement: score.achievement,
-      fc: score.fc,
-      fs: score.fs,
+      scoreValue: score.scoreValue,
+      comboStatus: score.comboStatus,
+      syncStatus: score.syncStatus,
+      clearStatus: score.clearStatus,
     };
   }
   return userScores;
 }
 
-export async function querySongDetails(
-  songName: string,
-  type: SongType,
-  userId?: string | null,
-  artist?: string
-): Promise<SongDetails> {
+export async function querySongDetails({ userId, ...song }: SongQuery & { userId?: string }): Promise<SongDetails> {
+  const { game, songName, type, artist, parentIds } = song;
   const chartsQuery = db
     .select({
-      songId: songInstanceId,
+      parentId: parentSong.publicId,
       songName: parentSong.songName,
       artist: parentSong.artist,
       cover: parentSong.cover,
-      difficulty: parentSong.difficulty,
+      difficulty: sql`${parentSong.difficulty}`.mapWith(value => definedKeyOf(game, "difficulty", Number(value))).as("difficulty"),
       level: songs.level,
       levelPrecise: songs.levelPrecise,
-      type: parentSong.type,
+      metadata: songs.metadata,
+      type: sql`${parentSong.type}`.mapWith(value => definedKeyOf(game, "chartType", Number(value))).as("type"),
       genre: parentSong.genre,
       region: songs.region,
       gameVersion: songs.gameVersion,
@@ -108,11 +118,17 @@ export async function querySongDetails(
     })
     .from(songs)
     .innerJoin(parentSong, eq(songs.parentId, parentSong.id))
-    .where(and(eq(parentSong.songName, songName), eq(parentSong.type, type), artist !== undefined ? eq(parentSong.artist, artist) : undefined))
+    .where(and(
+      eq(parentSong.game, game),
+      eq(parentSong.songName, songName),
+      eq(parentSong.type, codeOf(game, "chartType", type)),
+      artist !== undefined ? eq(parentSong.artist, artist) : undefined,
+      parentIds ? inArray(parentSong.publicId, parentIds) : undefined,
+    ))
     .orderBy(songs.region, desc(songs.gameVersion), parentSong.difficulty);
 
   const scoresQuery = userId
-    ? querySongScores(songName, type, userId, artist)
+    ? querySongScores({ ...song, userId })
     : Promise.resolve(undefined);
 
   const [charts, scores] = await Promise.all([chartsQuery, scoresQuery]);
@@ -129,12 +145,12 @@ export async function querySongDetails(
 
   type ChartType = (typeof charts)[number];
 
-  const byRegion = new Map<Region, Map<VersionId, ChartType[]>>();
+  const byRegion = new Map<Region, Map<number, ChartType[]>>();
   for (const chart of charts) {
     if (!byRegion.has(chart.region)) {
       byRegion.set(chart.region, new Map());
     }
-    const chartVersion = chart.gameVersion as VersionId;
+    const chartVersion = chart.gameVersion as number;
     const regionMap = byRegion.get(chart.region)!;
     if (!regionMap.has(chartVersion)) {
       regionMap.set(chartVersion, []);
@@ -153,7 +169,8 @@ export async function querySongDetails(
               difficulty: chart.difficulty,
               level: chart.level,
               levelPrecise: chart.levelPrecise,
-              addedVersion: chart.addedVersion as VersionId,
+              levelPreciseEstimated: chartEstimates(chart.metadata).levelPreciseEstimated ?? false,
+              addedVersion: chart.addedVersion,
               noteDesigner: chart.noteDesigner,
               tapCount: chart.tapCount,
               holdCount: chart.holdCount,
@@ -164,43 +181,46 @@ export async function querySongDetails(
           : versionCharts.map((chart): SongDetailHistoricalChart => ({
               difficulty: chart.difficulty,
               levelPrecise: chart.levelPrecise,
+              levelPreciseEstimated: chartEstimates(chart.metadata).levelPreciseEstimated ?? false,
             })),
       })),
     };
   });
 
-  const preferredChart: ChartType = maxBy(
-    charts,
-    (chart) => chart.gameVersion * 100 + (chart.region === "jp" ? 1 : 0)
-  )!;
+  const preferredChart: ChartType = maxBy(charts, instancePreference)!;
   const chartBpm = preferredChart.bpm || charts.find((c) => c.bpm !== null)?.bpm;
 
   return {
+    parentIds: [...new Set(charts.map(chart => chart.parentId))],
     songName: preferredChart.songName,
     artist: preferredChart.artist,
     cover: preferredChart.cover,
     type: preferredChart.type,
     genre: preferredChart.genre,
     bpm: chartBpm ?? null,
-    addedVersion: preferredChart.addedVersion as VersionId,
+    addedVersion: preferredChart.addedVersion,
     userScores: userScoresMap,
     regions,
   } satisfies SongDetails;
 }
 
-export async function queryAllUniqueSongs() {
+export async function queryAllUniqueSongs(game: CanonicalGameId) {
   const getCachedUniqueSongs = unstable_cache(
     async () => {
       const allSongs = await db
         .select({
           id: songs.id,
+          parentId: parentSong.publicId,
+          disambiguator: parentSong.disambiguator,
           songName: parentSong.songName,
           artist: parentSong.artist,
           cover: parentSong.cover,
-          type: parentSong.type,
+          type: sql`${parentSong.type}`.mapWith(value => definedKeyOf(game, "chartType", Number(value))).as("type"),
           genre: parentSong.genre,
-          difficulty: parentSong.difficulty,
+          difficultyCode: parentSong.difficulty,
+          level: songs.level,
           levelPrecise: songs.levelPrecise,
+          metadata: songs.metadata,
           noteDesigner: songs.noteDesigner,
           addedVersion: songs.addedVersion,
           region: songs.region,
@@ -208,6 +228,7 @@ export async function queryAllUniqueSongs() {
         })
         .from(songs)
         .innerJoin(parentSong, eq(songs.parentId, parentSong.id))
+        .where(eq(songs.game, game))
         .orderBy(parentSong.songName);
 
       const allSongsSortedById = [...allSongs].sort((a, b) => Number(a.id) - Number(b.id));
@@ -225,23 +246,25 @@ export async function queryAllUniqueSongs() {
       const uniqueSongs: Map<
         string,
         (typeof allSongsWithIndex)[0] & {
-          difficulties: (UniqueSongDifficulty & { region: Region; gameVersion: number })[];
+          parentIds: string[];
+          difficulties: (Omit<UniqueSongDifficulty, "difficulty"> & { difficultyCode: number; region: Region; gameVersion: number })[];
         }
       > = new Map();
       for (const song of allSongsWithIndex) {
-        const key = JSON.stringify([song.songName, song.artist, song.type]);
+        const key = JSON.stringify([song.songName, song.artist, song.type, song.disambiguator]);
         if (!uniqueSongs.has(key)) {
-          uniqueSongs.set(key, { ...song, difficulties: [] });
+          uniqueSongs.set(key, { ...song, parentIds: [song.parentId], difficulties: [] });
         } else {
           uniqueSongs.set(key, {
             ...uniqueSongs.get(key)!,
+            parentIds: [...new Set([...uniqueSongs.get(key)!.parentIds, song.parentId])],
             difficulties: [...uniqueSongs.get(key)!.difficulties],
             ...song,
           });
         }
         const existingDifficulty = uniqueSongs
           .get(key)!
-          .difficulties.find((d) => d.difficulty === song.difficulty);
+          .difficulties.find((d) => d.difficultyCode === song.difficultyCode);
         if (existingDifficulty) {
           if (
             existingDifficulty.gameVersion < song.gameVersion ||
@@ -259,44 +282,55 @@ export async function queryAllUniqueSongs() {
         }
 
         uniqueSongs.get(key)!.difficulties.push({
-          difficulty: song.difficulty,
+          difficultyCode: song.difficultyCode,
+          level: song.level,
           levelPrecise: song.levelPrecise,
+          levelPreciseEstimated: chartEstimates(song.metadata).levelPreciseEstimated ?? false,
           region: song.region,
           gameVersion: song.gameVersion,
           noteDesigner: song.noteDesigner,
         });
       }
 
-      const songsWithSlugs = await getSongSlugs(Array.from(uniqueSongs.values()));
+      const songsWithSlugs = await getSongSlugs(Array.from(uniqueSongs.values()), game);
       const songsStripped: UniqueSong[] = songsWithSlugs.map((song) => ({
+        parentIds: song.parentIds,
         index: song.index,
         songName: song.songName,
         artist: song.artist,
         cover: song.cover,
         type: song.type,
         genre: song.genre,
-        addedVersion: song.addedVersion as VersionId,
+        addedVersion: song.addedVersion,
         difficulties: song.difficulties
+          .toSorted((a, b) => a.difficultyCode - b.difficultyCode)
           .map(
             (d) =>
               ({
-                difficulty: d.difficulty,
+                difficulty: definedKeyOf(game, "difficulty", d.difficultyCode),
+                level: d.level,
                 levelPrecise: d.levelPrecise,
+                levelPreciseEstimated: d.levelPreciseEstimated,
                 noteDesigner: d.noteDesigner,
               }) satisfies UniqueSongDifficulty
-          )
-          .toSorted(
-            (a, b) =>
-              DIFFICULTY_ENUM.indexOf(a.difficulty) - DIFFICULTY_ENUM.indexOf(b.difficulty)
           ),
-        slug: song.slug,
+        slug: formatSongSlug(song.slug, song.disambiguator),
         aliases: song.aliases,
       }));
       return songsStripped;
     },
-    ["all-unique-songs", "parent-v1"],
-    { revalidate: 3600, tags: ["all-unique-songs"] }
+    ["all-unique-songs", game, "parent-v2"],
+    { revalidate: 3600, tags: [catalogTags(game).uniqueSongs] }
   );
 
   return getCachedUniqueSongs();
+}
+
+/** The catalog versions of a region that hold at least one chart. */
+export async function listCatalogVersionsWithSongs(game: CanonicalGameId, region: Region): Promise<number[]> {
+  const rows = await db
+    .selectDistinct({ gameVersion: songs.gameVersion })
+    .from(songs)
+    .where(and(eq(songs.game, game), eq(songs.region, region)));
+  return rows.map(row => row.gameVersion);
 }

@@ -8,7 +8,7 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { ProxyAgent } from "undici";
 import pino from "pino";
-import { fetchPreviewCatalog } from "./preview-catalog.js";
+import { fetchCurrentCatalogSlice } from "@tomomai/games/catalog-client";
 
 const log = pino({}, pino.destination({ sync: true }));
 
@@ -351,7 +351,7 @@ async function resolveSong(songName, artist) {
 
 async function fetchCatalog() {
   log.info({ url: CATALOG_URL }, "Fetching current JP catalog");
-  return fetchPreviewCatalog(CATALOG_URL);
+  return fetchCurrentCatalogSlice(CATALOG_URL, "maimai", "jp");
 }
 
 function uniqueSongs(charts) {
@@ -359,7 +359,7 @@ function uniqueSongs(charts) {
   for (const c of charts) {
     if (c.region !== "jp") continue;
     if (c.cover == null) continue;
-    if (c.type === "utage" || c.difficulty === "utage") continue;
+    if (c.difficulty === "utage") continue;
     const key = `${c.songName}|${c.artist}`;
     if (!seen.has(key)) {
       seen.set(key, {

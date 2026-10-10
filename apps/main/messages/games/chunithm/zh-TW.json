@@ -1,0 +1,32 @@
+{
+  "dashboard": {
+    "title": "tomochu ともチュウ"
+  },
+  "userHeader": {
+    "memberLabel": "ともチュウ 成員",
+    "discordPrompt": "遇到問題了嗎？或有想要新增到 tomochu ともチュウ 的功能或建議？"
+  },
+  "db": {
+    "songs": {
+      "detail": {
+        "viewDetails": "在 tomochu DB 查看詳細資訊"
+      }
+    }
+  },
+  "onboarding": {
+    "title": "歡迎來到 tomochu！",
+    "step1": {
+      "description": "使用者名稱是你在 tomochu 的稱呼。如果你選擇公開，也會成為你的公開個人檔案網址。"
+    },
+    "regionTaglines": {
+      "intl": "Asia / International",
+      "jp": "チュウニズム",
+      "cn": "中二节奏"
+    }
+  },
+  "acceptInvitation": {
+    "title": "tomochu ともチュウ",
+    "subtitle": "你已被邀請加入 tomochu ともチュウ 社群",
+    "invitedBy": "{name} 邀請你加入 tomochu ともチュウ"
+  }
+}

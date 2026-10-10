@@ -1,0 +1,33 @@
+{
+  "dashboard": {
+    "title": "tomomai ともマイ"
+  },
+  "userHeader": {
+    "memberLabel": "ともマイ member",
+    "discordPrompt": "Facing issues? Or have features or ideas to add to tomomai ともマイ?"
+  },
+  "db": {
+    "songs": {
+      "chartLabel": "maimai でらっくす {type, select, dx {DX} other {Standard}}",
+      "detail": {
+        "viewDetails": "View Details on tomomai DB"
+      }
+    }
+  },
+  "onboarding": {
+    "title": "Welcome to tomomai!",
+    "step1": {
+      "description": "Your username is your handle on tomomai. If you choose to share, it also becomes your public profile URL."
+    },
+    "regionTaglines": {
+      "intl": "Asia / International",
+      "jp": "maimai でらっくす",
+      "cn": "舞萌 DX"
+    }
+  },
+  "acceptInvitation": {
+    "title": "tomomai ともマイ",
+    "subtitle": "You've been invited to join the tomomai ともマイ community",
+    "invitedBy": "{name} has invited you to join tomomai ともマイ"
+  }
+}

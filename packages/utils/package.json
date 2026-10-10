@@ -7,6 +7,10 @@
     ".": {
       "import": "./src/index.ts",
       "types": "./src/index.ts"
+    },
+    "./regions": {
+      "types": "./src/regions.d.ts",
+      "import": "./src/regions.js"
     }
   },
   "main": "./src/index.ts",

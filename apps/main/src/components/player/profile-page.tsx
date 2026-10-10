@@ -1,0 +1,81 @@
+import { DataContent } from "@/components/player/data-content";
+import { PublicDataBanner } from "@/components/player/public-data-banner";
+import { Header } from "@/components/header";
+import type { Flags } from "@/lib/flags";
+import { ProfileData } from "@/lib/types";
+import type { Region } from "@/lib/games/ids";
+import { TomomaiAI } from "@/components/games/maimai/tomomai-ai";
+import type { GameSnapshotData } from "@/lib/games/player-view";
+import { supportsGameFeature } from "@/lib/games/frontend";
+import { getCurrentGame } from "@/lib/games/current";
+import { Suspense } from "react";
+
+interface ProfilePageProps {
+  profileData: ProfileData;
+  snapshotData: GameSnapshotData | null;
+  region: Region;
+  username: string;
+  initialTab?: string;
+  flags: Flags;
+  isOwner: boolean;
+}
+
+export function ProfilePage({
+  profileData,
+  snapshotData,
+  region,
+  username,
+  initialTab,
+  flags,
+  isOwner,
+}: ProfilePageProps) {
+  const game = getCurrentGame();
+
+  return (
+    <div className="container mx-auto max-w-[1300px] px-3 md:px-6 lg:px-12 py-8">
+      <Header
+        currentTab="dashboard"
+        customThemesEnabled={flags.customThemes}
+      />
+
+      <div className="space-y-6">
+        <PublicDataBanner
+          region={region}
+          snapshotData={snapshotData ? {
+            fetchedAt: snapshotData.snapshot.fetchedAt,
+            displayName: snapshotData.snapshot.displayName,
+            rating: snapshotData.snapshot.rating,
+            gameVersion: snapshotData.snapshot.gameVersion,
+          } : null}
+          profileUsername={username}
+        />
+
+        <Suspense>
+          <DataContent
+            region={region}
+            selectedSnapshotData={snapshotData}
+            privacySettings={{
+              profileShowAllScores: profileData.profileShowAllScores,
+              profileShowScoreDetails: profileData.profileShowScoreDetails,
+              profileShowPlates: profileData.profileShowPlates,
+              profileShowPlayCounts: profileData.profileShowPlayCounts,
+              profileShowEvents: profileData.profileShowEvents,
+              profileShowInSearch: profileData.profileShowInSearch,
+            }}
+            isLoading={false}
+            visitableProfileAt={username}
+            profileDescription={profileData.profileDescription}
+            profileUsername={username}
+            profileUserId={profileData.id}
+            publishProfile={profileData.publishProfile}
+            isOwner={isOwner}
+            initialTab={initialTab}
+            visitedBySelf={false}
+            flags={flags}
+          />
+        </Suspense>
+      </div>
+      {supportsGameFeature(game, "assistant") && snapshotData && <TomomaiAI snapshotData={snapshotData} region={region} aprilFools2026={flags.aprilFools2026} />}
+    </div>
+  );
+}

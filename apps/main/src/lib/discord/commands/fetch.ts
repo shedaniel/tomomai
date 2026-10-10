@@ -1,13 +1,12 @@
-import { db } from '@/lib/db';
-import { getAllStates, parseStatusStates } from '@/lib/fetch-states';
-import { getFetchStatusServer, startFetchServer } from '@/lib/maimai-server-actions';
-import { account, user } from '@/lib/db/schema-pg';
+import { parseStatusStates } from '@/lib/fetch-states';
+import { getGame } from '@/lib/games/registry';
+import { getScoreFetchStatus, startScoreFetch } from '@/server/services/games/fetch-sessions';
 import { getLogger } from '@/lib/request-logger';
 import { waitUntil } from '@vercel/functions';
-import { and, eq } from 'drizzle-orm';
 import { generateAndSendProfileImage } from '../image-utils';
-import { getProfileSummary, regionDisplayName, resolveRegion } from '../region';
-import { isAlbumSettingsError } from '@/lib/token-errors';
+import { getProfileSummary, resolveRegion } from '../region';
+import { FetchStartError } from '@/server/services/games/fetch-errors';
+import { fetchErrorDetail } from '@/lib/games/fetch-error-codes';
 import { resolveBaseUrl } from '@/lib/base-url';
 import {
   createDeferredResponse,
@@ -18,9 +17,11 @@ import {
   editDiscordMessage,
   getStateFriendlyName
 } from '../responses';
-import { t } from '../i18n';
-import { Region } from '@/lib/types';
-import { isMaimaiMaintenance } from '@/lib/maimai/maintenance';
+import { regionDisplayName, t } from '../i18n';
+import { DISCORD_GAME } from '../game';
+import { findDiscordUser } from '../user';
+import type { Region } from '@/lib/games/ids';
+import { formatMaintenanceWindow, getGameMaintenance, type GameMaintenance } from '@/lib/games/maintenance';
 
 export interface FetchCommandOptions {
   discordUserId: string;
@@ -28,6 +29,18 @@ export interface FetchCommandOptions {
   applicationId: string;
   interactionToken: string;
   locale?: string;
+}
+
+function maintenanceMessage(maintenance: GameMaintenance, locale?: string): string {
+  return t(locale, 'fetch.maintenanceWindow', formatMaintenanceWindow(maintenance));
+}
+
+function describeFetchError(error: unknown, region: Region, locale?: string): string {
+  if (error instanceof FetchStartError && error.code === 'MAINTENANCE') {
+    const maintenance = getGameMaintenance(DISCORD_GAME, region);
+    if (maintenance?.active) return maintenanceMessage(maintenance, locale);
+  }
+  return error instanceof Error ? fetchErrorDetail(error.message) : 'Unknown error';
 }
 
 function createAlbumPreferenceMessage(discordUserId: string, region: Region, locale?: string) {
@@ -79,37 +92,21 @@ export async function handleFetchCommand({
 }: FetchCommandOptions): Promise<DiscordResponse> {
   try {
     if (!discordUserId) {
-      return createErrorResponse(t(locale, 'common.error.unableToIdentify'), locale);
+      return createErrorResponse(t(locale, 'common.error.unableToIdentify'));
     }
 
-    // Find user by Discord ID via account table
-    const [dbUser] = await db
-      .select({
-        id: user.id,
-        name: user.name,
-        username: user.username,
-        region: user.region,
-      })
-      .from(user)
-      .innerJoin(account, eq(account.userId, user.id))
-      .where(and(
-        eq(account.accountId, discordUserId),
-        eq(account.providerId, 'discord')
-      ))
-      .limit(1);
+    const dbUser = await findDiscordUser(discordUserId);
 
     if (!dbUser) {
       return createNotRegisteredResponse(locale);
     }
 
     const region = resolveRegion(regionParam, dbUser.region);
+    if (!region) return createErrorResponse(t(locale, 'common.error.noRegion'));
     const regionName = regionDisplayName(region, locale);
 
-    if (isMaimaiMaintenance(region)) {
-      return createErrorResponse(t(locale, region === 'intl'
-        ? 'fetch.maintenanceWindowIntl'
-        : 'fetch.maintenanceWindow'), locale);
-    }
+    const maintenance = getGameMaintenance(DISCORD_GAME, region);
+    if (maintenance?.active) return createErrorResponse(maintenanceMessage(maintenance, locale));
 
     // Defer the response since fetch can take a while
     const deferredResponse = createDeferredResponse();
@@ -128,7 +125,7 @@ export async function handleFetchCommand({
     return deferredResponse;
   } catch (error) {
     getLogger().error({ err: error }, 'Error starting fetch');
-    return createErrorResponse(t(locale, 'fetch.startError'), locale);
+    return createErrorResponse(t(locale, 'fetch.startError'));
   }
 }
 
@@ -155,7 +152,7 @@ export async function runFetchSession({
 }): Promise<boolean> {
   try {
     // Start the fetch
-    const startResult = await startFetchServer(userId, region, undefined, { skipAfter: true });
+    const startResult = await startScoreFetch({ userId, game: DISCORD_GAME, region, options: { skipAfter: true } });
 
     // Send initial message
     await editDiscordMessage(applicationId, interactionToken, {
@@ -188,16 +185,19 @@ export async function runFetchSession({
     }
     return true;
   } catch (error) {
-    getLogger().error({ err: error }, 'Error in fetch process');
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    if (error instanceof FetchStartError) {
+      getLogger().warn({ err: error }, 'Fetch refused');
+    } else {
+      getLogger().error({ err: error }, 'Error in fetch process');
+    }
 
-    if (isAlbumSettingsError(errorMessage)) {
+    if (error instanceof FetchStartError && error.code === 'NO_USE_ALBUMS_SETTINGS') {
       await editDiscordMessage(applicationId, interactionToken, createAlbumPreferenceMessage(discordUserId, region, locale));
     } else {
       await editDiscordMessage(applicationId, interactionToken, {
         embeds: [{
           title: t(locale, 'fetch.error.title'),
-          description: t(locale, 'fetch.error.description', { userId: discordUserId, message: errorMessage }),
+          description: t(locale, 'fetch.error.description', { userId: discordUserId, message: describeFetchError(error, region, locale) }),
           color: DISCORD_COLORS.RED,
           footer: {
             text: t(locale, 'common.footer'),
@@ -225,30 +225,23 @@ async function pollForUpdates(
 
   while (attempts < maxAttempts) {
     try {
-      const status = await getFetchStatusServer(userId, region);
+      const status = await getScoreFetchStatus({ userId, game: DISCORD_GAME, region });
 
       if (status && status.id === sessionId) {
         if (status.status === "completed") {
           return true;
         } else if (status.status === "failed") {
-          const failureReason = status.errorMessage || 'Unknown error';
-
-          // Check if this is an album settings error
-          if (isAlbumSettingsError(failureReason)) {
-            await editDiscordMessage(applicationId, interactionToken, createAlbumPreferenceMessage(discordUserId, region, locale));
-          } else {
-            await editDiscordMessage(applicationId, interactionToken, {
-              embeds: [{
-                title: t(locale, 'fetch.failed.title'),
-                description: t(locale, 'fetch.failed.description', { userId: discordUserId, regionName, reason: failureReason }),
-                color: DISCORD_COLORS.RED,
-                footer: {
-                  text: t(locale, 'common.footer'),
-                },
-                timestamp: new Date().toISOString(),
-              }],
-            });
-          }
+          await editDiscordMessage(applicationId, interactionToken, {
+            embeds: [{
+              title: t(locale, 'fetch.failed.title'),
+              description: t(locale, 'fetch.failed.description', { userId: discordUserId, regionName, reason: status.errorMessage ? fetchErrorDetail(status.errorMessage) : 'Unknown error' }),
+              color: DISCORD_COLORS.RED,
+              footer: {
+                text: t(locale, 'common.footer'),
+              },
+              timestamp: new Date().toISOString(),
+            }],
+          });
           return false;
         } else {
           // Still pending, update with progress
@@ -334,12 +327,12 @@ async function updateFetchProgress(
   interactionToken: string,
   locale?: string,
 ): Promise<void> {
-  const allStates = getAllStates();
+  const allStates = getGame(DISCORD_GAME).fetchStages;
   const completedStates = parseStatusStates(statusStates);
 
   // Format all states with appropriate emojis
   const formattedStates = allStates.map(state => {
-    const friendlyName = getStateFriendlyName(state);
+    const friendlyName = getStateFriendlyName(DISCORD_GAME, state);
     let emoji;
 
     if (completedStates.includes(state)) {

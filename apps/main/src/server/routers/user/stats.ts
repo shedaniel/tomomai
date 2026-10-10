@@ -1,28 +1,18 @@
-import { protectedProcedure, publicProcedure, router } from '@/lib/trpc';
-import { z } from 'zod';
-import { getEnabledRegions } from '@/lib/enabled-regions';
-import { fetchPlayerStats, computeStatsForSnapshot } from '@/server/queries/stats';
-import { resolvePublicSnapshotUserId } from '@/server/queries/public-access';
-
-const regionSchema = z.enum(getEnabledRegions());
+import { fetchPlayerStats, computeStatsForSnapshot } from "@/server/queries/stats";
+import { protectedProcedure, publicProcedure, router } from "@/lib/trpc";
+import { toPublicStats } from "@/lib/games/public-player";
+import { gameProcedure, publicSnapshotProcedure } from "../game-procedures";
 
 export const statsRouter = router({
-  getPlayerStats: protectedProcedure
-    .input(z.object({
-      region: regionSchema,
-    }))
-    .query(async ({ ctx, input }) => {
-      return await fetchPlayerStats(ctx.session.user.id, input.region);
+  getPlayerStats: gameProcedure(protectedProcedure, "stats")
+    .query(({ ctx }) => {
+      return fetchPlayerStats(ctx.game, ctx.session.user.id, ctx.region);
     }),
 
-  getPublicPlayerStats: publicProcedure
-    .input(z.object({
-      snapshotId: z.string(),
-      region: regionSchema,
-    }))
-    .query(async ({ input }) => {
-      const { snapshotInternalId, gameVersion } = await resolvePublicSnapshotUserId(input.snapshotId);
-
-      return await computeStatsForSnapshot(snapshotInternalId, gameVersion, input.region);
+  getPublicPlayerStats: publicSnapshotProcedure(publicProcedure, "stats", "stats")
+    .query(async ({ ctx }) => {
+      const { snapshot } = ctx;
+      const stats = await computeStatsForSnapshot(ctx.game, snapshot.snapshotInternalId, snapshot.gameVersion, ctx.region);
+      return toPublicStats(stats, snapshot.privacy);
     }),
 });

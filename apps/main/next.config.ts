@@ -6,9 +6,11 @@ import { execSync } from "node:child_process";
 import fs from "node:fs";
 import matter from "gray-matter";
 import path from 'path';
+import { resolveFrontendGame, getFrontendDistDir } from './src/lib/games/frontend-config';
 
 const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts');
 const withAnalyzer = withBundleAnalyzer({ enabled: process.env.ANALYZE === 'true' });
+const frontendGame = resolveFrontendGame(process.env.FRONTEND_GAME);
 
 function configuredOrigin(value: string | undefined): string | null {
   if (!value) return null;
@@ -112,8 +114,17 @@ const APP_VERSION_MINOR = (() => {
 })();
 
 const nextConfig: NextConfig = {
+  distDir: getFrontendDistDir(frontendGame, process.env.NODE_ENV === "development"),
   transpilePackages: ["@tomomai/ui", "@tomomai/i18n", "@tomomai/markdown"],
-  env: { BUILD_STAMP, GIT_SHA, APP_VERSION_MINOR },
+  env: { BUILD_STAMP, GIT_SHA, APP_VERSION_MINOR, FRONTEND_GAME: frontendGame },
+  async rewrites() {
+    // Browsers also ask for /favicon.ico without reading the page's icon link.
+    return { beforeFiles: [{ source: '/favicon.ico', destination: `/brand/${frontendGame}/favicon.ico` }] };
+  },
+  async redirects() {
+    // Old Discord webhook posts and cached structured data still point at the pre-brand-folder icon.
+    return [{ source: '/icon.png', destination: `/brand/${frontendGame}/icon.png`, permanent: true }];
+  },
   async headers() {
     return [
       {
@@ -267,7 +278,6 @@ const nextConfig: NextConfig = {
   outputFileTracingRoot: path.resolve(process.cwd(), '..', '..'),
   outputFileTracingIncludes: {
     '/api/image-proxy': ['./public/res/**/*'],
-    '/api/admin/cache_images': ['./public/res/**/*'],
     '/**/*': ['../../node_modules/.pnpm/kuromoji@*/node_modules/kuromoji/dict/**/*'],
   },
   devIndicators: false,

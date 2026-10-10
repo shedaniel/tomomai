@@ -26,6 +26,8 @@ cp .env.example .env   # set RENDER_TOKEN_SECRET (must match apps/main), POSTGRE
 pnpm --filter @tomomai/render dev
 ```
 
+`pnpm --filter @tomomai/render test` runs the `node:test` suites through tsx.
+
 This app **owns its own** `/res` assets under `public/res` — a curated ~35MB
 subset (only the image dirs + 5 `FontLibrary.use()` fonts skia actually reads),
 not the website's full 122MB tree. The render-composite assets have zero
@@ -48,7 +50,7 @@ requests (unlike Vercel lambdas).
 
 ## Notes / debt
 
-- Domain logic (`lib/metadata`, `lib/score-details`, `lib/rating-calculator`,
+- Domain logic (`lib/score-details`, `lib/rating-calculator`,
   `server/services/*`, …) is **copied** from `apps/main`, not shared — the
   upcoming catalogue PR extracts these into a shared package; reconcile then.
 - `apps/main` still owns the `/api/export-image`, `/api/last-credit`,

@@ -1,6 +1,6 @@
 import { toEverything, toRomaji } from "./kuroshiro";
 import slug from "slug";
-import { SongType } from "./types";
+import type { CanonicalGameId } from "./games/ids";
 
 /**
  * Generate a URL-safe slug from a song name and artist
@@ -64,7 +64,7 @@ export function normalizeForSearch(str: string): string {
 export interface SongForSlug {
   songName: string;
   artist: string;
-  type: SongType;
+  type: string;
 }
 
 /**
@@ -81,6 +81,11 @@ export interface SongWithSlug extends SongForSlug {
 export async function getSongSlug(song: SongForSlug): Promise<string> {
   const baseSlug = await generateSongSlug(song.songName, song.artist);
   return `${baseSlug}-${song.type}`;
+}
+
+/** Appends the disambiguator that tells apart distinct charts sharing a name, type and difficulty. */
+export function formatSongSlug(slug: string, disambiguator: number): string {
+  return disambiguator ? `${slug}-${disambiguator}` : slug;
 }
 
 /**
@@ -136,9 +141,9 @@ async function computeSlugAndAliases(
  * Uses an in-process cache so repeated calls (within the same process,
  * across requests) skip the kuroshiro round-trip.
  */
-export async function getSongSlugs<T extends SongForSlug>(songs: T[]): Promise<(T & { slug: string; aliases: string[] })[]> {
+export async function getSongSlugs<T extends SongForSlug>(songs: T[], game: CanonicalGameId): Promise<(T & { slug: string; aliases: string[] })[]> {
   const results = await Promise.all(songs.map(async (song) => {
-    const key = `${song.songName}||${song.artist}||${song.type}`;
+    const key = JSON.stringify([game, song.songName, song.artist, song.type]);
     let cached = slugCache.get(key);
     if (!cached) {
       cached = await computeSlugAndAliases(song);

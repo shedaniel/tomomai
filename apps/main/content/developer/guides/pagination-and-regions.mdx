@@ -4,32 +4,57 @@ description: How to page through long lists and request data from a specific reg
 order: 5
 ---
 
+## Games
+
+All game data lives under `/api/v1/games/{game}`, where `{game}` is `maimai`
+or `chunithm`. Aliases and omitted game IDs are invalid. Successful responses
+include `game`. Not every game offers every endpoint: the
+[endpoint reference](/developer/reference) lists the games each one serves.
+
+`/api/v1/me`, `/api/v1/me/settings`, `/api/v1/me/scopes` and `/api/v1/ok` are
+global. Each game keeps its own region choices, so the `region` of `/me` and
+the `profileMainRegion` of `/me/settings` are the user's choices for the game
+of the site you call.
+
+Catalog routes include `/games/{game}/parents`, `/games/{game}/songs/versions`,
+`/games/{game}/songs` and `/games/{game}/songs/{id}`. The song catalog requires
+both `region` and `gameVersion`, and the versions endpoint lists them.
+Chart type and difficulty and the combo, sync and clear statuses are
+game-specific integer codes, which
+[`/games/{game}/codes`](/developer/reference/get-games-game-codes) lists.
+Scores expose `scoreValue` and `secondaryScore`. The
+[changelog](/developer/guides/changelog) maps the fields of the earlier
+maimai-only API to these.
+
+A request for a game, region or endpoint the deployment does not serve answers
+an error with a `code`. [Errors](/developer/guides/errors) lists every code.
+
 ## Regions
 
-User-data endpoints (`/snapshots`, `/snapshots/latest`, `/snapshots/{id}`,
-`/recents`, `/stats`, `/albums`) require a `?region=` query parameter.
-Valid values:
+Every user-data endpoint (snapshots, recents, stats, albums, plates and fetch)
+and the song catalog require a `?region=` query parameter. `intl` is
+International, `jp` is Japan and `cn` is China. Each game has its own regions:
 
-- `intl` — international
-- `jp` — Japan
-- `cn` — China
+<GameRegions />
 
-A user can have data across multiple regions; tomomai will not silently
-pick one for you.
+A deployment may enable fewer regions than its game has, and it answers a
+region it does not enable with an error. A user can have data in several
+regions, and tomomai will not silently pick one for you.
 
 ## Pagination
 
 `/recents` and `/albums` accept `?limit=` and `?offset=`:
 
-- `limit` defaults to 50 for recents, 20 for albums. Max 100 for both.
+- `limit` defaults to 50 for recents and 20 for albums, with a maximum of 100
+  for both.
 - `offset` defaults to 0.
 
-Responses include `hasMore: boolean`. Recents additionally returns
-`totalCount` so you can render a position indicator. Albums returns only
-`hasMore` — counting all albums up front would be expensive.
+Responses include `hasMore: boolean`. Recents also returns `totalCount` so you
+can render a position indicator. Albums returns only `hasMore`, because
+counting every album up front would be expensive.
 
 ```bash
 # Page 2 of recents (50 items per page)
-curl "https://tomomai.lol/api/v1/recents?region=intl&limit=50&offset=50" \
+curl "https://tomomai.lol/api/v1/games/maimai/recents?region=intl&limit=50&offset=50" \
   -H "Authorization: Bearer tmk_…"
 ```

@@ -1,0 +1,21 @@
+{
+  "dashboard": {
+    "title": "tomochu ともチュウ"
+  },
+  "userHeader": {
+    "memberLabel": "ともチュウ 멤버",
+    "discordPrompt": "문제나 제안 사항이 있으신가요? tomochu ともチュウ 디스코드에 참여하세요!"
+  },
+  "db": {
+    "songs": {
+      "detail": {
+        "viewDetails": "tomochu DB에서 상세 보기"
+      }
+    }
+  },
+  "acceptInvitation": {
+    "title": "tomochu ともチュウ",
+    "subtitle": "tomochu ともチュウ 커뮤니티에 초대되었습니다",
+    "invitedBy": "{name}님이 당신을 tomochu ともチュウ에 초대했습니다"
+  }
+}

@@ -8,7 +8,6 @@ import { isAprilFools2026JST } from "@/lib/april-fools";
 export interface Flags {
   // dashboard
   historyCard: boolean;
-  platesCard: boolean;
   eventsCard: boolean;
   albumsCard: boolean;
   recommendationFilters: boolean;
@@ -117,12 +116,6 @@ const registry = {
   historyCard: defineFlag("historyCard", {
     defaultValue: false,
     userSelectable: true,
-    category: "dashboard",
-    decide: () => false,
-  }),
-  platesCard: defineFlag("platesCard", {
-    defaultValue: false,
-    userSelectable: false,
     category: "dashboard",
     decide: () => false,
   }),
@@ -271,7 +264,6 @@ export async function resolveFlagsForUser(userId: string): Promise<Flags> {
 // Named exports required for Vercel Flags SDK discovery
 // dashboard
 export const useHistoryCard = registry.historyCard.fn;
-export const usePlatesCard = registry.platesCard.fn;
 export const useEventsCard = registry.eventsCard.fn;
 export const useAlbumsCard = registry.albumsCard.fn;
 export const useRecommendationFilters = registry.recommendationFilters.fn;

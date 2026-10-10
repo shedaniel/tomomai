@@ -1,0 +1,18 @@
+import { defineGameRoute } from "@/lib/api/registry";
+import { fetchStatus, querySchemas } from "@/lib/api/schemas";
+
+export const spec = defineGameRoute({
+  method: "GET",
+  path: "/api/v1/games/{game}/fetch/status",
+  tag: "Fetch",
+  summary: "Get the status of the latest data fetch",
+  description:
+    "Returns the latest fetch session for the caller in the given region " +
+    "— useful for polling after `POST /api/v1/games/{game}/fetch`. Returns `404` if no " +
+    "fetch has ever been started for this region.",
+  scope: "fetch:read",
+  capability: "scores",
+  cost: 2,
+  query: querySchemas.regionRequired,
+  response: fetchStatus,
+});

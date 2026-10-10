@@ -1,0 +1,146 @@
+---
+title: Changelog
+description: Breaking changes to the API and how to move an integration across them.
+order: 6
+---
+
+## Multi-game API
+
+tomomai serves CHUNITHM next to maimai DX. Every game endpoint moved under
+`/api/v1/games/{game}`, and every game shares one response vocabulary. This
+release breaks integrations written for the earlier maimai-only API. Each
+section below lists a change and what to do about it.
+
+### Paths moved under `/api/v1/games/{game}`
+
+`{game}` is `maimai` or `chunithm`. Aliases and omitted game IDs are invalid.
+The old paths served maimai DX, so each one moved to its `maimai` counterpart.
+
+| Before | After |
+|---|---|
+| `/api/v1/songs`, `/api/v1/songs/versions`, `/api/v1/songs/{id}` | `/api/v1/games/{game}/songs`, `/songs/versions`, `/songs/{id}` |
+| `/api/v1/parents` | `/api/v1/games/{game}/parents` |
+| `/api/v1/snapshots`, `/api/v1/snapshots/latest`, `/api/v1/snapshots/{id}` | `/api/v1/games/{game}/snapshots`, `/snapshots/latest`, `/snapshots/{id}` |
+| `/api/v1/recents` | `/api/v1/games/{game}/recents` |
+| `/api/v1/stats` | `/api/v1/games/{game}/stats` |
+| `/api/v1/albums` | `/api/v1/games/{game}/albums` |
+| `/api/v1/plates` | `/api/v1/games/{game}/plates` |
+| `/api/v1/fetch`, `/api/v1/fetch/status`, `/api/v1/fetch/token` | `/api/v1/games/{game}/fetch`, `/fetch/status`, `/fetch/token` |
+
+`/api/v1/me`, `/api/v1/me/settings`, `/api/v1/me/scopes` and `/api/v1/ok` did
+not move. Every successful game response now carries `game`.
+
+A request to a moved path answers `410 Gone` with the new location, which keeps
+the rest of the path and the query string:
+
+```json
+{
+  "error": "This endpoint moved to /api/v1/games/maimai/recents?region=jp",
+  "code": "MOVED",
+  "location": "/api/v1/games/maimai/recents?region=jp"
+}
+```
+
+Send the request to `location`, then apply the field changes below. A path
+under `/api/v1` that never existed answers `404`.
+
+### Integer codes
+
+Chart `difficulty` and `type` and the score statuses `comboStatus`,
+`syncStatus` and `clearStatus` are integer codes instead of strings, and each
+game has its own. [`GET /api/v1/games/{game}/codes`](/developer/reference/get-games-game-codes)
+lists them. Every kind is an array of keys in code order, so the code of a key
+is its index. For maimai DX, difficulty `3` is `master`, chart type `1` is `dx`
+and combo status `3` is `ap`. UTAGE is a difficulty, not a chart type.
+
+The codes endpoint is public and cached for a day. Codes are only ever
+appended, so a cached copy stays valid for the codes it lists. The `plateType`
+and `difficulty` query parameters of the plates endpoint still take names.
+
+### Score fields
+
+Snapshot songs, recent plays and plate entries use the same score fields.
+
+| Before | After |
+|---|---|
+| `achievement` | `scoreValue` |
+| `dxScore` | `secondaryScore` |
+| `fc` (name) | `comboStatus` (code) |
+| `fs` (name) | `syncStatus` (code) |
+| | `clearStatus` (code) |
+
+`scoreValue` keeps its scale. The [overview](/developer/guides/overview) gives
+each game's scale. `secondaryScore` is maimai's DX score and `0` for CHUNITHM.
+`clearStatus` is always `0` for maimai DX.
+
+### Game-specific fields moved into `details`
+
+A field that only one game has lives in a `details` object. Its `game` field
+names the shape, so clients can switch on it.
+
+- **Snapshots**: `courseRankUrl`, `classRankUrl` and `stars` moved into
+  `details`.
+- **Recent plays**: `maxDxScore` moved to `details.maxDxScore`. The fields that
+  `recent:detailed:read` adds moved to `details.playlog`: `venue`, `combo`,
+  `maxCombo`, `syncScore`, `maxSyncScore`, `rating`, `ratingChange` and the
+  `notes` judgments per note kind. `notes.fast` and `notes.late` became
+  `playlog.fast` and `playlog.late`. Counts are integers. `playlog` is `null`
+  without the scope and while the play's detail page has not been fetched. A
+  CHUNITHM playlog has `maxCombo`, `judgments` and `notePercentages`.
+- **Song detail** (`/songs/{id}`): `noteCounts` moved to `details.noteCounts`.
+  CHUNITHM counts `tap`, `hold`, `slide`, `air` and `flick`.
+
+### Catalog estimates
+
+Song entries in `/songs` and `/songs/{id}` carry `levelPreciseEstimated: true`
+when `levelPrecise` is an estimate and `addedVersionEstimated: true` when
+`addedVersion` is inferred. Both are left out when the value is confirmed. The
+catalog sources' raw records are not published.
+
+### Stats
+
+Buckets are keyed by the charts' added version and then by difficulty code
+instead of difficulty name. The `fc` and `fs` maps are replaced by `statuses`,
+which holds one map per status kind the game records, keyed by status code.
+The code for no status is not counted. `totalSongs` is keyed the same way.
+
+```json
+{
+  "stats": {
+    "13": {
+      "3": {
+        "grades": { "SSS+": 12, "SSS": 30 },
+        "statuses": { "comboStatus": { "1": 20, "3": 4 }, "syncStatus": { "4": 2 } },
+        "total": 51
+      }
+    }
+  },
+  "totalSongs": { "13": { "3": 60 } }
+}
+```
+
+Stats, albums and plates are only offered for maimai DX.
+
+### Fetch status
+
+`notFoundScores` entries are `{ songName, difficulty, type }` with codes. They
+replace the difficulty name and `musicType`.
+
+### Region choices per game
+
+Each game keeps its own region choices. `region` in `/api/v1/me` and
+`profileMainRegion` in `/api/v1/me/settings` are the user's choices for the
+game of the site that answers the request: maimai DX on tomomai.lol and
+CHUNITHM on tomochu.app. A choice the game does not enable, or no choice at
+all, answers the game's first enabled region. Both fields are `null` only
+while the game enables no region. The other settings are shared by both games.
+
+### Errors
+
+Errors with a stable cause carry a `code` next to `error`, and that code is
+what a client should branch on. An invalid parameter, an unknown game or a
+region the deployment does not serve answers `400`. A disabled game or an
+endpoint the game does not offer answers `422`. A moved path answers `410`,
+and a refused fetch answers `409`, `412`, `429` or `503`.
+[Errors](/developer/guides/errors) lists every code and how to react to each
+status.

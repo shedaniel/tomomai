@@ -1,14 +1,19 @@
-import { Dashboard } from "@/components/dashboard";
+import { getCatalogSection, getGameRegion, isPlayerAvailable } from "@/lib/games/frontend";
+import { getCurrentGame } from "@/lib/games/current";
+import type { GameSnapshotData, GameSnapshotSummary } from "@/lib/games/player-view";
+import { Dashboard } from "@/components/player/dashboard";
+import { GameUnavailable } from "@/components/player/game-unavailable";
 import { LandingPage } from "@/components/landing-page";
 import { getServerSession } from "@/lib/auth-server";
 import { useFlags } from "@/lib/flags";
 import { getLatestPost } from "@/lib/posts";
+import { pageLogger } from "@/lib/request-logger";
 import { getLocale } from "@/i18n/locale-server";
 import { createServerSideTRPC } from "@/lib/trpc-server";
 import { getSignupRequirements } from "@/lib/signup";
 import { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
-import { buildAlternates, openGraphLocales, localizePath } from "@/lib/seo";
+import { buildPageMetadata } from "@/lib/seo";
 
 // Force dynamic rendering since we need to check authentication
 export const dynamic = 'force-dynamic';
@@ -18,27 +23,21 @@ export async function generateMetadata(): Promise<Metadata> {
     getTranslations("dashboard"),
     getLocale(),
   ]);
-  return {
+  const { brand } = getCurrentGame();
+  return buildPageMetadata({
+    brand,
+    locale,
+    path: "/",
     title: t("title"),
-    description: t("description"),
-    alternates: await buildAlternates("/"),
-    openGraph: {
-      title: t("title"),
-      description: t("description"),
-      url: localizePath("/", locale),
-      siteName: "tomomai ともマイ",
-      type: "website",
-      ...openGraphLocales(locale),
-    },
-    twitter: {
-      card: "summary_large_image",
-      title: t("title"),
-      description: t("description"),
-    },
-  };
+    description: t("description", { game: brand.displayName }),
+    ogType: "website",
+    image: "route",
+  });
 }
 
 export default async function Home() {
+  const game = getCurrentGame();
+  if (!isPlayerAvailable(game)) return <GameUnavailable />;
   const session = await getServerSession();
   // eslint-disable-next-line react-hooks/rules-of-hooks
   let flags = await useFlags();
@@ -63,31 +62,29 @@ export default async function Home() {
     role: "user" as const,
   }));
 
-  const userRegion = userData.region || "intl";
+  const userRegion = getGameRegion(game, userData.region);
 
-  // Then fetch all other data in parallel using the correct region
-  const [snapshotsData] = await Promise.all([
-    trpc.user.getSnapshots({ region: userRegion }).catch(() => ({ snapshots: [] })),
-  ]);
-
-  // Fetch the latest snapshot data if we have snapshots
-  // This is the slowest query (potentially hundreds of songs), so we do it last
-  const latestSnapshotId = snapshotsData.snapshots[0]?.id;
-  const initialSnapshotData = latestSnapshotId
-    ? await trpc.user.getSnapshotData({
-      snapshotId: latestSnapshotId,
-      region: userRegion
-    }).catch(() => undefined)
-    : undefined;
+  // A failed first load opens an empty dashboard, which still offers fetching, instead of an error page.
+  let snapshots: GameSnapshotSummary[] = [];
+  let initialSnapshotData: GameSnapshotData | undefined;
+  try {
+    snapshots = await trpc.user.getSnapshots({ game: game.id, region: userRegion });
+    initialSnapshotData = snapshots[0]
+      ? await trpc.user.getSnapshotData({ game: game.id, region: userRegion, snapshotId: snapshots[0].publicId }) ?? undefined
+      : undefined;
+  } catch (err) {
+    (await pageLogger("home")).error({ err, game: game.id, region: userRegion }, "Dashboard initial snapshot load failed");
+  }
 
   const locale = await getLocale();
-  const latestPost = getLatestPost(locale);
+  const latestPost = getCatalogSection(game, "posts") ? getLatestPost(locale) : null;
 
   return (
     <Dashboard
       user={session.user}
       initialUserData={userData}
-      initialSnapshots={snapshotsData.snapshots}
+      initialRegion={userRegion}
+      initialSnapshots={snapshots}
       initialSnapshotData={initialSnapshotData}
       flags={flags}
       latestPost={latestPost}

@@ -66,7 +66,7 @@ function SchemaNode({ node, depth, name }: { node: unknown; depth: number; name?
     );
   }
 
-  // anyOf / oneOf (e.g. recent play union)
+  // anyOf / oneOf (e.g. per-game details)
   const union = (n.anyOf ?? n.oneOf) as unknown[] | undefined;
   if (union) {
     return (

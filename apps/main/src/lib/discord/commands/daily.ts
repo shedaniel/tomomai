@@ -1,9 +1,6 @@
-import { db } from '@/lib/db';
-import { account, user } from '@/lib/db/schema-pg';
 import { getLogger } from '@/lib/request-logger';
 import { waitUntil } from '@vercel/functions';
-import { and, eq } from 'drizzle-orm';
-import type { Region } from '@/lib/types';
+import type { Region } from '@/lib/games/ids';
 import {
   createDeferredResponse,
   createErrorResponse,
@@ -11,23 +8,11 @@ import {
   DiscordResponse,
 } from '../responses';
 import { resolveRegion } from '../region';
+import { findDiscordUser } from '../user';
 import { generateAndSendDailyPlaysImage } from '../image-utils';
-import { listDailyPlaysAvailableDays } from '@/server/services/daily-plays-data';
+import { listDailyPlaysAvailableDays } from '@/server/services/games/maimai/render/daily-plays-data';
 import { applyStalenessGate } from './staleness';
 import { t } from '../i18n';
-
-async function findDbUserByDiscordId(discordUserId: string) {
-  const [dbUser] = await db
-    .select({ id: user.id, name: user.name, username: user.username, region: user.region })
-    .from(user)
-    .innerJoin(account, eq(account.userId, user.id))
-    .where(and(
-      eq(account.accountId, discordUserId),
-      eq(account.providerId, 'discord')
-    ))
-    .limit(1);
-  return dbUser;
-}
 
 export interface DailyCommandOptions {
   discordUserId: string;
@@ -80,19 +65,20 @@ export async function handleDailyCommand({
 }: DailyCommandOptions): Promise<DiscordResponse> {
   try {
     if (!discordUserId) {
-      return createErrorResponse(t(locale, 'common.error.unableToIdentify'), locale);
+      return createErrorResponse(t(locale, 'common.error.unableToIdentify'));
     }
 
-    const dbUser = await findDbUserByDiscordId(discordUserId);
+    const dbUser = await findDiscordUser(discordUserId);
     if (!dbUser) {
       return createNotRegisteredResponse(locale);
     }
 
     const region = resolveRegion(regionParam, dbUser.region);
+    if (!region) return createErrorResponse(t(locale, 'common.error.noRegion'));
 
     const gate = await applyStalenessGate({
       command: 'daily',
-      dbUser: { id: dbUser.id, name: dbUser.name, username: dbUser.username, region: dbUser.region },
+      dbUser,
       region,
       discordUserId,
       forceFetch,
@@ -119,7 +105,7 @@ export async function handleDailyCommand({
     return deferredResponse;
   } catch (error) {
     getLogger().error({ err: error }, 'Error handling daily command');
-    return createErrorResponse(t(locale, 'daily.errorGeneric'), locale);
+    return createErrorResponse(t(locale, 'daily.errorGeneric'));
   }
 }
 
@@ -146,12 +132,13 @@ export async function handleDailyAutocomplete({
   }
 
   try {
-    const dbUser = await findDbUserByDiscordId(discordUserId);
+    const dbUser = await findDiscordUser(discordUserId);
     if (!dbUser) {
       return { type: 8, data: { choices: [] } };
     }
 
     const region = resolveRegion(regionParam, dbUser.region);
+    if (!region) return { type: 8, data: { choices: [] } };
     const days = await listDailyPlaysAvailableDays(dbUser.id, region);
     const filtered = focusedValue
       ? days.filter(d => d.day.includes(focusedValue))

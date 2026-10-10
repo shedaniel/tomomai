@@ -19,9 +19,11 @@ import {
   useSettingsSave,
 } from "@/components/settings/primitives";
 import { ProfilePrivacyFields } from "@/components/profile-privacy-fields";
-import { getEnabledRegions } from "@/lib/enabled-regions";
+import { useGame } from "@/components/providers/game-provider";
+import { getGameRegion, isGameRegion } from "@/lib/games/frontend";
 import { trpc } from "@/lib/trpc-client";
-import { ProfilePrivacySettings, Region } from "@/lib/types";
+import { ProfilePrivacySettings } from "@/lib/types";
+import type { Region } from "@/lib/games/ids";
 import { Copy, ExternalLink, Globe } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
@@ -44,6 +46,7 @@ export function PrivacySettings() {
 
 function PrivacyFields() {
   const t = useTranslations();
+  const game = useGame();
 
   const { data: userData } = trpc.user.getUserData.useQuery(undefined, {
     refetchOnWindowFocus: false,
@@ -60,7 +63,7 @@ function PrivacyFields() {
   const [selectedPrivacySettings, setSelectedPrivacySettings] = useState<ProfilePrivacySettings | null>(null);
 
   const effectivePublishProfile = selectedPublishProfile ?? profileSettings?.publishProfile ?? false;
-  const effectiveMainRegion = selectedMainRegion ?? profileSettings?.profileMainRegion ?? "intl";
+  const effectiveMainRegion = getGameRegion(game, selectedMainRegion ?? profileSettings?.profileMainRegion);
   const effectivePrivacySettings = selectedPrivacySettings ?? {
     profileShowAllScores: profileSettings?.profileShowAllScores ?? true,
     profileShowScoreDetails: profileSettings?.profileShowScoreDetails ?? true,
@@ -75,7 +78,7 @@ function PrivacyFields() {
   const updateProfilePrivacySettings = trpc.user.updateProfilePrivacySettings.useMutation();
 
   const publishDirty = !!profileSettings && effectivePublishProfile !== profileSettings.publishProfile;
-  const regionDirty = !!profileSettings && effectiveMainRegion !== profileSettings.profileMainRegion;
+  const regionDirty = !!profileSettings && selectedMainRegion !== null && selectedMainRegion !== profileSettings.profileMainRegion;
   const privacyDirty = !!profileSettings && (
     effectivePrivacySettings.profileShowAllScores !== profileSettings.profileShowAllScores ||
     effectivePrivacySettings.profileShowScoreDetails !== profileSettings.profileShowScoreDetails ||
@@ -91,7 +94,7 @@ function PrivacyFields() {
     if (!profileSettings) return;
     const promises: Promise<unknown>[] = [];
     if (publishDirty) promises.push(updatePublishProfile.mutateAsync({ publishProfile: effectivePublishProfile }));
-    if (regionDirty) promises.push(updateProfileMainRegion.mutateAsync({ profileMainRegion: effectiveMainRegion }));
+    if (regionDirty && effectiveMainRegion) promises.push(updateProfileMainRegion.mutateAsync({ profileMainRegion: effectiveMainRegion }));
     if (privacyDirty) promises.push(updateProfilePrivacySettings.mutateAsync(effectivePrivacySettings));
     await Promise.all(promises);
   });
@@ -130,7 +133,7 @@ function PrivacyFields() {
         layout="inline"
         icon={Globe}
         label={t("settings.profile.publishProfile")}
-        description={t("settings.profile.publishDescription")}
+        description={t("settings.profile.publishDescription", { game: game.brand.displayName })}
         htmlFor="publish-profile"
         action={
           <Switch
@@ -145,22 +148,22 @@ function PrivacyFields() {
 
       {effectivePublishProfile && (
         <div className="grid gap-4 pl-4 border-l-2 border-muted">
-          {getEnabledRegions().length > 1 && (
+          {game.regions.length > 1 && (
             <SettingsField
               label={t("settings.profile.mainRegion.label")}
-              description={t("settings.profile.mainRegion.description")}
+              description={t("settings.profile.mainRegion.description", { game: game.brand.displayName })}
               htmlFor="main-region"
             >
               <Select
-                value={effectiveMainRegion}
-                onValueChange={(value: Region) => setSelectedMainRegion(value)}
+                value={effectiveMainRegion ?? undefined}
+                onValueChange={value => { if (isGameRegion(game, value)) setSelectedMainRegion(value); }}
                 disabled={isLoadingSettings}
               >
                 <SelectTrigger id="main-region" className="bg-background">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {getEnabledRegions().map((region) => (
+                  {game.regions.map((region) => (
                     <SelectItem key={region} value={region}>
                       <div className="flex items-center space-x-2">
                         <span className="text-xs font-mono bg-muted px-1 py-0.5 rounded">{region.toUpperCase()}</span>

@@ -134,7 +134,7 @@ function OAuthConsent() {
             {client?.name ?? clientId} wants access
           </CardTitle>
           <CardDescription className="mt-1">
-            This application is requesting permission to access your maimai data.
+            This application is requesting permission to access your account and game data.
             {homepageHref && (
               <a
                 href={homepageHref}

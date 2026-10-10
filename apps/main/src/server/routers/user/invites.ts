@@ -1,4 +1,5 @@
 import { db } from '@/lib/db';
+import { resolveBaseUrl } from '@/lib/base-url';
 import { invites, user } from '@/lib/db/schema-pg';
 import { getLogger } from '@/lib/request-logger';
 import { getSignupRequirements } from '@/lib/signup';
@@ -6,7 +7,7 @@ import { usePasskey, useTwitterOauth } from '@/lib/flags';
 import { protectedProcedure, publicProcedure, router } from '@/lib/trpc';
 import { TRPCError } from '@trpc/server';
 import { nanoid } from 'nanoid';
-import { and, count, eq, isNull, lt, or } from 'drizzle-orm';
+import { and, eq, isNull, lt, or } from 'drizzle-orm';
 import { z } from 'zod';
 
 export const invitesRouter = router({
@@ -212,7 +213,7 @@ export const invitesRouter = router({
 
       return {
         invite: newInvite,
-        inviteUrl: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/accept/${code}`,
+        inviteUrl: `${process.env.NEXT_PUBLIC_APP_URL || resolveBaseUrl()}/accept/${code}`,
       };
     }),
 

@@ -1,0 +1,113 @@
+import "server-only";
+import type { Region } from "@/lib/games/ids";
+import type { PendingChart } from "@/server/services/catalog/ingestion/types";
+import { asCatalogFetcher } from "@/server/services/catalog/ingestion/merge";
+import { otogeDbUrl, parseOtogeDbConstant, parseOtogeDbDate } from "@/server/services/catalog/sources/otoge-db";
+import { codeOf } from "@/lib/games/codes";
+import { CHUNITHM_NOTE_KINDS, type ChunithmNoteKind } from "@/lib/games/chunithm/note-counts";
+import { getGame, type GameSiteRegion } from "@/lib/games/registry";
+import { requireGameSite } from "@/lib/games/sites";
+import { getCurrentVersion, getVersionFromDate } from "@/lib/games/versions";
+
+const SOURCES = {
+  jp: otogeDbUrl("chunithm/data/music-ex.json"),
+  intl: otogeDbUrl("chunithm/data/music-ex-intl.json"),
+} satisfies Record<GameSiteRegion<"chunithm">, string>;
+const ULTIMA = codeOf("chunithm", "difficulty", "ultima");
+const STANDARD_CHART_TYPE = codeOf("chunithm", "chartType", "standard");
+const CHARTS = [
+  { prefix: "lev_bas", difficulty: codeOf("chunithm", "difficulty", "basic") },
+  { prefix: "lev_adv", difficulty: codeOf("chunithm", "difficulty", "advanced") },
+  { prefix: "lev_exp", difficulty: codeOf("chunithm", "difficulty", "expert") },
+  { prefix: "lev_mas", difficulty: codeOf("chunithm", "difficulty", "master") },
+  { prefix: "lev_ult", difficulty: ULTIMA },
+] as const;
+
+type ChartPrefix = typeof CHARTS[number]["prefix"];
+type ChartField = "i" | "designer" | `notes_${ChunithmNoteKind}`;
+type SongsJsonRecord = {
+  id: string;
+  title: string;
+  artist: string;
+  catname: string;
+  image: string;
+  version: string;
+  intl: string;
+  date_added: string;
+  date_updated?: string;
+  date_intl_added?: string;
+  date_intl_updated?: string;
+  we_kanji: string;
+  we_star: string;
+  bpm: string;
+} & Partial<Record<ChartPrefix | `${ChartPrefix}_${ChartField}`, string>>;
+
+function getOtogeDbSource(region: Region) {
+  requireGameSite("chunithm", region);
+  return { url: SOURCES[region], version: getCurrentVersion("chunithm", region) };
+}
+
+function parseCount(value: string | undefined): number | undefined {
+  return value && /^\d+$/.test(value) ? Number(value) : undefined;
+}
+
+function addedVersionAt(region: Region, date: Date, sourceVersion: number | undefined): number {
+  const version = getVersionFromDate("chunithm", region, date, sourceVersion);
+  // INTL rates songs it receives ahead of its own update by their version tag, once that version is out in INTL.
+  const sourceReleased = sourceVersion !== undefined && getGame("chunithm").versions.regional(region, sourceVersion) !== null;
+  return sourceReleased && sourceVersion > version ? sourceVersion : version;
+}
+
+function normalizeOtogeDbCatalog(songs: SongsJsonRecord[], region: Region): PendingChart[] {
+  return songs.flatMap(song => {
+    if (song.we_kanji || song.we_star) return [];
+    if (region === "intl" ? song.intl === "0" : song.intl === "2") return [];
+    const sourceVersion = getGame("chunithm").versions.byName(song.version)?.id;
+    return CHARTS.flatMap(({ prefix, difficulty }): PendingChart[] => {
+      const level = song[prefix];
+      if (!level) return [];
+      const updateDate = region === "jp" ? song.date_updated : song.date_intl_updated;
+      const useUpdateDate = difficulty === ULTIMA && parseOtogeDbDate(updateDate) !== undefined;
+      const addedDateString = useUpdateDate ? updateDate : (region === "jp" ? song.date_added : song.date_intl_added);
+      const addedDate = parseOtogeDbDate(addedDateString);
+      const noteCounts = Object.fromEntries(CHUNITHM_NOTE_KINDS.flatMap(kind => {
+        const count = parseCount(song[`${prefix}_notes_${kind}`]);
+        return count === undefined ? [] : [[kind, count]];
+      }));
+      return [{
+        game: "chunithm",
+        songName: song.title,
+        chartType: STANDARD_CHART_TYPE,
+        difficulty,
+        artist: song.artist,
+        cover: otogeDbUrl(`chunithm/jacket/${song.image}`),
+        genre: song.catname,
+        level,
+        levelPrecise: parseOtogeDbConstant(song[`${prefix}_i`]),
+        addedVersion: addedDate ? addedVersionAt(region, addedDate, sourceVersion) : undefined,
+        bpm: parseCount(song.bpm),
+        noteDesigner: song[`${prefix}_designer`] || undefined,
+        metadata: {
+          ...(difficulty === ULTIMA && !useUpdateDate && { addedVersionEstimated: true }),
+          source: { provider: "otoge-db", id: song.id },
+          ...(Object.keys(noteCounts).length > 0 && { noteCounts }),
+        },
+      }];
+    });
+  });
+}
+
+export const OtogeDbFetcher = asCatalogFetcher(async ctx => {
+  const source = getOtogeDbSource(ctx.region);
+  if (ctx.version !== source.version) {
+    throw new Error(`otoge-db CHUNITHM ${ctx.region} catalog only supports version ${source.version}; requested ${ctx.version}`);
+  }
+  const response = await fetch(source.url, { signal: AbortSignal.timeout(30_000), cache: "no-store" });
+  if (!response.ok) throw new Error(`otoge-db CHUNITHM catalog request failed: HTTP ${response.status}`);
+  const songs: SongsJsonRecord[] = await response.json();
+  const charts = normalizeOtogeDbCatalog(songs, ctx.region);
+  if (!charts.length) throw new Error(`otoge-db returned no regular CHUNITHM charts for ${ctx.region}`);
+  ctx.log.info({ game: "chunithm", region: ctx.region, recordCount: charts.length }, "Collected otoge-db catalog");
+  ctx.notice.addDetail(`${charts.length} regular CHUNITHM charts from ${ctx.region.toUpperCase()} otoge-db; WORLD'S END excluded`);
+  return charts;
+});

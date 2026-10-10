@@ -1,7 +1,7 @@
 import { renderDailyPlaysImage } from '../lib/render-image';
 import type { SongForRender } from '../lib/render-image';
 import { commonSnapshotResources, renderToWebp, type RenderOutcome } from '../render-route';
-import { getCatalog } from '../lib/catalog';
+import { catalogEntry, getCatalog } from '../lib/catalog';
 import { calculateSongRating } from '../lib/rating-calculator';
 import type { Region, SnapshotMetadata } from '../lib/types';
 import type { RenderMessage } from '@tomomai/render-token';
@@ -10,7 +10,7 @@ import type { RenderMessage } from '@tomomai/render-token';
  * daily-plays route: decode token → join catalog → compute ratings → render.
  *
  * The token carries the day's plays (songId + achievement + fc + fs); catalog
- * fields are joined from /api/v1/songs. Per-play rating is computed here
+ * fields are joined from /api/v1/games/maimai/songs. Per-play rating is computed here
  * (deterministic: catalog levelPrecise + achievement + fc + gameVersion).
  */
 export async function renderDailyPlays(
@@ -23,13 +23,12 @@ export async function renderDailyPlays(
   const catalog = await getCatalog(payload.plays.map(chart => chart.songId));
 
   const plays = payload.plays.map((p) => {
-    const entry = catalog.get(p.songId);
-    if (!entry) throw new Error(`Chart not in catalogue: ${p.songId}`);
+    const entry = catalogEntry(catalog, p.songId);
     const song: SongForRender = {
       songName: entry.songName,
       cover: entry.cover,
-      difficulty: entry.difficulty as SongForRender['difficulty'],
-      type: entry.type as SongForRender['type'],
+      difficulty: entry.difficulty,
+      type: entry.type,
       levelPrecise: entry.levelPrecise,
       addedVersion: entry.addedVersion,
       achievement: p.achievement,

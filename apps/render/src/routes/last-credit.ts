@@ -1,9 +1,8 @@
 import { renderLastCreditImage } from '../lib/render-image';
 import { commonSnapshotResources, renderToWebp, type RenderOutcome } from '../render-route';
-import { getCatalog } from '../lib/catalog';
+import { catalogEntry, getCatalog } from '../lib/catalog';
 import type { Region, CreditData, SnapshotMetadata, RecentSongData, RecentSongDetails } from '../lib/types';
 import type { RenderMessage } from '@tomomai/render-token';
-import type { Difficulty } from '@tomomai/render-token';
 
 /** All sprites the last-credit renderer reads (fixed set, not data-dependent). */
 const LAST_CREDIT_SPRITES = [
@@ -28,7 +27,7 @@ const DIFFICULTY_SPRITES = ['basic', 'advanced', 'expert', 'master', 'remaster',
  *
  * The token carries the credit tracks (songId + achievement + fc + fs + dxScore
  * + maxDxScore + optional detail breakdowns); catalog fields are joined from
- * /api/v1/songs. No DB access.
+ * /api/v1/games/maimai/songs. No DB access.
  */
 export async function renderLastCredit(
   message: Extract<RenderMessage, { route: 'last-credit' }>,
@@ -40,8 +39,7 @@ export async function renderLastCredit(
   const catalog = await getCatalog(payload.tracks.map(chart => chart.songId));
 
   const tracks: RecentSongData[] = payload.tracks.map((t, index) => {
-    const entry = catalog.get(t.songId);
-    if (!entry) throw new Error(`Chart not in catalogue: ${t.songId}`);
+    const entry = catalogEntry(catalog, t.songId);
     const details: RecentSongDetails | null = t.details
       ? {
           fastCount: t.details.fastCount,

@@ -2,9 +2,9 @@
 
 The render token carries the **full render payload** (header metadata + score
 data) from `apps/main` to `apps/render`, HMAC-signed with `RENDER_TOKEN_SECRET`.
-This lets render produce images with **zero database access** — all data rides
+This lets render produce images with **zero database access**. All data rides
 the token, and catalog fields (song names, covers, levels) are joined from the
-public `/api/v1/songs` CDN-cached endpoint.
+public, CDN-cached `/api/v1/games/maimai/songs` catalog slices.
 
 A B50 export-image token is ~2KB on the wire — small enough to ride the existing
 302 redirect (`?t=<token>`) without a callback, Redis stash, or POST body.
@@ -45,7 +45,7 @@ token   = base64url(message) || "." || base64url(HMAC-SHA256(secret, message))
 | 1 | `route` | u8 | `0=export-image, 1=last-credit, 2=daily-plays` |
 | 2 | `scale` | u8 | `1` or `2` |
 | 3 | `exp` | u32 | unix seconds; render rejects if `now > exp` (410) |
-| 7 | `gameVersion` | u8 | replaces `metadata.ts` entirely |
+| 7 | `gameVersion` | u8 | maimai version ID, so render needs no version table |
 | 8 | `region` | u8 | `0=intl, 1=jp, 2=cn` |
 | 9 | `rating` | u16 | player DX rating |
 | 11 | `displayName` | L8 | UTF-8 (Japanese fullwidth OK) |
@@ -91,8 +91,8 @@ token   = base64url(message) || "." || base64url(HMAC-SHA256(secret, message))
 | `fs` | u8 | `0=none,1=sync,2=fs,3=fs+,4=fdx,5=fdx+` |
 
 **15 bytes.** The chart's `difficulty`, `type`, `levelPrecise`, `level`,
-`cover`, `songName`, `addedVersion` are **never in the token** — render joins
-them from `/api/v1/songs` by `songId`.
+`cover`, `songName`, `addedVersion` are **never in the token**. Render joins
+them from `/api/v1/games/maimai/songs` by `songId`.
 
 ### TrackRecord (last-credit)
 

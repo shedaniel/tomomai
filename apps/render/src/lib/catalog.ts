@@ -1,5 +1,5 @@
 /**
- * Process-level cache of the song catalogue from /api/v1/songs.
+ * Process-level cache of the song catalogue slices from /api/v1/games/maimai/songs.
  *
  * Replaces all DB access in the render service. The catalogue is public,
  * CDN-cached (s-maxage=3600), and contains every chart's static fields
@@ -11,8 +11,10 @@
  * module supplies the catalog fields the renderer joins by songId.
  */
 
-import { getLogger } from "./request-logger";
+import { fetchCatalogSlice, type CatalogSong } from "@tomomai/games/catalog-client";
+import { parseSongId } from "@tomomai/games/song-ids";
 import { Agent, fetch } from "undici";
+import { getLogger } from "./request-logger";
 
 const CATALOG_URL =
   process.env.CATALOG_URL ??
@@ -27,45 +29,20 @@ const sharedAgent = new Agent({
   connections: 16,
 });
 
-export interface CatalogEntry {
-  songId: string;
-  songName: string;
-  artist: string;
-  cover: string;
-  type: string;
-  genre: string;
-  difficulty: string;
-  level: string;
-  levelPrecise: number;
-  region: string;
-  gameVersion: number;
-  addedVersion: number;
-  bpm: number | null;
-  noteDesigner: string | null;
-}
+type CatalogEntry = CatalogSong<"maimai">;
+type Catalog = Map<string, CatalogEntry>;
 
-const cache = new Map<string, { map: Map<string, CatalogEntry>; fetchedAt: number }>();
-const inflight = new Map<string, Promise<Map<string, CatalogEntry>>>();
+const cache = new Map<string, { map: Catalog; fetchedAt: number }>();
+const inflight = new Map<string, Promise<Catalog>>();
 
-async function fetchCatalog(region: string, gameVersion: number): Promise<Map<string, CatalogEntry>> {
+async function fetchCatalog(region: string, gameVersion: number): Promise<Catalog> {
   const log = getLogger();
-  const url = `${CATALOG_URL.replace(/\/+$/, "")}/api/v1/songs?region=${region}&gameVersion=${gameVersion}`;
-  log.info({ url }, "Fetching song catalogue");
   const startTime = Date.now();
-
-  const response = await fetch(url, {
-    // @ts-ignore - dispatcher exists on undici but not in lib.dom
-    dispatcher: sharedAgent,
-    signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+  const songs = await fetchCatalogSlice(CATALOG_URL, "maimai", region, gameVersion, url => {
+    log.info({ url }, "Fetching song catalogue");
+    return fetch(url, { dispatcher: sharedAgent, signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) });
   });
-  if (!response.ok) {
-    throw new Error(`Catalogue fetch failed: ${response.status} ${response.statusText}`);
-  }
-  const body = (await response.json()) as { songs: CatalogEntry[] };
-  const map = new Map<string, CatalogEntry>();
-  for (const song of body.songs) {
-    map.set(song.songId, song);
-  }
+  const map: Catalog = new Map(songs.map(song => [song.songId, song]));
   log.info(
     { count: map.size, durationMs: Date.now() - startTime },
     "Catalogue loaded",
@@ -73,8 +50,8 @@ async function fetchCatalog(region: string, gameVersion: number): Promise<Map<st
   return map;
 }
 
-async function getSlice(region: string, gameVersion: number): Promise<Map<string, CatalogEntry>> {
-  const key = `${region}:${gameVersion}`;
+async function getSlice(region: string, gameVersion: number): Promise<Catalog> {
+  const key = `maimai:${region}:${gameVersion}`;
   const cached = cache.get(key);
   if (cached && Date.now() - cached.fetchedAt < CATALOG_TTL_MS) return cached.map;
   const pending = inflight.get(key);
@@ -89,27 +66,24 @@ async function getSlice(region: string, gameVersion: number): Promise<Map<string
   return request;
 }
 
-export async function getCatalog(songIds: readonly string[]): Promise<Map<string, CatalogEntry>> {
+export async function getCatalog(songIds: readonly string[]): Promise<Catalog> {
   const slices = new Map<string, { region: string; gameVersion: number }>();
   for (const id of songIds) {
-    const match = /^[A-Za-z0-9_-]{8}:([jic])(0|-?[1-9]\d*)$/.exec(id);
-    if (!match) throw new Error(`Invalid song instance id: ${id}`);
-    const region = { j: "jp", i: "intl", c: "cn" }[match[1]]!;
-    const gameVersion = Number(match[2]);
-    if (!Number.isInteger(gameVersion) || gameVersion < -32768 || gameVersion > 32767) {
-      throw new Error(`Invalid song version: ${id}`);
-    }
-    slices.set(`${region}:${gameVersion}`, { region, gameVersion });
+    const parsed = parseSongId(id);
+    if (parsed?.kind !== "instance") throw new Error(`Invalid song instance id: ${id}`);
+    slices.set(`${parsed.region}:${parsed.gameVersion}`, parsed);
   }
-  const result = new Map<string, CatalogEntry>();
+  const result: Catalog = new Map();
   const maps = await Promise.all([...slices.values()].map(({ region, gameVersion }) => getSlice(region, gameVersion)));
   for (const map of maps) for (const [id, entry] of map) result.set(id, entry);
   return result;
 }
 
-export async function getCatalogEntry(songId: string): Promise<CatalogEntry> {
-  const catalog = await getCatalog([songId]);
+/** The catalogue entry of a chart the token references. Every renderer draws its cover. */
+export function catalogEntry(catalog: Catalog, songId: string): CatalogEntry & { cover: string } {
   const entry = catalog.get(songId);
   if (!entry) throw new Error(`Chart not in catalogue: ${songId}`);
-  return entry;
+  const { cover } = entry;
+  if (cover === null) throw new Error(`Chart has no cover: ${songId}`);
+  return { ...entry, cover };
 }

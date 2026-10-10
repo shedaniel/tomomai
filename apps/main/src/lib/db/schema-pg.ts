@@ -1,34 +1,24 @@
-import { pgTable, text, integer, smallint, bigint, bigserial, boolean, timestamp, unique, uniqueIndex, index, pgEnum, jsonb, varchar, check, uuid, point, primaryKey } from "drizzle-orm/pg-core";
+import { pgTable, text, integer, smallint, bigint, boolean, timestamp, unique, uniqueIndex, index, pgEnum, jsonb, varchar, check, uuid, point, primaryKey, foreignKey } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 import {
   LANGUAGE_ENUM,
-  REGION_ENUM,
-  DIFFICULTY_ENUM,
-  LEVEL_ENUM,
-  CHART_TYPE_ENUM,
-  FC_ENUM,
-  FS_ENUM,
   FETCH_STATUS_ENUM,
   EVENT_TYPE_ENUM,
   EVENT_STATE_ENUM,
   STORE_STATUS_ENUM,
-  TITLE_TYPE_ENUM,
 } from "./types";
+import { CANONICAL_GAME_IDS, REGIONS } from "../games/ids";
+import type { CatalogMetadata } from "../catalog/chart-metadata";
 
 // PostgreSQL enum types
 export const languageEnum = pgEnum("language", LANGUAGE_ENUM);
-export const regionEnum = pgEnum("region", REGION_ENUM);
+export const gameEnum = pgEnum("game", CANONICAL_GAME_IDS);
+export const regionEnum = pgEnum("region", REGIONS);
 export const roleEnum = pgEnum("role", ["user", "admin"]);
-export const difficultyEnum = pgEnum("difficulty", DIFFICULTY_ENUM);
-export const levelEnum = pgEnum("level", LEVEL_ENUM);
-export const chartTypeEnum = pgEnum("chart_type", CHART_TYPE_ENUM);
-export const fcEnum = pgEnum("fc", FC_ENUM);
-export const fsEnum = pgEnum("fs", FS_ENUM);
 export const fetchStatusEnum = pgEnum("fetch_status", FETCH_STATUS_ENUM);
 export const eventTypeEnum = pgEnum("event_type", EVENT_TYPE_ENUM);
 export const eventStateEnum = pgEnum("event_state", EVENT_STATE_ENUM);
 export const storeStatusEnum = pgEnum("store_status", STORE_STATUS_ENUM);
-export const titleTypeEnum = pgEnum("title_type", TITLE_TYPE_ENUM);
 export const legalDocTypeEnum = pgEnum("legal_doc_type", ["tos", "privacy"]);
 export const profileReportReasonEnum = pgEnum("profile_report_reason", [
   "harassment",
@@ -56,10 +46,8 @@ export const user = pgTable("user", {
   banned: boolean("banned").notNull().default(false),
   banReason: text("banReason"),
   banExpires: timestamp("banExpires", { precision: 0 }),
-  region: regionEnum("region"), // nullable, null = intl (default)
   // Profile publishing settings
   publishProfile: boolean("publishProfile").notNull().default(false),
-  profileMainRegion: regionEnum("profileMainRegion").notNull().default("intl"),
   profileShowAllScores: boolean("profileShowAllScores").notNull().default(true),
   profileShowScoreDetails: boolean("profileShowScoreDetails").notNull().default(true),
   profileShowPlates: boolean("profileShowPlates").notNull().default(true),
@@ -164,22 +152,34 @@ export const profileReports = pgTable("profile_reports", {
     .where(sql`${table.status} = 'pending'`),
 ]);
 
-// Maimai-specific tables
 export const userTokens = pgTable("user_tokens", {
   id: uuid("id").primaryKey().defaultRandom(),
   userId: text("userId").notNull().references(() => user.id, { onDelete: "cascade" }),
+  game: gameEnum("game").notNull(),
   region: regionEnum("region").notNull(),
   token: text("token").notNull(), // Encrypted
   createdAt: timestamp("createdAt", { precision: 0 }).notNull(),
   updatedAt: timestamp("updatedAt", { precision: 0 }).notNull(),
 }, (table) => [
-  unique().on(table.userId, table.region),
+  unique("user_tokens_userid_game_region_unique").on(table.userId, table.game, table.region),
+]);
+
+// A null column falls back to the user's account-wide column of the same name.
+export const userGamePreferences = pgTable("user_game_preferences", {
+  userId: text("userId").notNull().references(() => user.id, { onDelete: "cascade" }),
+  game: gameEnum("game").notNull(),
+  region: regionEnum("region"),
+  profileMainRegion: regionEnum("profileMainRegion"),
+  updatedAt: timestamp("updatedAt", { precision: 0 }).notNull().defaultNow(),
+}, (table) => [
+  primaryKey({ columns: [table.userId, table.game] }),
 ]);
 
 export const fetchSessions = pgTable("fetch_sessions", {
   id: bigint("id", { mode: "bigint" }).primaryKey().generatedAlwaysAsIdentity(), // Internal auto-increment ID
   publicId: varchar("publicId", { length: 21 }).notNull().unique(), // Public-facing nanoid
   userId: text("userId").notNull().references(() => user.id, { onDelete: "cascade" }),
+  game: gameEnum("game").notNull(),
   region: regionEnum("region").notNull(),
   status: fetchStatusEnum("status").notNull(),
   startedAt: timestamp("startedAt", { precision: 0 }).notNull(),
@@ -189,56 +189,62 @@ export const fetchSessions = pgTable("fetch_sessions", {
   extraData: jsonb("extraData"),
 }, (table) => [
   index("fetch_sessions_publicid_idx").on(table.publicId),
-  index("fetch_sessions_userid_region_startedat_idx").on(table.userId, table.region, table.startedAt),
+  index("fetch_sessions_userid_game_region_startedat_idx").on(table.userId, table.game, table.region, table.startedAt),
 ]);
 
 export const userSnapshots = pgTable("user_snapshots", {
   id: integer("id").primaryKey().generatedAlwaysAsIdentity(), // Internal auto-increment ID for efficient indexing
   publicId: varchar("publicId", { length: 21 }).notNull().unique(), // Public-facing nanoid
   userId: text("userId").notNull().references(() => user.id, { onDelete: "cascade" }),
+  game: gameEnum("game").notNull(),
   region: regionEnum("region").notNull(),
   fetchedAt: timestamp("fetchedAt", { precision: 0 }).notNull(),
   gameVersion: smallint("gameVersion").notNull(),
   rating: smallint("rating").notNull(), // 0-20000
-  courseRankUrl: text("courseRankUrl").notNull(),
-  classRankUrl: text("classRankUrl").notNull(),
-  stars: smallint("stars").notNull(),
+  courseRankUrl: text("courseRankUrl"),
+  classRankUrl: text("classRankUrl"),
+  stars: smallint("stars"),
   versionPlayCount: integer("versionPlayCount").notNull(),
   totalPlayCount: integer("totalPlayCount").notNull(),
   iconUrl: text("iconUrl").notNull(),
   displayName: varchar("displayName", { length: 16 }).notNull(),
   title: text("title").notNull(),
-  titleType: titleTypeEnum("titleType").notNull().default("normal"),
+  titleType: smallint("titleType").notNull().default(0),
 }, (table) => [
   index("user_snapshots_publicid_idx").on(table.publicId),
-  index("user_snapshots_userid_region_idx").on(table.userId, table.region),
-  index("user_snapshots_userid_region_fetchedat_idx").on(table.userId, table.region, table.fetchedAt),
+  unique("user_snapshots_id_game_unique").on(table.id, table.game),
+  index("user_snapshots_userid_game_region_fetchedat_idx").on(table.userId, table.game, table.region, table.fetchedAt),
+  check("user_snapshots_maimai_fields", sql`${table.game} <> 'maimai' OR (${table.courseRankUrl} IS NOT NULL AND ${table.classRankUrl} IS NOT NULL AND ${table.stars} IS NOT NULL)`),
 ]);
 
 export const parentSong = pgTable("parent_song", {
   id: bigint("id", { mode: "bigint" }).primaryKey().generatedAlwaysAsIdentity(),
   publicId: varchar("publicId", { length: 8 }).notNull().unique(),
+  game: gameEnum("game").notNull(),
   songName: text("songName").notNull(),
   artist: text("artist").notNull(),
   genre: text("genre").notNull(),
   cover: text("cover").notNull(),
   bpm: smallint("bpm"),
-  type: chartTypeEnum("type").notNull(),
-  difficulty: difficultyEnum("difficulty").notNull(),
+  type: smallint("type").notNull(),
+  difficulty: smallint("difficulty").notNull(),
   disambiguator: smallint("disambiguator").notNull().default(0),
 }, (table) => [
-  unique("parent_song_name_type_difficulty_disambiguator_unique").on(table.songName, table.type, table.difficulty, table.disambiguator),
-  index("parent_song_songname_type_idx").on(table.songName, table.type),
+  unique("parent_song_id_game_unique").on(table.id, table.game),
+  unique("parent_song_game_name_type_difficulty_disambiguator_unique").on(table.game, table.songName, table.type, table.difficulty, table.disambiguator),
+  index("parent_song_game_songname_type_idx").on(table.game, table.songName, table.type),
 ]);
 
 export const songs = pgTable("songs", {
   id: bigint("id", { mode: "bigint" }).primaryKey().generatedAlwaysAsIdentity(), // Internal auto-increment ID
-  parentId: bigint("parentId", { mode: "bigint" }).notNull().references(() => parentSong.id, { onDelete: "restrict" }),
-  level: levelEnum("level").notNull(),
+  parentId: bigint("parentId", { mode: "bigint" }).notNull(),
+  game: gameEnum("game").notNull(),
+  metadata: jsonb("metadata").$type<CatalogMetadata>(),
+  level: text("level").notNull(),
   levelPrecise: smallint("levelPrecise").notNull(), // stored as 10x, e.g., 16.5 = 165
   region: regionEnum("region").notNull(),
-  gameVersion: smallint("gameVersion").notNull(), // ref @metadata.ts
-  addedVersion: smallint("addedVersion").notNull(), // ref @metadata.ts
+  gameVersion: smallint("gameVersion").notNull(),
+  addedVersion: smallint("addedVersion").notNull(),
   noteDesigner: text("noteDesigner"),
   tapCount: smallint("tapCount"),
   holdCount: smallint("holdCount"),
@@ -246,41 +252,74 @@ export const songs = pgTable("songs", {
   touchCount: smallint("touchCount"),
   breakCount: smallint("breakCount"),
 }, (table) => [
+  unique("songs_id_game_unique").on(table.id, table.game),
+  foreignKey({ columns: [table.parentId, table.game], foreignColumns: [parentSong.id, parentSong.game], name: "songs_parent_game_fk" }).onDelete("restrict"),
   unique("songs_parent_region_version_unique").on(table.parentId, table.region, table.gameVersion),
   index("songs_parentid_idx").on(table.parentId),
-  index("songs_region_gameversion_idx").on(table.region, table.gameVersion),
+  index("songs_game_region_gameversion_idx").on(table.game, table.region, table.gameVersion),
 ]);
 
 export const scoreData = pgTable("score_data", {
   id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
-  songId: bigint("songId", { mode: "bigint" }).notNull().references(() => songs.id, { onDelete: "cascade" }),
-  achievement: integer("achievement").notNull(),
-  dxScore: smallint("dxScore").notNull(),
-  fc: fcEnum("fc").notNull(),
-  fs: fsEnum("fs").notNull(),
+  game: gameEnum("game").notNull(),
+  songId: bigint("songId", { mode: "bigint" }).notNull(),
+  scoreValue: integer("scoreValue").notNull(),
+  secondaryScore: smallint("secondaryScore").notNull(),
+  comboStatus: smallint("comboStatus").notNull(),
+  syncStatus: smallint("syncStatus").notNull(),
+  clearStatus: smallint("clearStatus").notNull().default(0),
 }, (table) => [
-  unique("score_data_songid_achievement_dxscore_fc_fs_unique").on(table.songId, table.achievement, table.dxScore, table.fc, table.fs),
-  index("score_data_songid_idx").on(table.songId),
+  unique("score_data_id_game_unique").on(table.id, table.game),
+  unique("score_data_songid_score_combo_sync_clear_unique").on(table.songId, table.scoreValue, table.secondaryScore, table.comboStatus, table.syncStatus, table.clearStatus),
+  foreignKey({
+    columns: [table.songId, table.game],
+    foreignColumns: [songs.id, songs.game],
+    name: "score_data_song_game_fk",
+  }).onDelete("cascade"),
 ]);
 
 export const snapshotScores = pgTable("snapshot_scores", {
-  snapshotId: integer("snapshotId").notNull().references(() => userSnapshots.id, { onDelete: "cascade" }),
-  scoreId: integer("scoreId").notNull().references(() => scoreData.id, { onDelete: "cascade" }),
+  game: gameEnum("game").notNull(),
+  snapshotId: integer("snapshotId").notNull(),
+  scoreId: integer("scoreId").notNull(),
 }, (table) => [
   primaryKey({ columns: [table.snapshotId, table.scoreId] }),
+  foreignKey({
+    columns: [table.snapshotId, table.game],
+    foreignColumns: [userSnapshots.id, userSnapshots.game],
+    name: "snapshot_scores_snapshot_game_fk",
+  }).onDelete("cascade"),
+  foreignKey({
+    columns: [table.scoreId, table.game],
+    foreignColumns: [scoreData.id, scoreData.game],
+    name: "snapshot_scores_score_game_fk",
+  }).onDelete("cascade"),
 ]);
 
-export const snapshotB50 = pgTable("snapshot_b50", {
-  snapshotId: integer("snapshotId").notNull().references(() => userSnapshots.id, { onDelete: "cascade" }),
+export const snapshotRankings = pgTable("snapshot_rankings", {
+  snapshotId: integer("snapshotId").notNull(),
+  game: gameEnum("game").notNull(),
+  bucket: smallint("bucket").notNull(),
   rank: smallint("rank").notNull(),
-  scoreId: integer("scoreId").notNull().references(() => scoreData.id, { onDelete: "cascade" }),
+  scoreId: integer("scoreId").notNull(),
 }, (table) => [
-  primaryKey({ columns: [table.snapshotId, table.rank] }),
+  primaryKey({ columns: [table.snapshotId, table.bucket, table.rank] }),
+  foreignKey({
+    columns: [table.snapshotId, table.game],
+    foreignColumns: [userSnapshots.id, userSnapshots.game],
+    name: "snapshot_rankings_snapshot_game_fk",
+  }).onDelete("cascade"),
+  foreignKey({
+    columns: [table.scoreId, table.game],
+    foreignColumns: [scoreData.id, scoreData.game],
+    name: "snapshot_rankings_score_game_fk",
+  }).onDelete("cascade"),
 ]);
 
 export const userEvents = pgTable("user_events", {
   id: bigint("id", { mode: "bigint" }).primaryKey().generatedAlwaysAsIdentity(), // Internal only, never exposed
-  snapshotId: integer("snapshotId").notNull().references(() => userSnapshots.id, { onDelete: "cascade" }),
+  snapshotId: integer("snapshotId").notNull(),
+  game: gameEnum("game").notNull(),
   eventType: eventTypeEnum("eventType").notNull(), // area or eventArea
   name: text("name").notNull(),
   currentDistance: integer("currentDistance").notNull(), // 4 bytes
@@ -290,32 +329,44 @@ export const userEvents = pgTable("user_events", {
   eventPeriodStart: timestamp("eventPeriodStart", { precision: 0 }), // nullable for area events
   eventPeriodEnd: timestamp("eventPeriodEnd", { precision: 0 }), // nullable for area events
 }, (table) => [
-  index("user_events_snapshotid_idx").on(table.snapshotId),
+  foreignKey({
+    columns: [table.snapshotId, table.game],
+    foreignColumns: [userSnapshots.id, userSnapshots.game],
+    name: "user_events_snapshot_game_fk",
+  }).onDelete("cascade"),
+  index("user_events_snapshotid_game_idx").on(table.snapshotId, table.game),
 ]);
 
 export const userRecentSongs = pgTable("user_recent_songs", {
   id: bigint("id", { mode: "bigint" }).primaryKey().generatedAlwaysAsIdentity(), // Internal only, never exposed
   userId: text("userId").notNull().references(() => user.id, { onDelete: "cascade" }),
-  songId: bigint("songId", { mode: "bigint" }).notNull().references(() => songs.id, { onDelete: "cascade" }),
+  game: gameEnum("game").notNull(),
+  metadata: jsonb("metadata").$type<Record<string, unknown>>(),
+  songId: bigint("songId", { mode: "bigint" }).notNull(),
   playedAt: timestamp("playedAt", { precision: 0 }).notNull(),
-  archievement: integer("archievement").notNull(), // stored as 10000x, e.g., 99.1234% = 991234 (max 1010000)
-  dxScore: smallint("dxScore").notNull(),
-  maxDxScore: smallint("maxDxScore").notNull(),
-  fc: fcEnum("fc").notNull(),
-  fs: fsEnum("fs").notNull(),
+  scoreValue: integer("scoreValue").notNull(),
+  secondaryScore: smallint("secondaryScore").notNull(),
+  maxSecondaryScore: smallint("maxSecondaryScore"),
+  comboStatus: smallint("comboStatus").notNull(),
+  syncStatus: smallint("syncStatus").notNull(),
+  clearStatus: smallint("clearStatus").notNull().default(0),
   track: smallint("track").notNull(),
 }, (table) => [
-  // Unique constraint to prevent duplicate entries at DB level
-  unique("user_recent_songs_userid_songid_playedat_unique").on(table.userId, table.songId, table.playedAt),
+  // Prevents duplicate plays, and also serves a user's play history of one song
+  unique("user_recent_songs_userid_game_songid_playedat_unique").on(table.userId, table.game, table.songId, table.playedAt),
   // Primary query pattern: get recent plays for a user (ordered by playedAt DESC)
-  index("user_recent_songs_userid_playedat_idx").on(table.userId, table.playedAt.desc()),
-  // For duplicate checking and getting play history of a specific song for a user
-  index("user_recent_songs_userid_songid_idx").on(table.userId, table.songId),
+  index("user_recent_songs_userid_game_playedat_idx").on(table.userId, table.game, table.playedAt.desc()),
   // For queries related to specific songs across all users (analytics/admin)
-  index("user_recent_songs_songid_idx").on(table.songId),
+  index("user_recent_songs_songid_game_idx").on(table.songId, table.game),
+  foreignKey({
+    columns: [table.songId, table.game],
+    foreignColumns: [songs.id, songs.game],
+    name: "user_recent_songs_song_game_fk",
+  }).onDelete("cascade"),
+  check("user_recent_songs_maimai_fields", sql`${table.game} <> 'maimai' OR ${table.maxSecondaryScore} IS NOT NULL`),
 ]);
 
-export const userRecentSongsDetailed = pgTable("user_recent_songs_detailed", {
+export const maimaiRecentSongDetails = pgTable("user_recent_songs_detailed", {
   recentSongId: bigint("recentSongId", { mode: "bigint" }).primaryKey().references(() => userRecentSongs.id, { onDelete: "cascade" }),
   fastCount: smallint("fastCount").notNull(),
   lateCount: smallint("lateCount").notNull(),
@@ -351,8 +402,7 @@ export const userRecentSongsDetailed = pgTable("user_recent_songs_detailed", {
   venue: text("venue"),
   rating: smallint("rating").notNull(),
   ratingChange: smallint("ratingChange").notNull(),
-}, (table) => [
-]);
+});
 
 export const stores = pgTable("stores", {
   id: bigint("id", { mode: "bigint" }).primaryKey().generatedAlwaysAsIdentity(),
@@ -453,15 +503,21 @@ export const tourEventSteps = pgTable("tour_event_steps", {
 export const userAlbums = pgTable("user_albums", {
   id: bigint("id", { mode: "bigint" }).primaryKey().generatedAlwaysAsIdentity(),
   userId: text("userId").notNull().references(() => user.id, { onDelete: "cascade" }),
-  songId: bigint("songId", { mode: "bigint" }).notNull().references(() => songs.id, { onDelete: "cascade" }),
+  game: gameEnum("game").notNull(),
+  songId: bigint("songId", { mode: "bigint" }).notNull(),
   takenAt: timestamp("takenAt", { precision: 0 }).notNull(),
   venue: text("venue"),
   imageKey: text("imageKey").notNull(),
   imageSize: integer("imageSize").notNull(),
   createdAt: timestamp("createdAt", { precision: 0 }).notNull().defaultNow(),
 }, (table) => [
-  index("user_albums_userid_takenat_idx").on(table.userId, table.takenAt.desc()),
-  index("user_albums_songid_idx").on(table.songId),
+  index("user_albums_userid_game_takenat_idx").on(table.userId, table.game, table.takenAt.desc()),
+  index("user_albums_songid_game_idx").on(table.songId, table.game),
+  foreignKey({
+    columns: [table.songId, table.game],
+    foreignColumns: [songs.id, songs.game],
+    name: "user_albums_song_game_fk",
+  }).onDelete("cascade"),
 ]);
 
 // Better Auth JWT plugin table

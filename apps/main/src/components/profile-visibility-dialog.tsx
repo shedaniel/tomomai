@@ -1,9 +1,11 @@
 "use client";
 
 import { ProfilePrivacyFields } from "@/components/profile-privacy-fields";
+import { useGame } from "@/components/providers/game-provider";
 import { SettingsField } from "@/components/settings/primitives";
-import { getEnabledRegions } from "@/lib/enabled-regions";
-import type { ProfilePrivacySettings, ProfileSettings, Region } from "@/lib/types";
+import { getGameRegion, isGameRegion } from "@/lib/games/frontend";
+import type { ProfilePrivacySettings, ProfileSettings } from "@/lib/types";
+import type { Region } from "@/lib/games/ids";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -36,7 +38,7 @@ import type { Dispatch, SetStateAction } from "react";
 
 export type VisibilityDraft = {
   publishProfile: boolean;
-  profileMainRegion: Region;
+  profileMainRegion: Region | null;
   privacySettings: ProfilePrivacySettings;
 };
 
@@ -68,6 +70,7 @@ export function ProfileVisibilityDialog({
   controller,
 }: ProfileVisibilityDialogProps) {
   const t = useTranslations();
+  const game = useGame();
 
   return (
     <ResponsiveDialog open={controller.isOpen} onOpenChange={controller.handleOpenChange}>
@@ -90,7 +93,7 @@ export function ProfileVisibilityDialog({
               layout="inline"
               htmlFor="inline-publish-profile"
               label={t("settings.profile.publishProfile")}
-              description={t("settings.profile.publishDescription")}
+              description={t("settings.profile.publishDescription", { game: game.brand.displayName })}
               action={
                 <Switch
                   id="inline-publish-profile"
@@ -105,26 +108,27 @@ export function ProfileVisibilityDialog({
               }
             />
 
-            {getEnabledRegions().length > 1 ? (
+            {game.regions.length > 1 ? (
               <SettingsField
                 label={t("settings.profile.mainRegion.label")}
-                description={t("settings.profile.mainRegion.description")}
+                description={t("settings.profile.mainRegion.description", { game: game.brand.displayName })}
                 htmlFor="inline-profile-main-region"
               >
                 <Select
-                  value={controller.draft.profileMainRegion}
-                  onValueChange={(value: Region) =>
+                  value={getGameRegion(game, controller.draft.profileMainRegion) ?? undefined}
+                  onValueChange={(value) => {
+                    if (!isGameRegion(game, value)) return;
                     controller.setDraft((current) =>
                       current ? { ...current, profileMainRegion: value } : current,
-                    )
-                  }
+                    );
+                  }}
                   disabled={controller.isSaving}
                 >
                   <SelectTrigger id="inline-profile-main-region" className="bg-background">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {getEnabledRegions().map((enabledRegion) => (
+                    {game.regions.map((enabledRegion) => (
                       <SelectItem key={enabledRegion} value={enabledRegion}>
                         <div className="flex items-center gap-2">
                           <span className="rounded bg-muted px-1 py-0.5 font-mono text-xs">

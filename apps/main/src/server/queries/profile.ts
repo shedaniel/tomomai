@@ -1,15 +1,16 @@
 import { db } from "@/lib/db";
 import { user } from "@/lib/db/schema-pg";
 import { eq } from "drizzle-orm";
-import { isCNExclusive } from "@/lib/enabled-regions";
-import type { Region } from "@/lib/types";
+import type { CanonicalGameId } from "@/lib/games/ids";
+import { gamePreference } from "./game-preferences";
 
-export async function fetchProfileSettings(userId: string) {
-  const result = await db
+/** The profile main region is the one chosen for `game`. The other settings are account-wide. */
+export async function fetchProfileSettings(game: CanonicalGameId, userId: string) {
+  const [settings] = await db
     .select({
       publishProfile: user.publishProfile,
       profileDescription: user.profileDescription,
-      profileMainRegion: user.profileMainRegion,
+      profileMainRegion: gamePreference(game, "profileMainRegion"),
       profileShowAllScores: user.profileShowAllScores,
       profileShowScoreDetails: user.profileShowScoreDetails,
       profileShowPlates: user.profileShowPlates,
@@ -22,28 +23,22 @@ export async function fetchProfileSettings(userId: string) {
     .where(eq(user.id, userId))
     .limit(1);
 
-  if (result.length === 0) return null;
-  return result[0];
+  return settings ?? null;
 }
 
-export async function fetchUserData(userId: string) {
-  const result = await db
+/** The account with its dashboard region preference for `game`, null when none is set. */
+export async function fetchUserData(game: CanonicalGameId, userId: string) {
+  const [userData] = await db
     .select({
       username: user.username,
+      email: user.email,
       publishProfile: user.publishProfile,
       role: user.role,
-      ...(!isCNExclusive() ? { region: user.region } : {}),
+      region: gamePreference(game, "region"),
     })
     .from(user)
     .where(eq(user.id, userId))
     .limit(1);
 
-  if (result.length === 0) return null;
-
-  return {
-    username: result[0].username,
-    publishProfile: result[0].publishProfile,
-    region: (!isCNExclusive() ? result[0].region! : "cn") as Region,
-    role: result[0].role,
-  };
+  return userData ?? null;
 }

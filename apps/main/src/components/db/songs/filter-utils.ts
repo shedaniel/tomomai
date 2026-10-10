@@ -1,8 +1,10 @@
 import { FilterCategory } from "@/components/filter-panel";
-import { getVersionInfo } from "@/lib/metadata";
+import { getVersion } from "@/lib/games/versions";
+import type { CanonicalGameId } from "@/lib/games/ids";
+import { codeOf } from "@/lib/games/codes";
+import { getGameChartType } from "@/lib/games/presentation";
 import { Disc3, Folder, Calendar, ArrowUpDown, BarChart, Pencil } from "lucide-react";
 import { GroupMode, UniqueSong, UniqueSongDifficulty, UniqueSongFilter } from "./types";
-import { LEVEL_ENUM } from "@/lib/db/types";
 
 export type UniqueSongFlattened = Omit<UniqueSong, "difficulties"> & {
   difficulties: (UniqueSongDifficulty & { noteDesignerNumber: number })[];
@@ -22,8 +24,9 @@ export function hashString(str: string | null): number {
 
 // Create filter categories for unique songs
 export function createUniqueSongFilterCategories(
+  game: CanonicalGameId,
   songs: UniqueSong[],
-  t?: (key: string) => string
+  t?: (key: string) => string,
 ): FilterCategory[] {
   // Helper to get translation or fallback
   const getLabel = (key: string, fallback: string) => t?.(key) ?? fallback ?? key;
@@ -45,7 +48,7 @@ export function createUniqueSongFilterCategories(
   }
   const noteDesigners = Object.entries(noteDesignersToAmount).sort((a, b) => b[1] - a[1]).map(([designer]) => designer);
 
-  return [
+  const categories: FilterCategory[] = [
     {
       type: "sort",
       label: getLabel("sort", "Sort"),
@@ -62,16 +65,13 @@ export function createUniqueSongFilterCategories(
       type: "level",
       label: getLabel("level", "Level"),
       icon: BarChart,
-      options: LEVEL_ENUM.map((l, i) => ({ value: l, label: l, i })).toSorted((a, b) => b.i - a.i),
+      options: [...new Set(songs.flatMap(song => song.difficulties.map(chart => chart.level)))].sort((a, b) => Number.parseFloat(b) - Number.parseFloat(a) || b.localeCompare(a)).map(level => ({ value: level, label: level })),
     },
     {
       type: "type",
       label: getLabel("type", "Type"),
       icon: Disc3,
-      options: [
-        { value: "std", label: getLabel("std", "Standard") },
-        { value: "dx", label: getLabel("dx", "DX") },
-      ],
+      options: [...new Set(songs.map(song => song.type))].map(type => ({ value: type, label: getGameChartType(game, codeOf(game, "chartType", type)).label })),
     },
     {
       type: "genre",
@@ -83,10 +83,7 @@ export function createUniqueSongFilterCategories(
       type: "addedVersion",
       label: getLabel("addedVersion", "Added Version"),
       icon: Calendar,
-      options: addedVersions.map(v => {
-        const versionInfo = getVersionInfo(v);
-        return { value: String(v), label: versionInfo?.name ?? `v${v}` };
-      }),
+      options: addedVersions.map(v => ({ value: String(v), label: getVersion(game, v)?.name ?? `v${v}` })),
     },
     {
       type: "noteDesigner",
@@ -95,6 +92,7 @@ export function createUniqueSongFilterCategories(
       options: noteDesigners.map(d => ({ value: hashString(d).toString(), label: d })),
     },
   ];
+  return categories.filter(category => category.type !== "type" || category.options.length > 1);
 }
 
 // Apply filters to unique songs
@@ -110,7 +108,7 @@ export function applyUniqueSongFilters(allSongs: UniqueSong[], flattenedSongs: U
   const typeFilters = filters.filter(f => f.type === "type");
   const genreFilters = filters.filter(f => f.type === "genre");
   const versionFilters = filters.filter(f => f.type === "addedVersion");
-  const levelFilters = filters.filter(f => f.type === "level").map(f => ({ ...f, value: f.value.endsWith("+") ? Number(f.value.replace("+", "6")) : Number(f.value + "0") }));
+  const levelFilters = filters.filter(f => f.type === "level");
   const noteDesignerFilters = filters.filter(f => f.type === "noteDesigner").map(f => ({ ...f, value: Number(f.value) }));
 
   let processedSongs = allSongs;
@@ -148,13 +146,7 @@ export function applyUniqueSongFilters(allSongs: UniqueSong[], flattenedSongs: U
         const matchesLevel = levelFilters.some(f => {
           // Check if any difficulty matches the level filter
           // If flattened, song.difficulties has only 1 item
-          return song.difficulties.some(d => {
-            const level = d.levelPrecise / 10;
-            const isPlus = level % 1 >= 0.6;
-            const baseLevel = Math.floor(level);
-            const levelStr = isPlus ? baseLevel * 10 + 6 : baseLevel * 10;
-            return levelStr === f.value;
-          });
+          return song.difficulties.some(d => d.level === f.value);
         });
         if (!matchesLevel) return false;
       }

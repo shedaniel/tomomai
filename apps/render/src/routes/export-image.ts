@@ -1,7 +1,7 @@
 import { renderImage } from '../lib/render-image';
 import type { SongForRender } from '../lib/render-image';
 import { commonSnapshotResources, renderToWebp, type RenderOutcome } from '../render-route';
-import { getCatalog } from '../lib/catalog';
+import { catalogEntry, getCatalog } from '../lib/catalog';
 import { splitSongs } from '../lib/rating-calculator';
 import type { Region } from '../lib/types';
 import type { RenderMessage } from '@tomomai/render-token';
@@ -11,7 +11,7 @@ import type { RenderMessage } from '@tomomai/render-token';
  *
  * The token carries B50 score data (songId + achievement + fc + fs per chart);
  * catalog fields (songName, cover, difficulty, levelPrecise, type, addedVersion)
- * are joined from /api/v1/songs. No DB access.
+ * are joined from /api/v1/games/maimai/songs. No DB access.
  */
 export async function renderExportImage(
   message: Extract<RenderMessage, { route: 'export-image' }>,
@@ -23,13 +23,12 @@ export async function renderExportImage(
   const catalog = await getCatalog(payload.charts.map(chart => chart.songId));
 
   const songs: SongForRender[] = payload.charts.map((c) => {
-    const entry = catalog.get(c.songId);
-    if (!entry) throw new Error(`Chart not in catalogue: ${c.songId}`);
+    const entry = catalogEntry(catalog, c.songId);
     return {
       songName: entry.songName,
       cover: entry.cover,
-      difficulty: entry.difficulty as SongForRender['difficulty'],
-      type: entry.type as SongForRender['type'],
+      difficulty: entry.difficulty,
+      type: entry.type,
       levelPrecise: entry.levelPrecise,
       addedVersion: entry.addedVersion,
       achievement: c.achievement,

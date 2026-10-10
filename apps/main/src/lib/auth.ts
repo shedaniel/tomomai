@@ -21,6 +21,8 @@ import { useApiKeyCreation, useOauthAppCreation } from "@/lib/flags";
 import { getCurrentLegalVersions } from "@/lib/legal";
 import { getAcceptedPolicyVersions } from "@/lib/legal-acceptance";
 import { NEW_POLICY_REQUIRED_CODE } from "@/lib/security/policy-gate";
+import { DEV_PORTS } from "@/lib/games/frontend-config";
+import { getCurrentGame } from "@/lib/games/current";
 import { getSignupRequirements } from "@/lib/signup";
 
 async function mirrorAvatarForSignup(
@@ -263,6 +265,10 @@ const trustedOrigins = (process.env.TRUSTED_ORIGINS ?? "")
   .split(",")
   .map((s) => s.trim())
   .filter(Boolean);
+if (process.env.NODE_ENV === "development") {
+  const devOrigins = [...Object.values(DEV_PORTS).map(port => `http://localhost:${port}`), resolveBaseUrl()];
+  trustedOrigins.push(...new Set(devOrigins));
+}
 const authCookieDomain = process.env.AUTH_COOKIE_DOMAIN?.trim() || undefined;
 
 const authSecret = (() => {
@@ -353,7 +359,7 @@ export const auth = betterAuth({
     passkey({
       // Pinned to the registrable apex so credentials roam across subdomains.
       rpID: stripSubdomains(process.env.BETTER_AUTH_URL || resolveBaseUrl()),
-      rpName: "tomomai",
+      rpName: getCurrentGame().brand.productName,
     }),
     jwt(),
     oauthProvider({

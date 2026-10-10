@@ -1,0 +1,145 @@
+import "server-only";
+import type { Region } from "@/lib/games/ids";
+import { siteRoot } from "@/lib/games/sites";
+import { openGameSite, type GameSiteClient } from "@/server/services/games/sega/http";
+import { load } from "cheerio";
+import { normalizeGenre } from "../genres";
+import { type Logger } from "pino";
+import pLimit from "p-limit";
+import { catalogChartKey } from "@/server/services/catalog/ingestion/normalize-charts";
+import type { CatalogStage } from "@/server/services/catalog/ingestion/runner";
+import { value } from "@/server/services/catalog/ingestion/types";
+import { assertMaimaiPage } from "../../scores/parse-utils";
+import { MAIMAI_UTAGE, maimaiLevelPolicy } from "../chart";
+
+export const MaimaiAfterFetcher: CatalogStage["run"] = async (context, songs) => {
+  const limit = pLimit(5);
+  const detailCache: Record<string, Promise<ReturnType<typeof parseSongDetail>>> = {};
+  const site = openGameSite("maimai", context.region, context.session, { assertPage: assertMaimaiPage });
+  const { toPrecise } = maimaiLevelPolicy(context.version);
+
+  songs = songs.map(song => {
+    const level = value(song.level);
+    return song.difficulty === MAIMAI_UTAGE && level !== undefined ? { ...song, levelPrecise: toPrecise(level) } : song;
+  });
+
+  const getOrCreateDetail = (
+    inputName: string,
+    inputValue: string
+  ): Promise<ReturnType<typeof parseSongDetail>> => {
+    const key = `${inputName}:${inputValue}`;
+
+    if (!detailCache[key]) {
+      detailCache[key] = limit(async () => {
+        const html = await fetchWebsite(
+          site,
+          inputName,
+          inputValue,
+          context.log,
+        );
+        return parseSongDetail(html, context.region, context.log);
+      });
+    }
+    return detailCache[key];
+  };
+
+  const requiresFetch = songs.flatMap(song => {
+    if (song.genre) return [];
+    const inputName = song.extras?.["inputName"] as string | undefined;
+    const inputValue = song.extras?.["inputValue"] as string | undefined;
+
+    if (!inputName || !inputValue) return [];
+    return [{ inputName, inputValue, song }];
+  });
+
+  context.log.info(
+    { songKeys: requiresFetch.map(s => catalogChartKey(s.song)) },
+    `${requiresFetch.length} songs required fetching officially.`
+  );
+  context.notice.addDetail(`${requiresFetch.length} songs fetched from official site for missing cover/genre/artist`);
+
+  if (requiresFetch.length >= 1000) {
+    throw new Error("Too many songs to fetch officially");
+  }
+
+  const groups = Map.groupBy(requiresFetch, s => `${s.inputName}@${s.inputValue}`);
+
+  const detailPromises = Array.from(groups.entries()).map(async ([mapKey, group]) => {
+    const { inputName, inputValue } = group![0];
+    const details = await getOrCreateDetail(inputName, inputValue);
+
+    return [mapKey, details] as const;
+  });
+
+  const detailsMap = new Map(await Promise.all(detailPromises))
+
+  return songs.map(song => {
+    if (song.genre) return song;
+
+    const inputName = song.extras?.["inputName"] as (string | undefined), inputValue = song.extras?.["inputValue"] as (string | undefined)
+    if (!inputName || !inputValue) return song;
+
+    const details = detailsMap.get(`${inputName}@${inputValue}`)
+    if (!details) return song;
+
+    return {
+      ...song,
+      cover: details.coverUrl,
+      genre: details.genre,
+      artist: details.artist,
+    }
+  })
+}
+
+async function fetchWebsite(site: GameSiteClient, inputName: string, inputValue: string, log: Logger) {
+  const params = new URLSearchParams();
+  params.append(inputName, inputValue);
+  const detailHtml = await site.html(`record/musicDetail/?${params.toString()}`);
+  log.debug(`Song detail fetched successfully, length: ${detailHtml.length} characters`);
+
+  return detailHtml;
+}
+
+function parseSongDetail(html: string, region: Region, log: Logger): {
+  coverUrl: string;
+  genre: string;
+  artist: string;
+} {
+  const $ = load(html);
+
+  // Extract cover image URL
+  const coverElement = $('.basic_block > img');
+  if (coverElement.length === 0) {
+    const errorMsg = `Could not find cover image in song detail`;
+    log.error({ html }, errorMsg);
+    throw new Error(errorMsg);
+  }
+  const coverSrc = coverElement.attr('src');
+  if (!coverSrc) {
+    log.error({ html }, "Cover image element found but src attribute is missing");
+    throw new Error("Cover image element found but src attribute is missing");
+  }
+  const coverUrl = new URL(coverSrc, siteRoot("maimai", region)).href;
+
+  // Extract genre
+  const genreElement = $('.basic_block .blue');
+  if (genreElement.length === 0) {
+    throw new Error("Could not find genre element in song detail");
+  }
+  const genre = normalizeGenre(genreElement.text().trim());
+
+  // Extract artist
+  const artistElement = $('.basic_block .f_12.break');
+  if (artistElement.length === 0) {
+    throw new Error("Could not find artist element in song detail");
+  }
+  const artist = artistElement.text().trim();
+
+  log.debug(`Extracted song detail: cover=${coverUrl}, genre=${genre}, artist=${artist}`);
+
+  return {
+    coverUrl,
+    genre,
+    artist,
+  };
+}

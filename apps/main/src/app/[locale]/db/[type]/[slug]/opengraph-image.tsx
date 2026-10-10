@@ -1,12 +1,14 @@
-import { createSongOGImage, createHomeOGImage, DB_ACCENT, OG_SIZE } from "@/lib/og";
+import { getCurrentGame } from "@/lib/games/current";
+import { createDbOGImage, createSongOGImage } from "@/lib/og";
+import { ogImageVariants } from "@/lib/seo";
 import { getAllUniqueSongsCached } from "@/server/queries/songs-cache";
-import { getTranslations } from "next-intl/server";
-import { createSafeMaimaiImageUrl, isR2Url } from "@/lib/utils";
+import { isR2Url, resolveImageUrl } from "@/lib/images";
 import { resolveBaseUrlFromHeaders } from "@/lib/base-url";
 import { headers } from "next/headers";
-import { getVersionInfo } from "@/lib/metadata";
+import { getVersion } from "@/lib/games/versions";
+import { safeDecodeURIComponent } from "@/lib/utils";
 import type { Locale } from "@/i18n/locale";
-import { getOGImageLocales } from "@/i18n/og-locale";
+import { getDatabaseCopy } from "../../catalog-copy";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -16,41 +18,24 @@ type Props = {
 };
 
 export async function generateImageMetadata() {
-  const locales = await getOGImageLocales();
-  return locales.map(locale => ({ id: locale, alt: "maimai song", size: OG_SIZE, contentType: "image/png" as const }));
+  const { brand } = getCurrentGame();
+  return ogImageVariants(`${brand.displayName} song`);
 }
 
 export default async function Image({ params, id }: Props & { id: Promise<string> }) {
   const [{ type, slug }, locale] = await Promise.all([params, id]) as [{ type: string; slug: string }, Locale];
-
-  if (type !== "songs") {
-    const t = await getTranslations({ locale, namespace: "db.songs.metadata" });
-    return createHomeOGImage({
-      tagline: t("description"),
-      locale,
-      logoFile: "icon-db-dark.webp",
-      logoHeight: 220,
-      accent: DB_ACCENT,
-    });
-  }
-
-  const decodedSlug = decodeURIComponent(slug);
-  const songs = await getAllUniqueSongsCached();
-  const song = songs.find(s => s.slug === decodedSlug);
+  const game = getCurrentGame();
+  const song = type === "songs"
+    ? (await getAllUniqueSongsCached(game.id)).find(s => s.slug === safeDecodeURIComponent(slug))
+    : undefined;
 
   if (!song) {
-    const t = await getTranslations({ locale, namespace: "db.songs.metadata" });
-    return createHomeOGImage({
-      tagline: t("description"),
-      locale,
-      logoFile: "icon-db-dark.webp",
-      logoHeight: 220,
-      accent: DB_ACCENT,
-    });
+    const { description } = await getDatabaseCopy(locale, game);
+    return createDbOGImage({ brand: game.brand, tagline: description, locale });
   }
 
   const baseUrl = resolveBaseUrlFromHeaders(await headers());
-  const safeUrl = createSafeMaimaiImageUrl(song.cover);
+  const safeUrl = resolveImageUrl(song.cover);
   // sharp/node can fetch R2 directly; maimaidx URLs go through the local image-proxy route.
   const coverUrl = isR2Url(safeUrl)
     ? safeUrl
@@ -58,9 +43,10 @@ export default async function Image({ params, id }: Props & { id: Promise<string
       ? `${baseUrl}${safeUrl}`
       : safeUrl;
 
-  const versionName = getVersionInfo(song.addedVersion)?.shortName;
+  const versionName = getVersion(game.id, song.addedVersion)?.shortName;
 
   return createSongOGImage({
+    game,
     songName: song.songName,
     artist: song.artist,
     coverUrl,
@@ -70,6 +56,7 @@ export default async function Image({ params, id }: Props & { id: Promise<string
     difficulties: song.difficulties.map(d => ({
       difficulty: d.difficulty,
       levelPrecise: d.levelPrecise,
+      levelPreciseEstimated: d.levelPreciseEstimated,
     })),
     locale,
   });

@@ -36,7 +36,8 @@ export function resolveBaseUrl(): string {
     return normalize(withProtocol(process.env.VERCEL_PROJECT_PRODUCTION_URL));
   }
 
-  return normalize("http://localhost:3000");
+  // Next listens on PORT, or 3000 without it, in development and under `next start` alike.
+  return normalize(`http://localhost:${process.env.PORT || "3000"}`);
 }
 
 /**

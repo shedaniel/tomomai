@@ -8,7 +8,7 @@ import { locales, defaultLocale, type Locale } from './i18n/locale';
 // Path prefixes that must NOT be locale-prefixed.
 function isUnlocalizable(pathname: string): boolean {
   // Any path whose last segment has a file extension is a static asset or a
-  // route handler (e.g. /icon.webp, /sitemap.xml, /openapi.json) and must
+  // route handler (e.g. /favicon.ico, /sitemap.xml, /openapi.json) and must
   // never be locale-redirected — doing so breaks next/image optimization
   // and asset fetches.
   const lastSegment = pathname.split('/').pop() || '';

@@ -4,8 +4,12 @@ import { motion } from "motion/react";
 import { Link } from "@/i18n/navigation"
 import { cn } from "@/lib/utils";
 import { CoverImage } from "@/components/cover-image";
+import { ChartLevel } from "@/components/games/chart-level";
+import { ChartTypeBadge } from "@/components/games/chart-type-badge";
 import { UniqueSong } from "./types";
-import { renderLevelPrecise } from "@/lib/name-utils";
+import { useGame } from "@/components/providers/game-provider";
+import { codeOf } from "@/lib/games/codes";
+import { getGameDifficulty, getGameChartType } from "@/lib/games/presentation";
 
 interface SongRowProps {
   song: UniqueSong;
@@ -17,9 +21,12 @@ interface SongRowProps {
 }
 
 export function SongRow({ song, index, isSelected, onSelect, disableInitialAnimation }: SongRowProps) {
+  const game = useGame().id;
   const href = `/db/songs/${encodeURIComponent(song.slug)}`;
   const isSingleDifficulty = song.difficulties.length === 1;
   const singleDiff = isSingleDifficulty ? song.difficulties[0] : null;
+  const typeCode = codeOf(game, "chartType", song.type);
+  const difficultyCode = singleDiff ? codeOf(game, "difficulty", singleDiff.difficulty) : null;
 
   const handleClick = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -50,13 +57,7 @@ export function SongRow({ song, index, isSelected, onSelect, disableInitialAnima
           alt={song.songName}
           className={cn(
             "w-10 h-10 rounded ring-2 ring-offset-2 ring-offset-background",
-            !singleDiff && (song.type === "dx" ? "ring-amber-400" : "ring-slate-300"),
-            singleDiff?.difficulty === "basic" && "ring-green-400",
-            singleDiff?.difficulty === "advanced" && "ring-yellow-400",
-            singleDiff?.difficulty === "expert" && "ring-red-400",
-            singleDiff?.difficulty === "master" && "ring-purple-500",
-            singleDiff?.difficulty === "remaster" && "ring-purple-200",
-            singleDiff?.difficulty === "utage" && "ring-pink-400",
+            difficultyCode === null ? getGameChartType(game, typeCode).classes.ring : getGameDifficulty(game, difficultyCode).classes.ring,
           )}
           width={40}
           height={40}
@@ -66,23 +67,13 @@ export function SongRow({ song, index, isSelected, onSelect, disableInitialAnima
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
             <h2 className="font-medium truncate">{song.songName}</h2>
-            <span className={cn(
-              "text-[10px] px-1.5 py-0.5 rounded font-medium shrink-0",
-              song.type === "dx" ? "bg-amber-100 text-amber-700" : "bg-slate-100 text-slate-600"
-            )}>
-              {song.type.toUpperCase()}
-            </span>
-            {singleDiff && (
+            <ChartTypeBadge typeCode={typeCode} variant="label" />
+            {singleDiff && difficultyCode !== null && (
               <span className={cn(
                 "text-[10px] px-1.5 py-0.5 rounded font-medium shrink-0",
-                singleDiff.difficulty === "basic" && "bg-green-100 text-green-700",
-                singleDiff.difficulty === "advanced" && "bg-yellow-100 text-yellow-700",
-                singleDiff.difficulty === "expert" && "bg-red-100 text-red-700",
-                singleDiff.difficulty === "master" && "bg-purple-100 text-purple-700",
-                singleDiff.difficulty === "remaster" && "bg-purple-50 text-purple-900",
-                singleDiff.difficulty === "utage" && "bg-pink-100 text-pink-700",
+                getGameDifficulty(game, difficultyCode).classes.chip,
               )}>
-                {singleDiff.difficulty.slice(0, 3).toUpperCase()} {renderLevelPrecise(singleDiff.levelPrecise, singleDiff.difficulty)}
+                {getGameDifficulty(game, difficultyCode).shortLabel} <ChartLevel chart={singleDiff} />
               </span>
             )}
           </div>
