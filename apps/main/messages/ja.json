@@ -475,11 +475,11 @@
         },
         "snapshot:latest:metadata:read": {
           "name": "最新のスナップショット概要",
-          "description": "レーティング、表示名、プレイ回数"
+          "description": "レート値、表示名、プレイ回数"
         },
         "snapshot:latest:songs:b50:read": {
           "name": "最新のベスト50",
-          "description": "現在のレーティング対象スコア"
+          "description": "現在のレート値対象スコア"
         },
         "snapshot:latest:songs:read": {
           "name": "最新のスコア",
@@ -495,11 +495,11 @@
         },
         "snapshot:all:metadata:read": {
           "name": "スナップショット履歴",
-          "description": "すべてのスナップショットのレーティング、表示名、プレイ回数"
+          "description": "すべてのスナップショットのレート値、表示名、プレイ回数"
         },
         "snapshot:all:songs:b50:read": {
           "name": "ベスト50の履歴",
-          "description": "すべてのスナップショットのレーティング対象スコア"
+          "description": "すべてのスナップショットのレート値対象スコア"
         },
         "snapshot:all:songs:read": {
           "name": "スコア履歴",

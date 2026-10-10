@@ -534,8 +534,8 @@
           "description": "相片本身，可能拍到其他人"
         },
         "plate:read": {
-          "name": "牌子進度",
-          "description": "每個牌子尚需完成的歌曲"
+          "name": "稱號進度",
+          "description": "每個稱號尚需完成的歌曲"
         },
         "user:settings:read": {
           "name": "個人資料設定",
@@ -571,7 +571,7 @@
         },
         "read": {
           "name": "讀取大部分資料",
-          "description": "帳戶資料、設定、快照、遊玩紀錄、統計、相簿、牌子和同步狀態。不含頭像和相簿相片。"
+          "description": "帳戶資料、設定、快照、遊玩紀錄、統計、相簿、稱號和同步狀態。不含頭像和相簿相片。"
         }
       },
       "oauthApps": {
