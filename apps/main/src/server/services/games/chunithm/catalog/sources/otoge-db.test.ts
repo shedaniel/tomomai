@@ -53,6 +53,10 @@ describe("CHUNITHM otoge-db collection", () => {
     const charts = await collect([{ ...intlFixture[1], version: "CHUNITHM STAR PLUS" }], "intl");
     expect(charts.find(chart => chart.difficulty === 3)?.addedVersion).toBe(-7);
   });
+  it("files songs INTL received before its version update under their version tag once INTL has that version", async () => {
+    const charts = await collect([{ ...intlFixture[1], version: "X-VERSE-X", date_intl_added: "20260305" }], "intl");
+    expect(charts.find(chart => chart.difficulty === 3)?.addedVersion).toBe(8);
+  });
   it("keeps ambiguous BPM and absent note counts unknown", async () => {
     const charts = await collect([{ ...jpFixture[0], bpm: "440(MASTER譜面のみ220)", lev_mas_i: "-", lev_mas_notes_air: "-" }]);
     const chart = charts.find(chart => chart.difficulty === 3)!;

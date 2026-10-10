@@ -51,6 +51,13 @@ function parseCount(value: string | undefined): number | undefined {
   return value && /^\d+$/.test(value) ? Number(value) : undefined;
 }
 
+function addedVersionAt(region: Region, date: Date, sourceVersion: number | undefined): number {
+  const version = getVersionFromDate("chunithm", region, date, sourceVersion);
+  // INTL rates songs it receives ahead of its own update by their version tag, once that version is out in INTL.
+  const sourceReleased = sourceVersion !== undefined && getGame("chunithm").versions.regional(region, sourceVersion) !== null;
+  return sourceReleased && sourceVersion > version ? sourceVersion : version;
+}
+
 function normalizeOtogeDbCatalog(songs: SongsJsonRecord[], region: Region): PendingChart[] {
   return songs.flatMap(song => {
     if (song.we_kanji || song.we_star) return [];
@@ -77,7 +84,7 @@ function normalizeOtogeDbCatalog(songs: SongsJsonRecord[], region: Region): Pend
         genre: song.catname,
         level,
         levelPrecise: parseOtogeDbConstant(song[`${prefix}_i`]),
-        addedVersion: addedDate ? getVersionFromDate("chunithm", region, addedDate, sourceVersion) : undefined,
+        addedVersion: addedDate ? addedVersionAt(region, addedDate, sourceVersion) : undefined,
         bpm: parseCount(song.bpm),
         noteDesigner: song[`${prefix}_designer`] || undefined,
         metadata: {
