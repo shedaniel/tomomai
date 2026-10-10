@@ -1,4 +1,5 @@
 import { betterAuth } from "better-auth";
+import { waitUntil } from "@vercel/functions";
 import { resolveBaseUrl, stripSubdomains } from "@/lib/base-url";
 import { createAuthMiddleware, APIError, getSessionFromCtx } from "better-auth/api";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
@@ -289,6 +290,7 @@ export const auth = betterAuth({
     // — there is no path where an untrusted client can reach the app
     // without going through one of them.
     trustedProxyHeaders: true,
+    backgroundTasks: { handler: waitUntil },
     ipAddress: {
       ipAddressHeaders: [
         "cf-connecting-ip",
@@ -346,6 +348,10 @@ export const auth = betterAuth({
     apiKey({
       enableMetadata: true,
       defaultPrefix: "tmk_",
+      // Per-key limits live in withApiKey's Redis limiters. BA's own limiter
+      // defaults to 10 requests per day per key.
+      rateLimit: { enabled: false },
+      deferUpdates: true,
       startingCharactersConfig: { shouldStore: true, charactersLength: 8 },
       permissions: {
         defaultPermissions: { ready: ["access"] },
@@ -356,7 +362,8 @@ export const auth = betterAuth({
       rpID: stripSubdomains(process.env.BETTER_AUTH_URL || resolveBaseUrl()),
       rpName: "tomomai",
     }),
-    jwt(),
+    // Only signs OAuth access tokens. A session JWT on every /get-session is an unused bearer credential.
+    jwt({ disableSettingJwtHeader: true }),
     oauthProvider({
       loginPage: "/",
       consentPage: "/oauth/consent",
@@ -381,7 +388,6 @@ export const auth = betterAuth({
   disabledPaths: [
     // Password / email-credential flows — emailAndPassword is disabled.
     "/reset-password",
-    "/reset-password/{token}",
     "/change-password",
     "/change-email",
     "/verify-email",
@@ -400,7 +406,7 @@ export const auth = betterAuth({
     // single/other revoke endpoints stay open for the settings UI.
     "/update-session",
     "/revoke-sessions",
-    // TODO(v2026.5): Disable feature until release
+    // No external resource servers exist, so token introspection has no consumer.
     "/oauth2/introspect",
     // Social-provider token passthrough — we never expose Discord/Twitter
     // tokens to clients, so close these to avoid future foot-guns.
@@ -416,6 +422,31 @@ export const auth = betterAuth({
     // - /oauth2/end-session is OIDC RP-initiated logout; not wired up.
     "/oauth2/register",
     "/oauth2/end-session",
+    // JWT plugin's session-to-JWT exchange. The plugin is only here to sign
+    // OAuth access tokens and serve /jwks.
+    "/token",
+    // Mutations we only make in-process from tRPC, which validates input more
+    // strictly. disabledPaths only blocks HTTP, so auth.api calls still work.
+    "/api-key/create",
+    "/oauth2/create-client",
+    "/oauth2/update-client",
+    "/oauth2/client/rotate-secret",
+    "/oauth2/delete-client",
+    // Client and consent management lives in the developer tRPC router.
+    // BA's /oauth2/delete-consent would also leave the access tokens alive.
+    "/api-key/get",
+    "/oauth2/get-client",
+    "/oauth2/get-clients",
+    "/oauth2/get-consent",
+    "/oauth2/get-consents",
+    "/oauth2/update-consent",
+    "/oauth2/delete-consent",
+    // No login-page client preview, account selection, sign-up or post-login
+    // prompts, and no `openid` scope for /userinfo to serve.
+    "/oauth2/public-client-prelogin",
+    "/oauth2/continue",
+    "/oauth2/userinfo",
+    "/passkey/update-passkey",
     // Admin plugin is registered (for the `role` column) but no client or
     // server code calls these endpoints. Disable until an admin UI exists,
     // so a future role=admin user can't accidentally escalate via direct HTTP.
@@ -453,6 +484,11 @@ export const auth = betterAuth({
         }
       };
 
+
+      // disabledPaths matches literal request paths, so parameterized routes are closed here.
+      if (ctx.path === "/reset-password/:token") {
+        throw new APIError("NOT_FOUND", { message: "Not Found" });
+      }
 
       if (OAUTH_APP_BA_PATHS.has(ctx.path) && !(await useOauthAppCreation())) {
         throw new APIError("NOT_FOUND", { message: "Not Found" });

@@ -24,6 +24,37 @@ import { requireFreshSession } from "@/lib/security/fresh-session-server";
 import { httpsRedirectUrl, safeWebUrl, httpsWebUrl } from "@/lib/security/oauth-url";
 import { logger } from "@/lib/logger";
 
+/**
+ * Creates the key through the caller's session so Better Auth's session and fresh-session gates apply,
+ * then writes the server-only fields itself, since BA rejects `permissions` from a session call.
+ */
+async function createScopedApiKey(
+  headers: Headers,
+  userId: string,
+  name: string | undefined,
+  expiresIn: number | null,
+  fields: { permissions: string | null; expiresAt?: Date | null; enabled?: boolean },
+): Promise<string> {
+  const result = await auth.api.createApiKey({ body: { name, expiresIn }, headers });
+  if (!result?.key) {
+    throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to create API key" });
+  }
+  try {
+    const [row] = await db
+      .update(apikey)
+      .set(fields)
+      .where(and(eq(apikey.id, result.id), eq(apikey.referenceId, userId)))
+      .returning({ id: apikey.id });
+    if (!row) throw new Error("Created API key row not found");
+  } catch (err) {
+    await auth.api.deleteApiKey({ body: { keyId: result.id }, headers }).catch((compensationErr) => {
+      logger.error({ err: compensationErr, userId }, "Failed to delete unscoped API key after permissions write failure");
+    });
+    throw err;
+  }
+  return result.key;
+}
+
 const scopeKey = z.enum(Object.keys(API_SCOPES) as [ScopeKey, ...ScopeKey[]]);
 
 export const developerRouter = router({
@@ -39,43 +70,19 @@ export const developerRouter = router({
       if (!oldKey) {
         throw new TRPCError({ code: "FORBIDDEN", message: "Key not found" });
       }
-      let permissions: Record<string, string[]> | undefined;
-      try {
-        permissions = oldKey.permissions
-          ? (JSON.parse(oldKey.permissions) as Record<string, string[]>)
-          : undefined;
-      } catch {
-        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Malformed key permissions" });
-      }
-      const expiresIn = oldKey.expiresAt
-        ? Math.max(0, Math.floor((new Date(oldKey.expiresAt).getTime() - Date.now()) / 1000))
-        : null;
+      // Better Auth has no rotateApiKey. Create first so a failure never leaves the user keyless.
+      const key = await createScopedApiKey(ctx.req.headers, ctx.session.user.id, oldKey.name ?? undefined, null, {
+        permissions: oldKey.permissions,
+        expiresAt: oldKey.expiresAt,
+        enabled: oldKey.enabled,
+      });
 
-      // Better Auth has no rotateApiKey — implement as delete + recreate
       await auth.api.deleteApiKey({
         body: { keyId: input.keyId },
+        headers: ctx.req.headers,
       });
 
-      const result = await auth.api.createApiKey({
-        body: {
-          userId: ctx.session.user.id,
-          name: oldKey.name ?? undefined,
-          permissions,
-          expiresIn,
-        },
-      });
-
-      if (!result?.key) {
-        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to rotate API key" });
-      }
-
-      if (!oldKey.enabled) {
-        await auth.api.updateApiKey({
-          body: { keyId: result.id, enabled: false },
-        });
-      }
-
-      return { key: result.key };
+      return { key };
     }),
 
   createApiKey: protectedProcedure
@@ -87,6 +94,7 @@ export const developerRouter = router({
       })
     )
     .mutation(async ({ ctx, input }) => {
+      requireFreshSession(ctx.session);
       assertInternalScopesAllowed(input.scopes, ctx.session.user.role);
       // Expand any encompassing scopes to their leaf scopes before storing.
       // This keeps verifyApiKey simple (pure AND logic, single Better Auth call).
@@ -95,22 +103,11 @@ export const developerRouter = router({
         leafScopes.map((s) => [s, ["access"]])
       );
 
-      // Call without headers so Better Auth treats this as a server-side call,
-      // which allows setting permissions and userId directly.
-      const result = await auth.api.createApiKey({
-        body: {
-          userId: ctx.session.user.id,
-          name: input.name,
-          expiresIn: input.expiresIn ?? null,
-          permissions,
-        },
+      const key = await createScopedApiKey(ctx.req.headers, ctx.session.user.id, input.name, input.expiresIn ?? null, {
+        permissions: JSON.stringify(permissions),
       });
 
-      if (!result) {
-        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to create API key" });
-      }
-
-      return { key: result.key };
+      return { key };
     }),
 
   // ── OAuth Applications ────────────────────────────────────────────────────
