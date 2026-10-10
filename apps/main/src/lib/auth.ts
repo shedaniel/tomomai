@@ -21,6 +21,7 @@ import { useApiKeyCreation, useOauthAppCreation } from "@/lib/flags";
 import { getCurrentLegalVersions } from "@/lib/legal";
 import { getAcceptedPolicyVersions } from "@/lib/legal-acceptance";
 import { NEW_POLICY_REQUIRED_CODE } from "@/lib/security/policy-gate";
+import { DEV_ANONYMOUS_SIGN_IN_PATH, devAnonymousAuth } from "@/lib/dev-anonymous-auth";
 import { getSignupRequirements } from "@/lib/signup";
 
 async function mirrorAvatarForSignup(
@@ -374,7 +375,7 @@ export const auth = betterAuth({
       // per-MCP audiences) as the surface grows.
       validAudiences: [process.env.BETTER_AUTH_URL || resolveBaseUrl()],
     }),
-    ...(process.env.NODE_ENV === 'development' ? [openAPI()] : []),
+    ...(process.env.NODE_ENV === 'development' ? [openAPI(), devAnonymousAuth()] : []),
     nextCookies(),
   ],
   disabledPaths: [
@@ -622,6 +623,8 @@ export const auth = betterAuth({
     user: {
       create: {
         before: async (user, context) => {
+          if (context?.path === DEV_ANONYMOUS_SIGN_IN_PATH) return { data: user };
+
           const { signupEnabled, inviteRequired } = await getSignupRequirements();
 
           // APIError messages reach the client verbatim as the callback's ?error= code.
@@ -696,7 +699,7 @@ export const auth = betterAuth({
           // Check if invitation was used (and claim it if so)
           const { inviteRequired } = await getSignupRequirements();
 
-          if (inviteRequired) {
+          if (inviteRequired && context?.path !== DEV_ANONYMOUS_SIGN_IN_PATH) {
             let inviteCode: string | null = null;
 
             // Read the invitation code from cookies again
