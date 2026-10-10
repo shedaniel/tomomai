@@ -376,7 +376,7 @@
         },
         "snapshot:latest:icon:read": {
           "name": "최신 프로필 아이콘",
-          "description": "현재 프로필 아이콘. 소셜 계정이 드러날 수 있습니다"
+          "description": "현재 maimai 아이콘. 게임 내 카메라로 찍은 얼굴 사진일 수 있습니다"
         },
         "snapshot:all:metadata:read": {
           "name": "스냅샷 기록",
@@ -396,7 +396,7 @@
         },
         "snapshot:all:icon:read": {
           "name": "프로필 아이콘 기록",
-          "description": "모든 스냅샷의 프로필 아이콘. 소셜 계정이 드러날 수 있습니다"
+          "description": "모든 스냅샷의 maimai 아이콘. 게임 내 카메라로 찍은 얼굴 사진일 수 있습니다"
         },
         "recent:read": {
           "name": "최근 플레이",

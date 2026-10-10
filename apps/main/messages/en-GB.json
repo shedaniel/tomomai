@@ -439,7 +439,7 @@
         },
         "snapshot:latest:icon:read": {
           "name": "Latest profile icon",
-          "description": "Your current profile icon, which may reveal your social account"
+          "description": "Your current maimai icon, which may be a photo of your face taken with the in-game camera"
         },
         "snapshot:all:metadata:read": {
           "name": "Snapshot history",
@@ -459,7 +459,7 @@
         },
         "snapshot:all:icon:read": {
           "name": "Profile icon history",
-          "description": "Your profile icon from every snapshot, which may reveal your social account"
+          "description": "Your maimai icon from every snapshot, which may be a photo of your face taken with the in-game camera"
         },
         "recent:read": {
           "name": "Recent plays",

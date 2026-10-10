@@ -491,7 +491,7 @@
         },
         "snapshot:latest:icon:read": {
           "name": "最新頭像",
-          "description": "目前的頭像，可能會洩漏你的社群帳號"
+          "description": "目前的 maimai 頭像，可能是用遊戲內相機拍攝的臉部照片"
         },
         "snapshot:all:metadata:read": {
           "name": "快照紀錄",
@@ -511,7 +511,7 @@
         },
         "snapshot:all:icon:read": {
           "name": "頭像紀錄",
-          "description": "所有快照中的頭像，可能會洩漏你的社群帳號"
+          "description": "所有快照中的 maimai 頭像，可能是用遊戲內相機拍攝的臉部照片"
         },
         "recent:read": {
           "name": "最近遊玩",

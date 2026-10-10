@@ -491,7 +491,7 @@
         },
         "snapshot:latest:icon:read": {
           "name": "最新のプロフィールアイコン",
-          "description": "現在のプロフィールアイコン（SNSアカウントが分かる可能性があります）"
+          "description": "現在の maimai アイコン（ゲーム内カメラで撮影した顔写真の場合があります）"
         },
         "snapshot:all:metadata:read": {
           "name": "スナップショット履歴",
@@ -511,7 +511,7 @@
         },
         "snapshot:all:icon:read": {
           "name": "プロフィールアイコンの履歴",
-          "description": "すべてのスナップショットのプロフィールアイコン（SNSアカウントが分かる可能性があります）"
+          "description": "すべてのスナップショットの maimai アイコン（ゲーム内カメラで撮影した顔写真の場合があります）"
         },
         "recent:read": {
           "name": "最近のプレイ",

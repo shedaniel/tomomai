@@ -47,7 +47,7 @@ export const API_SCOPES = {
   },
   "snapshot:latest:icon:read": {
     name: "Latest Snapshot Icon (Read)",
-    description: "Read your profile icon URL (Discord avatar) from your latest snapshot. This is sensitive as it may reveal your social identity.",
+    description: "Read your maimai icon URL from your latest snapshot. Sensitive, as the icon may be a photo of your face taken with the in-game camera.",
     destructive: false,
     sensitive: true,
     default: false,
@@ -84,7 +84,7 @@ export const API_SCOPES = {
   },
   "snapshot:all:icon:read": {
     name: "All Snapshots Icon (Read)",
-    description: "Read your profile icon URL (Discord avatar) from any snapshot. This is sensitive as it may reveal your social identity.",
+    description: "Read your maimai icon URL from any snapshot. Sensitive, as the icon may be a photo of your face taken with the in-game camera.",
     destructive: false,
     sensitive: true,
     default: false,

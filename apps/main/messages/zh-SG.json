@@ -449,7 +449,7 @@
         },
         "snapshot:latest:icon:read": {
           "name": "最新头像",
-          "description": "目前头像，可能会暴露你的社交账号"
+          "description": "目前的 maimai 头像，可能是用游戏内相机拍摄的面部照片"
         },
         "snapshot:all:metadata:read": {
           "name": "快照历史",
@@ -469,7 +469,7 @@
         },
         "snapshot:all:icon:read": {
           "name": "头像历史",
-          "description": "所有快照中的头像，可能会暴露你的社交账号"
+          "description": "所有快照中的 maimai 头像，可能是用游戏内相机拍摄的面部照片"
         },
         "recent:read": {
           "name": "最近游玩",
