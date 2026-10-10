@@ -2,15 +2,18 @@ import { z } from "zod";
 
 interface ResponseTreeProps {
   schema: z.ZodTypeAny;
+  /** Skip the bordered container, for hosts that draw their own. */
+  bare?: boolean;
 }
 
-export function ResponseTree({ schema }: ResponseTreeProps) {
+export function ResponseTree({ schema, bare = false }: ResponseTreeProps) {
   let json: unknown;
   try {
     json = z.toJSONSchema(schema, { target: "draft-2020-12" });
   } catch {
     return <div className="text-sm text-muted-foreground">(unrepresentable)</div>;
   }
+  if (bare) return <SchemaNode node={json} depth={0} />;
   return (
     <div className="overflow-x-auto rounded-lg border border-border bg-muted/30 p-4">
       <SchemaNode node={json} depth={0} />

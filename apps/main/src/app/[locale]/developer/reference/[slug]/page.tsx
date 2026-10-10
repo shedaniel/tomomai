@@ -6,11 +6,24 @@ import { resolveBaseUrl } from "@/lib/base-url";
 import { ScopeBadge } from "@/components/developer/scope-badge";
 import { ParamTable } from "@/components/developer/param-table";
 import { ResponseTree } from "@/components/developer/response-tree";
+import { ResponseTabs } from "@/components/developer/response-tabs";
+import { responseTypeName, toTypeScript, toZod } from "@/lib/developer/schema-codegen";
+import { z } from "zod";
 import { ChevronRight, Terminal } from "lucide-react";
 import { Badge } from "@tomomai/ui";
 import { CodeSamples } from "@/components/developer/code-samples";
 import { MethodBadge } from "@/components/developer/method-badge";
 import type { RouteSpec } from "@/lib/api/registry";
+
+/** TypeScript and Zod source for the response, or null when the schema cannot be expressed as JSON Schema. */
+function renderResponseCode(schema: z.ZodTypeAny, name: string): { typescript: string; zod: string } | null {
+  try {
+    const json = z.toJSONSchema(schema, { target: "draft-2020-12" }) as Record<string, unknown>;
+    return { typescript: toTypeScript(json, name), zod: toZod(json, name) };
+  } catch {
+    return null;
+  }
+}
 
 function buildExampleUrl(spec: RouteSpec, baseUrl: string): string {
   let path = spec.path.replace(/\{(\w+)\}/g, (_, name) => `<${name}>`);
@@ -58,6 +71,7 @@ export default async function ReferenceEndpointPage({
     spec.scope === "public" ? [] : Array.isArray(spec.scope) ? spec.scope : [spec.scope];
 
   const exampleUrl = buildExampleUrl(spec, baseUrl);
+  const responseCode = renderResponseCode(spec.response, responseTypeName(slug));
 
   return (
     <div className="grid grid-cols-1 gap-8 lg:grid-cols-[1fr_360px]">
@@ -161,7 +175,15 @@ export default async function ReferenceEndpointPage({
           <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
             Response (200)
           </h2>
-          <ResponseTree schema={spec.response} />
+          {responseCode ? (
+            <ResponseTabs
+              tree={<ResponseTree schema={spec.response} bare />}
+              typescript={responseCode.typescript}
+              zod={responseCode.zod}
+            />
+          ) : (
+            <ResponseTree schema={spec.response} />
+          )}
         </section>
 
         {spec.examples?.length ? (
