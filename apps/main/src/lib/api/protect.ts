@@ -3,7 +3,7 @@ import { createHash } from "crypto";
 import { requestLogger } from "@/lib/request-logger";
 import { auth } from "@/lib/auth";
 import { verifyAccessToken } from "better-auth/oauth2";
-import { type ScopeKey, scopesToPermissions } from "@/lib/api/scopes";
+import { API_SCOPES, isInternalScope, type ScopeKey, scopesToPermissions } from "@/lib/api/scopes";
 import { resolveBaseUrl } from "@/lib/base-url";
 import { db } from "@/lib/db";
 import { oauthAccessToken, oauthClient, oauthConsent } from "@/lib/db/schema-pg";
@@ -55,10 +55,21 @@ async function isJwtGrantActive(clientId: string, userId: string): Promise<boole
   return row.skipConsent === true || row.consentId !== null;
 }
 
+/**
+ * Every valid token holds `ready`, as every API key does, whether or not the app requested it.
+ * Internal scopes are dropped, so a client stored with one before they were barred still cannot use it.
+ */
+function oauthPermissions(scopes: readonly string[]): Record<string, string[]> {
+  const apiScopes = scopes.filter((s) => s in API_SCOPES && !isInternalScope(s));
+  return Object.fromEntries(["ready", ...apiScopes].map((s) => [s, ["access"]]));
+}
+
 async function verifyOAuthToken(
   token: string,
-  requiredScopes: ScopeKey[],
+  routeScopes: ScopeKey[],
 ): Promise<ApiKeyInfo | null> {
+  if (routeScopes.some(isInternalScope)) return null;
+  const requiredScopes = routeScopes.filter((s) => s !== "ready");
   // ── JWT fast-path ──────────────────────────────────────────────────────
   if ((token.match(/\./g) ?? []).length === 2) {
     const baseUrl =
@@ -79,7 +90,7 @@ async function verifyOAuthToken(
         return {
           userId: payload.sub,
           keyId: jwtSurrogateId(token),
-          permissions: Object.fromEntries(scopeList.map((s) => [s, ["access"]])),
+          permissions: oauthPermissions(scopeList),
           name: null,
           expiresAt: payload.exp ? new Date(payload.exp * 1000) : null,
         };
@@ -112,7 +123,7 @@ async function verifyOAuthToken(
   return {
     userId: row.userId,
     keyId: row.id,
-    permissions: Object.fromEntries(row.scopes.map((s) => [s, ["access"]])),
+    permissions: oauthPermissions(row.scopes),
     name: null,
     expiresAt: row.expiresAt,
   };

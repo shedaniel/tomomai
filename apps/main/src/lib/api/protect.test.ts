@@ -30,9 +30,11 @@ import { withApiKey } from "./protect";
 
 const handler = withApiKey(["user:metadata:read"], async (_req, key) => Response.json({ userId: key.userId }));
 
-function call(token: string) {
+const readyHandler = withApiKey(["ready"], async (_req, key) => Response.json({ userId: key.userId }));
+
+function call(token: string, route = handler) {
   const req = new NextRequest("https://example.test/api/v1/me", { headers: { authorization: `Bearer ${token}` } });
-  return handler(req, { params: Promise.resolve({}) });
+  return route(req, { params: Promise.resolve({}) });
 }
 
 const jwt = "header.payload.signature";
@@ -61,5 +63,16 @@ describe("OAuth access tokens", () => {
   ])("opaque token with clientDisabled=%s returns %i", async (clientDisabled, status) => {
     rows.push([{ id: "t1", userId: "user-1", scopes: ["user:metadata:read"], expiresAt: future, clientDisabled }]);
     expect((await call("opaque-token")).status).toBe(status);
+  });
+
+  it("never lets an OAuth token use an internal scope, even one stored on the client", async () => {
+    const submitHandler = withApiKey(["snapshot:submit"], async () => Response.json({}));
+    rows.push([{ id: "t1", userId: "user-1", scopes: ["snapshot:submit"], expiresAt: future, clientDisabled: false }]);
+    expect((await call("opaque-token", submitHandler)).status).toBe(403);
+  });
+
+  it("grants the ready scope to tokens whose app did not request it", async () => {
+    rows.push([{ id: "t1", userId: "user-1", scopes: ["user:metadata:read"], expiresAt: future, clientDisabled: false }]);
+    expect((await call("opaque-token", readyHandler)).status).toBe(200);
   });
 });

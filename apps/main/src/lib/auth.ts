@@ -8,7 +8,9 @@ import { admin, jwt, openAPI } from "better-auth/plugins";
 import { apiKey } from "@better-auth/api-key";
 import { passkey } from "@better-auth/passkey";
 import { oauthProvider } from "@better-auth/oauth-provider";
-import { API_SCOPES, isInternalScope } from "@/lib/api/scopes";
+import { API_SCOPES, isInternalScope, OFFLINE_ACCESS } from "@/lib/api/scopes";
+
+const OAUTH_SCOPES = [...Object.keys(API_SCOPES).filter((s) => !isInternalScope(s)), OFFLINE_ACCESS];
 import { and, eq, isNull, lt, or } from "drizzle-orm";
 import { db } from "./db";
 import * as schema from "./db/schema-pg";
@@ -365,7 +367,10 @@ export const auth = betterAuth({
     // Only signs OAuth access tokens. A session JWT on every /get-session is an unused bearer credential.
     jwt({ disableSettingJwtHeader: true }),
     oauthProvider({
-      loginPage: "/",
+      // Signed-out users sign in on the consent page itself, so the request is never dropped.
+      loginPage: "/oauth/consent",
+      // Lets that page show the app before sign-in. Only answers for a validly signed authorize query.
+      allowPublicClientPrelogin: true,
       consentPage: "/oauth/consent",
       // No discovery consumer yet, and BA's metadata would advertise the disabled register and introspect routes.
       silenceWarnings: { oauthAuthServerConfig: true },
@@ -374,8 +379,10 @@ export const auth = betterAuth({
       // `scopes` is the canonical list the provider understands.
       // `clientRegistrationAllowedScopes` restricts what clients may request —
       // every entry here must also appear in `scopes`.
-      scopes: Object.keys(API_SCOPES) as string[],
-      clientRegistrationAllowedScopes: Object.keys(API_SCOPES) as string[],
+      // Internal scopes are left out, so no OAuth client can be registered with, request or be
+      // granted one, whoever registers it.
+      scopes: OAUTH_SCOPES,
+      clientRegistrationAllowedScopes: OAUTH_SCOPES,
       // Declare the site root as a valid audience so OAuth clients can request
       // JWT-signed access tokens via `resource=<baseUrl>` (RFC 8707). Without
       // this entry, Better Auth's default `validAudiences` is just
@@ -443,9 +450,8 @@ export const auth = betterAuth({
     "/oauth2/get-consents",
     "/oauth2/update-consent",
     "/oauth2/delete-consent",
-    // No login-page client preview, account selection, sign-up or post-login
-    // prompts, and no `openid` scope for /userinfo to serve.
-    "/oauth2/public-client-prelogin",
+    // No account selection, sign-up or post-login prompts, and no `openid`
+    // scope for /userinfo to serve.
     "/oauth2/continue",
     "/oauth2/userinfo",
     "/passkey/update-passkey",
@@ -470,18 +476,12 @@ export const auth = betterAuth({
   ],
   hooks: {
     before: createAuthMiddleware(async (ctx) => {
-      // Internal scopes (API_SCOPES[s].internal === true) may only be minted by
-      // admin-role users. BA's clientRegistrationAllowedScopes includes every
-      // key in API_SCOPES; without this check, any logged-in user could
-      // register a client carrying e.g. `snapshot:submit` via direct HTTP, or
-      // a non-admin could consent to such a scope if a client were
-      // misregistered. Sentinel-style message so a client-side detector can
-      // match exactly without substring drift. Shared between
-      // /oauth2/{create,update}-client and /oauth2/consent.
-      const rejectInternalScopesForNonAdmin = async (scopes: readonly string[]) => {
-        if (!scopes.some(isInternalScope)) return;
-        const s = await getSessionFromCtx(ctx);
-        if (s?.user?.role !== "admin") {
+      // Internal scopes (e.g. `snapshot:submit`) never belong to an OAuth client, admin-registered
+      // or not. OAUTH_SCOPES already keeps them out of the provider; this rejects them again on the
+      // client and consent routes in case a client was stored with one. Sentinel-style message so
+      // a client-side detector can match exactly without substring drift.
+      const rejectInternalScopes = (scopes: readonly string[]) => {
+        if (scopes.some(isInternalScope)) {
           throw new APIError("FORBIDDEN", { message: "INTERNAL_SCOPE_FORBIDDEN" });
         }
       };
@@ -572,7 +572,7 @@ export const auth = betterAuth({
         assertOptionalUrl(target.logo_uri, isHttpsUrl, "logo_uri must be an https:// URL");
 
         if (typeof target.scope === "string") {
-          await rejectInternalScopesForNonAdmin(target.scope.split(" ").filter(Boolean));
+          rejectInternalScopes(target.scope.split(" ").filter(Boolean));
         }
       }
 
@@ -607,7 +607,7 @@ export const auth = betterAuth({
           throw new APIError("BAD_REQUEST", { message: "oauth_query is required" });
         }
         const requestedScopes = new URLSearchParams(rawQuery).get("scope")?.split(" ").filter(Boolean) ?? [];
-        const unknown = requestedScopes.filter((s) => !(s in API_SCOPES));
+        const unknown = requestedScopes.filter((s) => !(s in API_SCOPES) && s !== OFFLINE_ACCESS);
         if (unknown.length > 0) {
           throw new APIError("BAD_REQUEST", { message: `Unknown scopes: ${unknown.join(", ")}` });
         }
@@ -620,9 +620,7 @@ export const auth = betterAuth({
               message: `scope must be a subset of the originally-requested scopes (extra: ${extra.join(", ")})`,
             });
           }
-          // Defence-in-depth: even if a client is misregistered with an
-          // internal scope, a non-admin must not be able to consent to it.
-          await rejectInternalScopesForNonAdmin(granted);
+          rejectInternalScopes(granted);
         }
       }
 

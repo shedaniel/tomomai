@@ -223,6 +223,12 @@ export const API_SCOPES = {
 
 export type ScopeKey = keyof typeof API_SCOPES;
 
+/**
+ * OAuth's standard scope for refresh tokens. Not a data permission, so it is not in API_SCOPES: every
+ * OAuth app may request it, and the consent screen shows it on its own line.
+ */
+export const OFFLINE_ACCESS = "offline_access";
+
 export function scopesToPermissions(scopes: ScopeKey[]) {
   return Object.fromEntries(scopes.map((s) => [s, ["access"]]));
 }

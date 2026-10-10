@@ -1,10 +1,9 @@
 import { auth } from "@/lib/auth";
-import { API_SCOPES, expandScopes, isInternalScope, type ScopeKey } from "@/lib/api/scopes";
+import { API_SCOPES, expandScopes, isInternalScope, OFFLINE_ACCESS, type ScopeKey } from "@/lib/api/scopes";
 import { protectedProcedure, router } from "@/lib/trpc";
 import { TRPCError } from "@trpc/server";
 
-/** Throw FORBIDDEN if any requested scope is internal-only and the session
- *  user is not an admin. Mirrors the BA hooks.before guard. */
+/** API keys only: throw FORBIDDEN if any requested scope is internal-only and the session user is not an admin. */
 function assertInternalScopesAllowed(scopes: readonly ScopeKey[], userRole: string | null | undefined) {
   const internal = scopes.filter(isInternalScope);
   if (internal.length === 0) return;
@@ -56,6 +55,15 @@ async function createScopedApiKey(
 }
 
 const scopeKey = z.enum(Object.keys(API_SCOPES) as [ScopeKey, ...ScopeKey[]]);
+/** What an OAuth app may request. Every app may ask for refresh tokens, so offline_access is always included. */
+function oauthClientScope(scopes: ScopeKey[]): string {
+  return [...expandScopes(scopes), OFFLINE_ACCESS].join(" ");
+}
+
+// Internal scopes are for first-party API keys only. No OAuth app can hold one, whoever registers it.
+const oauthScopeKey = z.enum(
+  (Object.keys(API_SCOPES) as ScopeKey[]).filter((s) => !isInternalScope(s)) as [ScopeKey, ...ScopeKey[]],
+);
 
 export const developerRouter = router({
   rotateApiKey: protectedProcedure
@@ -138,7 +146,7 @@ export const developerRouter = router({
       z.object({
         name: z.string().min(1).max(64),
         redirectUris: z.array(httpsRedirectUrl).min(1).max(10),
-        scopes: z.array(scopeKey).min(1),
+        scopes: z.array(oauthScopeKey).min(1),
         uri: safeWebUrl.optional(),
         icon: httpsWebUrl.optional(),
         policy: safeWebUrl.optional(),
@@ -147,14 +155,13 @@ export const developerRouter = router({
     )
     .mutation(async ({ ctx, input }) => {
       requireFreshSession(ctx.session);
-      assertInternalScopesAllowed(input.scopes, ctx.session.user.role);
       // Delegate creation to Better Auth so it handles client_id generation,
       // secret hashing, and any internal bookkeeping consistently.
       const result = await auth.api.createOAuthClient({
         body: {
           client_name: input.name,
           redirect_uris: input.redirectUris,
-          scope: expandScopes(input.scopes).join(" "),
+          scope: oauthClientScope(input.scopes),
           client_uri: input.uri,
           logo_uri: input.icon,
           policy_uri: input.policy,
@@ -208,7 +215,7 @@ export const developerRouter = router({
         icon: httpsWebUrl.optional().nullable(),
         policy: safeWebUrl.optional().nullable(),
         tos: safeWebUrl.optional().nullable(),
-        scopes: z.array(scopeKey).min(1).optional(),
+        scopes: z.array(oauthScopeKey).min(1).optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -216,7 +223,6 @@ export const developerRouter = router({
       // endpoint, so require a fresh session for them. Pure metadata edits (name,
       // icon, policy/tos) are lower-risk and stay session-only.
       if (input.redirectUris) requireFreshSession(ctx.session);
-      if (input.scopes) assertInternalScopesAllowed(input.scopes, ctx.session.user.role);
       // Verify ownership
       const [app] = await db
         .select({ id: oauthClient.id })
@@ -234,7 +240,7 @@ export const developerRouter = router({
             ...(input.icon !== undefined && { logo_uri: input.icon ?? undefined }),
             ...(input.policy !== undefined && { policy_uri: input.policy ?? undefined }),
             ...(input.tos !== undefined && { tos_uri: input.tos ?? undefined }),
-            ...(input.scopes && { scope: expandScopes(input.scopes).join(" ") }),
+            ...(input.scopes && { scope: oauthClientScope(input.scopes) }),
           },
         },
         headers: ctx.req.headers,
