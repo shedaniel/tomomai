@@ -1,0 +1,73 @@
+name: tomomai-dev
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: tomomai
+      POSTGRES_PASSWORD: tomomai
+      POSTGRES_DB: tomomai
+    ports:
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tomomai -d tomomai"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "127.0.0.1:${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  rustfs:
+    image: rustfs/rustfs:1.0.1
+    environment:
+      RUSTFS_ACCESS_KEY: tomomai
+      RUSTFS_SECRET_KEY: tomomai-dev-secret
+      RUSTFS_ADDRESS: ":9000"
+      RUSTFS_CONSOLE_ENABLE: "true"
+      RUSTFS_CONSOLE_ADDRESS: ":9001"
+    ports:
+      - "127.0.0.1:${S3_PORT:-9000}:9000"
+      - "127.0.0.1:${S3_CONSOLE_PORT:-9001}:9001"
+    volumes:
+      - rustfs:/data
+    healthcheck:
+      test: ["CMD", "curl", "-fs", "http://localhost:9000/health"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  # Creates the bucket and makes it publicly readable, standing in for the R2 public CDN.
+  s3-init:
+    image: amazon/aws-cli:2.27.0
+    depends_on:
+      rustfs:
+        condition: service_healthy
+    environment:
+      AWS_ACCESS_KEY_ID: tomomai
+      AWS_SECRET_ACCESS_KEY: tomomai-dev-secret
+      AWS_DEFAULT_REGION: us-east-1
+    entrypoint: ["sh", "-c"]
+    command:
+      - |
+        set -e
+        s3="aws --endpoint-url http://rustfs:9000 s3api"
+        $$s3 head-bucket --bucket tomomai 2>/dev/null || $$s3 create-bucket --bucket tomomai
+        $$s3 put-bucket-policy --bucket tomomai --policy '{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Principal":{"AWS":["*"]},"Action":["s3:GetObject"],"Resource":["arn:aws:s3:::tomomai/*"]}]}'
+    restart: "no"
+
+volumes:
+  postgres:
+  redis:
+  rustfs:

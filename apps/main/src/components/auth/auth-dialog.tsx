@@ -11,7 +11,7 @@ import {
   ResponsiveDialogTitle,
   XIcon,
 } from "@tomomai/ui";
-import { AlertCircle, Dot, KeyRound, Loader2 } from "lucide-react";
+import { AlertCircle, Dot, FlaskConical, KeyRound, Loader2 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useTranslations } from "next-intl";
 import { Checkbox } from "@/components/animate-ui/components/radix/checkbox";
@@ -342,6 +342,32 @@ function SignUpPanel({
   );
 }
 
+function DevAnonymousSignIn({ callbackURL, onError }: { callbackURL: string; onError: (message: string | null) => void }) {
+  const [pending, setPending] = useState(false);
+
+  const handleClick = async () => {
+    onError(null);
+    setPending(true);
+    const result = await authClient.$fetch("/dev/sign-in-anonymous", { method: "POST", body: {} });
+    if (result.error) {
+      setPending(false);
+      onError(result.error.message ?? "Anonymous sign-in failed");
+      return;
+    }
+    window.location.assign(callbackURL);
+  };
+
+  return (
+    <div className="flex flex-col gap-2 border-t border-dashed border-border pt-4">
+      <Button variant="outline" className="w-full border-dashed" disabled={pending} onClick={handleClick}>
+        {pending ? <Loader2 className="size-4 animate-spin" /> : <FlaskConical className="size-4" />}
+        Continue as anonymous user
+      </Button>
+      <p className="text-center text-2xs text-muted-foreground">Dev only. Creates a new throwaway account.</p>
+    </div>
+  );
+}
+
 export function AuthDialog({ open, onOpenChange, mode, onModeChange, error, onErrorChange, callbackURL }: AuthDialogProps) {
   const t = useTranslations("auth");
 
@@ -381,6 +407,9 @@ export function AuthDialog({ open, onOpenChange, mode, onModeChange, error, onEr
                 )}
               </motion.div>
             </AnimatePresence>
+            {process.env.NODE_ENV === "development" && (
+              <DevAnonymousSignIn callbackURL={callbackURL} onError={onErrorChange} />
+            )}
           </div>
         </AutoHeight>
       </ResponsiveDialogContent>

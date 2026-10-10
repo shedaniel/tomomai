@@ -5,6 +5,8 @@ import { nanoid } from "nanoid";
 export const r2Client = new S3Client({
   region: "auto",
   endpoint: process.env.R2_ENDPOINT,
+  // Local S3 stand-ins (RustFS) only serve path-style URLs.
+  forcePathStyle: process.env.R2_FORCE_PATH_STYLE === "true",
   credentials: {
     accessKeyId: process.env.R2_ACCESS_KEY_ID!,
     secretAccessKey: process.env.R2_SECRET_ACCESS_KEY!,

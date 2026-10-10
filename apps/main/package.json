@@ -22,6 +22,7 @@
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
+    "db:seed": "node scripts/seed-songs.mjs",
     "db:fix": "node scripts/fix-drizzle.js",
     "db:download": "node scripts/download-db.js",
     "db:download-pg": "node scripts/download-pg.js",
