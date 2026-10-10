@@ -367,6 +367,8 @@ export const auth = betterAuth({
     oauthProvider({
       loginPage: "/",
       consentPage: "/oauth/consent",
+      // No discovery consumer yet, and BA's metadata would advertise the disabled register and introspect routes.
+      silenceWarnings: { oauthAuthServerConfig: true },
       accessTokenExpiresIn: 3600,       // 1 hour
       refreshTokenExpiresIn: 2592000,   // 30 days
       // `scopes` is the canonical list the provider understands.
