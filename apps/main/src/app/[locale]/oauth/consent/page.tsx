@@ -1,9 +1,9 @@
 "use client";
 
-import { Suspense, useEffect, useState, type ReactNode } from "react";
+import { Suspense, useCallback, useEffect, useState, type ReactNode } from "react";
 import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { ArrowDown, Check, ChevronRight, ExternalLink, Loader2, Pencil, RotateCcw, ShieldAlert, TriangleAlert } from "lucide-react";
+import { ArrowDown, Check, ChevronRight, RefreshCw, ExternalLink, Loader2, Pencil, RotateCcw, ShieldAlert, TriangleAlert } from "lucide-react";
 import { Button, Skeleton } from "@tomomai/ui";
 import { Link } from "@/i18n/navigation";
 import { authClient, useSession } from "@/lib/auth-client";
@@ -319,7 +319,9 @@ function OAuthConsent() {
 function useScrollReview() {
   const [el, setEl] = useState<HTMLDivElement | null>(null);
   const [atEnd, setAtEnd] = useState(true);
-  const [reviewed, setReviewed] = useState(false);
+  // Null until measured, and treated as reviewed. Starting from false would paint Authorize disabled
+  // and then fade it in for content that already fits.
+  const [reviewed, setReviewed] = useState<boolean | null>(null);
 
   useEffect(() => {
     if (!el) return;
@@ -344,7 +346,16 @@ function useScrollReview() {
     el?.scrollTo({ top: el.scrollHeight, behavior: reduceMotion ? "auto" : "smooth" });
   };
 
-  return { attach: setEl, atEnd, reviewed, scrollToEnd };
+  // Measuring as the node attaches settles the state before the first paint.
+  const attach = useCallback((node: HTMLDivElement | null) => {
+    setEl(node);
+    if (!node) return;
+    const fits = node.scrollHeight - node.clientHeight <= 8;
+    setAtEnd(fits);
+    setReviewed((prev) => prev === true || fits);
+  }, []);
+
+  return { attach, atEnd, reviewed: reviewed !== false, scrollToEnd };
 }
 
 // Concentric corners: the card's radius is the 20px pill button radius plus the 16px footer
@@ -408,12 +419,18 @@ function PermissionTree({ scopes, offlineAccess, appName }: { scopes: ScopeKey[]
   const granted = new Set(scopes);
   // `ready` comes with every grant, so it is shown only when nothing else was asked for.
   const tree = grantedScopeTree(scopes.filter((s) => s !== "ready"));
+  // Not a data permission, so it sits apart from the read and change sections.
+  const stayConnected = offlineAccess && (
+    <ul>
+      <ScopeLeaf icon="refresh" name={t("offlineAccess.name")} description={t("offlineAccess.description", { app: appName })} />
+    </ul>
+  );
   if (tree.length === 0) {
     return (
-      <ul className="space-y-3">
-        <ScopeLeaf name={t("basicAccess")} />
-        {offlineAccess && <ScopeLeaf name={t("offlineAccess.name")} description={t("offlineAccess.description", { app: appName })} />}
-      </ul>
+      <>
+        <ul><ScopeLeaf name={t("basicAccess")} /></ul>
+        {stayConnected}
+      </>
     );
   }
   const changes = tree.filter((n) => API_SCOPES[n.key].destructive);
@@ -431,13 +448,11 @@ function PermissionTree({ scopes, offlineAccess, appName }: { scopes: ScopeKey[]
           </ul>
         </section>
       )}
-      {(reads.length > 0 || offlineAccess) && (
+      {stayConnected}
+      {reads.length > 0 && (
         <section>
           <h2 className="mb-3 text-sm font-medium text-muted-foreground">{t("readHeading")}</h2>
           <ul className="space-y-3">
-            {offlineAccess && (
-              <ScopeLeaf name={t("offlineAccess.name")} description={t("offlineAccess.description", { app: appName })} />
-            )}
             {reads.map((node) => <ScopeNode key={node.key} node={node} granted={granted} />)}
           </ul>
         </section>
@@ -504,16 +519,28 @@ function ScopeNode({ node, granted, tone }: { node: TreeNode; granted: Set<Scope
   );
 }
 
-function ScopeLeaf({ name, description, sensitive, tone }: { name: string; description?: string; sensitive?: string; tone?: "change" }) {
+function ScopeLeaf({
+  name,
+  description,
+  sensitive,
+  tone,
+  icon,
+}: {
+  name: string;
+  description?: string;
+  sensitive?: string;
+  tone?: "change";
+  icon?: "refresh";
+}) {
   return (
     <li className="flex gap-3">
-      <ScopeMark sensitive={!!sensitive} tone={tone} />
+      <ScopeMark sensitive={!!sensitive} tone={tone} icon={icon} />
       <ScopeText name={name} description={description} sensitive={sensitive} />
     </li>
   );
 }
 
-function ScopeMark({ sensitive, tone }: { sensitive: boolean; tone?: "change" }) {
+function ScopeMark({ sensitive, tone, icon }: { sensitive: boolean; tone?: "change"; icon?: "refresh" }) {
   return (
     <span
       className={cn(
@@ -521,7 +548,13 @@ function ScopeMark({ sensitive, tone }: { sensitive: boolean; tone?: "change" })
         tone === "change" || sensitive ? "bg-amber-500/15 text-amber-600 dark:text-amber-400" : "bg-primary/12 text-primary",
       )}
     >
-      {tone === "change" ? <Pencil className="size-3" strokeWidth={2.5} /> : <Check className="size-3.5" strokeWidth={3} />}
+      {tone === "change" ? (
+        <Pencil className="size-3" strokeWidth={2.5} />
+      ) : icon === "refresh" ? (
+        <RefreshCw className="size-3" strokeWidth={2.5} />
+      ) : (
+        <Check className="size-3.5" strokeWidth={3} />
+      )}
     </span>
   );
 }

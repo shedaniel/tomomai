@@ -134,6 +134,8 @@ export async function middleware(request: NextRequest) {
   // Forward the request id to route handlers / pages.
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set('x-request-id', requestId);
+  // Server layouts cannot read the URL; the settings layout uses this to send signed-out visitors back after sign-in.
+  requestHeaders.set('x-pathname', `${pathname}${request.nextUrl.search}`);
 
   const response = NextResponse.next({ request: { headers: requestHeaders } });
 

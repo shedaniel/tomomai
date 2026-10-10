@@ -387,6 +387,9 @@
     "developer": {
       "reauthRequired": "Please sign in again before performing this action.",
       "apiKeys": {
+        "errors": {
+          "limitReached": "You can have up to {max} API keys. Delete one to create another."
+        },
         "label": "API Keys",
         "description": "Authenticate requests to the tomomai API using these keys.",
         "createButton": "Create API Key",
@@ -567,11 +570,15 @@
           "description": "Details, scores and event progress from every snapshot"
         },
         "read": {
-          "name": "Read everything (non-sensitive)",
-          "description": "Account info, settings, snapshots, plays, stats, albums, plates and fetch status, without the sensitive extras"
+          "name": "Read most of your data",
+          "description": "Account info, settings, snapshots, plays, stats, albums, plates and fetch status. Leaves out profile icons and album photos."
         }
       },
       "oauthApps": {
+        "errors": {
+          "limitReached": "You can have up to {max} OAuth apps. Delete one to create another.",
+          "nameReserved": "App names can't include \"tomomai\", because users could mistake the app for an official one."
+        },
         "label": "OAuth Applications",
         "description": "Register apps that can request access on behalf of users via OAuth 2.1 + PKCE.",
         "createButton": "New Application",

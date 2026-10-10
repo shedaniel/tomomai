@@ -387,6 +387,9 @@
     "developer": {
       "reauthRequired": "請重新登入後再執行此操作。",
       "apiKeys": {
+        "errors": {
+          "limitReached": "最多可建立 {max} 個 API 金鑰。請先刪除一個再建立新的。"
+        },
         "label": "API 金鑰",
         "description": "使用這些金鑰來驗證對 tomomai API 的請求。",
         "createButton": "建立 API 金鑰",
@@ -567,11 +570,15 @@
           "description": "所有快照的概要、成績和活動進度"
         },
         "read": {
-          "name": "讀取全部（不含敏感資料）",
-          "description": "帳號資料、設定、快照、遊玩紀錄、統計、相簿、稱號和同步狀態，不含敏感項目"
+          "name": "讀取大部分資料",
+          "description": "帳號資料、設定、快照、遊玩紀錄、統計、相簿、稱號和同步狀態。不含頭像和相簿相片。"
         }
       },
       "oauthApps": {
+        "errors": {
+          "limitReached": "最多可建立 {max} 個 OAuth 應用程式。請先刪除一個再建立新的。",
+          "nameReserved": "應用程式名稱不能包含「tomomai」，以免使用者誤以為是官方應用程式。"
+        },
         "label": "OAuth 應用程式",
         "description": "註冊可透過 OAuth 2.1 + PKCE 代表使用者請求存取的應用程式。",
         "createButton": "新增應用程式",

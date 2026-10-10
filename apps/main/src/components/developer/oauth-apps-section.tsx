@@ -24,7 +24,10 @@ import {
 } from "@tomomai/ui";
 import { trpc } from "@/lib/trpc-client";
 import { API_SCOPES, type ScopeKey } from "@/lib/api/scopes";
-import { useReauthGuard } from "@/lib/security/use-reauth-guard";
+import { useEnsureFreshSession, useReauthGuard } from "@/lib/security/use-reauth-guard";
+import { useSearchParams } from "next/navigation";
+import { useRouter } from "@/i18n/navigation";
+import { MAX_OAUTH_APPS_PER_USER, OAUTH_APP_LIMIT_REACHED, OAUTH_APP_NAME_RESERVED } from "@/lib/developer-limits";
 import { SettingsField } from "@/components/settings/primitives";
 import { toast } from "sonner";
 import { Plus, Trash2, Globe, Loader2, RefreshCw, AlertTriangle, X, AppWindow, Pencil } from "lucide-react";
@@ -269,9 +272,13 @@ function CreateOAuthAppDialog({
 
   const createMutation = trpc.developer.createOAuthApp.useMutation({
     ...useReauthGuard({
-      callbackURL: "/settings/developer",
+      callbackURL: "/settings/developer?open=new-app",
       reauthMessage: t("reauthRequired"),
       fallback: t("oauthApps.createDialog.createError"),
+      errorMessages: {
+        [OAUTH_APP_LIMIT_REACHED]: t("oauthApps.errors.limitReached", { max: MAX_OAUTH_APPS_PER_USER }),
+        [OAUTH_APP_NAME_RESERVED]: t("oauthApps.errors.nameReserved"),
+      },
     }),
     onSuccess: (data) => {
       setCreatedApp({ clientId: String(data.client_id), secret: String(data.client_secret) });
@@ -433,9 +440,10 @@ function EditOAuthAppDialog({
 
   const updateMutation = trpc.developer.updateOAuthApp.useMutation({
     ...useReauthGuard({
-      callbackURL: "/settings/developer",
+      callbackURL: `/settings/developer?open=edit-app:${app.clientId}`,
       reauthMessage: t("reauthRequired"),
       fallback: t("oauthApps.editDialog.saveError"),
+      errorMessages: { [OAUTH_APP_NAME_RESERVED]: t("oauthApps.errors.nameReserved") },
     }),
     onSuccess: () => {
       onSaved();
@@ -594,6 +602,21 @@ export function OAuthAppsSection() {
 
   const { data: apps, isLoading } = trpc.developer.listOAuthApps.useQuery();
 
+  // Forms that need a fresh session check it before opening, so a reauth bounce never discards typed
+  // input. The return URL names the form, which then reopens from `?open=` once the user is back.
+  const ensureFresh = useEnsureFreshSession(t("reauthRequired"));
+  const router = useRouter();
+  const reopen = useSearchParams().get("open");
+  const clearReopen = () => { if (reopen) router.replace("/settings/developer"); };
+  const isCreateOpen = createOpen || reopen === "new-app";
+  const shownEditApp = editApp ?? apps?.find((a: OAuthApp) => reopen === `edit-app:${a.clientId}`) ?? null;
+  const openCreate = async () => {
+    if (await ensureFresh("/settings/developer?open=new-app")) setCreateOpen(true);
+  };
+  const openEdit = async (app: OAuthApp) => {
+    if (await ensureFresh(`/settings/developer?open=edit-app:${app.clientId}`)) setEditApp(app);
+  };
+
   const deleteMutation = trpc.developer.deleteOAuthApp.useMutation({
     ...useReauthGuard({
       callbackURL: "/settings/developer",
@@ -627,7 +650,7 @@ export function OAuthAppsSection() {
         label={t("oauthApps.label")}
         description={t("oauthApps.description")}
         action={
-          <Button variant="outline" size="sm" onClick={() => setCreateOpen(true)} className="bg-background">
+          <Button variant="outline" size="sm" onClick={openCreate} className="bg-background">
             <Plus className="h-4 w-4 mr-2" />
             {t("oauthApps.createButton")}
           </Button>
@@ -646,7 +669,7 @@ export function OAuthAppsSection() {
             <p className="text-sm font-medium">{t("oauthApps.emptyTitle")}</p>
             <p className="text-xs text-muted-foreground">
               <button
-                onClick={() => setCreateOpen(true)}
+                onClick={openCreate}
                 className="underline underline-offset-2 hover:text-foreground transition-colors"
               >
                 {t("oauthApps.emptyCreateLink")}
@@ -704,7 +727,7 @@ export function OAuthAppsSection() {
               <div className="flex items-center gap-1.5 shrink-0 pt-0.5">
                 <Button
                   variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground"
-                  onClick={() => setEditApp(app)} aria-label={t("oauthApps.editDialog.title")}
+                  onClick={() => openEdit(app)} aria-label={t("oauthApps.editDialog.title")}
                 >
                   <Pencil className="h-4 w-4" />
                 </Button>
@@ -727,15 +750,15 @@ export function OAuthAppsSection() {
       )}
 
       <CreateOAuthAppDialog
-        open={createOpen}
-        onOpenChange={setCreateOpen}
+        open={isCreateOpen}
+        onOpenChange={(v) => { setCreateOpen(v); if (!v) clearReopen(); }}
         onCreated={() => queryClient.invalidateQueries({ queryKey: [["developer", "listOAuthApps"]] })}
       />
 
-      {editApp && (
+      {shownEditApp && (
         <EditOAuthAppDialog
-          app={editApp}
-          onOpenChange={(v) => { if (!v) setEditApp(null); }}
+          app={shownEditApp}
+          onOpenChange={(v) => { if (!v) { setEditApp(null); clearReopen(); } }}
           onSaved={() => queryClient.invalidateQueries({ queryKey: [["developer", "listOAuthApps"]] })}
         />
       )}
