@@ -7,6 +7,7 @@ import { Separator } from "@tomomai/ui";
 import { getRegistry, routeSlug } from "@/lib/api/specs";
 import { listGuides } from "@/lib/developer/guides";
 import { DeveloperSidebar } from "@/components/developer/sidebar";
+import { SiteFooter } from "@/components/site-footer";
 import { useDeveloperPortal } from "@/lib/flags";
 
 export const metadata: Metadata = {
@@ -64,6 +65,7 @@ export default async function DeveloperLayout({ children }: { children: React.Re
           <main className="min-w-0 flex-1 px-4 py-8 sm:px-6 lg:px-8">
             <div className="mx-auto max-w-5xl">{children}</div>
           </main>
+          <SiteFooter inset />
         </SidebarInset>
       </SidebarProvider>
     </>
