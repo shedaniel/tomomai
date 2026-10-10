@@ -160,9 +160,8 @@ const POLICY_REQUIRED_PATHS: Record<string, { tos: string; privacy: string }> = 
   "/link-social": { tos: "20260630", privacy: "20260630" },
 };
 
-// OAuth client mutation paths. Gated by the `oauthAppCreation` flag until
-// v1 ships — UI may render, but no client can be created, rotated, or
-// destroyed via tRPC or direct BA HTTP.
+// OAuth client mutation paths. The `oauthAppCreation` flag is a kill switch: turned
+// off, no client can be created, rotated or destroyed through tRPC or BA HTTP.
 const OAUTH_APP_BA_PATHS = new Set<string>([
   "/oauth2/create-client",
   "/oauth2/update-client",
