@@ -18,7 +18,15 @@ function assertInternalScopesAllowed(scopes: readonly ScopeKey[], userRole: stri
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { apikey, oauthClient, oauthConsent, oauthRefreshToken, oauthAccessToken } from "@/lib/db/schema-pg";
-import { and, eq } from "drizzle-orm";
+import { and, count, eq } from "drizzle-orm";
+import {
+  API_KEY_LIMIT_REACHED,
+  isReservedAppName,
+  MAX_API_KEYS_PER_USER,
+  MAX_OAUTH_APPS_PER_USER,
+  OAUTH_APP_LIMIT_REACHED,
+  OAUTH_APP_NAME_RESERVED,
+} from "@/lib/developer-limits";
 import { requireFreshSession } from "@/lib/security/fresh-session-server";
 import { httpsRedirectUrl, safeWebUrl, httpsWebUrl } from "@/lib/security/oauth-url";
 import { logger } from "@/lib/logger";
@@ -52,6 +60,27 @@ async function createScopedApiKey(
     throw err;
   }
   return result.key;
+}
+
+/** Caps how many keys or apps one account can hold, so a single account cannot flood the tables. Admins are exempt. */
+async function assertUnderLimit(
+  role: string | null | undefined,
+  table: typeof apikey | typeof oauthClient,
+  owner: typeof apikey.referenceId | typeof oauthClient.userId,
+  userId: string,
+  max: number,
+  code: string,
+) {
+  if (role === "admin") return;
+  const [row] = await db.select({ n: count() }).from(table).where(eq(owner, userId));
+  if ((row?.n ?? 0) >= max) throw new TRPCError({ code: "FORBIDDEN", message: code });
+}
+
+/** App names show on the consent screen, so only admins may use the tomomai name. */
+function assertAppNameAllowed(name: string, role: string | null | undefined) {
+  if (role !== "admin" && isReservedAppName(name)) {
+    throw new TRPCError({ code: "FORBIDDEN", message: OAUTH_APP_NAME_RESERVED });
+  }
 }
 
 const scopeKey = z.enum(Object.keys(API_SCOPES) as [ScopeKey, ...ScopeKey[]]);
@@ -104,6 +133,7 @@ export const developerRouter = router({
     .mutation(async ({ ctx, input }) => {
       requireFreshSession(ctx.session);
       assertInternalScopesAllowed(input.scopes, ctx.session.user.role);
+      await assertUnderLimit(ctx.session.user.role, apikey, apikey.referenceId, ctx.session.user.id, MAX_API_KEYS_PER_USER, API_KEY_LIMIT_REACHED);
       // Expand any encompassing scopes to their leaf scopes before storing.
       // This keeps verifyApiKey simple (pure AND logic, single Better Auth call).
       const leafScopes = expandScopes(input.scopes);
@@ -155,6 +185,8 @@ export const developerRouter = router({
     )
     .mutation(async ({ ctx, input }) => {
       requireFreshSession(ctx.session);
+      assertAppNameAllowed(input.name, ctx.session.user.role);
+      await assertUnderLimit(ctx.session.user.role, oauthClient, oauthClient.userId, ctx.session.user.id, MAX_OAUTH_APPS_PER_USER, OAUTH_APP_LIMIT_REACHED);
       // Delegate creation to Better Auth so it handles client_id generation,
       // secret hashing, and any internal bookkeeping consistently.
       const result = await auth.api.createOAuthClient({
@@ -223,6 +255,7 @@ export const developerRouter = router({
       // endpoint, so require a fresh session for them. Pure metadata edits (name,
       // icon, policy/tos) are lower-risk and stay session-only.
       if (input.redirectUris) requireFreshSession(ctx.session);
+      if (input.name !== undefined) assertAppNameAllowed(input.name, ctx.session.user.role);
       // Verify ownership
       const [app] = await db
         .select({ id: oauthClient.id })
