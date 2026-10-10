@@ -12,6 +12,17 @@ Never run `db:push`, `db:migrate`, `drizzle-kit push`, `drizzle-kit migrate`, or
 equivalent schema-application commands in this repository. The only permitted
 Drizzle schema command is `db:generate`/`drizzle-kit generate`.
 
+Exception: `make migrate` (and `make setup`/`make reset`, which call it) may be
+run, but only after confirming `POSTGRES_URL` in `.env.local` points at a local
+host (`localhost`, `127.0.0.1` or `[::1]`). Check the host alone, without printing
+the URL, credentials or any other value from the file:
+
+```sh
+sed -nE 's#^POSTGRES_URL=["'\'']?[a-z]+://([^@/]*@)?(\[[^]]*\]|[^:/?"'\'']+).*#\2#p' .env.local
+```
+
+If it prints any other host, more than one line, or nothing, do not run it.
+
 Before generating a migration, notify the user that generation is about to
 reset migration state. Then restore the tracked contents of
 `apps/main/drizzle-pg` from `upstream/main` and remove only untracked files

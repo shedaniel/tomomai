@@ -34,6 +34,9 @@ export async function getCachedEdgeConfig<T>(
   key: string,
   ttlMs: number = DEFAULT_TTL_MS,
 ): Promise<T | undefined> {
+  // Local dev has no Edge Config store; every flag reads as unset (maintenance off).
+  if (!process.env.EDGE_CONFIG) return undefined;
+
   const now = Date.now();
   const hit = cache.get(key);
   if (hit && hit.expires > now) {
