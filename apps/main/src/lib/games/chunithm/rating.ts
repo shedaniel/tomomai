@@ -24,9 +24,9 @@ export function chunithmChartRating({ scoreValue, levelPrecise, difficultyCode }
 
   if (scoreValue >= 1_009_000) rating = constant + 215;
   else if (scoreValue >= 1_007_500) rating = constant + 200 + Math.floor((scoreValue - 1_007_500) / 100);
-  else if (scoreValue >= 1_005_000) rating = constant + 150 + Math.floor((scoreValue - 1_005_000) / 500) * 10;
-  else if (scoreValue >= 1_000_000) rating = constant + 100 + Math.floor((scoreValue - 1_000_000) / 1_000) * 10;
-  else if (scoreValue >= 975_000) rating = constant + Math.floor((scoreValue - 975_000) / 2_500) * 10;
+  else if (scoreValue >= 1_005_000) rating = constant + 150 + Math.floor((scoreValue - 1_005_000) / 50);
+  else if (scoreValue >= 1_000_000) rating = constant + 100 + Math.floor((scoreValue - 1_000_000) / 100);
+  else if (scoreValue >= 975_000) rating = constant + Math.floor((scoreValue - 975_000) / 250);
   else if (scoreValue >= 925_000) rating = interpolate(scoreValue, 925_000, 975_000, constant - 300, constant);
   else if (scoreValue >= 900_000) rating = interpolate(scoreValue, 900_000, 925_000, constant - 500, constant - 300);
   else if (scoreValue >= 800_000) rating = interpolate(scoreValue, 800_000, 900_000, Math.floor((constant - 500) / 2), constant - 500);

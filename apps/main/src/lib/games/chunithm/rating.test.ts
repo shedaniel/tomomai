@@ -13,6 +13,13 @@ it("applies CHUNITHM score thresholds in integer rating units", () => {
   expect(chunithmChartRating(chart(499999))).toBe(0);
 });
 
+it("interpolates between thresholds at 0.01 granularity", () => {
+  expect(chunithmChartRating(chart(1008250))).toBe(1707);
+  expect(chunithmChartRating(chart(1005986))).toBe(1669);
+  expect(chunithmChartRating(chart(1004473))).toBe(1644);
+  expect(chunithmChartRating(chart(997045))).toBe(1588);
+});
+
 it("rates WORLD'S END charts as zero", () => {
   expect(chunithmChartRating(chart(1009000, worldsEnd))).toBe(0);
 });
