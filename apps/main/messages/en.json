@@ -409,7 +409,7 @@
         "regenerateError": "Failed to regenerate API key",
         "regeneratedTitle": "Key Regenerated",
         "regeneratedDescription": "Copy your new API key now. It will not be shown again.",
-        "regeneratedSaveWarning": "Save this key — it won't be shown again after closing this dialog.",
+        "regeneratedSaveWarning": "Save this key now. It won't be shown again after you close this dialog.",
         "regenerateDialog": {
           "title": "Regenerate API key?",
           "description": "This will immediately invalidate the current key. Any application using it will lose access until updated with the new key.",
@@ -435,7 +435,7 @@
         "createdTitle": "API Key Created",
         "createdDescription": "Copy your API key now. It will not be shown again.",
         "copyAriaLabel": "Copy API key",
-        "saveWarning": "Save this key — it won't be shown again after closing this dialog.",
+        "saveWarning": "Save this key now. It won't be shown again after you close this dialog.",
         "done": "Done",
         "nameLabel": "Name",
         "namePlaceholder": "My Userscript",
@@ -610,7 +610,7 @@
           "clientIdLabel": "Client ID",
           "secretLabel": "Client Secret",
           "copyAriaLabel": "Copy value",
-          "saveWarning": "Save this secret — it won't be shown again after closing this dialog.",
+          "saveWarning": "Save this secret now. It won't be shown again after you close this dialog.",
           "done": "Done"
         },
         "rotateDialog": {
@@ -1071,7 +1071,7 @@
       "title": "Pick a username",
       "description": "Your username is your handle on tomomai. If you choose to share, it also becomes your public profile URL.",
       "publishToggleLabel": "Share my profile with friends",
-      "publishToggleDescription": "Let others view your scores at a public link. Off by default — you can change this anytime.",
+      "publishToggleDescription": "Let others view your scores at a public link. It's off by default, and you can change it anytime.",
       "publicUrlHint": "Your public profile:"
     },
     "step2": {

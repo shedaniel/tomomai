@@ -107,7 +107,7 @@ function useOAuthAppForm(initial: OAuthAppFormInit) {
     const val = redirectInput.trim();
     if (!val) return;
     try { new URL(val); } catch {
-      toast.error("Invalid redirect URI — must be a full URL.");
+      toast.error("Invalid redirect URI. It must be a full URL.");
       return;
     }
     if (redirectUris.includes(val)) return;

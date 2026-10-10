@@ -10,9 +10,9 @@ User-data endpoints (`/snapshots`, `/snapshots/latest`, `/snapshots/{id}`,
 `/recents`, `/stats`, `/albums`) require a `?region=` query parameter.
 Valid values:
 
-- `intl` — international
-- `jp` — Japan
-- `cn` — China
+- `intl`: international
+- `jp`: Japan
+- `cn`: China
 
 A user can have data across multiple regions; tomomai will not silently
 pick one for you.
@@ -26,7 +26,7 @@ pick one for you.
 
 Responses include `hasMore: boolean`. Recents additionally returns
 `totalCount` so you can render a position indicator. Albums returns only
-`hasMore` — counting all albums up front would be expensive.
+`hasMore`, because counting all albums up front would be expensive.
 
 ```bash
 # Page 2 of recents (50 items per page)

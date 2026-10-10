@@ -406,7 +406,7 @@
         "regenerateError": "重新生成 API 密钥失败",
         "regeneratedTitle": "密钥已重新生成",
         "regeneratedDescription": "请立即复制你的新 API 密钥，之后将不再显示。",
-        "regeneratedSaveWarning": "请保存此密钥 —— 关闭对话框后将不再显示。",
+        "regeneratedSaveWarning": "请保存此密钥，关闭对话框后将不再显示。",
         "regenerateDialog": {
           "title": "重新生成 API 密钥？",
           "description": "当前密钥将立即失效。使用该密钥的应用程序将无法访问，直到更新为新密钥。",
@@ -435,7 +435,7 @@
         "createdTitle": "API 密钥已创建",
         "createdDescription": "请立即复制你的 API 密钥。关闭后将不再显示。",
         "copyAriaLabel": "复制 API 密钥",
-        "saveWarning": "请保存此密钥 —— 关闭此对话框后将无法再次查看。",
+        "saveWarning": "请保存此密钥，关闭此对话框后将无法再次查看。",
         "done": "完成",
         "nameLabel": "名称",
         "namePlaceholder": "我的用户脚本",
@@ -1062,7 +1062,7 @@
       "title": "设定用户名",
       "description": "用户名是你在 tomomai 的称呼。如果你选择公开，它也会成为你的公开个人资料网址。",
       "publishToggleLabel": "和朋友分享我的资料",
-      "publishToggleDescription": "让其他人通过公开链接查看你的成绩。默认关闭 — 你可以随时更改。",
+      "publishToggleDescription": "让其他人通过公开链接查看你的成绩。默认关闭，你可以随时更改。",
       "publicUrlHint": "你的公开资料："
     },
     "step2": {

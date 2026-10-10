@@ -406,7 +406,7 @@
         "regenerateError": "重新產生 API 金鑰失敗",
         "regeneratedTitle": "金鑰已重新產生",
         "regeneratedDescription": "請立即複製你的新 API 金鑰，其後將不會再次顯示。",
-        "regeneratedSaveWarning": "請儲存此金鑰 — 關閉對話框後將不會再次顯示。",
+        "regeneratedSaveWarning": "請儲存此金鑰，關閉對話框後將不會再次顯示。",
         "regenerateDialog": {
           "title": "重新產生 API 金鑰？",
           "description": "目前的金鑰將立即失效。使用該金鑰的應用程式將無法存取，直到更新為新金鑰。",
@@ -435,7 +435,7 @@
         "createdTitle": "API 金鑰已建立",
         "createdDescription": "請立即複製你的 API 金鑰。關閉後將不會再次顯示。",
         "copyAriaLabel": "複製 API 金鑰",
-        "saveWarning": "請儲存此金鑰 — 關閉此對話框後將無法再次查看。",
+        "saveWarning": "請儲存此金鑰，關閉此對話框後將無法再次查看。",
         "done": "完成",
         "nameLabel": "名稱",
         "namePlaceholder": "我的 Userscript",
@@ -1062,7 +1062,7 @@
       "title": "設定用戶名稱",
       "description": "用戶名稱是你在 tomomai 的稱號。如果你選擇公開，亦會成為你的公開個人檔案網址。",
       "publishToggleLabel": "與朋友分享我的個人檔案",
-      "publishToggleDescription": "讓其他人透過公開連結查看你的成績。預設為關閉 — 你可以隨時更改。",
+      "publishToggleDescription": "讓其他人透過公開連結查看你的成績。預設為關閉，你可以隨時更改。",
       "publicUrlHint": "你的公開個人檔案："
     },
     "step2": {

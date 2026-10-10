@@ -7,7 +7,7 @@ import { slugifyScope } from "@/components/developer/scope-badge";
 export const metadata: Metadata = {
   title: "Scopes",
   description:
-    "Every scope tomomai uses to gate access to its API — what each one " +
+    "Every scope tomomai uses to gate access to its API: what each one " +
     "covers, which are sensitive, and how they expand.",
 };
 
@@ -38,7 +38,7 @@ export default function ScopesPage() {
           Every protected request is checked against one or more scopes. A
           token holds a set of scopes; the endpoint declares a required set;
           the request succeeds only if the token covers them. Bundles expand
-          to their leaves at the moment a key is created — only the leaves
+          to their leaves at the moment a key is created, and only the leaves
           are stored.
         </p>
       </header>

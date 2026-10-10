@@ -406,7 +406,7 @@
         "regenerateError": "APIキーの再生成に失敗しました",
         "regeneratedTitle": "キーが再生成されました",
         "regeneratedDescription": "新しいAPIキーを今すぐコピーしてください。再表示されません。",
-        "regeneratedSaveWarning": "このキーを保存してください — ダイアログを閉じると再表示されません。",
+        "regeneratedSaveWarning": "このキーを保存してください。ダイアログを閉じると再表示されません。",
         "regenerateDialog": {
           "title": "APIキーを再生成しますか？",
           "description": "現在のキーは即座に無効になります。このキーを使用しているアプリは新しいキーに更新するまでアクセスできなくなります。",
@@ -1062,7 +1062,7 @@
       "title": "ユーザー名を決める",
       "description": "ユーザー名は ともマイ でのあなたのハンドルです。公開を選ぶと、公開プロフィールのURLにも使われます。",
       "publishToggleLabel": "プロフィールを友達に共有する",
-      "publishToggleDescription": "他のユーザーが公開リンクであなたのスコアを見られるようになります。初期設定はオフです — いつでも変更できます。",
+      "publishToggleDescription": "他のユーザーが公開リンクであなたのスコアを見られるようになります。初期設定はオフで、いつでも変更できます。",
       "publicUrlHint": "あなたの公開プロフィール："
     },
     "step2": {

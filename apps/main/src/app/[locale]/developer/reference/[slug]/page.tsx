@@ -93,7 +93,7 @@ export default async function ReferenceEndpointPage({
             <Link
               href="/developer/guides/rate-limits"
               className="inline-flex items-center gap-1.5 rounded-md border border-border bg-muted/30 px-2 py-1 font-mono text-muted-foreground hover:text-foreground hover:bg-muted/60"
-              title="Cost units consumed per call — see Rate Limits guide"
+              title="Cost units consumed per call. See the Rate limits guide."
             >
               <span className="uppercase tracking-wider">Cost</span>
               <span className="font-semibold text-foreground">{spec.cost}</span>
@@ -134,7 +134,7 @@ export default async function ReferenceEndpointPage({
                     {spec.optionalScopes.map((o) => (
                       <li key={o.scope} className="flex items-start gap-2">
                         <ScopeBadge scope={o.scope} />
-                        <span className="text-muted-foreground">— {o.effect}</span>
+                        <span className="text-muted-foreground">{o.effect}</span>
                       </li>
                     ))}
                   </ul>

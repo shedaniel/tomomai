@@ -11,7 +11,7 @@ import { SiteFooter } from "@/components/site-footer";
 import { useDeveloperPortal } from "@/lib/flags";
 
 export const metadata: Metadata = {
-  title: { default: "Developer Center", template: "%s — tomomai Developer Center" },
+  title: { default: "Developer Center", template: "%s | tomomai Developer Center" },
   description:
     "Build with the tomomai API. Personal API keys, OAuth 2.1, scopes, and " +
     "reference for every /api/v1/* endpoint.",

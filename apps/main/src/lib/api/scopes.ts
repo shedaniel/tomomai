@@ -125,7 +125,7 @@ export const API_SCOPES = {
   },
   "album:images:read": {
     name: "Album Images (Read)",
-    description: "Adds resolved image URLs to album responses. Sensitive — photos may contain images of people.",
+    description: "Adds resolved image URLs to album responses. Sensitive, as photos may contain images of people.",
     destructive: false,
     sensitive: true,
     default: false,
@@ -152,7 +152,7 @@ export const API_SCOPES = {
   // ── Snapshot: destructive ─────────────────────────────────────────────────
   "snapshot:all:delete": {
     name: "Snapshots (Delete)",
-    description: "Delete any of your snapshots. Grants DELETE /api/v1/snapshots/:id. Destructive — must be requested explicitly and is never implied by encompassing scopes.",
+    description: "Delete any of your snapshots. Grants DELETE /api/v1/snapshots/:id. Destructive, so it must be requested explicitly and is never implied by encompassing scopes.",
     destructive: true,
     sensitive: true,
     default: false,
@@ -167,7 +167,7 @@ export const API_SCOPES = {
   // by talking to our own server, which uses a server-side credential.
   "snapshot:submit": {
     name: "Snapshots (Submit)",
-    description: "Submit a new snapshot. Internal — admin only.",
+    description: "Submit a new snapshot. Internal and admin only.",
     destructive: true,
     sensitive: true,
     default: false,
@@ -184,14 +184,14 @@ export const API_SCOPES = {
   },
   "fetch:start": {
     name: "Start Fetch",
-    description: "Trigger a new maimai data fetch using your stored upstream token. Grants POST /api/v1/fetch. Destructive — consumes upstream API budget and writes a new snapshot.",
+    description: "Trigger a new maimai data fetch using your stored upstream token. Grants POST /api/v1/fetch. Destructive, as it consumes upstream API budget and writes a new snapshot.",
     destructive: true,
     sensitive: false,
     default: false,
   },
   "fetch:delete": {
     name: "Fetch Token (Delete)",
-    description: "Delete your stored upstream maimai authentication token. Grants DELETE /api/v1/fetch/token. Destructive and sensitive — breaks any in-app and API-driven fetch flow until you re-authenticate.",
+    description: "Delete your stored upstream maimai authentication token. Grants DELETE /api/v1/fetch/token. Destructive and sensitive, as it breaks any in-app and API-driven fetch flow until you re-authenticate.",
     destructive: true,
     sensitive: true,
     default: false,
@@ -214,7 +214,7 @@ export const API_SCOPES = {
   },
   "read": {
     name: "Read (All Non-Sensitive)",
-    description: "Broad read access: user metadata, all snapshots, recents, stats, and albums. Excludes icon and album image URLs — those must be granted explicitly. Sensitive due to broad personal data access.",
+    description: "Broad read access: user metadata, all snapshots, recents, stats, and albums. Excludes icon and album image URLs, which must be granted explicitly. Sensitive due to broad personal data access.",
     destructive: false,
     sensitive: true,
     default: false,

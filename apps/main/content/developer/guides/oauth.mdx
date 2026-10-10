@@ -31,16 +31,16 @@ you call /api/v1/* with Authorization: Bearer <access_token>
 **[Settings → Developer → OAuth Applications](/settings/developer).**
 You'll need:
 
-- **Name, optional description / icon** — shown on the consent screen.
-- **Redirect URIs** — each must match exactly (scheme, host, port, path)
+- **Name, optional description / icon**: shown on the consent screen.
+- **Redirect URIs**: each must match exactly (scheme, host, port, path)
   what you send in `redirect_uri` at runtime. Register one per environment.
-- **Scopes** — the maximum set your app may ask for. You can request a
+- **Scopes**: the maximum set your app may ask for. You can request a
   subset per authorization, but never a superset of what you registered.
 
 After creation you receive:
 
-- `client_id` — public, embed in your app.
-- `client_secret` — **shown only once**, server-side only. Store like a
+- `client_id`: public, embed in your app.
+- `client_secret`: **shown only once**, server-side only. Store like a
   password.
 
 > **Public clients** (mobile, SPA, anything that can't keep a secret):
@@ -71,9 +71,9 @@ GET https://tomomai.lol/api/auth/oauth2/authorize
 - **PKCE is mandatory.** Generate a high-entropy `code_verifier` (43–128
   chars), keep it on the client, send the SHA-256 challenge here. The
   `plain` method is not supported.
-- **`state`** is required and round-tripped to your callback — verify it
+- **`state`** is required and round-tripped to your callback. Verify it
   matches before doing anything with the `code`.
-- For long-lived access, include `offline_access` in the scope list — the
+- For long-lived access, include `offline_access` in the scope list. The
   token response then includes a refresh token.
 
 ## 3. Callback
@@ -81,7 +81,7 @@ GET https://tomomai.lol/api/auth/oauth2/authorize
 The user is redirected to `?code=<one-time code>&state=<your state>&iss=…`.
 
 - **Check `state` first.** Reject if it doesn't match what you sent.
-- **Use `iss` as a defence-in-depth check** — it should equal
+- **Use `iss` as a defence-in-depth check.** It should equal
   `https://tomomai.lol/api/auth`
   ([RFC 9207](https://datatracker.ietf.org/doc/html/rfc9207)).
 
@@ -137,35 +137,32 @@ grant_type=refresh_token
 &client_secret=<your client_secret>
 ```
 
-Refresh tokens **rotate** on every use — store the new one, discard the
-old. Refresh tokens are valid for 30 days; access tokens for 1 hour.
+Refresh tokens **rotate** on every use. Store the new one and discard the
+old one, since reusing an old refresh token revokes every token issued from it. Refresh tokens are valid for 30 days; access tokens for 1 hour.
 
 ## Token formats
 
-- **Default: opaque** — a random string. tomomai validates it via a hashed
-  lookup, so revoking from [Settings → Developer](/settings/developer) (or
+- **Default: opaque**, a random string. tomomai validates it via a hashed
+  lookup, so revoking from [Settings → Applications](/settings/applications) (or
   via `/api/auth/oauth2/revoke`) takes effect immediately.
-- **JWT** — opt-in by sending `resource=https://tomomai.lol` in the
+- **JWT**: opt in by sending `resource=https://tomomai.lol` in the
   **token request body**. The returned access token is then a JWT signed
   via the JWKS at `/api/auth/jwks`, verifiable locally without a network
   round-trip. Useful for high-traffic resource servers. Standard
   `iss`/`aud` claims apply (`iss = https://tomomai.lol/api/auth`,
   `aud = https://tomomai.lol`).
 
-Both formats are accepted by every `/api/v1/*` endpoint — clients don't
+Both formats are accepted by every `/api/v1/*` endpoint, so clients don't
 have to choose at integration time.
 
-## Revocation and introspection
+## Revocation
 
-- `POST /api/auth/oauth2/revoke` — RFC 7009. Pass `token=…` plus your
-  client credentials to revoke an access or refresh token immediately.
-- `POST /api/auth/oauth2/introspect` — RFC 7662. Confidential clients can
-  ask the server about a token they were issued. Note: this endpoint only
-  returns `active: true` when the introspecting client matches the token's
-  issuing client, so it's most useful as a self-check.
+`POST /api/auth/oauth2/revoke` ([RFC 7009](https://datatracker.ietf.org/doc/html/rfc7009)).
+Pass `token=…` plus your client credentials to revoke an access or refresh
+token immediately.
 
 ## A complete working example
 
-See [`packages/userscript`](https://github.com/shedaniel/maimai-charts/tree/main/packages/userscript)
-in the source — it's a tomomai-authored userscript that performs the full
+See [`packages/userscript`](https://github.com/shedaniel/tomomai/tree/main/packages/userscript)
+in the source. It's a tomomai-authored userscript that performs the full
 OAuth flow (PKCE, popup callback, refresh) from scratch.

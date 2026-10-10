@@ -1,6 +1,6 @@
 ---
 title: Rate limits and quotas
-description: How tomomai meters API traffic — per-key burst, per-user umbrella, and monthly quota.
+description: How tomomai meters API traffic, with a per-key burst limit, a per-user umbrella and a monthly quota.
 order: 5
 ---
 
@@ -13,11 +13,11 @@ Each layer protects against a different failure mode:
 | **Per-user umbrella burst** | Cost-units per rolling 60s window, per user | Closes the multi-key bypass: 50 keys does **not** equal 50× the budget. Sums across every API key and OAuth token you own. |
 | **Monthly quota** | Cost-units per calendar month, per user | Long-term fairness. Resets at the first of next month, 00:00 UTC. |
 
-<Callout type="warning" title="Tier I — defaults, subject to change">
+<Callout type="warning" title="Tier I: defaults, subject to change">
 Every account today is on **Tier I**. These numbers are the current defaults
 and **may change** as we observe real-world traffic and roll out tier
-upgrades for heavier workloads. Don't hard-code them — read the response
-headers below.
+upgrades for heavier workloads. Don't hard-code them. Read the response
+headers below instead.
 
 | Layer | Limit |
 |---|---|
@@ -39,15 +39,15 @@ A few rules of thumb:
 - Standard data reads (snapshots, recents, stats, albums, plates, settings)
   cost 2.
 - Snapshot deletion costs 10.
-- Triggering a fresh fetch from upstream (`POST /api/v1/fetch`) costs 40 —
-  it kicks off a polling job against an external service.
+- Triggering a fresh fetch from upstream (`POST /api/v1/fetch`) costs 40,
+  because it kicks off a polling job against an external service.
 
-Public endpoints (`/api/v1/songs*`) do not consume tier budget — they're
+Public endpoints (`/api/v1/songs*`) do not consume tier budget. They're
 served under the global IP limit instead.
 
 ## Response headers
 
-Every `/api/v1/*` response — `200` or `429` — carries these headers so you
+Every `/api/v1/*` response, `200` or `429`, carries these headers so you
 can self-throttle without ever seeing a `429`:
 
 | Header | Meaning |
@@ -82,7 +82,7 @@ building an OAuth app:
   app does not consume one shared cap.
 - The per-key burst limit is per *token*, so each user × app pair gets
   its own burst budget.
-- The per-user umbrella covers **all** of a user's traffic — across every
+- The per-user umbrella covers **all** of a user's traffic, across every
   app they've authorized plus any personal API keys they've created.
 
 The intent: the user whose data is being read is the one being metered.
@@ -93,5 +93,5 @@ The intent: the user whose data is being read is the one being metered.
 2. Read `X-RateLimit-Remaining` and `X-Quota-Remaining` on successful
    responses to estimate when you'll get close to a limit, and back off
    *before* hitting `429`.
-3. If your workload genuinely needs more headroom, [open an issue](https://github.com/anthropics/tomomai/issues)
-   — we're tracking real-world traffic and will adjust the defaults.
+3. If your workload genuinely needs more headroom, [open an issue](https://github.com/shedaniel/tomomai/issues).
+   We're tracking real-world traffic and will adjust the defaults.
