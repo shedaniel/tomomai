@@ -155,16 +155,16 @@ const registry = {
 
   // ── settings ─────────────────────────────────────────────────────────────
   settingsApplications: defineFlag("settingsApplications", {
-    defaultValue: false,
+    defaultValue: true,
     userSelectable: true,
     category: "settings",
-    decide: () => false,
+    decide: () => true,
   }),
   settingsDeveloper: defineFlag("settingsDeveloper", {
-    defaultValue: false,
+    defaultValue: true,
     userSelectable: true,
     category: "settings",
-    decide: () => false,
+    decide: () => true,
   }),
 
   // ── theming ──────────────────────────────────────────────────────────────
@@ -197,22 +197,22 @@ const registry = {
 
   // ── developer ────────────────────────────────────────────────────────────
   developerPortal: defineFlag("developerPortal", {
-    defaultValue: false,
+    defaultValue: true,
     userSelectable: true,
     category: "developer",
-    decide: () => false,
+    decide: () => true,
   }),
   apiKeyCreation: defineFlag("apiKeyCreation", {
-    defaultValue: false,
+    defaultValue: true,
     userSelectable: false,
     category: "developer",
-    decide: () => false,
+    decide: () => true,
   }),
   oauthAppCreation: defineFlag("oauthAppCreation", {
-    defaultValue: false,
+    defaultValue: true,
     userSelectable: false,
     category: "developer",
-    decide: () => false,
+    decide: () => true,
   }),
   userscriptFetch: defineFlag("userscriptFetch", {
     defaultValue: false,

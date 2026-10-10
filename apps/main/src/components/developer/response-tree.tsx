@@ -2,15 +2,18 @@ import { z } from "zod";
 
 interface ResponseTreeProps {
   schema: z.ZodTypeAny;
+  /** Skip the bordered container, for hosts that draw their own. */
+  bare?: boolean;
 }
 
-export function ResponseTree({ schema }: ResponseTreeProps) {
+export function ResponseTree({ schema, bare = false }: ResponseTreeProps) {
   let json: unknown;
   try {
     json = z.toJSONSchema(schema, { target: "draft-2020-12" });
   } catch {
     return <div className="text-sm text-muted-foreground">(unrepresentable)</div>;
   }
+  if (bare) return <SchemaNode node={json} depth={0} />;
   return (
     <div className="overflow-x-auto rounded-lg border border-border bg-muted/30 p-4">
       <SchemaNode node={json} depth={0} />
@@ -33,7 +36,7 @@ function SchemaNode({ node, depth, name }: { node: unknown; depth: number; name?
           <div className="text-foreground">
             {name}
             <span className="text-muted-foreground"> : object</span>
-            {desc ? <span className="ml-2 text-muted-foreground">— {desc}</span> : null}
+            {desc ? <span className="ml-2 text-muted-foreground">· {desc}</span> : null}
           </div>
         ) : null}
         <div className={name ? "border-l border-border pl-3 mt-1" : ""}>
@@ -57,7 +60,7 @@ function SchemaNode({ node, depth, name }: { node: unknown; depth: number; name?
         <div className="text-foreground">
           {name}
           <span className="text-muted-foreground"> : array of</span>
-          {desc ? <span className="ml-2 text-muted-foreground">— {desc}</span> : null}
+          {desc ? <span className="ml-2 text-muted-foreground">· {desc}</span> : null}
         </div>
         <div className="border-l border-border pl-3 mt-1">
           <SchemaNode node={n.items} depth={depth + 1} />
@@ -74,12 +77,12 @@ function SchemaNode({ node, depth, name }: { node: unknown; depth: number; name?
         <div className="text-foreground">
           {name}
           <span className="text-muted-foreground"> : one of</span>
-          {desc ? <span className="ml-2 text-muted-foreground">— {desc}</span> : null}
+          {desc ? <span className="ml-2 text-muted-foreground">· {desc}</span> : null}
         </div>
         <div className="border-l border-border pl-3 mt-1 space-y-2">
           {union.map((u, i) => (
             <div key={i}>
-              <div className="text-muted-foreground">— variant {i + 1}:</div>
+              <div className="text-muted-foreground">Variant {i + 1}:</div>
               <SchemaNode node={u} depth={depth + 1} />
             </div>
           ))}
@@ -95,7 +98,7 @@ function SchemaNode({ node, depth, name }: { node: unknown; depth: number; name?
         <span className="text-muted-foreground">
           {" "}: {(n.enum as unknown[]).map((v) => JSON.stringify(v)).join(" | ")}
         </span>
-        {desc ? <span className="ml-2 text-muted-foreground">— {desc}</span> : null}
+        {desc ? <span className="ml-2 text-muted-foreground">· {desc}</span> : null}
       </div>
     );
   }
@@ -104,7 +107,7 @@ function SchemaNode({ node, depth, name }: { node: unknown; depth: number; name?
     <div className="font-mono text-xs">
       {name}
       <span className="text-muted-foreground"> : {type ?? "any"}</span>
-      {desc ? <span className="ml-2 text-muted-foreground">— {desc}</span> : null}
+      {desc ? <span className="ml-2 text-muted-foreground">· {desc}</span> : null}
     </div>
   );
 }

@@ -8,7 +8,7 @@ export const spec = defineRoute({
   summary: "Health check",
   description:
     "Returns `{ ok: true }` if your token is valid. Useful as a smoke test " +
-    "during integration — the only scope this needs is `ready`, which every " +
+    "during integration. The only scope this needs is `ready`, which every " +
     "token holds by default.",
   scope: "ready",
   cost: 1,

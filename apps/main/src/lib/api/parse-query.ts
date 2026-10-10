@@ -10,10 +10,8 @@ export function parseQuery<T extends z.ZodTypeAny>(
   if (!result.success) {
     const first = result.error.issues[0];
     const path = first.path.join(".");
-    return Response.json(
-      { error: path ? `Invalid ?${path}: ${first.message}` : first.message },
-      { status: 400 },
-    );
+    const error = !path ? first.message : searchParams.has(path) ? `Invalid ?${path}: ${first.message}` : `Missing required ?${path}`;
+    return Response.json({ error }, { status: 400 });
   }
   return result.data;
 }

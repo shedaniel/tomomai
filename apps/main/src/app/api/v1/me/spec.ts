@@ -14,7 +14,7 @@ export const spec = defineRoute({
   cost: 1,
   response: z.object({
     username: z.string().nullable(),
-    region: regionSchema,
+    region: regionSchema.nullable().describe("Primary region, or null until the user picks one."),
     publishProfile: z.boolean().describe("Whether the user's profile is publicly visible."),
     role: z.string().nullable().describe("Account role: `user`, `admin`, etc."),
   }),

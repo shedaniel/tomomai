@@ -8,8 +8,8 @@ All `/api/v1/*` errors return JSON of the shape `{ "error": "..." }`.
 
 | Status | Meaning | What to do |
 |---|---|---|
-| `400` | Bad request — usually a missing or invalid query parameter (e.g. `?region=`). | Read the error message; fix the request. |
-| `401` | Missing API key — no `Authorization` / `x-api-key` header. | Add a token. |
+| `400` | Bad request, usually a missing or invalid query parameter (e.g. `?region=`). | Read the error message; fix the request. |
+| `401` | Missing API key: no `Authorization` / `x-api-key` header. | Add a token. |
 | `403` | Token is malformed, revoked, expired, or doesn't hold a required scope. | Re-auth (OAuth) or rotate the key (API key). |
 | `404` | Resource not found (e.g. snapshot ID doesn't belong to you). | Don't retry; double-check the path. |
 | `500` | Server error. | Retry with exponential backoff. If persistent, file an issue. |
@@ -27,7 +27,7 @@ authorization server redirects errors back to your `redirect_uri` with
 tomomai applies a three-layer rate-limit model to `/api/v1/*` (per-key
 burst, per-user umbrella burst, and a monthly quota), plus a coarse per-IP
 limit on all `/api/*` traffic. A blocked request returns
-`429 Too Many Requests` with a `Retry-After` header — wait at least that
+`429 Too Many Requests` with a `Retry-After` header. Wait at least that
 many seconds before retrying.
 
 See the [Rate limits guide](/developer/guides/rate-limits) for the limits,

@@ -1,10 +1,9 @@
 import { auth } from "@/lib/auth";
-import { API_SCOPES, expandScopes, isInternalScope, type ScopeKey } from "@/lib/api/scopes";
+import { API_SCOPES, expandScopes, isInternalScope, OFFLINE_ACCESS, type ScopeKey } from "@/lib/api/scopes";
 import { protectedProcedure, router } from "@/lib/trpc";
 import { TRPCError } from "@trpc/server";
 
-/** Throw FORBIDDEN if any requested scope is internal-only and the session
- *  user is not an admin. Mirrors the BA hooks.before guard. */
+/** API keys only: throw FORBIDDEN if any requested scope is internal-only and the session user is not an admin. */
 function assertInternalScopesAllowed(scopes: readonly ScopeKey[], userRole: string | null | undefined) {
   const internal = scopes.filter(isInternalScope);
   if (internal.length === 0) return;
@@ -19,12 +18,81 @@ function assertInternalScopesAllowed(scopes: readonly ScopeKey[], userRole: stri
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { apikey, oauthClient, oauthConsent, oauthRefreshToken, oauthAccessToken } from "@/lib/db/schema-pg";
-import { and, eq } from "drizzle-orm";
+import { and, count, eq } from "drizzle-orm";
+import {
+  API_KEY_LIMIT_REACHED,
+  isReservedAppName,
+  MAX_API_KEYS_PER_USER,
+  MAX_OAUTH_APPS_PER_USER,
+  OAUTH_APP_LIMIT_REACHED,
+  OAUTH_APP_NAME_RESERVED,
+} from "@/lib/developer-limits";
 import { requireFreshSession } from "@/lib/security/fresh-session-server";
 import { httpsRedirectUrl, safeWebUrl, httpsWebUrl } from "@/lib/security/oauth-url";
 import { logger } from "@/lib/logger";
 
+/**
+ * Creates the key through the caller's session so Better Auth's session and fresh-session gates apply,
+ * then writes the server-only fields itself, since BA rejects `permissions` from a session call.
+ */
+async function createScopedApiKey(
+  headers: Headers,
+  userId: string,
+  name: string | undefined,
+  expiresIn: number | null,
+  fields: { permissions: string | null; expiresAt?: Date | null; enabled?: boolean },
+): Promise<string> {
+  const result = await auth.api.createApiKey({ body: { name, expiresIn }, headers });
+  if (!result?.key) {
+    throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to create API key" });
+  }
+  try {
+    const [row] = await db
+      .update(apikey)
+      .set(fields)
+      .where(and(eq(apikey.id, result.id), eq(apikey.referenceId, userId)))
+      .returning({ id: apikey.id });
+    if (!row) throw new Error("Created API key row not found");
+  } catch (err) {
+    await auth.api.deleteApiKey({ body: { keyId: result.id }, headers }).catch((compensationErr) => {
+      logger.error({ err: compensationErr, userId }, "Failed to delete unscoped API key after permissions write failure");
+    });
+    throw err;
+  }
+  return result.key;
+}
+
+/** Caps how many keys or apps one account can hold, so a single account cannot flood the tables. Admins are exempt. */
+async function assertUnderLimit(
+  role: string | null | undefined,
+  table: typeof apikey | typeof oauthClient,
+  owner: typeof apikey.referenceId | typeof oauthClient.userId,
+  userId: string,
+  max: number,
+  code: string,
+) {
+  if (role === "admin") return;
+  const [row] = await db.select({ n: count() }).from(table).where(eq(owner, userId));
+  if ((row?.n ?? 0) >= max) throw new TRPCError({ code: "FORBIDDEN", message: code });
+}
+
+/** App names show on the consent screen, so only admins may use the tomomai name. */
+function assertAppNameAllowed(name: string, role: string | null | undefined) {
+  if (role !== "admin" && isReservedAppName(name)) {
+    throw new TRPCError({ code: "FORBIDDEN", message: OAUTH_APP_NAME_RESERVED });
+  }
+}
+
 const scopeKey = z.enum(Object.keys(API_SCOPES) as [ScopeKey, ...ScopeKey[]]);
+/** What an OAuth app may request. Every app may ask for refresh tokens, so offline_access is always included. */
+function oauthClientScope(scopes: ScopeKey[]): string {
+  return [...expandScopes(scopes), OFFLINE_ACCESS].join(" ");
+}
+
+// Internal scopes are for first-party API keys only. No OAuth app can hold one, whoever registers it.
+const oauthScopeKey = z.enum(
+  (Object.keys(API_SCOPES) as ScopeKey[]).filter((s) => !isInternalScope(s)) as [ScopeKey, ...ScopeKey[]],
+);
 
 export const developerRouter = router({
   rotateApiKey: protectedProcedure
@@ -39,43 +107,19 @@ export const developerRouter = router({
       if (!oldKey) {
         throw new TRPCError({ code: "FORBIDDEN", message: "Key not found" });
       }
-      let permissions: Record<string, string[]> | undefined;
-      try {
-        permissions = oldKey.permissions
-          ? (JSON.parse(oldKey.permissions) as Record<string, string[]>)
-          : undefined;
-      } catch {
-        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Malformed key permissions" });
-      }
-      const expiresIn = oldKey.expiresAt
-        ? Math.max(0, Math.floor((new Date(oldKey.expiresAt).getTime() - Date.now()) / 1000))
-        : null;
+      // Better Auth has no rotateApiKey. Create first so a failure never leaves the user keyless.
+      const key = await createScopedApiKey(ctx.req.headers, ctx.session.user.id, oldKey.name ?? undefined, null, {
+        permissions: oldKey.permissions,
+        expiresAt: oldKey.expiresAt,
+        enabled: oldKey.enabled,
+      });
 
-      // Better Auth has no rotateApiKey — implement as delete + recreate
       await auth.api.deleteApiKey({
         body: { keyId: input.keyId },
+        headers: ctx.req.headers,
       });
 
-      const result = await auth.api.createApiKey({
-        body: {
-          userId: ctx.session.user.id,
-          name: oldKey.name ?? undefined,
-          permissions,
-          expiresIn,
-        },
-      });
-
-      if (!result?.key) {
-        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to rotate API key" });
-      }
-
-      if (!oldKey.enabled) {
-        await auth.api.updateApiKey({
-          body: { keyId: result.id, enabled: false },
-        });
-      }
-
-      return { key: result.key };
+      return { key };
     }),
 
   createApiKey: protectedProcedure
@@ -87,7 +131,9 @@ export const developerRouter = router({
       })
     )
     .mutation(async ({ ctx, input }) => {
+      requireFreshSession(ctx.session);
       assertInternalScopesAllowed(input.scopes, ctx.session.user.role);
+      await assertUnderLimit(ctx.session.user.role, apikey, apikey.referenceId, ctx.session.user.id, MAX_API_KEYS_PER_USER, API_KEY_LIMIT_REACHED);
       // Expand any encompassing scopes to their leaf scopes before storing.
       // This keeps verifyApiKey simple (pure AND logic, single Better Auth call).
       const leafScopes = expandScopes(input.scopes);
@@ -95,22 +141,11 @@ export const developerRouter = router({
         leafScopes.map((s) => [s, ["access"]])
       );
 
-      // Call without headers so Better Auth treats this as a server-side call,
-      // which allows setting permissions and userId directly.
-      const result = await auth.api.createApiKey({
-        body: {
-          userId: ctx.session.user.id,
-          name: input.name,
-          expiresIn: input.expiresIn ?? null,
-          permissions,
-        },
+      const key = await createScopedApiKey(ctx.req.headers, ctx.session.user.id, input.name, input.expiresIn ?? null, {
+        permissions: JSON.stringify(permissions),
       });
 
-      if (!result) {
-        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to create API key" });
-      }
-
-      return { key: result.key };
+      return { key };
     }),
 
   // ── OAuth Applications ────────────────────────────────────────────────────
@@ -141,7 +176,7 @@ export const developerRouter = router({
       z.object({
         name: z.string().min(1).max(64),
         redirectUris: z.array(httpsRedirectUrl).min(1).max(10),
-        scopes: z.array(scopeKey).min(1),
+        scopes: z.array(oauthScopeKey).min(1),
         uri: safeWebUrl.optional(),
         icon: httpsWebUrl.optional(),
         policy: safeWebUrl.optional(),
@@ -150,14 +185,15 @@ export const developerRouter = router({
     )
     .mutation(async ({ ctx, input }) => {
       requireFreshSession(ctx.session);
-      assertInternalScopesAllowed(input.scopes, ctx.session.user.role);
+      assertAppNameAllowed(input.name, ctx.session.user.role);
+      await assertUnderLimit(ctx.session.user.role, oauthClient, oauthClient.userId, ctx.session.user.id, MAX_OAUTH_APPS_PER_USER, OAUTH_APP_LIMIT_REACHED);
       // Delegate creation to Better Auth so it handles client_id generation,
       // secret hashing, and any internal bookkeeping consistently.
       const result = await auth.api.createOAuthClient({
         body: {
           client_name: input.name,
           redirect_uris: input.redirectUris,
-          scope: expandScopes(input.scopes).join(" "),
+          scope: oauthClientScope(input.scopes),
           client_uri: input.uri,
           logo_uri: input.icon,
           policy_uri: input.policy,
@@ -211,7 +247,7 @@ export const developerRouter = router({
         icon: httpsWebUrl.optional().nullable(),
         policy: safeWebUrl.optional().nullable(),
         tos: safeWebUrl.optional().nullable(),
-        scopes: z.array(scopeKey).min(1).optional(),
+        scopes: z.array(oauthScopeKey).min(1).optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -219,7 +255,7 @@ export const developerRouter = router({
       // endpoint, so require a fresh session for them. Pure metadata edits (name,
       // icon, policy/tos) are lower-risk and stay session-only.
       if (input.redirectUris) requireFreshSession(ctx.session);
-      if (input.scopes) assertInternalScopesAllowed(input.scopes, ctx.session.user.role);
+      if (input.name !== undefined) assertAppNameAllowed(input.name, ctx.session.user.role);
       // Verify ownership
       const [app] = await db
         .select({ id: oauthClient.id })
@@ -237,7 +273,7 @@ export const developerRouter = router({
             ...(input.icon !== undefined && { logo_uri: input.icon ?? undefined }),
             ...(input.policy !== undefined && { policy_uri: input.policy ?? undefined }),
             ...(input.tos !== undefined && { tos_uri: input.tos ?? undefined }),
-            ...(input.scopes && { scope: expandScopes(input.scopes).join(" ") }),
+            ...(input.scopes && { scope: oauthClientScope(input.scopes) }),
           },
         },
         headers: ctx.req.headers,

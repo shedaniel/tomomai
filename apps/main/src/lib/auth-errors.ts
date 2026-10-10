@@ -1,3 +1,5 @@
+import { readOAuthAuthorizeError } from "@/lib/oauth-errors";
+
 export type AuthErrorMessageKey =
   | "noAccount"
   | "signupUnavailable"
@@ -63,6 +65,8 @@ export function resolveAuthError(code: string): ResolvedAuthError | null {
  * OAuth state as `?state=state_not_found` rather than `?error=`.
  */
 export function readAuthErrorCode(params: URLSearchParams): string | null {
+  // OAuth provider authorize errors belong to the consent page, which shows them itself.
+  if (readOAuthAuthorizeError(params)) return null;
   const error = params.get("error");
   if (error) return error;
   return params.get("state") === "state_not_found" ? "state_not_found" : null;

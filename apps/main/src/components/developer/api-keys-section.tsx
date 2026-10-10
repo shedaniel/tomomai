@@ -28,7 +28,9 @@ import { trpc } from "@/lib/trpc-client";
 import { API_SCOPES, type ScopeKey } from "@/lib/api/scopes";
 import { CreateApiKeyDialog } from "@/components/developer/create-api-key-dialog";
 import { SettingsField } from "@/components/settings/primitives";
-import { useReauthGuard } from "@/lib/security/use-reauth-guard";
+import { useEnsureFreshSession, useReauthGuard } from "@/lib/security/use-reauth-guard";
+import { useSearchParams } from "next/navigation";
+import { useRouter } from "@/i18n/navigation";
 import { toast } from "sonner";
 import { Plus, Trash2, Key, Loader2, RefreshCw, Copy, Check, AlertTriangle, Pencil } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -58,6 +60,15 @@ export function ApiKeysSection() {
   const [createOpen, setCreateOpen] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [regenerateId, setRegenerateId] = useState<string | null>(null);
+
+  // See OAuthAppsSection: check freshness before the form opens, and reopen it from `?open=` after reauth.
+  const ensureFresh = useEnsureFreshSession(t("reauthRequired"));
+  const router = useRouter();
+  const reopen = useSearchParams().get("open");
+  const isCreateOpen = createOpen || reopen === "new-key";
+  const openCreate = async () => {
+    if (await ensureFresh("/settings/developer?open=new-key")) setCreateOpen(true);
+  };
   const [regeneratedKey, setRegeneratedKey] = useState<string | null>(null);
   const [copiedRegen, setCopiedRegen] = useState(false);
   const [togglingId, setTogglingId] = useState<string | null>(null);
@@ -155,7 +166,7 @@ export function ApiKeysSection() {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => setCreateOpen(true)}
+            onClick={openCreate}
             className="bg-background"
           >
             <Plus className="h-4 w-4 mr-2" />
@@ -176,7 +187,7 @@ export function ApiKeysSection() {
             <p className="text-sm font-medium">{t("apiKeys.emptyTitle")}</p>
             <p className="text-xs text-muted-foreground">
               <button
-                onClick={() => setCreateOpen(true)}
+                onClick={openCreate}
                 className="underline underline-offset-2 hover:text-foreground transition-colors"
               >
                 {t("apiKeys.emptyCreateLink")}
@@ -268,8 +279,8 @@ export function ApiKeysSection() {
       )}
 
       <CreateApiKeyDialog
-        open={createOpen}
-        onOpenChange={setCreateOpen}
+        open={isCreateOpen}
+        onOpenChange={(v) => { setCreateOpen(v); if (!v && reopen) router.replace("/settings/developer"); }}
         onCreated={() => queryClient.invalidateQueries({ queryKey: ["api-keys"] })}
       />
 

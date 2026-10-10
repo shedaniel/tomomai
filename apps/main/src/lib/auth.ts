@@ -1,4 +1,5 @@
 import { betterAuth } from "better-auth";
+import { waitUntil } from "@vercel/functions";
 import { resolveBaseUrl, stripSubdomains } from "@/lib/base-url";
 import { createAuthMiddleware, APIError, getSessionFromCtx } from "better-auth/api";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
@@ -7,7 +8,9 @@ import { admin, jwt, openAPI } from "better-auth/plugins";
 import { apiKey } from "@better-auth/api-key";
 import { passkey } from "@better-auth/passkey";
 import { oauthProvider } from "@better-auth/oauth-provider";
-import { API_SCOPES, isInternalScope } from "@/lib/api/scopes";
+import { API_SCOPES, isInternalScope, OFFLINE_ACCESS } from "@/lib/api/scopes";
+
+const OAUTH_SCOPES = [...Object.keys(API_SCOPES).filter((s) => !isInternalScope(s)), OFFLINE_ACCESS];
 import { and, eq, isNull, lt, or } from "drizzle-orm";
 import { db } from "./db";
 import * as schema from "./db/schema-pg";
@@ -157,9 +160,8 @@ const POLICY_REQUIRED_PATHS: Record<string, { tos: string; privacy: string }> = 
   "/link-social": { tos: "20260630", privacy: "20260630" },
 };
 
-// OAuth client mutation paths. Gated by the `oauthAppCreation` flag until
-// v1 ships — UI may render, but no client can be created, rotated, or
-// destroyed via tRPC or direct BA HTTP.
+// OAuth client mutation paths. The `oauthAppCreation` flag is a kill switch: turned
+// off, no client can be created, rotated or destroyed through tRPC or BA HTTP.
 const OAUTH_APP_BA_PATHS = new Set<string>([
   "/oauth2/create-client",
   "/oauth2/update-client",
@@ -289,6 +291,7 @@ export const auth = betterAuth({
     // — there is no path where an untrusted client can reach the app
     // without going through one of them.
     trustedProxyHeaders: true,
+    backgroundTasks: { handler: waitUntil },
     ipAddress: {
       ipAddressHeaders: [
         "cf-connecting-ip",
@@ -346,6 +349,10 @@ export const auth = betterAuth({
     apiKey({
       enableMetadata: true,
       defaultPrefix: "tmk_",
+      // Per-key limits live in withApiKey's Redis limiters. BA's own limiter
+      // defaults to 10 requests per day per key.
+      rateLimit: { enabled: false },
+      deferUpdates: true,
       startingCharactersConfig: { shouldStore: true, charactersLength: 8 },
       permissions: {
         defaultPermissions: { ready: ["access"] },
@@ -356,17 +363,25 @@ export const auth = betterAuth({
       rpID: stripSubdomains(process.env.BETTER_AUTH_URL || resolveBaseUrl()),
       rpName: "tomomai",
     }),
-    jwt(),
+    // Only signs OAuth access tokens. A session JWT on every /get-session is an unused bearer credential.
+    jwt({ disableSettingJwtHeader: true }),
     oauthProvider({
-      loginPage: "/",
+      // Signed-out users sign in on the consent page itself, so the request is never dropped.
+      loginPage: "/oauth/consent",
+      // Lets that page show the app before sign-in. Only answers for a validly signed authorize query.
+      allowPublicClientPrelogin: true,
       consentPage: "/oauth/consent",
+      // No discovery consumer yet, and BA's metadata would advertise the disabled register and introspect routes.
+      silenceWarnings: { oauthAuthServerConfig: true },
       accessTokenExpiresIn: 3600,       // 1 hour
       refreshTokenExpiresIn: 2592000,   // 30 days
       // `scopes` is the canonical list the provider understands.
       // `clientRegistrationAllowedScopes` restricts what clients may request —
       // every entry here must also appear in `scopes`.
-      scopes: Object.keys(API_SCOPES) as string[],
-      clientRegistrationAllowedScopes: Object.keys(API_SCOPES) as string[],
+      // Internal scopes are left out, so no OAuth client can be registered with, request or be
+      // granted one, whoever registers it.
+      scopes: OAUTH_SCOPES,
+      clientRegistrationAllowedScopes: OAUTH_SCOPES,
       // Declare the site root as a valid audience so OAuth clients can request
       // JWT-signed access tokens via `resource=<baseUrl>` (RFC 8707). Without
       // this entry, Better Auth's default `validAudiences` is just
@@ -381,7 +396,6 @@ export const auth = betterAuth({
   disabledPaths: [
     // Password / email-credential flows — emailAndPassword is disabled.
     "/reset-password",
-    "/reset-password/{token}",
     "/change-password",
     "/change-email",
     "/verify-email",
@@ -400,7 +414,7 @@ export const auth = betterAuth({
     // single/other revoke endpoints stay open for the settings UI.
     "/update-session",
     "/revoke-sessions",
-    // TODO(v2026.5): Disable feature until release
+    // No external resource servers exist, so token introspection has no consumer.
     "/oauth2/introspect",
     // Social-provider token passthrough — we never expose Discord/Twitter
     // tokens to clients, so close these to avoid future foot-guns.
@@ -416,6 +430,30 @@ export const auth = betterAuth({
     // - /oauth2/end-session is OIDC RP-initiated logout; not wired up.
     "/oauth2/register",
     "/oauth2/end-session",
+    // JWT plugin's session-to-JWT exchange. The plugin is only here to sign
+    // OAuth access tokens and serve /jwks.
+    "/token",
+    // Mutations we only make in-process from tRPC, which validates input more
+    // strictly. disabledPaths only blocks HTTP, so auth.api calls still work.
+    "/api-key/create",
+    "/oauth2/create-client",
+    "/oauth2/update-client",
+    "/oauth2/client/rotate-secret",
+    "/oauth2/delete-client",
+    // Client and consent management lives in the developer tRPC router.
+    // BA's /oauth2/delete-consent would also leave the access tokens alive.
+    "/api-key/get",
+    "/oauth2/get-client",
+    "/oauth2/get-clients",
+    "/oauth2/get-consent",
+    "/oauth2/get-consents",
+    "/oauth2/update-consent",
+    "/oauth2/delete-consent",
+    // No account selection, sign-up or post-login prompts, and no `openid`
+    // scope for /userinfo to serve.
+    "/oauth2/continue",
+    "/oauth2/userinfo",
+    "/passkey/update-passkey",
     // Admin plugin is registered (for the `role` column) but no client or
     // server code calls these endpoints. Disable until an admin UI exists,
     // so a future role=admin user can't accidentally escalate via direct HTTP.
@@ -437,22 +475,21 @@ export const auth = betterAuth({
   ],
   hooks: {
     before: createAuthMiddleware(async (ctx) => {
-      // Internal scopes (API_SCOPES[s].internal === true) may only be minted by
-      // admin-role users. BA's clientRegistrationAllowedScopes includes every
-      // key in API_SCOPES; without this check, any logged-in user could
-      // register a client carrying e.g. `snapshot:submit` via direct HTTP, or
-      // a non-admin could consent to such a scope if a client were
-      // misregistered. Sentinel-style message so a client-side detector can
-      // match exactly without substring drift. Shared between
-      // /oauth2/{create,update}-client and /oauth2/consent.
-      const rejectInternalScopesForNonAdmin = async (scopes: readonly string[]) => {
-        if (!scopes.some(isInternalScope)) return;
-        const s = await getSessionFromCtx(ctx);
-        if (s?.user?.role !== "admin") {
+      // Internal scopes (e.g. `snapshot:submit`) never belong to an OAuth client, admin-registered
+      // or not. OAUTH_SCOPES already keeps them out of the provider; this rejects them again on the
+      // client and consent routes in case a client was stored with one. Sentinel-style message so
+      // a client-side detector can match exactly without substring drift.
+      const rejectInternalScopes = (scopes: readonly string[]) => {
+        if (scopes.some(isInternalScope)) {
           throw new APIError("FORBIDDEN", { message: "INTERNAL_SCOPE_FORBIDDEN" });
         }
       };
 
+
+      // disabledPaths matches literal request paths, so parameterized routes are closed here.
+      if (ctx.path === "/reset-password/:token") {
+        throw new APIError("NOT_FOUND", { message: "Not Found" });
+      }
 
       if (OAUTH_APP_BA_PATHS.has(ctx.path) && !(await useOauthAppCreation())) {
         throw new APIError("NOT_FOUND", { message: "Not Found" });
@@ -534,7 +571,7 @@ export const auth = betterAuth({
         assertOptionalUrl(target.logo_uri, isHttpsUrl, "logo_uri must be an https:// URL");
 
         if (typeof target.scope === "string") {
-          await rejectInternalScopesForNonAdmin(target.scope.split(" ").filter(Boolean));
+          rejectInternalScopes(target.scope.split(" ").filter(Boolean));
         }
       }
 
@@ -569,7 +606,7 @@ export const auth = betterAuth({
           throw new APIError("BAD_REQUEST", { message: "oauth_query is required" });
         }
         const requestedScopes = new URLSearchParams(rawQuery).get("scope")?.split(" ").filter(Boolean) ?? [];
-        const unknown = requestedScopes.filter((s) => !(s in API_SCOPES));
+        const unknown = requestedScopes.filter((s) => !(s in API_SCOPES) && s !== OFFLINE_ACCESS);
         if (unknown.length > 0) {
           throw new APIError("BAD_REQUEST", { message: `Unknown scopes: ${unknown.join(", ")}` });
         }
@@ -582,9 +619,7 @@ export const auth = betterAuth({
               message: `scope must be a subset of the originally-requested scopes (extra: ${extra.join(", ")})`,
             });
           }
-          // Defence-in-depth: even if a client is misregistered with an
-          // internal scope, a non-admin must not be able to consent to it.
-          await rejectInternalScopesForNonAdmin(granted);
+          rejectInternalScopes(granted);
         }
       }
 

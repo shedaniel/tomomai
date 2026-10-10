@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { DiscordIcon, ThreadsIcon, XIcon } from "@tomomai/ui";
 import { getAppVersion } from "@/lib/version";
+import { cn } from "@/lib/utils";
 
 const currentYear = new Date().getFullYear();
 const copyrightYears = currentYear > 2025 ? `2025-${currentYear}` : "2025";
@@ -22,11 +23,21 @@ function FooterLink({ href, children }: { href: string; children: React.ReactNod
   );
 }
 
-export function SiteFooter() {
+/**
+ * `inset` renders the copy that lives inside the developer portal's content column. Its fixed
+ * sidebar would otherwise cover the page-level footer, so the page-level copy hides itself there.
+ */
+export function SiteFooter({ inset = false }: { inset?: boolean }) {
   const { minor, stamp, sha } = getAppVersion();
 
   return (
-    <footer className="mt-auto border-t border-border/40 bg-muted/20">
+    <footer
+      data-inset-footer={inset || undefined}
+      className={cn(
+        "mt-auto border-t border-border/40 bg-muted/20",
+        !inset && "[body:has([data-inset-footer])_&]:hidden",
+      )}
+    >
       <div className="container mx-auto max-w-5xl px-6 py-5">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
