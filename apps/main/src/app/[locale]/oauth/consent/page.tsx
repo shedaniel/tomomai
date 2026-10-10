@@ -126,6 +126,8 @@ function OAuthConsent() {
 
   const { client } = state;
   const appName = client.client_name?.trim() || t("defaultAppName");
+  const tosHref = safeHref(client.tos_uri);
+  const policyHref = safeHref(client.policy_uri);
   const signedIn = !!session?.user;
 
   // Restarting the request after sign-out lands on the signed-out consent screen, ready for another account.
@@ -225,7 +227,14 @@ function OAuthConsent() {
               {t("redirectNotice", { host: redirectHost })}
             </Notice>
           )}
-          <Notice icon={<ShieldAlert className="size-3.5" />}>{t("trustNotice", { app: appName })}</Notice>
+          <Notice icon={<ShieldAlert className="size-3.5" />}>
+            {t.rich("trustNotice", {
+              app: appName,
+              links: tosHref && policyHref ? "both" : tosHref ? "terms" : policyHref ? "privacy" : "none",
+              terms: (chunks) => <AppLink href={tosHref}>{chunks}</AppLink>,
+              privacy: (chunks) => <AppLink href={policyHref}>{chunks}</AppLink>,
+            })}
+          </Notice>
           {signedIn && (
             <Notice icon={<RotateCcw className="size-3.5" />}>
               {t.rich("revokeNotice", {
@@ -307,7 +316,6 @@ function OAuthConsent() {
         </footer>
       </article>
 
-      <AppLegalLinks client={client} name={appName} />
     </ConsentShell>
   );
 }
@@ -584,22 +592,11 @@ function Notice({ icon, children }: { icon: ReactNode; children: ReactNode }) {
   );
 }
 
-function AppLegalLinks({ client, name }: { client: PublicClient; name: string }) {
-  const t = useTranslations("oauthConsent");
-  const links = [
-    { href: safeHref(client.tos_uri), label: t("appTerms") },
-    { href: safeHref(client.policy_uri), label: t("appPrivacy") },
-  ].filter((l): l is { href: string; label: string } => !!l.href);
-  if (links.length === 0) return null;
+function AppLink({ href, children }: { href?: string; children: ReactNode }) {
   return (
-    <nav className="flex flex-wrap justify-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
-      <span className="font-medium">{name}</span>
-      {links.map((l) => (
-        <a key={l.label} href={l.href} target="_blank" rel="noopener noreferrer" className="underline-offset-4 hover:text-foreground hover:underline">
-          {l.label}
-        </a>
-      ))}
-    </nav>
+    <a href={href} target="_blank" rel="noopener noreferrer" className="font-medium text-foreground underline-offset-4 hover:underline">
+      {children}
+    </a>
   );
 }
 
