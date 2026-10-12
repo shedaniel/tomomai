@@ -264,7 +264,9 @@
       },
       "developer": {
         "title": "開発者",
-        "description": "API キーと OAuth アプリケーションを管理します。"
+        "description": "API キーと OAuth アプリケーションを管理します。",
+        "portalTitle": "開発者センター",
+        "portalDescription": "ともマイ API で開発するためのガイド、エンドポイントリファレンス、スコープ一覧です。"
       },
       "applications": {
         "title": "アプリ",
