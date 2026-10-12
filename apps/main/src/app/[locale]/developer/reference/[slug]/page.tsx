@@ -12,17 +12,27 @@ import { z } from "zod";
 import { ChevronRight, Terminal } from "lucide-react";
 import { Badge } from "@tomomai/ui";
 import { CodeSamples } from "@/components/developer/code-samples";
+import { CodeBlock } from "@/components/developer/code-block";
+import { highlight } from "@/lib/developer/highlight";
+import { renderSnippet, SAMPLE_HIGHLIGHT, SAMPLE_LANGS } from "@/lib/developer/code-samples";
 import { MethodBadge } from "@/components/developer/method-badge";
 import type { RouteSpec } from "@/lib/api/registry";
 
 /** TypeScript and Zod source for the response, or null when the schema cannot be expressed as JSON Schema. */
-function renderResponseCode(schema: z.ZodTypeAny, name: string): { typescript: string; zod: string } | null {
+async function renderResponseCode(schema: z.ZodTypeAny, name: string) {
+  let typescript: string;
+  let zod: string;
   try {
     const json = z.toJSONSchema(schema, { target: "draft-2020-12" }) as Record<string, unknown>;
-    return { typescript: toTypeScript(json, name), zod: toZod(json, name) };
+    typescript = toTypeScript(json, name);
+    zod = toZod(json, name);
   } catch {
     return null;
   }
+  return {
+    typescript: { code: typescript, html: await highlight(typescript, "typescript") },
+    zod: { code: zod, html: await highlight(zod, "typescript") },
+  };
 }
 
 function buildExampleUrl(spec: RouteSpec, baseUrl: string): string {
@@ -71,7 +81,16 @@ export default async function ReferenceEndpointPage({
     spec.scope === "public" ? [] : Array.isArray(spec.scope) ? spec.scope : [spec.scope];
 
   const exampleUrl = buildExampleUrl(spec, baseUrl);
-  const responseCode = renderResponseCode(spec.response, responseTypeName(slug));
+  const needsAuth = spec.scope !== "public";
+  const [responseCode, samples] = await Promise.all([
+    renderResponseCode(spec.response, responseTypeName(slug)),
+    Promise.all(
+      SAMPLE_LANGS.map(async (lang) => {
+        const code = renderSnippet(lang, spec.method, exampleUrl, needsAuth);
+        return { lang, code, html: await highlight(code, SAMPLE_HIGHLIGHT[lang]) };
+      }),
+    ),
+  ]);
 
   return (
     <div className="grid grid-cols-1 gap-8 lg:grid-cols-[1fr_360px]">
@@ -194,9 +213,11 @@ export default async function ReferenceEndpointPage({
             {spec.examples.map((ex) => (
               <div key={ex.name} className="space-y-2">
                 <div className="text-sm font-medium">{ex.name}</div>
-                <pre className="overflow-x-auto rounded-lg border border-border bg-muted/30 p-3 text-xs">
-                  <code>{JSON.stringify(ex.response, null, 2)}</code>
-                </pre>
+                <CodeBlock
+                  code={JSON.stringify(ex.response, null, 2)}
+                  lang="json"
+                  className="rounded-lg border border-border bg-muted/30 [&_pre]:p-3"
+                />
               </div>
             ))}
           </section>
@@ -209,11 +230,7 @@ export default async function ReferenceEndpointPage({
             <Terminal className="size-3.5" />
             Try it
           </h3>
-          <CodeSamples
-            method={spec.method}
-            url={exampleUrl}
-            needsAuth={spec.scope !== "public"}
-          />
+          <CodeSamples samples={samples} />
           <p className="text-xs text-muted-foreground">
             Need a key?{" "}
             <Link href="/settings/developer" className="underline">
