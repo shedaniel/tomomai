@@ -163,6 +163,8 @@ describe("keyed game routes", () => {
       expect(body.code).toBe(code);
     }
     expect(await (await GET(request("maimai/route-test/1", { key: KEY }), context({ game: "maimai", id: "1" }))).json())
+      .toEqual({ error: "Missing required ?region", code: "INVALID_PARAMETER" });
+    expect(await (await GET(request("maimai/route-test/1?region=xx", { key: KEY }), context({ game: "maimai", id: "1" }))).json())
       .toEqual({ error: expect.stringMatching(/^Invalid \?region: /), code: "INVALID_PARAMETER" });
     expect(handler).not.toHaveBeenCalled();
   });

@@ -47,7 +47,7 @@ export const API_SCOPES = {
   },
   "snapshot:latest:icon:read": {
     name: "Latest Snapshot Icon (Read)",
-    description: "Read your profile icon URL (Discord avatar) from your latest snapshot. This is sensitive as it may reveal your social identity.",
+    description: "Read your in-game icon URL from your latest snapshot. Sensitive, as the icon may be a photo of your face taken with the in-game camera.",
     destructive: false,
     sensitive: true,
     default: false,
@@ -84,7 +84,7 @@ export const API_SCOPES = {
   },
   "snapshot:all:icon:read": {
     name: "All Snapshots Icon (Read)",
-    description: "Read your profile icon URL (Discord avatar) from any snapshot. This is sensitive as it may reveal your social identity.",
+    description: "Read your in-game icon URL from any snapshot. Sensitive, as the icon may be a photo of your face taken with the in-game camera.",
     destructive: false,
     sensitive: true,
     default: false,
@@ -222,6 +222,12 @@ export const API_SCOPES = {
 } as const;
 
 export type ScopeKey = keyof typeof API_SCOPES;
+
+/**
+ * OAuth's standard scope for refresh tokens. Not a data permission, so it is not in API_SCOPES: every
+ * OAuth app may request it, and the consent screen shows it on its own line.
+ */
+export const OFFLINE_ACCESS = "offline_access";
 
 export function scopesToPermissions(scopes: ScopeKey[]) {
   return Object.fromEntries(scopes.map((s) => [s, ["access"]]));

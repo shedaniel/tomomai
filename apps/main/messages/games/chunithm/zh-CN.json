@@ -28,5 +28,19 @@
     "title": "tomochu ともチュウ",
     "subtitle": "你已被邀请加入 tomochu ともチュウ 社群",
     "invitedBy": "{name} 邀请你加入 tomochu ともチュウ"
+  },
+  "oauthConsent": {
+    "title": "{app} 请求访问你的 <nb>tomochu 账号</nb>",
+    "signedOutDescription": "{app} 请求访问你的 tomochu 账号。请登录后查看此请求。",
+    "trustNotice": "{app} 并非由 tomochu 运营。{links, select, both {你的数据将按照其<terms>服务条款</terms>和<privacy>隐私政策</privacy>处理。} terms {你的数据将按照其<terms>服务条款</terms>处理。} privacy {你的数据将按照其<privacy>隐私政策</privacy>处理。} other {该应用未提供服务条款或隐私政策。}}请仅在信任该应用时继续。",
+    "errors": {
+      "redirect": {
+        "body": "该应用试图将你送回一个未在 tomochu 注册的地址，为保护你的账号，请求已被阻止。请勿通过此链接登录，并告知应用开发者。"
+      },
+      "badRequest": {
+        "body": "该应用发送了 tomochu 不支持的请求。请返回应用重试，或联系其开发者。"
+      }
+    },
+    "backHome": "返回 tomochu"
   }
 }

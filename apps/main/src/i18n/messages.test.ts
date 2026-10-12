@@ -28,6 +28,7 @@ const MAIMAI_BRAND_ON_EVERY_SITE = new Set([
   "settings.developer.createDialog.description",
   "settings.albumPrivacy.noteText",
   "db.posts.list.description",
+  "settings.developer.oauthApps.errors.nameReserved",
 ]);
 
 function brandNames(game: CanonicalGameId): RegExp {

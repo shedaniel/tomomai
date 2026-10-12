@@ -110,10 +110,10 @@ export function ApplicationsSettings() {
                 {auth.scopes.length > 0 && (
                   <div className="flex flex-wrap gap-1">
                     {auth.scopes
-                      .filter((s) => s in API_SCOPES)
+                      .filter((s): s is ScopeKey => s in API_SCOPES && s !== "ready")
                       .map((s) => (
                         <Badge key={s} variant="outline" className="text-xs">
-                          {API_SCOPES[s as ScopeKey]?.name ?? s}
+                          {t(`settings.developer.scopes.${s}.name`)}
                         </Badge>
                       ))}
                   </div>

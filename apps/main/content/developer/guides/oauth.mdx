@@ -138,14 +138,15 @@ grant_type=refresh_token
 ```
 
 Refresh tokens **rotate** on every use. Store the new one and discard the
-old. Refresh tokens are valid for 30 days and access tokens for 1 hour.
+old one, since reusing an old refresh token revokes every token issued from it.
+Refresh tokens are valid for 30 days and access tokens for 1 hour.
 
 ## Token formats
 
 - **Default: opaque**, a random string. tomomai validates it via a hashed
-  lookup, so revoking from [Settings → Developer](/settings/developer) (or
+  lookup, so revoking from [Settings → Applications](/settings/applications) (or
   via `/api/auth/oauth2/revoke`) takes effect immediately.
-- **JWT**, opt-in by sending `resource=https://tomomai.lol` in the
+- **JWT**: opt in by sending `resource=https://tomomai.lol` in the
   **token request body**. The returned access token is then a JWT signed
   via the JWKS at `/api/auth/jwks`, verifiable locally without a network
   round-trip. Useful for high-traffic resource servers. Standard
@@ -155,17 +156,14 @@ old. Refresh tokens are valid for 30 days and access tokens for 1 hour.
 Both formats are accepted by every `/api/v1/*` endpoint, so clients don't
 have to choose at integration time.
 
-## Revocation and introspection
+## Revocation
 
-- `POST /api/auth/oauth2/revoke`: RFC 7009. Pass `token=…` plus your
-  client credentials to revoke an access or refresh token immediately.
-- `POST /api/auth/oauth2/introspect`: RFC 7662. Confidential clients can
-  ask the server about a token they were issued. Note: this endpoint only
-  returns `active: true` when the introspecting client matches the token's
-  issuing client, so it's most useful as a self-check.
+`POST /api/auth/oauth2/revoke` ([RFC 7009](https://datatracker.ietf.org/doc/html/rfc7009)).
+Pass `token=…` plus your client credentials to revoke an access or refresh
+token immediately.
 
 ## A complete working example
 
-See [`packages/userscript`](https://github.com/shedaniel/maimai-charts/tree/main/packages/userscript)
+See [`packages/userscript`](https://github.com/shedaniel/tomomai/tree/main/packages/userscript)
 in the source. It's a tomomai-authored userscript that performs the full
 OAuth flow (PKCE, popup callback, refresh) from scratch.

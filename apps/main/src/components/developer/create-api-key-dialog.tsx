@@ -20,8 +20,9 @@ import {
   SelectValue,
 } from "@tomomai/ui/select-friendly";
 import { trpc } from "@/lib/trpc-client";
+import { useReauthGuard } from "@/lib/security/use-reauth-guard";
+import { API_KEY_LIMIT_REACHED, MAX_API_KEYS_PER_USER } from "@/lib/developer-limits";
 import { API_SCOPES, type ScopeKey } from "@/lib/api/scopes";
-import { toast } from "sonner";
 import { AlertTriangle, Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import {
@@ -66,11 +67,16 @@ export function CreateApiKeyDialog({ open, onOpenChange, onCreated }: CreateApiK
   const confirmPhrase = t("createDialog.confirmPhrase");
 
   const createMutation = trpc.developer.createApiKey.useMutation({
+    ...useReauthGuard({
+      callbackURL: "/settings/developer?open=new-key",
+      reauthMessage: t("reauthRequired"),
+      fallback: t("createDialog.createError"),
+      errorMessages: { [API_KEY_LIMIT_REACHED]: t("apiKeys.errors.limitReached", { max: MAX_API_KEYS_PER_USER }) },
+    }),
     onSuccess: (data) => {
       setCreatedKey(data.key);
       onCreated();
     },
-    onError: (err) => toast.error(err.message ?? t("createDialog.createError")),
   });
 
   const implied = computeImplied(selectedScopes);

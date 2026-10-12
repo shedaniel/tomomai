@@ -29,5 +29,19 @@
     "title": "tomomai ともマイ",
     "subtitle": "You've been invited to join the tomomai ともマイ community",
     "invitedBy": "{name} has invited you to join tomomai ともマイ"
+  },
+  "oauthConsent": {
+    "title": "{app} wants to access <nb>your tomomai account</nb>",
+    "signedOutDescription": "{app} is asking for access to your tomomai account. Sign in to review the request.",
+    "trustNotice": "{app} is not run by tomomai. {links, select, both {It handles your data under its own <terms>Terms of Service</terms> and <privacy>Privacy Policy</privacy>.} terms {It handles your data under its own <terms>Terms of Service</terms>.} privacy {It handles your data under its own <privacy>Privacy Policy</privacy>.} other {It hasn't published terms or a privacy policy.}} Only continue if you trust it.",
+    "errors": {
+      "redirect": {
+        "body": "The app asked to send you back to an address it never registered with tomomai, so the request was stopped to protect your account. Don't sign in through this link, and let the app's developer know."
+      },
+      "badRequest": {
+        "body": "The app sent a request tomomai doesn't support. Go back to the app and try again, or contact its developer."
+      }
+    },
+    "backHome": "Back to tomomai"
   }
 }
