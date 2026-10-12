@@ -221,7 +221,9 @@
       },
       "developer": {
         "title": "开发者",
-        "description": "管理 API 密钥和 OAuth 应用程式。"
+        "description": "管理 API 密钥和 OAuth 应用程式。",
+        "portalTitle": "开发者中心",
+        "portalDescription": "使用 tomomai API 开发所需的指南、接口参考和权限范围。"
       },
       "applications": {
         "title": "应用程式",

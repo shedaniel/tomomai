@@ -211,7 +211,9 @@
       },
       "developer": {
         "title": "Developer",
-        "description": "Manage API keys and OAuth applications."
+        "description": "Manage API keys and OAuth applications.",
+        "portalTitle": "Developer Center",
+        "portalDescription": "Guides, endpoint reference and scopes for building on the tomomai API."
       },
       "applications": {
         "title": "Applications",

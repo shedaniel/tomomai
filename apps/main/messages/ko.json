@@ -206,7 +206,9 @@
       },
       "developer": {
         "title": "개발자",
-        "description": "API 키와 OAuth 앱을 관리합니다."
+        "description": "API 키와 OAuth 앱을 관리합니다.",
+        "portalTitle": "개발자 센터",
+        "portalDescription": "tomomai API로 개발할 때 필요한 가이드, 엔드포인트 레퍼런스, 스코프를 확인하세요."
       },
       "applications": {
         "title": "애플리케이션",
