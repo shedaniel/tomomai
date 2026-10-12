@@ -19,6 +19,7 @@ import { toast } from "sonner";
 import { Globe, Loader2, AppWindow } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
+import { useGame } from "@/components/providers/game-provider";
 import { useLocale } from "@/components/providers/locale-provider";
 import { SettingsHeader } from "@/components/settings/primitives";
 
@@ -35,6 +36,7 @@ type Authorization = {
 
 export function ApplicationsSettings() {
   const t = useTranslations();
+  const game = useGame().brand.displayName;
   const ta = useTranslations("settings.applications");
   const tc = useTranslations("common");
   const { locale } = useLocale();
@@ -113,7 +115,7 @@ export function ApplicationsSettings() {
                       .filter((s): s is ScopeKey => s in API_SCOPES && s !== "ready")
                       .map((s) => (
                         <Badge key={s} variant="outline" className="text-xs">
-                          {t(`settings.developer.scopes.${s}.name`)}
+                          {t(`settings.developer.scopes.${s}.name`, { game })}
                         </Badge>
                       ))}
                   </div>

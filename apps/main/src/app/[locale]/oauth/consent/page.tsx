@@ -482,19 +482,20 @@ function countLeaves(nodes: TreeNode[]): number {
 function ScopeNode({ node, granted, tone }: { node: TreeNode; granted: Set<ScopeKey>; tone?: "change" }) {
   const t = useTranslations("oauthConsent");
   const ts = useTranslations("settings.developer");
+  const game = useGame().brand.displayName;
   const [open, setOpen] = useState(false);
   const children = node.children ?? [];
-  const name = ts(`scopes.${node.key}.name`);
+  const name = ts(`scopes.${node.key}.name`, { game });
   const sensitive = hasSensitive(node) ? t("sensitive") : undefined;
 
   if (children.length === 0) {
-    return <ScopeLeaf name={name} description={ts(`scopes.${node.key}.description`)} sensitive={sensitive} tone={tone} />;
+    return <ScopeLeaf name={name} description={ts(`scopes.${node.key}.description`, { game })} sensitive={sensitive} tone={tone} />;
   }
 
   // An umbrella scope is never granted itself, and the app may hold only part of it, so its row
   // counts what was actually granted rather than describing the whole umbrella.
   const description = granted.has(node.key)
-    ? ts(`scopes.${node.key}.description`)
+    ? ts(`scopes.${node.key}.description`, { game })
     : t("groupCount", { count: countLeaves(children) });
   return (
     <li>

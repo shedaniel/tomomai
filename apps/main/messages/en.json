@@ -478,7 +478,7 @@
         },
         "snapshot:latest:icon:read": {
           "name": "Latest profile icon",
-          "description": "Your current maimai icon, which may be a photo of your face taken with the in-game camera"
+          "description": "Your current {game} icon, which may be a photo of your face taken with the in-game camera"
         },
         "snapshot:all:metadata:read": {
           "name": "Snapshot history",
@@ -498,7 +498,7 @@
         },
         "snapshot:all:icon:read": {
           "name": "Profile icon history",
-          "description": "Your maimai icon from every snapshot, which may be a photo of your face taken with the in-game camera"
+          "description": "Your {game} icon from every snapshot, which may be a photo of your face taken with the in-game camera"
         },
         "recent:read": {
           "name": "Recent plays",
@@ -542,11 +542,11 @@
         },
         "fetch:start": {
           "name": "Start a fetch",
-          "description": "Fetch new data with your saved maimai token, adding a new snapshot"
+          "description": "Fetch new data with your saved {game} token, adding a new snapshot"
         },
         "fetch:delete": {
-          "name": "Remove saved maimai token",
-          "description": "Fetching stops until you sign in to maimai again"
+          "name": "Remove saved {game} token",
+          "description": "Fetching stops until you sign in to {game} again"
         },
         "snapshot:latest:read": {
           "name": "Latest snapshot",

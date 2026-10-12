@@ -25,6 +25,7 @@ import { API_KEY_LIMIT_REACHED, MAX_API_KEYS_PER_USER } from "@/lib/developer-li
 import { API_SCOPES, type ScopeKey } from "@/lib/api/scopes";
 import { AlertTriangle, Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { useGame } from "@/components/providers/game-provider";
 import {
   SCOPE_TREE,
   ALL_PARENT_KEYS,
@@ -55,6 +56,7 @@ interface CreateApiKeyDialogProps {
 
 export function CreateApiKeyDialog({ open, onOpenChange, onCreated }: CreateApiKeyDialogProps) {
   const t = useTranslations("settings.developer");
+  const game = useGame().brand.displayName;
   const tc = useTranslations("common");
 
   const [name, setName] = useState("");
@@ -180,8 +182,8 @@ export function CreateApiKeyDialog({ open, onOpenChange, onCreated }: CreateApiK
                         onToggle={toggleScope}
                         onToggleExpanded={toggleExpanded}
                         idPrefix="scope"
-                        scopeName={(k) => t(`scopes.${k}.name`)}
-                        scopeDescription={(k) => t(`scopes.${k}.description`)}
+                        scopeName={(k) => t(`scopes.${k}.name`, { game })}
+                        scopeDescription={(k) => t(`scopes.${k}.description`, { game })}
                         badges={badges}
                       />
                     ))}

@@ -35,6 +35,7 @@ import { toast } from "sonner";
 import { Plus, Trash2, Key, Loader2, RefreshCw, Copy, Check, AlertTriangle, Pencil } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
+import { useGame } from "@/components/providers/game-provider";
 import { useLocale } from "@/components/providers/locale-provider";
 
 type ApiKey = {
@@ -54,6 +55,7 @@ function getScopeKeys(permissions: Record<string, string[]> | null): ScopeKey[] 
 
 export function ApiKeysSection() {
   const t = useTranslations("settings.developer");
+  const game = useGame().brand.displayName;
   const tc = useTranslations("common");
   const { locale } = useLocale();
   const queryClient = useQueryClient();
@@ -226,7 +228,7 @@ export function ApiKeysSection() {
                   <div className="flex items-center gap-2 flex-wrap">
                     {scopes.map((s) => (
                       <Badge key={s} variant="outline" className="text-xs">
-                        {t(`scopes.${s}.name`)}
+                        {t(`scopes.${s}.name`, { game })}
                       </Badge>
                     ))}
                     <span className="text-xs text-muted-foreground">

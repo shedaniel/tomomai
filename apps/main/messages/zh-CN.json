@@ -478,7 +478,7 @@
         },
         "snapshot:latest:icon:read": {
           "name": "最新头像",
-          "description": "当前的 maimai 头像，可能是用游戏内相机拍摄的面部照片"
+          "description": "当前的 {game} 头像，可能是用游戏内相机拍摄的面部照片"
         },
         "snapshot:all:metadata:read": {
           "name": "快照历史",
@@ -498,7 +498,7 @@
         },
         "snapshot:all:icon:read": {
           "name": "头像历史",
-          "description": "所有快照中的 maimai 头像，可能是用游戏内相机拍摄的面部照片"
+          "description": "所有快照中的 {game} 头像，可能是用游戏内相机拍摄的面部照片"
         },
         "recent:read": {
           "name": "最近游玩",
@@ -542,11 +542,11 @@
         },
         "fetch:start": {
           "name": "发起同步",
-          "description": "使用已保存的 maimai 令牌同步新数据，并新增一个快照"
+          "description": "使用已保存的 {game} 令牌同步新数据，并新增一个快照"
         },
         "fetch:delete": {
-          "name": "删除已保存的 maimai 令牌",
-          "description": "在你重新登录 maimai 之前无法同步"
+          "name": "删除已保存的 {game} 令牌",
+          "description": "在你重新登录 {game} 之前无法同步"
         },
         "snapshot:latest:read": {
           "name": "最新快照",

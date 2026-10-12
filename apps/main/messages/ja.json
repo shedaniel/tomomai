@@ -478,7 +478,7 @@
         },
         "snapshot:latest:icon:read": {
           "name": "最新のプロフィールアイコン",
-          "description": "現在の maimai アイコン（ゲーム内カメラで撮影した顔写真の場合があります）"
+          "description": "現在の {game} アイコン（ゲーム内カメラで撮影した顔写真の場合があります）"
         },
         "snapshot:all:metadata:read": {
           "name": "スナップショット履歴",
@@ -498,7 +498,7 @@
         },
         "snapshot:all:icon:read": {
           "name": "プロフィールアイコンの履歴",
-          "description": "すべてのスナップショットの maimai アイコン（ゲーム内カメラで撮影した顔写真の場合があります）"
+          "description": "すべてのスナップショットの {game} アイコン（ゲーム内カメラで撮影した顔写真の場合があります）"
         },
         "recent:read": {
           "name": "最近のプレイ",
@@ -542,11 +542,11 @@
         },
         "fetch:start": {
           "name": "フェッチの開始",
-          "description": "保存済みの maimai トークンで新しいデータを取得し、スナップショットを追加します"
+          "description": "保存済みの {game} トークンで新しいデータを取得し、スナップショットを追加します"
         },
         "fetch:delete": {
-          "name": "保存済み maimai トークンの削除",
-          "description": "maimai に再度ログインするまでフェッチできなくなります"
+          "name": "保存済み {game} トークンの削除",
+          "description": "{game} に再度ログインするまでフェッチできなくなります"
         },
         "snapshot:latest:read": {
           "name": "最新のスナップショット",
