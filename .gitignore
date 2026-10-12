@@ -12,8 +12,8 @@ packages/*/tsconfig.tsbuildinfo
 # Generated at prebuild/predev from node_modules/altcha
 apps/main/public/altcha/argon2id.js
 
-# next.js (any app)
-.next/
+# next.js (any app, any distDir)
+.next*/
 out/
 
 # production

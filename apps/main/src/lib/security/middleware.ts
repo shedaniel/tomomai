@@ -55,11 +55,12 @@ function applySecurityHeaders(response: NextResponse): void {
 // Auth paths that involve credential submission or account state changes.
 // Read-only session/key management routes (e.g. /api/auth/api-key/list,
 // /api/auth/get-session) intentionally omitted — they use the general apiLimiter.
+// So are the OAuth provider's /api/auth/oauth2/* routes: they need a session or a
+// client secret, and an app's backend exchanges tokens for all its users from one IP.
 const STRICT_AUTH_PREFIXES = [
   '/api/auth/sign-in',
   '/api/auth/sign-up',
   '/api/auth/callback',
-  '/api/auth/oauth',
   '/api/auth/passkey/authenticate',
   '/api/auth/reset-password',
   '/api/auth/change-password',

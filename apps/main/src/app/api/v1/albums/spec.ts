@@ -16,7 +16,7 @@ export const spec = defineRoute({
     {
       scope: "album:images:read",
       effect:
-        "Populates `imageUrl` with the resolved R2 URL (sensitive — photos may contain images of people).",
+        "Populates `imageUrl` with the resolved R2 URL (sensitive, as photos may contain images of people).",
     },
   ],
   cost: 2,

@@ -1,16 +1,17 @@
 import type { Metadata, Viewport } from "next";
 import { Link } from "@/i18n/navigation"
 import { notFound } from "next/navigation";
-import { FileCode2, TriangleAlert } from "lucide-react";
+import { FileCode2 } from "lucide-react";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@tomomai/ui/shadcn-sidebar";
 import { Separator } from "@tomomai/ui";
 import { getRegistry, routeSlug } from "@/lib/api/specs";
 import { listGuides } from "@/lib/developer/guides";
 import { DeveloperSidebar } from "@/components/developer/sidebar";
+import { SiteFooter } from "@/components/site-footer";
 import { useDeveloperPortal } from "@/lib/flags";
 
 export const metadata: Metadata = {
-  title: { default: "Developer Center", template: "%s — tomomai Developer Center" },
+  title: { default: "Developer Center", template: "%s | tomomai Developer Center" },
   description:
     "Build with the tomomai API. Personal API keys, OAuth 2.1, scopes, and " +
     "reference for every /api/v1/* endpoint.",
@@ -44,7 +45,6 @@ export default async function DeveloperLayout({ children }: { children: React.Re
 
   return (
     <>
-      <PreviewBanner />
       <SidebarProvider>
         <DeveloperSidebar guides={guides} routeGroups={routeGroups} />
         <SidebarInset>
@@ -65,38 +65,9 @@ export default async function DeveloperLayout({ children }: { children: React.Re
           <main className="min-w-0 flex-1 px-4 py-8 sm:px-6 lg:px-8">
             <div className="mx-auto max-w-5xl">{children}</div>
           </main>
+          <SiteFooter inset />
         </SidebarInset>
       </SidebarProvider>
     </>
-  );
-}
-
-function PreviewBanner() {
-  return (
-    <div className="sticky top-0 z-50 w-full border-b border-border bg-muted/60 backdrop-blur-sm p-4">
-      <div className="max-w-screen-xl mx-auto flex gap-3 items-start">
-        <div className="mt-0.5 shrink-0 rounded-full bg-primary/15 p-1">
-          <TriangleAlert className="h-3 w-3 text-primary" />
-        </div>
-        <div className="flex flex-col gap-1 flex-1">
-          <p className="text-sm font-semibold text-foreground">
-            Developer API is not yet open to the public
-          </p>
-          <div className="text-sm text-muted-foreground">
-            <span className="block">
-              Personal API keys and OAuth 2.1 apps are still gated while we
-              finish auth hardening and observe the new limiter under real
-              traffic. This documentation is published for preview only.
-              Creating keys or registering OAuth clients will not work in
-              production yet.
-            </span>
-            <span className="block mt-[0.5em]">
-              The portal will open in a follow-up release once the v1 auth
-              rework has been stable for long enough. Check back then.
-            </span>
-          </div>
-        </div>
-      </div>
-    </div>
   );
 }

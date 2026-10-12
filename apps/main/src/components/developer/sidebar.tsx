@@ -57,7 +57,7 @@ export function DeveloperSidebar({ guides, routeGroups }: DeveloperSidebarProps)
         </SidebarMenu>
       </SidebarHeader>
 
-      <SidebarContent>
+      <SidebarContent className="[scrollbar-color:var(--border)_transparent] [scrollbar-width:thin]">
         <SidebarGroup>
           <SidebarGroupLabel className="gap-2">
             <BookOpen className="size-3.5" />

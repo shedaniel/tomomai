@@ -52,12 +52,13 @@ export function LandingPage({ signInOptions }: LandingPageProps) {
     utils.user.getSignInOptions.setData(undefined, signInOptions);
   }, [utils, signInOptions]);
 
-  // Better Auth's OAuth provider sends signed-out visitors here (loginPage: "/")
-  // with a signed query that sign-in must be started from.
+  // Signed-out visits to settings land here with `?signin=<path>`. Only same-site settings paths are
+  // honoured, so the parameter cannot be used as an open redirect.
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    if (!params.has("sig")) return;
-    openAuthDialog({ mode: params.get("prompt") === "create" ? "signup" : "signin" });
+    const next = new URLSearchParams(window.location.search).get("signin");
+    if (!next || !next.startsWith("/settings") || next.startsWith("//")) return;
+    window.history.replaceState(window.history.state, "", window.location.pathname);
+    openAuthDialog({ callbackURL: next });
   }, [openAuthDialog]);
 
   return (

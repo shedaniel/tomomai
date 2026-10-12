@@ -356,7 +356,7 @@
         "regenerateError": "Failed to regenerate API key",
         "regeneratedTitle": "Key Regenerated",
         "regeneratedDescription": "Copy your new API key now. It will not be shown again.",
-        "regeneratedSaveWarning": "Save this key — it won't be shown again after closing this dialog.",
+        "regeneratedSaveWarning": "Save this key now. It won't be shown again after you close this dialog.",
         "regenerateDialog": {
           "title": "Regenerate API key?",
           "description": "This will immediately invalidate the current key. Any application using it will lose access until updated with the new key.",
@@ -374,6 +374,9 @@
           "title": "Delete API key?",
           "description": "This action cannot be undone. Any application using this key will immediately lose access.",
           "confirm": "Delete"
+        },
+        "errors": {
+          "limitReached": "You can have up to {max} API keys. Delete one to create another."
         }
       },
       "createDialog": {
@@ -382,7 +385,7 @@
         "createdTitle": "API Key Created",
         "createdDescription": "Copy your API key now. It will not be shown again.",
         "copyAriaLabel": "Copy API key",
-        "saveWarning": "Save this key — it won't be shown again after closing this dialog.",
+        "saveWarning": "Save this key now. It won't be shown again after you close this dialog.",
         "done": "Done",
         "nameLabel": "Name",
         "namePlaceholder": "My Userscript",
@@ -411,112 +414,112 @@
       },
       "scopes": {
         "ready": {
-          "name": "Ready",
-          "description": "Basic access. Grants GET /api/v1/ok. Included by default."
+          "name": "Basic access",
+          "description": "Confirm that the app is connected to your account"
         },
         "user:metadata:read": {
-          "name": "User Metadata (Read)",
-          "description": "Read your username, region, profile visibility, and role. Grants GET /api/v1/me."
+          "name": "Account info",
+          "description": "Your username, region, profile visibility and role"
         },
         "snapshot:latest:metadata:read": {
-          "name": "Latest Snapshot Metadata (Read)",
-          "description": "Read metadata (rating, display name, play counts, etc.) for your latest snapshot. Grants GET /api/v1/snapshots/latest."
+          "name": "Latest snapshot details",
+          "description": "Rating, display name and play counts"
         },
         "snapshot:latest:songs:b50:read": {
-          "name": "Latest Snapshot B50 Songs (Read)",
-          "description": "Read the B50 song scores (best 50) from your latest snapshot."
+          "name": "Latest best 50 scores",
+          "description": "The scores behind your current rating"
         },
         "snapshot:latest:songs:read": {
-          "name": "Latest Snapshot All Songs (Read)",
-          "description": "Read all song scores from your latest snapshot."
+          "name": "Latest scores",
+          "description": "Every song score in your most recent snapshot"
         },
         "snapshot:latest:events:read": {
-          "name": "Latest Snapshot Events (Read)",
-          "description": "Read event progress data from your latest snapshot."
+          "name": "Latest event progress",
+          "description": "Your current event progress"
         },
         "snapshot:latest:icon:read": {
-          "name": "Latest Snapshot Icon (Read)",
-          "description": "Read your profile icon URL (Discord avatar) from your latest snapshot. Sensitive — may reveal your social identity."
+          "name": "Latest profile icon",
+          "description": "Your current maimai icon, which may be a photo of your face taken with the in-game camera"
         },
         "snapshot:all:metadata:read": {
-          "name": "All Snapshots Metadata (Read)",
-          "description": "List all your snapshots and read their metadata. Grants GET /api/v1/snapshots and GET /api/v1/snapshots/:id."
+          "name": "Snapshot history",
+          "description": "Rating, display name and play counts from every snapshot"
         },
         "snapshot:all:songs:b50:read": {
-          "name": "All Snapshots B50 Songs (Read)",
-          "description": "Read the B50 song scores from any of your snapshots."
+          "name": "Best 50 score history",
+          "description": "The scores behind your rating, from every snapshot"
         },
         "snapshot:all:songs:read": {
-          "name": "All Snapshots All Songs (Read)",
-          "description": "Read all song scores from any of your snapshots."
+          "name": "Score history",
+          "description": "Every song score, from every snapshot"
         },
         "snapshot:all:events:read": {
-          "name": "All Snapshots Events (Read)",
-          "description": "Read event progress data from any of your snapshots."
+          "name": "Event progress history",
+          "description": "Your event progress, from every snapshot"
         },
         "snapshot:all:icon:read": {
-          "name": "All Snapshots Icon (Read)",
-          "description": "Read your profile icon URL (Discord avatar) from any snapshot. Sensitive — may reveal your social identity."
+          "name": "Profile icon history",
+          "description": "Your maimai icon from every snapshot, which may be a photo of your face taken with the in-game camera"
         },
         "recent:read": {
-          "name": "Recent Plays (Read)",
-          "description": "Read your recent play history including song info, achievement, and combo/sync status. Grants GET /api/v1/recents."
+          "name": "Recent plays",
+          "description": "Your play history with scores and combo status"
         },
         "recent:detailed:read": {
-          "name": "Recent Plays Detailed (Read)",
-          "description": "Adds venue and full per-note-type breakdown to recent play results."
+          "name": "Play details",
+          "description": "Venue and a per-note breakdown for each play"
         },
         "stats:read": {
-          "name": "Stats (Read)",
-          "description": "Read your grade/FC/FS distribution statistics. Grants GET /api/v1/stats."
+          "name": "Stats",
+          "description": "Your grade, FC and FS totals"
         },
         "album:read": {
-          "name": "Albums (Read)",
-          "description": "Read your arcade photo album entries (metadata only, no image URLs). Grants GET /api/v1/albums."
+          "name": "Photo album",
+          "description": "Your arcade photo album entries, without the photos"
         },
         "album:images:read": {
-          "name": "Album Images (Read)",
-          "description": "Adds resolved image URLs to album responses. Sensitive — photos may contain images of people."
+          "name": "Album photos",
+          "description": "The photos themselves, which may show people"
         },
         "plate:read": {
-          "name": "Plates (Read)",
-          "description": "Read your plate completion data (which songs still need to be cleared / FC'd / AP'd for each plate). Grants GET /api/v1/plates."
+          "name": "Plate progress",
+          "description": "Which songs you still need for each plate"
         },
         "user:settings:read": {
-          "name": "User Settings (Read)",
-          "description": "Read your privacy and profile-display settings (publish profile, show scores, show plates, etc.). Grants GET /api/v1/me/settings."
+          "name": "Profile settings",
+          "description": "Your privacy and profile display settings"
         },
         "snapshot:all:delete": {
-          "name": "Snapshots (Delete)",
-          "description": "Delete any of your snapshots. Grants DELETE /api/v1/snapshots/:id. Destructive — must be requested explicitly and is never implied by encompassing scopes."
+          "name": "Delete snapshots",
+          "description": "Permanently delete any of your snapshots"
         },
         "snapshot:submit": {
-          "name": "Snapshots (Submit)",
-          "description": "Submit a new snapshot. Internal — admin only."
+          "name": "Submit snapshots",
+          "description": "Upload new snapshots to your account"
         },
         "fetch:read": {
-          "name": "Fetch Status (Read)",
-          "description": "Read the status of your in-progress or most-recent maimai data fetch. Grants GET /api/v1/fetch/status."
+          "name": "Fetch status",
+          "description": "Whether a data fetch is running and how it went"
         },
         "fetch:start": {
-          "name": "Start Fetch",
-          "description": "Trigger a new maimai data fetch using your stored upstream token. Grants POST /api/v1/fetch. Destructive — consumes upstream API budget and writes a new snapshot."
+          "name": "Start a fetch",
+          "description": "Fetch new data with your saved maimai token, adding a new snapshot"
         },
         "fetch:delete": {
-          "name": "Fetch Token (Delete)",
-          "description": "Delete your stored upstream maimai authentication token. Grants DELETE /api/v1/fetch/token. Destructive and sensitive — breaks any in-app and API-driven fetch flow until you re-authenticate."
+          "name": "Remove saved maimai token",
+          "description": "Fetching stops until you sign in to maimai again"
         },
         "snapshot:latest:read": {
-          "name": "Latest Snapshot (Read)",
-          "description": "Grants metadata, song scores, and events for your latest snapshot only. Excludes icon (opt-in for privacy)."
+          "name": "Latest snapshot",
+          "description": "Details, scores and event progress from your most recent snapshot"
         },
         "snapshot:all:read": {
-          "name": "All Snapshots (Read)",
-          "description": "Grants metadata, song scores, and events for all your snapshots, including the latest. Excludes icon (opt-in for privacy)."
+          "name": "All snapshots",
+          "description": "Details, scores and event progress from every snapshot"
         },
         "read": {
-          "name": "Read (All Non-Sensitive)",
-          "description": "Broad read access: user metadata, all snapshots, recents, stats, and albums. Excludes icon and album image URLs. Sensitive due to broad personal data access."
+          "name": "Read most of your data",
+          "description": "Account info, settings, snapshots, plays, stats, albums, plates and fetch status. Leaves out profile icons and album photos."
         }
       },
       "oauthApps": {
@@ -553,7 +556,7 @@
           "clientIdLabel": "Client ID",
           "secretLabel": "Client Secret",
           "copyAriaLabel": "Copy value",
-          "saveWarning": "Save this secret — it won't be shown again after closing this dialog.",
+          "saveWarning": "Save this secret now. It won't be shown again after you close this dialog.",
           "done": "Done"
         },
         "rotateDialog": {
@@ -585,6 +588,10 @@
           "title": "Delete OAuth Application?",
           "description": "This will permanently delete the application and revoke all issued tokens. This cannot be undone.",
           "confirm": "Delete"
+        },
+        "errors": {
+          "limitReached": "You can have up to {max} OAuth apps. Delete one to create another.",
+          "nameReserved": "App names can't include \"tomomai\", because users could mistake the app for an official one."
         }
       }
     },
@@ -1005,7 +1012,7 @@
       "title": "Pick a username",
       "description": "Your username is your handle on tomomai. If you choose to share, it also becomes your public profile URL.",
       "publishToggleLabel": "Share my profile with friends",
-      "publishToggleDescription": "Let others view your scores at a public link. Off by default — you can change this anytime.",
+      "publishToggleDescription": "Let others view your scores at a public link. It's off by default, and you can change it anytime.",
       "publicUrlHint": "Your public profile:"
     },
     "step2": {
@@ -1536,5 +1543,58 @@
         "description": "See @shedaniel's scores"
       }
     }
+  },
+  "oauthConsent": {
+    "loading": "Loading",
+    "title": "{app} wants to access <nb>your tomomai account</nb>",
+    "signedOutTitle": "Sign in to continue to {app}",
+    "signedOutDescription": "{app} is asking for access to your tomomai account. Sign in to review the request.",
+    "signedInAs": "Signed in as {name}",
+    "switchAccount": "Not you? Switch account",
+    "basicAccess": "Confirm that it is connected to your account",
+    "offlineAccess": {
+      "name": "Stay connected",
+      "description": "{app} can keep access without asking you again, until you revoke it"
+    },
+    "sensitive": "Sensitive",
+    "redirectNotice": "When you're done, you'll go back to {host}",
+    "trustNotice": "{app} is not run by tomomai. {links, select, both {It handles your data under its own <terms>Terms of Service</terms> and <privacy>Privacy Policy</privacy>.} terms {It handles your data under its own <terms>Terms of Service</terms>.} privacy {It handles your data under its own <privacy>Privacy Policy</privacy>.} other {It hasn't published terms or a privacy policy.}} Only continue if you trust it.",
+    "revokeNotice": "You can revoke access at any time in <link>Settings</link>.",
+    "deny": "Deny",
+    "authorize": "Authorise",
+    "signIn": "Sign in to continue",
+    "errorTitle": "Can't continue",
+    "missingClient": "This authorisation link is incomplete. Go back to the app and try again.",
+    "loadFailed": "This request has expired or the app is no longer available. Go back to the app and try again.",
+    "errors": {
+      "redirect": {
+        "title": "This app's return address isn't registered",
+        "body": "The app asked to send you back to an address it never registered with tomomai, so the request was stopped to protect your account. Don't sign in through this link, and let the app's developer know."
+      },
+      "unavailable": {
+        "title": "This app isn't available",
+        "body": "It may have been removed or turned off by its developer."
+      },
+      "badRequest": {
+        "title": "This sign-in link doesn't work",
+        "body": "The app sent a request tomomai doesn't support. Go back to the app and try again, or contact its developer."
+      },
+      "tampered": {
+        "title": "This link has been changed",
+        "body": "Part of this authorisation link was modified, so it can't be trusted. Go back to the app and start again."
+      }
+    },
+    "genericError": "Something went wrong. Please try again.",
+    "unknownScopesTitle": "Unrecognised permissions",
+    "unknownScopesBody": "{app} is asking for permissions that don't exist ({scopes}). It needs to fix its request before you can authorise it.",
+    "backHome": "Back to tomomai",
+    "defaultAppName": "This app",
+    "changeHeading": "Can change your data",
+    "readHeading": "Can read your data",
+    "showDetails": "Show details",
+    "hideDetails": "Hide details",
+    "scrollToEnd": "Scroll to the end",
+    "scrollHint": "Scroll to review all permissions",
+    "groupCount": "{count, plural, one {# permission} other {# permissions}}"
   }
 }

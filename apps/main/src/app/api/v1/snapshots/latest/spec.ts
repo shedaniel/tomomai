@@ -21,7 +21,7 @@ export const spec = defineRoute({
     { scope: "snapshot:latest:events:read", effect: "Includes the `events` array." },
     {
       scope: "snapshot:latest:icon:read",
-      effect: "Populates `iconUrl` (sensitive — may reveal social identity).",
+      effect: "Populates `iconUrl` (sensitive, as the icon may be a photo of your face taken with the in-game camera).",
     },
   ],
   cost: 2,
