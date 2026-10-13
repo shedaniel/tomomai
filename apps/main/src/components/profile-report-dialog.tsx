@@ -1,6 +1,6 @@
 "use client";
 
-import { Link } from "@/i18n/navigation";
+import { useAuthDialog } from "@/components/auth/auth-dialog-provider";
 import { useSession } from "@/lib/auth-client";
 import { trpc } from "@/lib/trpc-client";
 import {
@@ -51,6 +51,7 @@ export function ProfileReportDialog({
 }: ProfileReportDialogProps) {
   const t = useTranslations();
   const { data: session, isPending: isSessionPending } = useSession();
+  const { openAuthDialog } = useAuthDialog();
   const [open, setOpen] = useState(false);
   const [reason, setReason] = useState<ProfileReportReason>();
   const [details, setDetails] = useState("");
@@ -205,8 +206,13 @@ export function ProfileReportDialog({
             </form>
           ) : (
             <ResponsiveDialogFooter>
-              <Button asChild>
-                <Link href="/">{t("profileReport.signInAction")}</Link>
+              <Button
+                onClick={() => {
+                  setOpen(false);
+                  openAuthDialog();
+                }}
+              >
+                {t("profileReport.signInAction")}
               </Button>
             </ResponsiveDialogFooter>
           )}

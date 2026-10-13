@@ -35,6 +35,8 @@ export interface ReauthGuardOptions {
   reauthMessage: string;
   /** Optional toast message when a non-reauth error arrives without `err.message`. */
   fallback?: string;
+  /** Translated toasts for server error codes, such as a limit being reached. */
+  errorMessages?: Record<string, string>;
   /** Confirm dialog strings — caller pre-translates since this module is React-context-free. */
   title: string;
   description: string;
@@ -57,37 +59,53 @@ export interface ReauthGuardOptions {
  * session. The server-side check remains belt-and-braces for clock skew /
  * cross-tab expiry between pre-flight and request.
  */
-export function reauthGuard(opts: ReauthGuardOptions) {
-  const promptThenReauth = async () => {
-    const ok = await showConfirm({
-      title: opts.title,
-      description: opts.description,
-      confirmLabel: opts.confirmLabel,
-      cancelLabel: opts.cancelLabel,
-      dedupKey: "fresh-session:reauth",
-    });
-    if (ok) {
-      toast.error(opts.reauthMessage);
-      void triggerReauth(opts.callbackURL);
-    }
-  };
+type ReauthPrompt = Omit<ReauthGuardOptions, "fallback" | "errorMessages">;
 
+async function promptThenReauth(opts: ReauthPrompt) {
+  const ok = await showConfirm({
+    title: opts.title,
+    description: opts.description,
+    confirmLabel: opts.confirmLabel,
+    cancelLabel: opts.cancelLabel,
+    dedupKey: "fresh-session:reauth",
+  });
+  if (ok) {
+    toast.error(opts.reauthMessage);
+    void triggerReauth(opts.callbackURL);
+  }
+}
+
+async function hasFreshSession() {
+  const sessionRes = await authClient.getSession();
+  const session = (sessionRes as { data?: { session?: { createdAt?: string | Date } } }).data;
+  return isSessionFresh(session?.session?.createdAt);
+}
+
+/**
+ * Checks freshness before a form opens, so the reauth bounce happens before the user types anything.
+ * Resolves true when the session is fresh. Otherwise offers reauth back to `callbackURL` and resolves false.
+ */
+export async function ensureFreshSession(opts: ReauthPrompt): Promise<boolean> {
+  if (await hasFreshSession()) return true;
+  await promptThenReauth(opts);
+  return false;
+}
+
+export function reauthGuard(opts: ReauthGuardOptions) {
   return {
     onMutate: async () => {
-      const sessionRes = await authClient.getSession();
-      const session = (sessionRes as { data?: { session?: { createdAt?: string | Date } } }).data;
-      if (!isSessionFresh(session?.session?.createdAt)) {
-        await promptThenReauth();
+      if (!(await hasFreshSession())) {
+        await promptThenReauth(opts);
         throw new Error(FRESH_LOCAL_STALE);
       }
     },
     onError: async (err: { message?: string }) => {
       if (err.message === FRESH_LOCAL_STALE) return;
       if (isFreshSessionError(err)) {
-        await promptThenReauth();
+        await promptThenReauth(opts);
         return;
       }
-      toast.error(err.message || opts.fallback);
+      toast.error((err.message && opts.errorMessages?.[err.message]) || err.message || opts.fallback);
     },
   };
 }

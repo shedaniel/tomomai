@@ -16,7 +16,7 @@ interface PolicyDialogProps {
 
 /**
  * Reusable dialog for displaying policy text (Terms of Service or Privacy Policy).
- * Used by both ConsentDialog and AboutDialog.
+ * Used by both AuthDialog and AboutDialog.
  */
 export function PolicyDialog({ open, onOpenChange, title, content }: PolicyDialogProps) {
   return (

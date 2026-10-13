@@ -58,7 +58,7 @@ export const levelPreciseField = z
   .number()
   .int()
   .describe(
-    "Difficulty constant scaled ×10 (integer). Divide by 10 to get the displayed decimal — e.g. 147 → 14.7.",
+    "Difficulty constant scaled ×10 (integer). Divide by 10 to get the displayed decimal, e.g. 147 → 14.7.",
   );
 
 /**
@@ -69,7 +69,7 @@ export const achievementField = z
   .number()
   .int()
   .describe(
-    "Score achievement scaled ×10000 (integer). Divide by 10000 to get the percentage — e.g. 991234 → 99.1234%. Range 0 to 1010000 (101.0000%, SSS+).",
+    "Score achievement scaled ×10000 (integer). Divide by 10000 to get the percentage, e.g. 991234 → 99.1234%. Range 0 to 1010000 (101.0000%, SSS+).",
   );
 
 export const plateEntry = z.object({
@@ -123,7 +123,7 @@ export const fetchStartResult = z.object({
 export const successResponse = z.object({ success: z.literal(true) });
 
 export const chartCatalogueEntry = z.object({
-  songId: z.string().regex(/^[A-Za-z0-9_-]{8}$/).describe("Chart ID (8-char nanoid) — the prefix of every composite instance ID."),
+  songId: z.string().regex(/^[A-Za-z0-9_-]{8}$/).describe("Chart ID (8-char nanoid), the prefix of every composite instance ID."),
   songName: z.string(),
   artist: z.string(),
   cover: z.string().nullable().describe("Cover image URL, may be null."),

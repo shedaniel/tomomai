@@ -4,48 +4,14 @@ import { useState } from "react";
 import { Input } from "@tomomai/ui";
 import { Checkbox } from "@/components/animate-ui/components/radix/checkbox";
 import { API_SCOPES, SCOPE_EXPANSIONS, SCOPE_IMPLIES, type ScopeKey } from "@/lib/api/scopes";
+import type { TreeNode } from "@/lib/api/scope-tree";
 import { toast } from "sonner";
 import { Copy, Check, AlertTriangle, ChevronRight, ChevronDown } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 // ── Tree types & helpers ──────────────────────────────────────────────────────
 
-export type TreeNode = { key: ScopeKey; children?: TreeNode[] };
-
-export const SCOPE_TREE: TreeNode[] = [
-  { key: "ready" },
-  {
-    key: "read",
-    children: [
-      { key: "user:metadata:read" },
-      {
-        key: "snapshot:all:read",
-        children: [
-          { key: "snapshot:all:metadata:read" },
-          { key: "snapshot:all:songs:b50:read" },
-          { key: "snapshot:all:songs:read" },
-          { key: "snapshot:all:events:read" },
-          { key: "snapshot:all:icon:read" },
-        ],
-      },
-      {
-        key: "snapshot:latest:read",
-        children: [
-          { key: "snapshot:latest:metadata:read" },
-          { key: "snapshot:latest:songs:b50:read" },
-          { key: "snapshot:latest:songs:read" },
-          { key: "snapshot:latest:events:read" },
-          { key: "snapshot:latest:icon:read" },
-        ],
-      },
-      { key: "recent:read", children: [{ key: "recent:detailed:read" }] },
-      { key: "stats:read" },
-      { key: "album:read", children: [{ key: "album:images:read" }] },
-    ],
-  },
-];
-
-export const ALL_PARENT_KEYS = collectParents(SCOPE_TREE);
+export { SCOPE_TREE, ALL_PARENT_KEYS, collectParents, type TreeNode } from "@/lib/api/scope-tree";
 
 export const DEFAULT_SCOPES = new Set(
   (Object.entries(API_SCOPES) as [ScopeKey, (typeof API_SCOPES)[ScopeKey]][])
@@ -68,16 +34,6 @@ export function computeImplied(selected: Set<ScopeKey>): Set<ScopeKey> {
     if (scopeImplies) for (const i of scopeImplies) addImplied(i);
   }
   return implied;
-}
-
-export function collectParents(nodes: TreeNode[], parents = new Set<ScopeKey>()): Set<ScopeKey> {
-  for (const n of nodes) {
-    if (n.children?.length) {
-      parents.add(n.key);
-      collectParents(n.children, parents);
-    }
-  }
-  return parents;
 }
 
 export function hasAnyDescendantActive(

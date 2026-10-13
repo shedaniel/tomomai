@@ -6,11 +6,34 @@ import { resolveBaseUrl } from "@/lib/base-url";
 import { ScopeBadge } from "@/components/developer/scope-badge";
 import { ParamTable } from "@/components/developer/param-table";
 import { ResponseTree } from "@/components/developer/response-tree";
+import { ResponseTabs } from "@/components/developer/response-tabs";
+import { responseTypeName, toTypeScript, toZod } from "@/lib/developer/schema-codegen";
+import { z } from "zod";
 import { ChevronRight, Terminal } from "lucide-react";
 import { Badge } from "@tomomai/ui";
 import { CodeSamples } from "@/components/developer/code-samples";
+import { CodeBlock } from "@/components/developer/code-block";
+import { highlight } from "@/lib/developer/highlight";
+import { renderSnippet, SAMPLE_HIGHLIGHT, SAMPLE_LANGS } from "@/lib/developer/code-samples";
 import { MethodBadge } from "@/components/developer/method-badge";
 import type { RouteSpec } from "@/lib/api/registry";
+
+/** TypeScript and Zod source for the response, or null when the schema cannot be expressed as JSON Schema. */
+async function renderResponseCode(schema: z.ZodTypeAny, name: string) {
+  let typescript: string;
+  let zod: string;
+  try {
+    const json = z.toJSONSchema(schema, { target: "draft-2020-12" }) as Record<string, unknown>;
+    typescript = toTypeScript(json, name);
+    zod = toZod(json, name);
+  } catch {
+    return null;
+  }
+  return {
+    typescript: { code: typescript, html: await highlight(typescript, "typescript") },
+    zod: { code: zod, html: await highlight(zod, "typescript") },
+  };
+}
 
 function buildExampleUrl(spec: RouteSpec, baseUrl: string): string {
   let path = spec.path.replace(/\{(\w+)\}/g, (_, name) => `<${name}>`);
@@ -58,6 +81,16 @@ export default async function ReferenceEndpointPage({
     spec.scope === "public" ? [] : Array.isArray(spec.scope) ? spec.scope : [spec.scope];
 
   const exampleUrl = buildExampleUrl(spec, baseUrl);
+  const needsAuth = spec.scope !== "public";
+  const [responseCode, samples] = await Promise.all([
+    renderResponseCode(spec.response, responseTypeName(slug)),
+    Promise.all(
+      SAMPLE_LANGS.map(async (lang) => {
+        const code = renderSnippet(lang, spec.method, exampleUrl, needsAuth);
+        return { lang, code, html: await highlight(code, SAMPLE_HIGHLIGHT[lang]) };
+      }),
+    ),
+  ]);
 
   return (
     <div className="grid grid-cols-1 gap-8 lg:grid-cols-[1fr_360px]">
@@ -79,7 +112,7 @@ export default async function ReferenceEndpointPage({
             <Link
               href="/developer/guides/rate-limits"
               className="inline-flex items-center gap-1.5 rounded-md border border-border bg-muted/30 px-2 py-1 font-mono text-muted-foreground hover:text-foreground hover:bg-muted/60"
-              title="Cost units consumed per call — see Rate Limits guide"
+              title="Cost units consumed per call. See the Rate limits guide."
             >
               <span className="uppercase tracking-wider">Cost</span>
               <span className="font-semibold text-foreground">{spec.cost}</span>
@@ -120,7 +153,7 @@ export default async function ReferenceEndpointPage({
                     {spec.optionalScopes.map((o) => (
                       <li key={o.scope} className="flex items-start gap-2">
                         <ScopeBadge scope={o.scope} />
-                        <span className="text-muted-foreground">— {o.effect}</span>
+                        <span className="text-muted-foreground">{o.effect}</span>
                       </li>
                     ))}
                   </ul>
@@ -161,7 +194,15 @@ export default async function ReferenceEndpointPage({
           <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
             Response (200)
           </h2>
-          <ResponseTree schema={spec.response} />
+          {responseCode ? (
+            <ResponseTabs
+              tree={<ResponseTree schema={spec.response} bare />}
+              typescript={responseCode.typescript}
+              zod={responseCode.zod}
+            />
+          ) : (
+            <ResponseTree schema={spec.response} />
+          )}
         </section>
 
         {spec.examples?.length ? (
@@ -172,9 +213,11 @@ export default async function ReferenceEndpointPage({
             {spec.examples.map((ex) => (
               <div key={ex.name} className="space-y-2">
                 <div className="text-sm font-medium">{ex.name}</div>
-                <pre className="overflow-x-auto rounded-lg border border-border bg-muted/30 p-3 text-xs">
-                  <code>{JSON.stringify(ex.response, null, 2)}</code>
-                </pre>
+                <CodeBlock
+                  code={JSON.stringify(ex.response, null, 2)}
+                  lang="json"
+                  className="rounded-lg border border-border bg-muted/30 [&_pre]:p-3"
+                />
               </div>
             ))}
           </section>
@@ -187,11 +230,7 @@ export default async function ReferenceEndpointPage({
             <Terminal className="size-3.5" />
             Try it
           </h3>
-          <CodeSamples
-            method={spec.method}
-            url={exampleUrl}
-            needsAuth={spec.scope !== "public"}
-          />
+          <CodeSamples samples={samples} />
           <p className="text-xs text-muted-foreground">
             Need a key?{" "}
             <Link href="/settings/developer" className="underline">

@@ -77,8 +77,6 @@
     "loginWithPasskey": "使用通行密钥登录",
     "signIn": "登录",
     "newHere": "新用户？",
-    "noAccount": "创建账户来开始追踪你的成绩。",
-    "signup": "注册",
     "signupWithDiscord": "使用 Discord 注册",
     "signupWithX": "使用 X 注册",
     "passkey": {
@@ -87,13 +85,39 @@
     },
     "signupDisabled": "注册功能已关闭",
     "signupDisabledMessage": "目前暂不开放新用户注册，请稍后再试。",
-    "peekExampleProfile": "看看示例个人主页",
     "features": {
       "title": "功能：",
       "trackScores": "追踪国际服和日本服的成绩",
       "viewHistory": "查看你的历史游玩数据",
       "importData": "从 maimai DX NET 导入数据",
       "analyzeProgress": "分析你的游玩记录"
+    },
+    "signInTitle": "登录 tomomai",
+    "signInDescription": "欢迎回来！请使用注册时的账号继续。",
+    "signUpTitle": "创建 tomomai 账号",
+    "signUpDescription": "请先阅读我们的政策，再选择用于注册的账号。",
+    "createAccount": "创建账号",
+    "haveAccount": "已经有账号了？",
+    "inviteOnlyTitle": "需要邀请",
+    "inviteOnlyMessage": "目前注册新账号需要现有用户提供的邀请链接。",
+    "errors": {
+      "title": "验证错误",
+      "noAccount": "该登录方式还没有对应的 tomomai 账号，请在下方创建账号开始使用。",
+      "signupUnavailable": "无法创建账号，目前可能暂停开放注册。",
+      "inviteRequired": "目前注册需要邀请。请打开你收到的邀请链接后再试一次。",
+      "inviteInvalid": "该邀请码无效。",
+      "inviteRevoked": "该邀请已被撤销。",
+      "inviteUsed": "该邀请已被使用。",
+      "inviteExpired": "该邀请已过期。",
+      "accountNotLinked": "该账号尚未关联到你的用户，且无法自动关联。\n\n你可能已经有一个使用相同邮箱的账号。\n\n请先使用最初注册时的方式登录，再到“设置 → 账号”关联该账号。",
+      "emailMismatch": "该账号的邮箱与当前账号不一致。",
+      "alreadyLinked": "该账号已关联到其他用户。",
+      "emailMissing": "该账号没有提供邮箱地址，而登录 tomomai 需要邮箱地址。",
+      "restart": "登录过程被中断或超时，请重试。",
+      "provider": "无法从登录服务获取你的账号信息，请重试。",
+      "banned": "该账号已被封禁。如果你认为这是误判，请通过 Discord 联系我们。",
+      "generic": "验证时出现问题，请重试。",
+      "code": "错误代码: {code}"
     }
   },
   "linkedAccounts": {
@@ -127,6 +151,56 @@
     "deleteTitle": "删除通行密钥？",
     "deleteDescription": "该通行密钥将被删除，你将无法再使用它登录。",
     "reauthRequired": "管理通行密钥前请重新登录。"
+  },
+  "oauthConsent": {
+    "loading": "加载中",
+    "title": "{app} 请求访问你的 <nb>tomomai 账号</nb>",
+    "signedOutTitle": "登录以继续使用 {app}",
+    "signedOutDescription": "{app} 请求访问你的 tomomai 账号。请登录后查看此请求。",
+    "signedInAs": "当前登录：{name}",
+    "switchAccount": "不是你？切换账号",
+    "basicAccess": "确认已与你的账号关联",
+    "offlineAccess": {"name": "保持连接", "description": "在你撤销之前，{app} 无需再次询问即可持续访问"},
+    "sensitive": "敏感",
+    "redirectNotice": "完成后将返回 {host}",
+    "trustNotice": "{app} 并非由 tomomai 运营。{links, select, both {你的数据将按照其<terms>服务条款</terms>和<privacy>隐私政策</privacy>处理。} terms {你的数据将按照其<terms>服务条款</terms>处理。} privacy {你的数据将按照其<privacy>隐私政策</privacy>处理。} other {该应用未提供服务条款或隐私政策。}}请仅在信任该应用时继续。",
+    "revokeNotice": "你可以随时在<link>设置</link>中撤销访问权限。",
+    "deny": "拒绝",
+    "authorize": "授权",
+    "signIn": "登录以继续",
+    "errorTitle": "无法继续",
+    "missingClient": "此授权链接不完整。请返回应用重试。",
+    "loadFailed": "此请求已过期或该应用已不可用。请返回应用重试。",
+    "errors": {
+      "redirect": {
+        "title": "此应用的返回地址未注册",
+        "body": "该应用试图将你送回一个未在 tomomai 注册的地址，为保护你的账号，请求已被阻止。请勿通过此链接登录，并告知应用开发者。"
+      },
+      "unavailable": {
+        "title": "此应用不可用",
+        "body": "它可能已被开发者删除或停用。"
+      },
+      "badRequest": {
+        "title": "此链接无法使用",
+        "body": "该应用发送了 tomomai 不支持的请求。请返回应用重试，或联系其开发者。"
+      },
+      "tampered": {
+        "title": "此链接已被修改",
+        "body": "此授权链接的部分内容已被修改，无法信任。请返回应用重新开始。"
+      }
+    },
+    "genericError": "出现问题，请重试。",
+    "unknownScopesTitle": "无法识别的权限",
+    "unknownScopesBody": "{app} 请求了不存在的权限（{scopes}）。在应用修正请求之前无法授权。",
+    "backHome": "返回 tomomai",
+    "defaultAppName": "此应用",
+    "changeHeading": "可以修改你的数据",
+    "readHeading": "可以读取你的数据",
+    "showDetails": "显示详情",
+    "hideDetails": "隐藏详情",
+    "scrollToEnd": "滚动到底部",
+    "scrollHint": "滚动查看所有权限",
+    "groupCount": "{count} 项权限"
   },
   "consent": {
     "title": "欢迎来到 tomomai",
@@ -187,7 +261,9 @@
       },
       "developer": {
         "title": "开发者",
-        "description": "管理 API 密钥和 OAuth 应用程序。"
+        "description": "管理 API 密钥和 OAuth 应用程序。",
+        "portalTitle": "开发者中心",
+        "portalDescription": "使用 tomomai API 开发所需的指南、接口参考和权限范围。"
       },
       "applications": {
         "title": "应用程序",
@@ -311,6 +387,9 @@
     "developer": {
       "reauthRequired": "请重新登录后再执行此操作。",
       "apiKeys": {
+        "errors": {
+          "limitReached": "最多可创建 {max} 个 API 密钥。请先删除一个再创建新的。"
+        },
         "label": "API 密钥",
         "description": "使用这些密钥来验证对 tomomai API 的请求。",
         "createButton": "创建 API 密钥",
@@ -329,7 +408,7 @@
         "regenerateError": "重新生成 API 密钥失败",
         "regeneratedTitle": "密钥已重新生成",
         "regeneratedDescription": "请立即复制你的新 API 密钥，之后将不再显示。",
-        "regeneratedSaveWarning": "请保存此密钥 —— 关闭对话框后将不再显示。",
+        "regeneratedSaveWarning": "请保存此密钥，关闭对话框后将不再显示。",
         "regenerateDialog": {
           "title": "重新生成 API 密钥？",
           "description": "当前密钥将立即失效。使用该密钥的应用程序将无法访问，直到更新为新密钥。",
@@ -358,7 +437,7 @@
         "createdTitle": "API 密钥已创建",
         "createdDescription": "请立即复制你的 API 密钥。关闭后将不再显示。",
         "copyAriaLabel": "复制 API 密钥",
-        "saveWarning": "请保存此密钥 —— 关闭此对话框后将无法再次查看。",
+        "saveWarning": "请保存此密钥，关闭此对话框后将无法再次查看。",
         "done": "完成",
         "nameLabel": "名称",
         "namePlaceholder": "我的用户脚本",
@@ -387,115 +466,119 @@
       },
       "scopes": {
         "ready": {
-          "name": "Ready",
-          "description": "基础访问权限。授予 GET /api/v1/ok。默认包含。"
+          "name": "基本访问",
+          "description": "确认应用已与你的账号关联"
         },
         "user:metadata:read": {
-          "name": "用户元数据（只读）",
-          "description": "读取你的用户名、地区、个人主页可见性和角色。授予 GET /api/v1/me。"
+          "name": "账号信息",
+          "description": "用户名、地区、主页公开状态和角色"
         },
         "snapshot:latest:metadata:read": {
-          "name": "最新快照元数据（只读）",
-          "description": "读取你最新快照的元数据（Rating、显示名称、游玩次数等）。授予 GET /api/v1/snapshots/latest。"
+          "name": "最新快照概要",
+          "description": "Rating、显示名称和游玩次数"
         },
         "snapshot:latest:songs:b50:read": {
-          "name": "最新快照 B50 歌曲（只读）",
-          "description": "从最新快照中读取 B50 歌曲分数。"
+          "name": "最新 B50",
+          "description": "当前计入 Rating 的成绩"
         },
         "snapshot:latest:songs:read": {
-          "name": "最新快照全部歌曲（只读）",
-          "description": "从最新快照中读取全部歌曲分数。"
+          "name": "最新成绩",
+          "description": "最新快照中的全部歌曲成绩"
         },
         "snapshot:latest:events:read": {
-          "name": "最新快照活动（只读）",
-          "description": "从你的最新快照中读取活动进度数据。"
+          "name": "最新活动进度",
+          "description": "当前的活动进度"
         },
         "snapshot:latest:icon:read": {
-          "name": "最新快照头像（只读）",
-          "description": "从最新快照中读取你的头像 URL（Discord 头像）。敏感 —— 可能暴露社交身份。"
+          "name": "最新头像",
+          "description": "当前的 maimai 头像，可能是用游戏内相机拍摄的面部照片"
         },
         "snapshot:all:metadata:read": {
-          "name": "全部快照元数据（只读）",
-          "description": "列出你的所有快照并读取其元数据。授予 GET /api/v1/snapshots 和 GET /api/v1/snapshots/:id。"
+          "name": "快照历史",
+          "description": "所有快照的 Rating、显示名称和游玩次数"
         },
         "snapshot:all:songs:b50:read": {
-          "name": "全部快照 B50 歌曲（只读）",
-          "description": "从你的任意快照中读取 B50 歌曲分数。"
+          "name": "B50 历史",
+          "description": "所有快照中计入 Rating 的成绩"
         },
         "snapshot:all:songs:read": {
-          "name": "全部快照全部歌曲（只读）",
-          "description": "从你的任意快照中读取全部歌曲分数。"
+          "name": "成绩历史",
+          "description": "所有快照中的全部歌曲成绩"
         },
         "snapshot:all:events:read": {
-          "name": "全部快照活动（只读）",
-          "description": "从你的任意快照中读取活动进度数据。"
+          "name": "活动进度历史",
+          "description": "所有快照中的活动进度"
         },
         "snapshot:all:icon:read": {
-          "name": "全部快照头像（只读）",
-          "description": "从任意快照中读取你的头像 URL（Discord 头像）。敏感 —— 可能暴露社交身份。"
+          "name": "头像历史",
+          "description": "所有快照中的 maimai 头像，可能是用游戏内相机拍摄的面部照片"
         },
         "recent:read": {
-          "name": "最近游玩记录（只读）",
-          "description": "读取包含歌曲信息、达成率和连击/同步状态的最近游玩历史。授予 GET /api/v1/recents。"
+          "name": "最近游玩",
+          "description": "包含成绩和连击状态的游玩记录"
         },
         "recent:detailed:read": {
-          "name": "最近游玩记录（详细·只读）",
-          "description": "在最近游玩记录中添加场地信息和每种音符类型的详细分类。"
+          "name": "游玩详情",
+          "description": "每次游玩的店铺和各类音符明细"
         },
         "stats:read": {
-          "name": "统计数据（只读）",
-          "description": "读取你的评级/FC/FS 分布统计。授予 GET /api/v1/stats。"
+          "name": "统计",
+          "description": "评级、FC 和 FS 统计"
         },
         "album:read": {
-          "name": "相册（只读）",
-          "description": "读取你的街机照片相册条目（仅元数据，不含图片 URL）。授予 GET /api/v1/albums。"
+          "name": "相册",
+          "description": "机厅相册记录（不含照片）"
         },
         "album:images:read": {
-          "name": "相册图片（只读）",
-          "description": "在相册响应中包含图片 URL。敏感 —— 照片可能包含人物图像。"
+          "name": "相册照片",
+          "description": "照片本身，可能拍到他人"
         },
         "plate:read": {
-          "name": "称号（只读）",
-          "description": "读取你的称号完成数据（每个称号还需要哪些歌曲完成 Clear / FC / AP）。授予 GET /api/v1/plates。"
+          "name": "称号进度",
+          "description": "每个称号还需要完成的歌曲"
         },
         "user:settings:read": {
-          "name": "用户设置（只读）",
-          "description": "读取你的隐私和主页显示设置（是否公开主页、是否显示分数、是否显示称号等）。授予 GET /api/v1/me/settings。"
+          "name": "主页设置",
+          "description": "隐私和主页显示设置"
         },
         "snapshot:all:delete": {
-          "name": "快照（删除）",
-          "description": "删除你的任意快照。授予 DELETE /api/v1/snapshots/:id。破坏性 —— 必须显式申请，绝不被任何包含性范围隐式授予。"
+          "name": "删除快照",
+          "description": "永久删除你的任意快照"
         },
         "snapshot:submit": {
-          "name": "快照（提交）",
-          "description": "提交新快照。内部使用 — 仅管理员。"
+          "name": "提交快照",
+          "description": "向你的账号上传新快照"
         },
         "fetch:read": {
-          "name": "同步状态（只读）",
-          "description": "读取你正在进行或最近一次 maimai 数据同步的状态。授予 GET /api/v1/fetch/status。"
+          "name": "同步状态",
+          "description": "数据同步是否正在进行以及结果"
         },
         "fetch:start": {
           "name": "发起同步",
-          "description": "使用已保存的上游令牌发起一次新的 maimai 数据同步。授予 POST /api/v1/fetch。破坏性 —— 消耗上游 API 配额并写入一份新快照。"
+          "description": "使用已保存的 maimai 令牌同步新数据，并新增一个快照"
         },
         "fetch:delete": {
-          "name": "同步令牌（删除）",
-          "description": "删除已保存的上游 maimai 认证令牌。授予 DELETE /api/v1/fetch/token。破坏性且敏感 —— 在重新认证之前会中断站内和 API 触发的同步流程。"
+          "name": "删除已保存的 maimai 令牌",
+          "description": "在你重新登录 maimai 之前无法同步"
         },
         "snapshot:latest:read": {
-          "name": "最新快照（只读）",
-          "description": "仅包含你最新快照的元数据、全部歌曲和活动。排除头像（出于隐私考虑，需单独授权）。"
+          "name": "最新快照",
+          "description": "最新快照的概要、成绩和活动进度"
         },
         "snapshot:all:read": {
-          "name": "全部快照（只读）",
-          "description": "包含你的所有快照（包括最新）的元数据、全部歌曲和活动。排除头像（出于隐私考虑，需单独授权）。"
+          "name": "全部快照",
+          "description": "所有快照的概要、成绩和活动进度"
         },
         "read": {
-          "name": "只读（所有非敏感数据）",
-          "description": "广泛的只读访问权限：用户元数据、所有快照、最近游玩、统计和相册。不包含头像和相册图片 URL。因涉及广泛的个人数据，标记为敏感。"
+          "name": "读取大部分数据",
+          "description": "账号信息、设置、快照、游玩记录、统计、相册、称号和同步状态。不含头像和相册照片。"
         }
       },
       "oauthApps": {
+        "errors": {
+          "limitReached": "最多可创建 {max} 个 OAuth 应用。请先删除一个再创建新的。",
+          "nameReserved": "应用名称不能包含“tomomai”，以免用户误以为是官方应用。"
+        },
         "label": "OAuth 应用程序",
         "description": "注册可通过 OAuth 2.1 + PKCE 代表用户请求访问权限的应用程序。",
         "createButton": "新建应用程序",
@@ -981,7 +1064,7 @@
       "title": "设定用户名",
       "description": "用户名是你在 tomomai 的称呼。如果你选择公开，它也会成为你的公开个人资料网址。",
       "publishToggleLabel": "和朋友分享我的资料",
-      "publishToggleDescription": "让其他人通过公开链接查看你的成绩。默认关闭 — 你可以随时更改。",
+      "publishToggleDescription": "让其他人通过公开链接查看你的成绩。默认关闭，你可以随时更改。",
       "publicUrlHint": "你的公开资料："
     },
     "step2": {
@@ -1093,14 +1176,10 @@
       "expired": "此邀请已过期",
       "ownCode": "你不能使用自己的邀请代码",
       "validationFailed": "邀请验证失败"
-    }
+    },
+    "claimed": "欢迎！已成功使用邀请。"
   },
   "db": {
-    "callout": {
-      "title": "想查询数据库吗？",
-      "subtitle": "无需登录即可查看歌曲数据库！",
-      "description": "tomomai ともマイ DB 是一个公开的 maimai 谱面、机厅及更多maimai信息的数据库"
-    },
     "beta": {
       "title": "测试功能",
       "description": "数据库功能目前处于测试阶段。部分数据可能不完整或不准确。"
@@ -1501,5 +1580,20 @@
     "curveDescription": "估计相近 Rating 玩家中，达成率不高于各数值的比例。有 {percent} 的玩家达成率不高于你的 {achievement}，包含同分。",
     "clusterDescription": "Rating {ratingMin}–{ratingMax}；达成率 {achievementMin}–{achievementMax}：{count} 条样本",
     "youDescription": "你：Rating {rating}，达成率 {achievement}"
+  },
+  "landing": {
+    "headline": "记录你的 maimai DX 成绩",
+    "subheadline": "从 maimai DX NET 导入，查看你的 R 值、最佳成绩与历史记录。",
+    "screenshotAlt": "显示玩家最佳成绩与 R 值图表的 tomomai 主页",
+    "links": {
+      "db": {
+        "title": "tomomai DB",
+        "description": "谱面、机厅等资料"
+      },
+      "profile": {
+        "title": "示例个人主页",
+        "description": "看看 @shedaniel 的成绩"
+      }
+    }
   }
 }

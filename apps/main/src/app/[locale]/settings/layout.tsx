@@ -1,9 +1,13 @@
 import { getServerSession } from "@/lib/auth-server";
-import { AuthErrorHandler } from "@/components/auth-error-handler";
 import { SettingsSidebar } from "@/components/settings/sidebar";
 import { Link, redirect } from "@/i18n/navigation"
 import Image from "next/image";
 import { useFlags } from "@/lib/flags";
+import { headers } from "next/headers";
+
+function stripLocale(path: string, locale: string): string {
+  return path === `/${locale}` || path.startsWith(`/${locale}/`) || path.startsWith(`/${locale}?`) ? path.slice(locale.length + 1) || "/" : path;
+}
 
 export default async function SettingsLayout({
   children,
@@ -16,14 +20,16 @@ export default async function SettingsLayout({
   const session = await getServerSession();
 
   if (!session) {
-    redirect({ href: "/", locale });
+    // Open sign-in on the landing page and come back to the settings page that was asked for.
+    const requested = stripLocale((await headers()).get("x-pathname") ?? "", locale);
+    const signin = requested.startsWith("/settings") ? requested : "/settings";
+    redirect({ href: { pathname: "/", query: { signin } }, locale });
   }
 
   const flags = await useFlags();
 
   return (
     <div className="container mx-auto max-w-200 px-4 py-8 overflow-x-hidden">
-      <AuthErrorHandler />
       <div className="mb-8">
         <Link href="/">
           <Image

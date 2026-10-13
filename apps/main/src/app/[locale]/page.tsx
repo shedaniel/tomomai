@@ -1,12 +1,11 @@
-import { AuthHandler } from "@/components/auth-handler";
 import { Dashboard } from "@/components/dashboard";
-import { LoginScreen } from "@/components/login-screen";
+import { LandingPage } from "@/components/landing-page";
 import { getServerSession } from "@/lib/auth-server";
 import { useFlags } from "@/lib/flags";
 import { getLatestPost } from "@/lib/posts";
 import { getLocale } from "@/i18n/locale-server";
 import { createServerSideTRPC } from "@/lib/trpc-server";
-import { Suspense } from "react";
+import { getSignupRequirements } from "@/lib/signup";
 import { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import { buildAlternates, openGraphLocales, localizePath } from "@/lib/seo";
@@ -45,21 +44,9 @@ export default async function Home() {
   let flags = await useFlags();
 
   if (!session) {
-    // Fetch signup requirements on the server
-    const trpc = await createServerSideTRPC();
-    const signupRequirements = await trpc.user.getSignupRequirements() as {
-      signupEnabled: boolean;
-      inviteRequired: boolean;
-      reason: 'disabled' | 'invite-only' | 'enabled' | 'open';
-    };
-
+    const signup = await getSignupRequirements();
     return (
-      <>
-        <Suspense fallback={null}>
-          <AuthHandler />
-        </Suspense>
-        <LoginScreen signupRequirements={signupRequirements} flags={{ passkey: flags.passkey, twitterOauth: flags.twitterOauth }} />
-      </>
+      <LandingPage signInOptions={{ signup, passkey: flags.passkey, twitterOauth: flags.twitterOauth }} />
     );
   }
 
