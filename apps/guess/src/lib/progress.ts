@@ -45,3 +45,18 @@ export function saveProgress(p: Persisted): void {
     // Ignore quota / privacy errors — the in-memory state still drives the UI.
   }
 }
+
+/** Rebuilds local progress from a server-recorded result list. */
+export function progressFromResults(
+  dateKey: string,
+  results: StepResult[],
+  totalSteps: number,
+): Persisted {
+  const misses = results.filter((r) => r !== "correct").length;
+  return {
+    dateKey,
+    results,
+    won: results.at(-1) === "correct",
+    step: Math.min(1 + misses, totalSteps - 1),
+  };
+}

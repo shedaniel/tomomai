@@ -4,6 +4,9 @@ import { GameClient } from "@/components/GameClient";
 import { HostLabel } from "@/components/HostLabel";
 import { PastBanner } from "@/components/PastBanner";
 import { SiteHeader } from "@/components/SiteHeader";
+import { SignInBanner } from "@/components/account/SignInBanner";
+import { BANNER_COOKIE } from "@/lib/banner";
+import { cookies } from "next/headers";
 import { TOTAL_STEPS } from "@/lib/types";
 import { formatDateKey } from "@/lib/date-slug";
 import { metaNamespace } from "@/lib/metadata";
@@ -20,9 +23,10 @@ type Props = {
  * component just renders the chrome + GameClient with the given dateKey.
  */
 export async function GamePage({ dateKey, dateSlug }: Props) {
-  const [tMeta, locale] = await Promise.all([
+  const [tMeta, locale, jar] = await Promise.all([
     getTranslations(metaNamespace()),
     getLocale(),
+    cookies(),
   ]);
   const isPast = Boolean(dateSlug);
   const formattedDate = isPast ? formatDateKey(dateKey, locale) : "";
@@ -33,6 +37,7 @@ export async function GamePage({ dateKey, dateSlug }: Props) {
       <h1 className="sr-only">{tMeta("title")}</h1>
       <SiteHeader belowLocale={<HostLabel dateKey={dateKey} />} />
       {isPast && <PastBanner formattedDate={formattedDate} />}
+      <SignInBanner snoozed={jar.has(BANNER_COOKIE)} />
       <div className="flex-1 flex flex-col justify-center pt-8 pb-6">
         <GameClient
           dateKey={dateKey}

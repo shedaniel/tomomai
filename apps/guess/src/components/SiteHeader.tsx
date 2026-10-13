@@ -2,6 +2,8 @@ import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { LocaleSwitcher } from "@tomomai/i18n/client";
+import { AccountButton } from "./account/AccountButton";
+import { StreakChip } from "./account/StreakChip";
 
 type Props = {
   /** Rendered under the LocaleSwitcher (e.g. HostLabel on the game page). */
@@ -36,7 +38,11 @@ export function SiteHeader({ belowLocale }: Props) {
         />
       </Link>
       <div className="flex flex-col items-end gap-1">
-        <LocaleSwitcher forceVisible />
+        <div className="flex items-center gap-2">
+          <LocaleSwitcher />
+          <StreakChip />
+          <AccountButton />
+        </div>
         {belowLocale}
       </div>
     </div>

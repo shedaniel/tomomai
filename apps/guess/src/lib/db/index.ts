@@ -4,24 +4,28 @@ import * as schema from "./schema";
 
 type Db = PostgresJsDatabase<typeof schema>;
 
-let client: postgres.Sql | null = null;
-let cached: Db | null | undefined;
+// Survives dev hot reloads, which would otherwise open a new pool on every edit.
+const store = globalThis as typeof globalThis & {
+  __guessDb?: { client: postgres.Sql | null; cached: Db | null | undefined };
+};
+store.__guessDb ??= { client: null, cached: undefined };
+const state = store.__guessDb;
 
 /** Lazy client; `null` when `POSTGRES_URL` is unset (local dev, self-host). */
 export function getDb(): Db | null {
-  if (cached !== undefined) return cached;
+  if (state.cached !== undefined) return state.cached;
   const url = process.env.POSTGRES_URL;
   if (!url) {
-    cached = null;
+    state.cached = null;
     return null;
   }
-  client = postgres(url, { prepare: false });
-  cached = drizzle(client, { schema });
-  return cached;
+  state.client = postgres(url, { prepare: false });
+  state.cached = drizzle(state.client, { schema });
+  return state.cached;
 }
 
 export async function closeDb(): Promise<void> {
-  await client?.end();
-  client = null;
-  cached = undefined;
+  await state.client?.end();
+  state.client = null;
+  state.cached = undefined;
 }

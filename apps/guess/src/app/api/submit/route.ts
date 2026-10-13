@@ -4,6 +4,7 @@ import { submitLimiter } from "@/lib/rate-limit";
 import { buildReveal, getToday } from "@/lib/today";
 import { isGuessCorrect } from "@/lib/fuzzy";
 import { readDateOverride } from "@/lib/route-date";
+import { isTracked, recordAction, resolveOwner, toState } from "@/lib/attempts";
 
 export const runtime = "nodejs";
 
@@ -24,10 +25,18 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "invalid date" }, { status: 404 });
   }
 
-  const { chart } = await getToday(override ?? undefined);
+  const { dateKey, chart } = await getToday(override ?? undefined);
   const correct = isGuessCorrect(guess, chart.songName);
-  if (correct) {
-    return NextResponse.json({ correct: true, reveal: buildReveal(chart) });
+
+  let attempt = null;
+  if (isTracked(dateKey)) {
+    const owner = await resolveOwner(true);
+    const row = owner ? await recordAction(owner, dateKey, correct ? "correct" : "incorrect") : null;
+    attempt = row ? toState(row) : null;
   }
-  return NextResponse.json({ correct: false });
+
+  if (correct) {
+    return NextResponse.json({ correct: true, reveal: buildReveal(chart), attempt });
+  }
+  return NextResponse.json({ correct: false, attempt });
 }
