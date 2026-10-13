@@ -471,7 +471,7 @@
         },
         "user:metadata:read": {
           "name": "帳號資料",
-          "description": "使用者名稱、地區、個人資料公開狀態和角色"
+          "description": "使用者名稱、頭像、地區、個人資料公開狀態和角色"
         },
         "snapshot:latest:metadata:read": {
           "name": "最新快照概要",

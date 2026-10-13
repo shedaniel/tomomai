@@ -10,6 +10,7 @@ export const GET = withApiKey(["user:metadata:read"], async (_req, key) => {
   }
   return zodJson(spec.response, {
     username: userData.username,
+    image: userData.image,
     region: userData.region,
     publishProfile: userData.publishProfile,
     role: userData.role,

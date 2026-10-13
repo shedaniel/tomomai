@@ -358,7 +358,7 @@
         },
         "user:metadata:read": {
           "name": "계정 정보",
-          "description": "사용자 이름, 지역, 프로필 공개 여부 및 역할"
+          "description": "사용자 이름, 프로필 사진, 지역, 프로필 공개 여부 및 역할"
         },
         "snapshot:latest:metadata:read": {
           "name": "최신 스냅샷 개요",

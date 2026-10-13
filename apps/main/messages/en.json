@@ -471,7 +471,7 @@
         },
         "user:metadata:read": {
           "name": "Account info",
-          "description": "Your username, region, profile visibility and role"
+          "description": "Your username, profile picture, region, profile visibility and role"
         },
         "snapshot:latest:metadata:read": {
           "name": "Latest snapshot details",

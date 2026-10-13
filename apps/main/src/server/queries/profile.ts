@@ -30,6 +30,7 @@ export async function fetchUserData(userId: string) {
   const result = await db
     .select({
       username: user.username,
+      image: user.image,
       publishProfile: user.publishProfile,
       role: user.role,
       ...(!isCNExclusive() ? { region: user.region } : {}),
@@ -42,6 +43,7 @@ export async function fetchUserData(userId: string) {
 
   return {
     username: result[0].username,
+    image: result[0].image,
     publishProfile: result[0].publishProfile,
     region: (!isCNExclusive() ? result[0].region! : "cn") as Region,
     role: result[0].role,
