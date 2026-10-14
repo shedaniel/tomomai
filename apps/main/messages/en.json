@@ -169,7 +169,10 @@
     "signedInAs": "Signed in as {name}",
     "switchAccount": "Not you? Switch account",
     "basicAccess": "Confirm that it is connected to your account",
-    "offlineAccess": {"name": "Stay connected", "description": "{app} can keep access without asking you again, until you revoke it"},
+    "offlineAccess": {
+      "name": "Stay connected",
+      "description": "{app} can keep access without asking you again, until you revoke it"
+    },
     "sensitive": "Sensitive",
     "redirectNotice": "When you're done, you'll go back to {host}",
     "trustNotice": "{app} is not run by tomomai. {links, select, both {It handles your data under its own <terms>Terms of Service</terms> and <privacy>Privacy Policy</privacy>.} terms {It handles your data under its own <terms>Terms of Service</terms>.} privacy {It handles your data under its own <privacy>Privacy Policy</privacy>.} other {It hasn't published terms or a privacy policy.}} Only continue if you trust it.",
@@ -683,6 +686,15 @@
       },
       "revokeSuccess": "Access revoked",
       "revokeError": "Failed to revoke access"
+    },
+    "unsaved": {
+      "bar": "You have unsaved changes",
+      "title": "Leave without saving?",
+      "description": "Your changes on this page haven't been saved yet.",
+      "keepEditing": "Keep editing",
+      "discard": "Discard",
+      "saveAndLeave": "Save and leave",
+      "saving": "Saving..."
     }
   },
   "dataBanner": {

@@ -180,7 +180,7 @@ function OAuthConsent() {
         <div
           ref={attachScroll}
           tabIndex={0}
-          className="min-h-0 flex-1 overflow-y-auto overscroll-contain outline-none [scrollbar-color:var(--border)_transparent] [scrollbar-width:thin]"
+          className="min-h-0 flex-1 overflow-y-auto overscroll-contain outline-none"
         >
         <div>
         <header
