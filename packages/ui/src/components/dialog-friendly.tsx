@@ -101,7 +101,7 @@ function ResponsiveDialogContent({
   }
 
   return (
-    <AnimatedDialogContent className={cn("overflow-y-auto max-h-[95dvh]", className)} showCloseButton={showCloseButton} {...props}>
+    <AnimatedDialogContent className={cn("overflow-y-auto max-h-[95dvh] [scrollbar-gutter:stable_both-edges]", className)} showCloseButton={showCloseButton} {...props}>
       {children}
     </AnimatedDialogContent>
   )

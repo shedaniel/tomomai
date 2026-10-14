@@ -21,7 +21,7 @@ function TypeSelector({
   const t = useTranslations();
 
   return (
-    <div className="flex items-center space-x-2 -mt-4 overflow-x-auto">
+    <div className="flex items-center space-x-2 -mt-4 overflow-x-auto scrollbar-none scroll-fade-x">
       {types.map((type) => {
         const href = `/db/${type}`;
         const isActive = currentType === type;
