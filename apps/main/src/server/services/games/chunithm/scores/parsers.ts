@@ -138,12 +138,15 @@ export type ChunithmRecentRow = { recent: NormalizedRecent; form: ChunithmForm }
 
 /**
  * Plays of charts outside the fetched difficulties, such as WORLD'S END, are
- * skipped and counted. A page without play rows is an empty history, because
- * the page request has already verified the session.
+ * skipped and counted. A play that cannot be read is left out with its error,
+ * so one unexpected row does not cost the rest of the history. A page without
+ * play rows is an empty history, because the page request has already verified
+ * the session.
  */
-export function parseRecents(html: string, context: ChartContext): { rows: ChunithmRecentRow[]; skipped: number } {
+export function parseRecents(html: string, context: ChartContext): { rows: ChunithmRecentRow[]; skipped: number; errors: unknown[] } {
   const $ = load(html);
   const rows: ChunithmRecentRow[] = [];
+  const errors: unknown[] = [];
   let skipped = 0;
   $(".frame02.w400:has(.play_datalist_date)").each((_, element) => {
     const row = $(element);
@@ -153,26 +156,30 @@ export function parseRecents(html: string, context: ChartContext): { rows: Chuni
       skipped++;
       return;
     }
-    const date = row.find(".play_datalist_date").text().trim();
-    const match = date.match(/^(\d{4})\/(\d{2})\/(\d{2}) (\d{2}):(\d{2})$/);
-    if (!match) throw new Error("Unexpected CHUNITHM play date");
-    const playedAt = new Date(`${match[1]}-${match[2]}-${match[3]}T${match[4]}:${match[5]}:00+09:00`);
-    const track = row.find(".play_track_text").text().trim().match(/^TRACK\s+(\d+)$/);
-    if (!track || !Number.isFinite(playedAt.getTime())) throw new Error("Unexpected CHUNITHM recent record");
-    const songName = row.find(".play_musicdata_title").text().trim();
-    if (!songName) throw new Error("Missing CHUNITHM recent title");
-    const recent: NormalizedRecent = {
-      chart: { game: "chunithm", region: context.region, version: context.gameVersion, songName, chartType: STANDARD_CHART_TYPE, difficulty: difficulty.id },
-      scoreValue: integer(row.find(".play_musicdata_score_text").text()), secondaryScore: 0,
-      ...statuses(row.find(".play_musicdata_icon img").map((_, image) => $(image).attr("src") ?? "").get()),
-      playedAt, track: Number(track[1]),
-    };
-    const rowForm = row.find("form").length ? row.find("form").first() : row.closest("form");
-    const detail = form(load(rowForm.toString()), "form");
-    if (!detail.fields.has("idx")) throw new Error("Missing CHUNITHM recent selector");
-    rows.push({ recent, form: detail });
+    try {
+      const date = row.find(".play_datalist_date").text().trim();
+      const match = date.match(/^(\d{4})\/(\d{2})\/(\d{2}) (\d{2}):(\d{2})$/);
+      if (!match) throw new Error("Unexpected CHUNITHM play date");
+      const playedAt = new Date(`${match[1]}-${match[2]}-${match[3]}T${match[4]}:${match[5]}:00+09:00`);
+      const track = row.find(".play_track_text").text().trim().match(/^TRACK\s+(\d+)$/);
+      if (!track || !Number.isFinite(playedAt.getTime())) throw new Error("Unexpected CHUNITHM recent record");
+      const songName = row.find(".play_musicdata_title").text().trim();
+      if (!songName) throw new Error("Missing CHUNITHM recent title");
+      const recent: NormalizedRecent = {
+        chart: { game: "chunithm", region: context.region, version: context.gameVersion, songName, chartType: STANDARD_CHART_TYPE, difficulty: difficulty.id },
+        scoreValue: integer(row.find(".play_musicdata_score_text").text()), secondaryScore: 0,
+        ...statuses(row.find(".play_musicdata_icon img").map((_, image) => $(image).attr("src") ?? "").get()),
+        playedAt, track: Number(track[1]),
+      };
+      const rowForm = row.find("form").length ? row.find("form").first() : row.closest("form");
+      const detail = form(load(rowForm.toString()), "form");
+      if (!detail.fields.has("idx")) throw new Error("Missing CHUNITHM recent selector");
+      rows.push({ recent, form: detail });
+    } catch (error) {
+      errors.push(error);
+    }
   });
-  return { rows, skipped };
+  return { rows, skipped, errors };
 }
 
 export function parsePlaylog(html: string): ChunithmPlaylog {

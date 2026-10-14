@@ -173,6 +173,15 @@ it("still ingests scores and the other recents when the history holds a WORLD'S 
   expect(mocks.log.info).toHaveBeenCalledWith({ recordCount: 1, skipped: 1 }, "Read CHUNITHM recent plays");
 });
 
+it("keeps the scores and the other recents when one play cannot be read", async () => {
+  const [site] = sites;
+  serveSite(site, playRow(site.basePath, 1).replace("TRACK 1", "COURSE 1") + playRow(site.basePath, 2));
+  const { result } = await fetchScores();
+  expect(result.scores).toHaveLength(5);
+  expect(result.recents?.map(play => play.track)).toEqual([2]);
+  expect(mocks.log.warn).toHaveBeenCalledWith({ err: expect.any(Error), errorCount: 1 }, "Could not read some CHUNITHM recent plays");
+});
+
 it("has nothing to enrich without recent plays", async () => {
   const [site] = sites;
   serveSite(site, "");

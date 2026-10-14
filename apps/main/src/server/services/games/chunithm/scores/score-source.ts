@@ -35,8 +35,9 @@ export async function fetchChunithmScores(ctx: ScoreFetchContext, run: FetchRun)
   }
 
   const plays = await run.stage("recents", async () => {
-    const { rows, skipped } = parseRecents(await site.html("record/playlog"), { region, gameVersion });
+    const { rows, skipped, errors } = parseRecents(await site.html("record/playlog"), { region, gameVersion });
     run.log.info({ recordCount: rows.length, skipped }, "Read CHUNITHM recent plays");
+    if (errors.length > 0) run.log.warn({ err: errors[0], errorCount: errors.length }, "Could not read some CHUNITHM recent plays");
     return rows;
   }, FETCH_STATES.RECENT_SONGS);
 
