@@ -1,28 +1,34 @@
 /**
- * Binary encoder/decoder for render token v1.
+ * Binary encoder/decoder for render token v3.
  *
  * Wire format (all multi-byte ints big-endian):
- *   message = HEADER || ROUTE_PAYLOAD
+ *   message = VERSION || GAME || ROUTE || HEADER || ROUTE_PAYLOAD
  *   token   = base64url(message) || "." || base64url(HMAC-SHA256(secret, message))
  *
- * Version byte 0x02. If ≠ 0x02 on decode → reject. No migration.
+ * Version byte 0x03. If ≠ 0x03 on decode → reject. No migration. Each game has its own header
+ * and payloads.
  *
- * See docs/render-token-v2.md for the full spec.
+ * See docs/render-token-v3.md for the full spec.
  */
 
 import type {
-  ChartRecord,
-  ExportImagePayload,
-  LastCreditPayload,
-  DailyPlaysPayload,
-  RenderHeader,
+  ChunithmChartRecord,
+  ChunithmDailyPlaysPayload,
+  ChunithmExportImagePayload,
+  ChunithmRenderHeader,
+  MaimaiChartRecord,
+  MaimaiDailyPlaysPayload,
+  MaimaiExportImagePayload,
+  MaimaiLastCreditPayload,
+  MaimaiRenderHeader,
+  MaimaiTrackRecord,
   RenderMessage,
-  TrackRecord,
 } from "./message";
 import type {
   Difficulty,
   FullCombo,
   FullSync,
+  Game,
   NoteCounts,
   Region,
   Route,
@@ -38,9 +44,10 @@ import {
 
 // ---- version ----
 
-export const VERSION = 0x02;
+export const VERSION = 0x03;
 
-const ROUTE_IDS: readonly Route[] = ["export-image", "last-credit", "daily-plays"];
+const GAMES: readonly Game[] = ["maimai", "chunithm"];
+const ROUTES: readonly Route[] = ["export-image", "last-credit", "daily-plays"];
 
 // ---- ByteWriter ----
 
@@ -257,6 +264,12 @@ function enumValue<T extends string>(arr: readonly T[], i: number): T {
 export class EncodeError extends Error {}
 export class DecodeError extends Error {}
 
+/** A value for a fixed-width field, which would otherwise wrap silently. */
+function uint(value: number, max: number, field: string): number {
+  if (!Number.isInteger(value) || value < 0 || value > max) throw new EncodeError(`${field} out of range: ${value}`);
+  return value;
+}
+
 const SONG_ID_PATTERN = /^[A-Za-z0-9_-]{8}:[jic](?:0|-?[1-9]\d*)$/;
 
 function validSongId(id: string): boolean {
@@ -268,14 +281,14 @@ function validSongId(id: string): boolean {
 export const SONG_ID_LEN = 10;
 const SONG_REGION_LETTERS = { intl: "i", jp: "j", cn: "c" } as const;
 
-function encodeSongId(w: ByteWriter, id: string, region: RenderHeader["region"]): void {
+function encodeSongId(w: ByteWriter, id: string, region: Region): void {
   if (!validSongId(id)) throw new EncodeError(`invalid song instance id: ${id}`);
   if (id[9] !== SONG_REGION_LETTERS[region]) throw new EncodeError("song region must match header region");
   w.asciiFixed(id.slice(0, 8), 8);
   w.u16(Number(id.slice(10)));
 }
 
-function decodeSongId(r: ByteReader, region: RenderHeader["region"]): string {
+function decodeSongId(r: ByteReader, region: Region): string {
   const parentId = r.asciiFixed(8);
   const encodedVersion = r.u16();
   const version = encodedVersion >= 0x8000 ? encodedVersion - 0x10000 : encodedVersion;
@@ -288,26 +301,41 @@ function decodeSongId(r: ByteReader, region: RenderHeader["region"]): string {
 
 export function encodeMessage(msg: RenderMessage): Uint8Array {
   const w = new ByteWriter();
-  // VERSION (offset 0) + route (offset 1) per spec.
+  // VERSION (offset 0), game (offset 1) and route (offset 2) per spec.
   w.u8(VERSION);
-  w.u8(ROUTE_IDS.indexOf(msg.route));
-  encodeHeader(w, msg.header);
-  switch (msg.route) {
-    case "export-image":
-      encodeExportImage(w, msg.payload, msg.header.region);
-      break;
-    case "last-credit":
-      encodeLastCredit(w, msg.payload, msg.header.region);
-      break;
-    case "daily-plays":
-      encodeDailyPlays(w, msg.payload, msg.header.region);
-      break;
+  w.u8(enumIndex(GAMES, msg.game));
+  w.u8(enumIndex(ROUTES, msg.route));
+  if (msg.game === "maimai") {
+    encodeHeader(w, msg.header);
+    switch (msg.route) {
+      case "export-image":
+        encodeExportImage(w, msg.payload, msg.header.region);
+        break;
+      case "last-credit":
+        encodeLastCredit(w, msg.payload, msg.header.region);
+        break;
+      case "daily-plays":
+        encodeDailyPlays(w, msg.payload, msg.header.region);
+        break;
+    }
+  } else {
+    encodeChunithmHeader(w, msg.header);
+    switch (msg.route) {
+      case "export-image":
+        encodeChunithmExportImage(w, msg.payload, msg.header.region);
+        break;
+      case "daily-plays":
+        encodeChunithmDailyPlays(w, msg.payload, msg.header.region);
+        break;
+    }
   }
   return w.toUint8Array();
 }
 
-/** Writes everything AFTER version+route (scale onward). */
-function encodeHeader(w: ByteWriter, h: RenderHeader): void {
+type HeaderCore = Pick<MaimaiRenderHeader, "scale" | "exp" | "gameVersion" | "region" | "rating" | "displayName" | "iconUrl" | "title">;
+
+/** The fields every game's header starts with, after version, game and route (scale onward). */
+function encodeHeaderCore(w: ByteWriter, h: HeaderCore): void {
   w.u8(h.scale);
   w.u32(h.exp);
   w.u8(h.gameVersion);
@@ -316,37 +344,45 @@ function encodeHeader(w: ByteWriter, h: RenderHeader): void {
   w.l8(h.displayName, "truncate");
   w.l16(h.iconUrl);
   w.l8(h.title, "truncate");
+}
+
+function encodeHeader(w: ByteWriter, h: MaimaiRenderHeader): void {
+  encodeHeaderCore(w, h);
   w.u8(enumIndex(TITLE_TYPES, h.titleType));
   w.l16(h.classRankUrl);
   w.l16(h.courseRankUrl);
 }
 
-function encodeExportImage(w: ByteWriter, p: ExportImagePayload, region: RenderHeader["region"]): void {
+function encodeChunithmHeader(w: ByteWriter, h: ChunithmRenderHeader): void {
+  encodeHeaderCore(w, { ...h, rating: uint(h.rating, 0xffff, "rating") });
+}
+
+function encodeExportImage(w: ByteWriter, p: MaimaiExportImagePayload, region: Region): void {
   w.l8Optional(p.visitableProfileAt);
   w.u8(p.charts.length);
   for (const c of p.charts) encodeChart(w, c, region);
 }
 
-function encodeLastCredit(w: ByteWriter, p: LastCreditPayload, region: RenderHeader["region"]): void {
+function encodeLastCredit(w: ByteWriter, p: MaimaiLastCreditPayload, region: Region): void {
   w.u32(p.playedAt);
   w.u8(p.tracks.length);
   for (const t of p.tracks) encodeTrack(w, t, region);
 }
 
-function encodeDailyPlays(w: ByteWriter, p: DailyPlaysPayload, region: RenderHeader["region"]): void {
+function encodeDailyPlays(w: ByteWriter, p: MaimaiDailyPlaysPayload, region: Region): void {
   w.l8(p.day);
   w.u8(p.plays.length);
   for (const c of p.plays) encodeChart(w, c, region);
 }
 
-function encodeChart(w: ByteWriter, c: ChartRecord, region: RenderHeader["region"]): void {
+function encodeChart(w: ByteWriter, c: MaimaiChartRecord, region: Region): void {
   encodeSongId(w, c.songId, region);
   w.u24(c.achievement);
   w.u8(enumIndex(FULL_COMBOS, c.fc));
   w.u8(enumIndex(FULL_SYNCS, c.fs));
 }
 
-function encodeTrack(w: ByteWriter, t: TrackRecord, region: RenderHeader["region"]): void {
+function encodeTrack(w: ByteWriter, t: MaimaiTrackRecord, region: Region): void {
   encodeSongId(w, t.songId, region);
   w.u24(t.achievement);
   w.u8(enumIndex(FULL_COMBOS, t.fc));
@@ -373,6 +409,29 @@ function encodeNoteCounts(w: ByteWriter, n: NoteCounts): void {
   w.u16(n.miss);
 }
 
+function encodeChunithmExportImage(w: ByteWriter, p: ChunithmExportImagePayload, region: Region): void {
+  w.l8Optional(p.visitableProfileAt);
+  encodeChunithmCharts(w, p.newCharts, region);
+  encodeChunithmCharts(w, p.oldCharts, region);
+}
+
+function encodeChunithmDailyPlays(w: ByteWriter, p: ChunithmDailyPlaysPayload, region: Region): void {
+  w.l8(p.day);
+  encodeChunithmCharts(w, p.plays, region);
+}
+
+function encodeChunithmCharts(w: ByteWriter, charts: readonly ChunithmChartRecord[], region: Region): void {
+  w.u8(uint(charts.length, 0xff, "chart count"));
+  for (const c of charts) {
+    encodeSongId(w, c.songId, region);
+    w.u24(uint(c.scoreValue, 0xffffff, "scoreValue"));
+    w.u8(uint(c.comboStatus, 0xff, "comboStatus"));
+    w.u8(uint(c.syncStatus, 0xff, "syncStatus"));
+    w.u8(uint(c.clearStatus, 0xff, "clearStatus"));
+    w.u16(uint(c.rating, 0xffff, "rating"));
+  }
+}
+
 // ---- DECODE ----
 
 export function decodeMessage(data: Uint8Array): RenderMessage {
@@ -381,30 +440,44 @@ export function decodeMessage(data: Uint8Array): RenderMessage {
   if (version !== VERSION) {
     throw new DecodeError(`unsupported version ${version} (expected ${VERSION})`);
   }
-  const routeId = r.u8();
-  const route = ROUTE_IDS[routeId];
-  if (!route) throw new DecodeError(`unknown route id ${routeId}`);
+  const game = enumValue(GAMES, r.u8());
+  const route = enumValue(ROUTES, r.u8());
 
-  const header = decodeHeader(r);
-  let payload: ExportImagePayload | LastCreditPayload | DailyPlaysPayload;
-  switch (route) {
-    case "export-image":
-      payload = decodeExportImage(r, header.region);
-      break;
-    case "last-credit":
-      payload = decodeLastCredit(r, header.region);
-      break;
-    case "daily-plays":
-      payload = decodeDailyPlays(r, header.region);
-      break;
-  }
   // Trailing bytes are allowed (forward-compat ignore). We don't enforce
   // r.remaining() === 0; the HMAC covers the exact bytes so tampering is
   // already caught by signature verification.
-  return { route, header, payload } as RenderMessage;
+  if (game === "maimai") {
+    const header = decodeHeader(r);
+    let payload: MaimaiExportImagePayload | MaimaiLastCreditPayload | MaimaiDailyPlaysPayload;
+    switch (route) {
+      case "export-image":
+        payload = decodeExportImage(r, header.region);
+        break;
+      case "last-credit":
+        payload = decodeLastCredit(r, header.region);
+        break;
+      case "daily-plays":
+        payload = decodeDailyPlays(r, header.region);
+        break;
+    }
+    return { game, route, header, payload } as RenderMessage;
+  }
+  const header = decodeHeaderCore(r);
+  let payload: ChunithmExportImagePayload | ChunithmDailyPlaysPayload;
+  switch (route) {
+    case "export-image":
+      payload = decodeChunithmExportImage(r, header.region);
+      break;
+    case "daily-plays":
+      payload = decodeChunithmDailyPlays(r, header.region);
+      break;
+    default:
+      throw new DecodeError(`no ${route} render for ${game}`);
+  }
+  return { game, route, header, payload } as RenderMessage;
 }
 
-function decodeHeader(r: ByteReader): RenderHeader {
+function decodeHeaderCore(r: ByteReader): HeaderCore {
   const scale = r.u8();
   if (scale !== 1 && scale !== 2) throw new DecodeError(`invalid scale ${scale}`);
   const exp = r.u32();
@@ -414,49 +487,42 @@ function decodeHeader(r: ByteReader): RenderHeader {
   const displayName = r.l8();
   const iconUrl = r.l16();
   const title = r.l8();
+  return { scale, exp, gameVersion, region, rating, displayName, iconUrl, title };
+}
+
+function decodeHeader(r: ByteReader): MaimaiRenderHeader {
+  const core = decodeHeaderCore(r);
   const titleType = enumValue(TITLE_TYPES, r.u8());
   const classRankUrl = r.l16();
   const courseRankUrl = r.l16();
-  return {
-    scale,
-    exp,
-    gameVersion,
-    region,
-    rating,
-    displayName,
-    iconUrl,
-    title,
-    titleType,
-    classRankUrl,
-    courseRankUrl,
-  };
+  return { ...core, titleType, classRankUrl, courseRankUrl };
 }
 
-function decodeExportImage(r: ByteReader, region: RenderHeader["region"]): ExportImagePayload {
+function decodeExportImage(r: ByteReader, region: Region): MaimaiExportImagePayload {
   const visitableProfileAt = r.l8Optional();
   const count = r.u8();
-  const charts: ChartRecord[] = [];
+  const charts: MaimaiChartRecord[] = [];
   for (let i = 0; i < count; i++) charts.push(decodeChart(r, region));
   return { visitableProfileAt, charts };
 }
 
-function decodeLastCredit(r: ByteReader, region: RenderHeader["region"]): LastCreditPayload {
+function decodeLastCredit(r: ByteReader, region: Region): MaimaiLastCreditPayload {
   const playedAt = r.u32();
   const count = r.u8();
-  const tracks: TrackRecord[] = [];
+  const tracks: MaimaiTrackRecord[] = [];
   for (let i = 0; i < count; i++) tracks.push(decodeTrack(r, region));
   return { playedAt, tracks };
 }
 
-function decodeDailyPlays(r: ByteReader, region: RenderHeader["region"]): DailyPlaysPayload {
+function decodeDailyPlays(r: ByteReader, region: Region): MaimaiDailyPlaysPayload {
   const day = r.l8();
   const count = r.u8();
-  const plays: ChartRecord[] = [];
+  const plays: MaimaiChartRecord[] = [];
   for (let i = 0; i < count; i++) plays.push(decodeChart(r, region));
   return { day, plays };
 }
 
-function decodeChart(r: ByteReader, region: RenderHeader["region"]): ChartRecord {
+function decodeChart(r: ByteReader, region: Region): MaimaiChartRecord {
   const songId = decodeSongId(r, region);
   const achievement = r.u24();
   const fc = enumValue(FULL_COMBOS, r.u8());
@@ -464,7 +530,7 @@ function decodeChart(r: ByteReader, region: RenderHeader["region"]): ChartRecord
   return { songId, achievement, fc, fs };
 }
 
-function decodeTrack(r: ByteReader, region: RenderHeader["region"]): TrackRecord {
+function decodeTrack(r: ByteReader, region: Region): MaimaiTrackRecord {
   const songId = decodeSongId(r, region);
   const achievement = r.u24();
   const fc = enumValue(FULL_COMBOS, r.u8());
@@ -472,7 +538,7 @@ function decodeTrack(r: ByteReader, region: RenderHeader["region"]): TrackRecord
   const dxScore = r.u32();
   const maxDxScore = r.u32();
   const hasDetails = r.u8() === 1;
-  let details: TrackRecord["details"] = null;
+  let details: MaimaiTrackRecord["details"] = null;
   if (hasDetails) {
     const fastCount = r.u16();
     const lateCount = r.u16();
@@ -495,6 +561,34 @@ function decodeNoteCounts(r: ByteReader): NoteCounts {
   return { criticalPerfect, perfect, great, good, miss };
 }
 
+function decodeChunithmExportImage(r: ByteReader, region: Region): ChunithmExportImagePayload {
+  const visitableProfileAt = r.l8Optional();
+  const newCharts = decodeChunithmCharts(r, region);
+  const oldCharts = decodeChunithmCharts(r, region);
+  return { visitableProfileAt, newCharts, oldCharts };
+}
+
+function decodeChunithmDailyPlays(r: ByteReader, region: Region): ChunithmDailyPlaysPayload {
+  const day = r.l8();
+  const plays = decodeChunithmCharts(r, region);
+  return { day, plays };
+}
+
+function decodeChunithmCharts(r: ByteReader, region: Region): ChunithmChartRecord[] {
+  const count = r.u8();
+  const charts: ChunithmChartRecord[] = [];
+  for (let i = 0; i < count; i++) {
+    const songId = decodeSongId(r, region);
+    const scoreValue = r.u24();
+    const comboStatus = r.u8();
+    const syncStatus = r.u8();
+    const clearStatus = r.u8();
+    const rating = r.u16();
+    charts.push({ songId, scoreValue, comboStatus, syncStatus, clearStatus, rating });
+  }
+  return charts;
+}
+
 // ---- Exported enums for consumers that need the ordered sets ----
 
 export {
@@ -508,6 +602,7 @@ export type {
   Difficulty,
   FullCombo,
   FullSync,
+  Game,
   NoteCounts,
   Region,
   Route,

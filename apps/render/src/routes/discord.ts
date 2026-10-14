@@ -26,6 +26,6 @@ export async function handleDiscordRender(
     return { status: outcome.status, body: outcome.body };
   }
   await uploadDiscordFollowup(req.applicationId, req.interactionToken, req.payloadJson, outcome.buffer, req.filename);
-  logger.info({ requestId, route: message.route, size: outcome.buffer.length }, 'Uploaded Discord followup');
+  logger.info({ requestId, game: message.game, route: message.route, size: outcome.buffer.length }, 'Uploaded Discord followup');
   return { status: 200, body: { ok: true, requestId } };
 }

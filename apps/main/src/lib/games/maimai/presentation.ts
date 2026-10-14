@@ -1,4 +1,5 @@
 import type { GamePresentation } from "../types";
+import { CANVAS_HEIGHT, CANVAS_WIDTH } from "./image-spec";
 import { MAIMAI_GRADES } from "./grades";
 
 // Compact precision floors, so 99.9956% never reads as 100.00%.
@@ -152,4 +153,5 @@ export const maimaiPresentation = {
   ],
   grades: MAIMAI_GRADES,
   imageProxyHosts: ["maimaidx.jp", "maimaidx-eng.com", "cdn.gamerch.com", "maimai.sega.jp"],
+  imageSize: { width: CANVAS_WIDTH, height: CANVAS_HEIGHT },
 } satisfies GamePresentation<"maimai">;

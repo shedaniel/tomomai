@@ -14,13 +14,13 @@ import type { RenderMessage } from '@tomomai/render-token';
  * are joined from /api/v1/games/maimai/songs. No DB access.
  */
 export async function renderExportImage(
-  message: Extract<RenderMessage, { route: 'export-image' }>,
+  message: Extract<RenderMessage, { game: 'maimai'; route: 'export-image' }>,
   opts: { requestId: string; profile: boolean },
 ): Promise<RenderOutcome> {
   const { header, payload } = message;
   const region = header.region as Region;
 
-  const catalog = await getCatalog(payload.charts.map(chart => chart.songId));
+  const catalog = await getCatalog('maimai', payload.charts.map(chart => chart.songId));
 
   const songs: SongForRender[] = payload.charts.map((c) => {
     const entry = catalogEntry(catalog, c.songId);

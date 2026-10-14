@@ -1,4 +1,5 @@
 import type { GamePresentation } from "../types";
+import { CANVAS_HEIGHT, CANVAS_WIDTH } from "./image-spec";
 import { CHUNITHM_GRADES } from "./grades";
 
 const integer = new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 });
@@ -140,4 +141,5 @@ export const chunithmPresentation = {
   ],
   grades: CHUNITHM_GRADES,
   imageProxyHosts: [],
+  imageSize: { width: CANVAS_WIDTH, height: CANVAS_HEIGHT },
 } satisfies GamePresentation<"chunithm">;

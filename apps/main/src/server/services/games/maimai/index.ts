@@ -48,4 +48,14 @@ export const maimaiServerModule: GameServerModule<"maimai"> = {
     const { loadMaimaiRecentDetails } = await import("./recent-details");
     return loadMaimaiRecentDetails(plays);
   },
+  images: {
+    async exportImage(request) {
+      const { buildExportImageMessage } = await import("./render/messages");
+      return buildExportImageMessage(request);
+    },
+    async dailyPlays(request) {
+      const { buildDailyPlaysMessage } = await import("./render/messages");
+      return buildDailyPlaysMessage(request);
+    },
+  },
 };

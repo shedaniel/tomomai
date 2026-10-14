@@ -12,9 +12,9 @@ import type { ProfilePrivacySettings } from "@/lib/types";
 import type { Region } from "@/lib/games/ids";
 import { DeveloperCardSkeleton } from "@/components/games/maimai/developer-card.skeleton";
 import { EventsCardSkeleton } from "@/components/games/maimai/events-card.skeleton";
-import { ExportImageCardSkeleton } from "@/components/games/maimai/export-image-card.skeleton";
 import { StatsCardSkeleton } from "@/components/games/maimai/stats-card.skeleton";
 import { AlbumCardSkeleton } from "./album-card.skeleton";
+import { ExportImageCardSkeleton } from "./export-image-card.skeleton";
 import { HistoryCardSkeleton } from "./history-card.skeleton";
 import { InfoCard, type PlayerProfile } from "./info-card";
 import { RecentSongsCardSkeleton } from "./recent-songs-card.skeleton";
@@ -27,7 +27,7 @@ import { SongsCard } from "./songs/songs-card";
 // sidebar) and makes the chunk placeholder match the data placeholder.
 const StatsCard = dynamic(() => import("@/components/games/maimai/stats-card").then(m => m.StatsCard), { loading: () => <StatsCardSkeleton /> });
 const RecommendationCard = dynamic(() => import("./recommendation-card").then(m => m.RecommendationCard), { loading: () => <RecommendationCardSkeleton /> });
-const ExportImageCard = dynamic(() => import("@/components/games/maimai/export-image-card").then(m => m.ExportImageCard), { loading: () => <ExportImageCardSkeleton /> });
+const ExportImageCard = dynamic(() => import("./export-image-card").then(m => m.ExportImageCard), { loading: () => <ExportImageCardSkeleton /> });
 const HistoryCard = dynamic(() => import("./history-card").then(m => m.HistoryCard), { loading: () => <HistoryCardSkeleton /> });
 const EventsCard = dynamic(() => import("@/components/games/maimai/events-card").then(m => m.EventsCard), { loading: () => <EventsCardSkeleton /> });
 const RecentSongsCard = dynamic(() => import("./recent-songs-card").then(m => m.RecentSongsCard), { loading: () => <RecentSongsCardSkeleton /> });
@@ -101,7 +101,7 @@ function ExportImageTab({ data, region, visitedBySelf, privacy, profile, publicS
     <ExportImageCard
       snapshot={data.snapshot}
       region={region}
-      showLastCredit={visitedBySelf || PUBLIC_VIEWS.recentPlays(privacy)}
+      showPlays={visitedBySelf || PUBLIC_VIEWS.recentPlays(privacy)}
       username={profile.visitableProfileAt ?? undefined}
       publicSnapshotId={publicSnapshotId}
     />

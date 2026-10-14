@@ -11,18 +11,20 @@ is a deliberate later step.
 
 ## Routes
 
-`GET /img?t=<token>[&profile=1]` — `profile=1` is dev-only (prints a span tree).
-The token payload (`src/token.ts`) carries `route` + the already-authorized
-identity (`snapshotId` | `userId` | reserved `username`) + `region`/`scale` and
-route params (`day`, `beforeDate`). `route` selects the handler:
-`export-image` | `last-credit` | `daily-plays`.
+`GET /img?t=<token>[&profile=1]` (`profile=1` is dev-only and prints a span tree).
+The token ([docs/render-token-v3.md](../../docs/render-token-v3.md)) carries the
+whole image: its `game` and `route`, the player header and the scores. Catalog
+fields are joined from `/api/v1/games/{game}/songs`, so no database is read.
+`src/routes/dispatch.ts` picks the handler. maimai has `export-image`,
+`last-credit` and `daily-plays`. CHUNITHM has `export-image` (the rating
+breakdown) and `daily-plays`, drawn by `src/lib/chunithm/render-image.ts`.
 
 `GET /health` — liveness.
 
 ## Run
 
 ```sh
-cp .env.example .env   # set RENDER_TOKEN_SECRET (must match apps/main), POSTGRES_URL, PUBLIC_DIR
+cp .env.example .env   # set RENDER_TOKEN_SECRET (must match apps/main), CATALOG_URL, PUBLIC_DIR
 pnpm --filter @tomomai/render dev
 ```
 
@@ -45,7 +47,7 @@ docker build -f apps/render/Dockerfile -t tomomai-render .   # build from repo r
 ```
 
 Run on any cheap-egress host (Fly / Railway / Cloud Run / Hetzner). Long-lived
-process, so the in-memory decoded-image cache and DB pool stay warm across
+process, so the in-memory decoded-image and catalogue caches stay warm across
 requests (unlike Vercel lambdas).
 
 ## Notes / debt
@@ -53,7 +55,8 @@ requests (unlike Vercel lambdas).
 - Domain logic (`lib/score-details`, `lib/rating-calculator`,
   `server/services/*`, …) is **copied** from `apps/main`, not shared — the
   upcoming catalogue PR extracts these into a shared package; reconcile then.
-- `apps/main` still owns the `/api/export-image`, `/api/last-credit`,
-  `/api/daily-plays` routes; they mint a short-lived signed token and 302 to
-  this service's `/img` (web) or POST `/discord/render` (Discord followup).
-  See `apps/main/src/lib/render-token.ts` and `render-client.ts`.
+- `apps/main` owns the `/api/export-image`, `/api/last-credit` and
+  `/api/daily-plays` routes. Each game's server module builds the message, and
+  the routes mint a short-lived signed token and 302 to this service's `/img`
+  (web) or POST `/discord/render` (Discord followup). See
+  `apps/main/src/lib/render-token.ts` and `render-client.ts`.

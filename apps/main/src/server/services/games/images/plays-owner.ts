@@ -7,7 +7,7 @@ import { resolveGameContext } from "@/lib/games/access";
 import { GameError, gameErrorResponse } from "@/lib/games/errors";
 import { regionSchema } from "@/lib/games/schema";
 import type { GameCapability } from "@/lib/games/types";
-import type { Region } from "@/lib/games/ids";
+import type { CanonicalGameId, Region } from "@/lib/games/ids";
 import { resolvePublicSnapshotAccess } from "@/server/queries/public-access";
 
 /** A visitor names a published snapshot, the signed-in owner names a region. */
@@ -17,19 +17,20 @@ export const playsOwnerQuery = z.union([
 ]);
 
 /**
- * Whose recent plays an image shows. A visitor sees the snapshot owner's plays in the snapshot's own
- * region, and only when the owner shares recent plays. Refusals come back as the response to send.
+ * Whose recent plays an image of the game shows. A visitor sees the snapshot owner's plays in the snapshot's
+ * own region, and only when the owner shares recent plays. Refusals come back as the response to send.
  */
 export async function resolvePlaysOwner(
+  game: CanonicalGameId,
   query: z.infer<typeof playsOwnerQuery>,
   capability: GameCapability,
 ): Promise<{ userId: string; region: Region } | Response> {
   try {
     if ("snapshotId" in query) {
-      const { userId, region } = await resolvePublicSnapshotAccess("maimai", query.snapshotId, { capability, view: "recentPlays" });
+      const { userId, region } = await resolvePublicSnapshotAccess(game, query.snapshotId, { capability, view: "recentPlays" });
       return { userId, region };
     }
-    const { region } = resolveGameContext("maimai", { region: query.region, capability });
+    const { region } = resolveGameContext(game, { region: query.region, capability });
     const session = await getServerSession();
     if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     return { userId: session.user.id, region };

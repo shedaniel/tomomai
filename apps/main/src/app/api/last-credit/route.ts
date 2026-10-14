@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { renderRedirectUrl } from '@/lib/render-token';
 import { buildLastCreditMessage } from '@/server/services/games/maimai/render/messages';
-import { playsOwnerQuery, resolvePlaysOwner } from '@/server/services/games/maimai/render/plays-owner';
+import { playsOwnerQuery, resolvePlaysOwner } from '@/server/services/games/images/plays-owner';
 import { requestLogger } from '@/lib/request-logger';
 import { z } from 'zod';
 import { requireFrontendGame } from '@/lib/games/current';
@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
       { status: 400 },
     );
   }
-  const owner = await resolvePlaysOwner(parsed.data, "image-export");
+  const owner = await resolvePlaysOwner("maimai", parsed.data, "last-credit");
   if (owner instanceof Response) return owner;
   if ("snapshotId" in parsed.data) log.info({ userId: owner.userId, snapshotId: parsed.data.snapshotId }, 'Public mode');
   else log.info({ userId: owner.userId }, 'Authenticated mode');

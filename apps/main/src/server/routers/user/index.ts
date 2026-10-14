@@ -5,6 +5,7 @@ import { profileReportsRouter } from './profile-reports';
 import { fetchRouter } from './fetch';
 import { invitesRouter } from './invites';
 import { recentsRouter } from './recents';
+import { dailyPlaysRouter } from './daily-plays';
 import { statsRouter } from './stats';
 import { albumsRouter } from './albums';
 import { songsRouter } from './songs';
@@ -46,6 +47,10 @@ export const userRouter = router({
   // Recents
   getRecentSongs: recentsRouter.getRecentSongs,
   getPublicRecentSongs: recentsRouter.getPublicRecentSongs,
+
+  // Daily plays
+  getDailyPlaysAvailableDays: dailyPlaysRouter.getAvailableDays,
+  getPublicDailyPlaysAvailableDays: dailyPlaysRouter.getPublicAvailableDays,
 
   // Stats
   getPlayerStats: statsRouter.getPlayerStats,

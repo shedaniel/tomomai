@@ -43,7 +43,7 @@ enough identifying data.
 These are breaking API changes. Old 21-character song IDs are not aliases for
 the new IDs. All first-party consumers change together. Render tokens use v2
 with fixed 10-byte instance IDs; old tokens are rejected and must be minted
-again. See [the wire format](render-token-v2.md).
+again. See [the wire format](render-token-v3.md).
 
 ## Publication and caching
 

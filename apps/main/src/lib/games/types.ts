@@ -34,6 +34,7 @@ export const GAME_CAPABILITIES = [
   "minigames",
   "community-banner",
   "discord-bot",
+  "last-credit",
 ] as const;
 export type GameCapability = (typeof GAME_CAPABILITIES)[number];
 
@@ -185,6 +186,8 @@ type PresentationOf<G extends CanonicalGameId> = {
   grades: readonly GradeRow[];
   /** Hosts whose images browsers load through /api/image-proxy instead of directly. */
   imageProxyHosts: readonly string[];
+  /** The canvas of the images apps/render draws, so a page can hold their space before one loads. */
+  imageSize: { width: number; height: number };
 };
 
 /** Keyed by code key, so a key added to a game's code table needs its presentation. */

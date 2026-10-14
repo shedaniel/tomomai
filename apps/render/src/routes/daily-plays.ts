@@ -14,13 +14,13 @@ import type { RenderMessage } from '@tomomai/render-token';
  * (deterministic: catalog levelPrecise + achievement + fc + gameVersion).
  */
 export async function renderDailyPlays(
-  message: Extract<RenderMessage, { route: 'daily-plays' }>,
+  message: Extract<RenderMessage, { game: 'maimai'; route: 'daily-plays' }>,
   opts: { requestId: string; profile: boolean },
 ): Promise<RenderOutcome> {
   const { header, payload } = message;
   const region = header.region as Region;
 
-  const catalog = await getCatalog(payload.plays.map(chart => chart.songId));
+  const catalog = await getCatalog('maimai', payload.plays.map(chart => chart.songId));
 
   const plays = payload.plays.map((p) => {
     const entry = catalogEntry(catalog, p.songId);

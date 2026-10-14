@@ -24,6 +24,7 @@ it.each([
     anonymous: [
       "getAllUniqueSongs",
       "getPolicies",
+      "getPublicDailyPlaysAvailableDays",
       "getPublicPlayerStats",
       "getPublicRecentSongs",
       "getSignInOptions",
@@ -44,7 +45,6 @@ it.each([
       "getEventStepsByNames",
       "getEvents",
       "getLxnsOAuthConfigured",
-      "getPublicDailyPlaysAvailableDays",
       "getPublicPlateSongs",
       "getRecommendationPeers",
       "getTopSongs",

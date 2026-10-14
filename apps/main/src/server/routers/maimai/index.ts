@@ -1,5 +1,4 @@
 import { router } from "@/lib/trpc";
-import { dailyPlaysRouter } from "./daily-plays";
 import { dbRouter } from "./db";
 import { percentileRouter } from "./percentile";
 import { platesRouter } from "./plates";
@@ -14,10 +13,6 @@ export const maimaiRouter = router({
   // Percentile
   getChartPercentiles: percentileRouter.getChartPercentiles,
   getRecommendationPeers: percentileRouter.getRecommendationPeers,
-
-  // Daily plays
-  getDailyPlaysAvailableDays: dailyPlaysRouter.getAvailableDays,
-  getPublicDailyPlaysAvailableDays: dailyPlaysRouter.getPublicAvailableDays,
 
   // Catalog database
   getEvents: dbRouter.getEvents,

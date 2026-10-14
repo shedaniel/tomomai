@@ -10,7 +10,8 @@ import {
 import { resolveRegion } from '../region';
 import { findDiscordUser } from '../user';
 import { generateAndSendDailyPlaysImage } from '../image-utils';
-import { listDailyPlaysAvailableDays } from '@/server/services/games/maimai/render/daily-plays-data';
+import { listDailyPlaysAvailableDays } from '@/server/services/games/images/daily-plays';
+import { DISCORD_GAME } from '../game';
 import { applyStalenessGate } from './staleness';
 import { t } from '../i18n';
 
@@ -139,7 +140,7 @@ export async function handleDailyAutocomplete({
 
     const region = resolveRegion(regionParam, dbUser.region);
     if (!region) return { type: 8, data: { choices: [] } };
-    const days = await listDailyPlaysAvailableDays(dbUser.id, region);
+    const days = await listDailyPlaysAvailableDays(DISCORD_GAME, dbUser.id, region);
     const filtered = focusedValue
       ? days.filter(d => d.day.includes(focusedValue))
       : days;

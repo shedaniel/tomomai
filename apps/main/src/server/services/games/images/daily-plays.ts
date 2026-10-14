@@ -2,11 +2,11 @@ import "server-only";
 import { db } from '@/lib/db';
 import { parentSong, songs, user, userRecentSongs } from '@/lib/db/schema-pg';
 import { and, desc, eq, gte, lt } from 'drizzle-orm';
-import type { Region } from '@/lib/games/ids';
+import { songInstanceId } from '@/lib/db/song-instance-id';
+import type { CanonicalGameId, Region } from '@/lib/games/ids';
 import type { GamePlayerScore, GameSnapshot } from '@/lib/games/player-view';
 import { latestSnapshot } from '@/server/queries/latest-snapshot';
 import { gameSnapshotColumns } from '@/server/queries/snapshots';
-import { maimaiRecentPlayColumns } from '../columns';
 
 /**
  * A "play day" runs from 07:00 JST to the next day 04:00 JST. Plays between
@@ -55,7 +55,20 @@ export function dayBounds(day: string): { start: Date; end: Date } {
   return { start, end };
 }
 
-export type DailyPlay = Pick<GamePlayerScore, "songId" | "scoreValue" | "secondaryScore" | "comboStatus" | "syncStatus"> & { playedAt: Date };
+export type DailyPlay = Pick<GamePlayerScore, "songId" | "scoreValue" | "secondaryScore" | "comboStatus" | "syncStatus" | "clearStatus" | "levelPrecise" | "difficultyCode"> & { playedAt: Date };
+
+/** A play's result and what rating it needs. Select it from user_recent_songs joined to songs and parent_song. */
+const dailyPlayColumns = {
+  playedAt: userRecentSongs.playedAt,
+  songId: songInstanceId,
+  scoreValue: userRecentSongs.scoreValue,
+  secondaryScore: userRecentSongs.secondaryScore,
+  comboStatus: userRecentSongs.comboStatus,
+  syncStatus: userRecentSongs.syncStatus,
+  clearStatus: userRecentSongs.clearStatus,
+  levelPrecise: songs.levelPrecise,
+  difficultyCode: parentSong.difficulty,
+};
 
 export type DailyPlaysPrepareResult =
   | {
@@ -67,7 +80,8 @@ export type DailyPlaysPrepareResult =
   }
   | { type: "error"; error: string };
 
-export async function prepareDailyPlaysData(
+export async function prepareDailyPlays(
+  game: CanonicalGameId,
   userId: string,
   region: Region,
   requestedDay: string | undefined,
@@ -80,7 +94,7 @@ export async function prepareDailyPlaysData(
       .from(userRecentSongs)
       .innerJoin(songs, eq(userRecentSongs.songId, songs.id))
       .where(and(
-        eq(userRecentSongs.game, "maimai"),
+        eq(userRecentSongs.game, game),
         eq(userRecentSongs.userId, userId),
         eq(songs.region, region),
       ))
@@ -99,12 +113,12 @@ export async function prepareDailyPlaysData(
   const { start, end } = dayBounds(day);
 
   const plays: DailyPlay[] = await db
-    .select(maimaiRecentPlayColumns)
+    .select(dailyPlayColumns)
     .from(userRecentSongs)
     .innerJoin(songs, eq(userRecentSongs.songId, songs.id))
     .innerJoin(parentSong, eq(songs.parentId, parentSong.id))
     .where(and(
-      eq(userRecentSongs.game, "maimai"),
+      eq(userRecentSongs.game, game),
       eq(userRecentSongs.userId, userId),
       eq(songs.region, region),
       gte(userRecentSongs.playedAt, start),
@@ -114,7 +128,7 @@ export async function prepareDailyPlaysData(
     .limit(50);
 
   // The header shows the player as of the end of that day.
-  const snapshot = await latestSnapshot("maimai", userId, region, gameSnapshotColumns, { asOf: end });
+  const snapshot = await latestSnapshot(game, userId, region, gameSnapshotColumns, { asOf: end });
 
   if (!snapshot) {
     return { type: "error", error: "No snapshot found for this day" };
@@ -151,6 +165,7 @@ export interface DailyPlaysAvailableDay {
  * Returns every JST play-day that has at least one play, newest first.
  */
 export async function listDailyPlaysAvailableDays(
+  game: CanonicalGameId,
   userId: string,
   region: Region,
 ): Promise<DailyPlaysAvailableDay[]> {
@@ -159,7 +174,7 @@ export async function listDailyPlaysAvailableDays(
     .from(userRecentSongs)
     .innerJoin(songs, eq(userRecentSongs.songId, songs.id))
     .where(and(
-      eq(userRecentSongs.game, "maimai"),
+      eq(userRecentSongs.game, game),
       eq(userRecentSongs.userId, userId),
       eq(songs.region, region),
     ))

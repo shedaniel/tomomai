@@ -15,7 +15,7 @@ import { router } from "@/lib/trpc";
 import { statsRouter } from "./user/stats";
 import { recentsRouter } from "./user/recents";
 import { platesRouter } from "./maimai/plates";
-import { dailyPlaysRouter } from "./maimai/daily-plays";
+import { dailyPlaysRouter } from "./user/daily-plays";
 
 const caller = router({
   stats: statsRouter.getPublicPlayerStats,
@@ -55,7 +55,7 @@ describe("public snapshot access", () => {
   // A fake cannot evaluate the owner's profile flags, so the access query itself is the contract.
   it("reads only a snapshot of the game whose owner publishes a listed profile", async () => {
     publish();
-    await caller.days({ snapshotId: "snapshot" });
+    await caller.days({ game: "maimai", snapshotId: "snapshot" });
     const [access] = proxy.queries;
     expect(access.sql).toContain('"user_snapshots"."game" = $1');
     expect(access.sql).toContain('"user"."publishProfile" = $3');
@@ -64,14 +64,14 @@ describe("public snapshot access", () => {
   });
 
   it("answers NOT_FOUND for a missing or unpublished snapshot without reading any data", async () => {
-    await expect(caller.days({ snapshotId: "missing" })).rejects.toMatchObject({ code: "NOT_FOUND" });
+    await expect(caller.days({ game: "maimai", snapshotId: "missing" })).rejects.toMatchObject({ code: "NOT_FOUND" });
     expect(dataQueries()).toEqual([]);
   });
 
   it("checks the capability in the snapshot's own region", async () => {
     publish({}, "intl");
     vi.stubEnv("NEXT_PUBLIC_ENABLED_MAIMAI_REGIONS", "jp");
-    await expect(caller.days({ snapshotId: "snapshot" })).rejects.toMatchObject({ code: "BAD_REQUEST" });
+    await expect(caller.days({ game: "maimai", snapshotId: "snapshot" })).rejects.toMatchObject({ code: "BAD_REQUEST" });
     expect(dataQueries()).toEqual([]);
   });
 });
@@ -137,13 +137,13 @@ describe("getPublicPlateSongs", () => {
 describe("getPublicDailyPlaysAvailableDays", () => {
   it("is hidden unless the owner shares score details", async () => {
     publish({ profileShowScoreDetails: false });
-    await expect(caller.days({ snapshotId: "snapshot" })).rejects.toMatchObject({ code: "NOT_FOUND" });
+    await expect(caller.days({ game: "maimai", snapshotId: "snapshot" })).rejects.toMatchObject({ code: "NOT_FOUND" });
     expect(dataQueries()).toEqual([]);
   });
 
   it("lists the snapshot owner's play days in the snapshot's region", async () => {
     publish({}, "intl");
-    await expect(caller.days({ snapshotId: "snapshot" })).resolves.toEqual([]);
+    await expect(caller.days({ game: "maimai", snapshotId: "snapshot" })).resolves.toEqual([]);
     expect(dataQueries()[0].params).toEqual(["maimai", "owner", "intl"]);
   });
 });

@@ -30,13 +30,13 @@ const DIFFICULTY_SPRITES = ['basic', 'advanced', 'expert', 'master', 'remaster',
  * /api/v1/games/maimai/songs. No DB access.
  */
 export async function renderLastCredit(
-  message: Extract<RenderMessage, { route: 'last-credit' }>,
+  message: Extract<RenderMessage, { game: 'maimai'; route: 'last-credit' }>,
   opts: { requestId: string; profile: boolean },
 ): Promise<RenderOutcome> {
   const { header, payload } = message;
   const region = header.region as Region;
 
-  const catalog = await getCatalog(payload.tracks.map(chart => chart.songId));
+  const catalog = await getCatalog('maimai', payload.tracks.map(chart => chart.songId));
 
   const tracks: RecentSongData[] = payload.tracks.map((t, index) => {
     const entry = catalogEntry(catalog, t.songId);

@@ -1,15 +1,15 @@
 import { protectedProcedure, publicProcedure, router } from "@/lib/trpc";
-import { listDailyPlaysAvailableDays } from "@/server/services/games/maimai/render/daily-plays-data";
-import { maimaiPublicSnapshotProcedure, maimaiRegionProcedure } from "./procedures";
+import { listDailyPlaysAvailableDays } from "@/server/services/games/images/daily-plays";
+import { gameProcedure, publicSnapshotProcedure } from "../game-procedures";
 
 export const dailyPlaysRouter = router({
-  getAvailableDays: maimaiRegionProcedure(protectedProcedure, "daily-plays")
+  getAvailableDays: gameProcedure(protectedProcedure, "daily-plays")
     .query(({ ctx }) => {
-      return listDailyPlaysAvailableDays(ctx.session.user.id, ctx.region);
+      return listDailyPlaysAvailableDays(ctx.game, ctx.session.user.id, ctx.region);
     }),
 
-  getPublicAvailableDays: maimaiPublicSnapshotProcedure(publicProcedure, "daily-plays", "recentPlays")
+  getPublicAvailableDays: publicSnapshotProcedure(publicProcedure, "daily-plays", "recentPlays")
     .query(({ ctx }) => {
-      return listDailyPlaysAvailableDays(ctx.snapshot.userId, ctx.region);
+      return listDailyPlaysAvailableDays(ctx.game, ctx.snapshot.userId, ctx.region);
     }),
 });

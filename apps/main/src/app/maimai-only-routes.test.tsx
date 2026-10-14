@@ -8,12 +8,10 @@ vi.mock("@/lib/auth-server", () => ({ getServerSession: vi.fn() }));
 
 type Handler = (request: NextRequest) => unknown;
 
-// Every handler here serves a maimai-only feature: renders, the China proxy, lxns sign-in, the userscript and
-// the percentile refresh cron, which every deployment registers.
+// Every handler here serves a maimai-only feature: the last credit render, the China proxy, lxns sign-in, the
+// userscript and the percentile refresh cron, which every deployment registers.
 const ROUTES: Record<string, () => Promise<Handler>> = {
   "GET /api/cron/percentile-bands": async () => (await import("./api/cron/percentile-bands/route")).GET,
-  "GET /api/daily-plays": async () => (await import("./api/daily-plays/route")).GET,
-  "GET /api/export-image": async () => (await import("./api/export-image/route")).GET,
   "GET /api/last-credit": async () => (await import("./api/last-credit/route")).GET,
   "POST /api/cn-proxy/callback": async () => (await import("./api/cn-proxy/callback/route")).POST,
   "GET /api/cn-proxy/yaml": async () => (await import("./api/cn-proxy/yaml/route")).GET,

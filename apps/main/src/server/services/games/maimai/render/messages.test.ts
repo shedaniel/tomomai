@@ -33,6 +33,7 @@ it("mints the export image from the snapshot's stored rankings in maimai vocabul
   expect(result).toEqual({
     ok: true,
     message: {
+      game: "maimai",
       route: "export-image",
       header: expectedHeader,
       payload: { visitableProfileAt: "player", charts: [{ songId: "abc:j13", achievement: 1005000, fc: "ap+", fs: "fdx+" }] },
@@ -46,6 +47,7 @@ it("mints a day's plays with the header of the snapshot before it", async () => 
   expect(result).toEqual({
     ok: true,
     message: {
+      game: "maimai",
       route: "daily-plays",
       header: expectedHeader,
       payload: { day: "2026-09-01", plays: [{ songId: "abc:j13", achievement: 990000, fc: "fc", fs: "fs" }] },
@@ -73,6 +75,7 @@ it("mints the latest credit's tracks in play order with their judgement details"
   expect(result).toEqual({
     ok: true,
     message: {
+      game: "maimai",
       route: "last-credit",
       header: expectedHeader,
       payload: {

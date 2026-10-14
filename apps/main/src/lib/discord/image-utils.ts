@@ -3,7 +3,8 @@ import { regionDisplayName, t } from './i18n';
 import { formatProfileSummaryContent, type ProfileSummary } from './region';
 import type { Region } from '@/lib/games/ids';
 import { prepareCreditData } from '@/server/services/games/maimai/render/credit-data';
-import { prepareDailyPlaysData } from '@/server/services/games/maimai/render/daily-plays-data';
+import { prepareDailyPlays } from '@/server/services/games/images/daily-plays';
+import { DISCORD_GAME } from './game';
 import { getLogger } from '@/lib/request-logger';
 import { requestDiscordRender } from './render-client';
 import { buildExportImageMessage, buildLastCreditMessage, buildDailyPlaysMessage } from '@/server/services/games/maimai/render/messages';
@@ -244,7 +245,7 @@ export async function generateAndSendDailyPlaysImage({
   try {
     // Resolve the day (and confirm there are plays) for the message; the render
     // service re-fetches to render. Passing the resolved day keeps both in sync.
-    const result = await prepareDailyPlaysData(userId, region, day);
+    const result = await prepareDailyPlays(DISCORD_GAME, userId, region, day);
     if (result.type === 'error') {
       const content = day
         ? t(locale, 'daily.noPlaysDay', { userId: discordUserId, day, regionName })

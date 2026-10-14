@@ -1,7 +1,8 @@
 "use client";
 
 import { Button } from "@tomomai/ui";
-import { CANVAS_HEIGHT, CANVAS_WIDTH } from "@/lib/games/maimai/image-spec";
+import { useGame, usePresentation } from "@/components/providers/game-provider";
+import { supportsGameFeature } from "@/lib/games/frontend";
 import type { Region } from "@/lib/games/ids";
 import type { GameSnapshot } from "@/lib/games/player-view";
 import { Download, RefreshCw } from "lucide-react";
@@ -37,8 +38,9 @@ function ImagePanel({
   const [hydrated, setHydrated] = useState(false);
   useEffect(() => setHydrated(true), []);
   const isDev = process.env.NODE_ENV === 'development';
+  const { imageSize } = usePresentation();
 
-  const ratio = naturalRatio ?? CANVAS_WIDTH / CANVAS_HEIGHT;
+  const ratio = naturalRatio ?? imageSize.width / imageSize.height;
 
   const handleImageLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
     const img = e.currentTarget;
@@ -142,11 +144,14 @@ function ImagePanel({
 interface ExportImageCardProps {
   snapshot: Pick<GameSnapshot, "publicId" | "fetchedAt" | "displayName">;
   region: Region;
-  showLastCredit?: boolean;
+  /** Offers the play images the game has. Off for a visitor the owner does not share recent plays with. */
+  showPlays?: boolean;
   username?: string;
   /** Public snapshot publicId. When set, daily-plays days fetch uses the public tRPC procedure. */
   publicSnapshotId?: string;
 }
+
+const TAB_COLUMNS = { 2: "grid-cols-2", 3: "grid-cols-3" } as const;
 
 function buildExportImageUrl(snapshotId: string, region: Region, username?: string, extra?: Record<string, string>) {
   const params = new URLSearchParams({ snapshotId });
@@ -186,8 +191,11 @@ function formatDayLabel(day: string, count: number, locale: string) {
   return `${formatted} (${count})`;
 }
 
-export function ExportImageCard({ snapshot, region, showLastCredit = true, username, publicSnapshotId }: ExportImageCardProps) {
+export function ExportImageCard({ snapshot, region, showPlays = true, username, publicSnapshotId }: ExportImageCardProps) {
   const t = useTranslations();
+  const game = useGame();
+  const showLastCredit = showPlays && supportsGameFeature(game, "last-credit", region);
+  const showDaily = showPlays && supportsGameFeature(game, "daily-plays", region);
 
   const snapshotId = snapshot.publicId;
   const playsOwner = useMemo(() => playsOwnerParams(region, publicSnapshotId), [region, publicSnapshotId]);
@@ -213,13 +221,13 @@ export function ExportImageCard({ snapshot, region, showLastCredit = true, usern
   const [dailyUrlExtra, setDailyUrlExtra] = useState<Record<string, string>>({});
 
   const isPublic = !!publicSnapshotId;
-  const ownDaysQuery = trpc.maimai.getDailyPlaysAvailableDays.useQuery(
-    { region },
-    { enabled: !isPublic },
+  const ownDaysQuery = trpc.user.getDailyPlaysAvailableDays.useQuery(
+    { game: game.id, region },
+    { enabled: showDaily && !isPublic },
   );
-  const publicDaysQuery = trpc.maimai.getPublicDailyPlaysAvailableDays.useQuery(
-    { snapshotId: publicSnapshotId! },
-    { enabled: isPublic && showLastCredit },
+  const publicDaysQuery = trpc.user.getPublicDailyPlaysAvailableDays.useQuery(
+    { game: game.id, snapshotId: publicSnapshotId! },
+    { enabled: showDaily && isPublic },
   );
   const availableDays = (isPublic ? publicDaysQuery.data : ownDaysQuery.data) ?? [];
   const daysLoading = (isPublic ? publicDaysQuery.isFetching : ownDaysQuery.isFetching) && availableDays.length === 0;
@@ -293,7 +301,7 @@ export function ExportImageCard({ snapshot, region, showLastCredit = true, usern
       imageUrl={exportImageUrl}
       imageKey={exportImageKey}
       isLoading={exportIsLoading}
-      fileName={`maimai-profile-${snapshot.displayName || 'export'}.png`}
+      fileName={`${game.id}-profile-${snapshot.displayName || 'export'}.png`}
       onRefresh={handleExportRefresh}
       onRefreshFast={handleExportRefreshFast}
       onRefreshProfile={handleExportRefreshProfile}
@@ -303,6 +311,73 @@ export function ExportImageCard({ snapshot, region, showLastCredit = true, usern
 
   const locale = typeof window !== 'undefined' ? navigator.language : 'en-US';
 
+  const lastCreditPanel = (
+    <ImagePanel
+      imageUrl={lastCreditImageUrl}
+      imageKey={lastCreditImageKey}
+      isLoading={lastCreditIsLoading}
+      fileName={`${game.id}-last-credit-${snapshot.displayName || 'export'}.png`}
+      onRefresh={handleLastCreditRefresh}
+      onRefreshFast={handleLastCreditRefreshFast}
+      onLoad={() => setLastCreditIsLoading(false)}
+    />
+  );
+
+  const dailyPanel = (
+    <div className="flex flex-col items-center space-y-4">
+      <div className="flex items-center gap-2">
+        <span className="text-sm text-muted-foreground">
+          {t('dataContent.exportImageCard.dayLabel')}
+        </span>
+        <Select
+          value={selectedDay ?? ""}
+          onValueChange={handleDailyDayChange}
+          disabled={daysLoading || availableDays.length === 0}
+        >
+          <SelectTrigger variant="secondary" size="sm" className="min-w-[14rem]">
+            <SelectValue placeholder={
+              daysLoading
+                ? t('dataContent.exportImageCard.dayLoading')
+                : availableDays.length === 0
+                  ? t('dataContent.exportImageCard.noPlays')
+                  : t('dataContent.exportImageCard.dayPlaceholder')
+            } />
+          </SelectTrigger>
+          <SelectContent>
+            {availableDays.map(({ day, count }) => (
+              <SelectItem key={day} value={day}>
+                {formatDayLabel(day, count, locale)}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+      {selectedDay ? (
+        <ImagePanel
+          imageUrl={dailyImageUrl}
+          imageKey={dailyImageKey}
+          isLoading={dailyIsLoading}
+          fileName={`${game.id}-daily-${selectedDay}-${snapshot.displayName || 'export'}.png`}
+          onRefresh={handleDailyRefresh}
+          onRefreshFast={handleDailyRefreshFast}
+          onLoad={() => setDailyIsLoading(false)}
+        />
+      ) : (
+        <div className="text-sm text-muted-foreground py-8">
+          {daysLoading
+            ? t('dataContent.exportImageCard.dayLoading')
+            : t('dataContent.exportImageCard.noPlays')}
+        </div>
+      )}
+    </div>
+  );
+
+  const tabs = [
+    { value: "profile", label: t('dataContent.exportImageCard.profileImage'), panel: profilePanel },
+    ...(showLastCredit ? [{ value: "lastCredit", label: t('dataContent.exportImageCard.lastCredit'), panel: lastCreditPanel }] : []),
+    ...(showDaily ? [{ value: "daily", label: t('dataContent.exportImageCard.dailyPlays'), panel: dailyPanel }] : []),
+  ];
+
   return (
     <div className="w-full mx-auto space-y-6">
       <h2 className="text-lg font-semibold flex items-center gap-2">
@@ -310,83 +385,22 @@ export function ExportImageCard({ snapshot, region, showLastCredit = true, usern
         {t('dataContent.tabs.exportImage')}
       </h2>
 
-      {showLastCredit ? (
+      {tabs.length > 1 ? (
         <Tabs defaultValue="profile" className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="profile">
-              {t('dataContent.exportImageCard.profileImage')}
-            </TabsTrigger>
-            <TabsTrigger value="lastCredit">
-              {t('dataContent.exportImageCard.lastCredit')}
-            </TabsTrigger>
-            <TabsTrigger value="daily">
-              {t('dataContent.exportImageCard.dailyPlays')}
-            </TabsTrigger>
+          <TabsList className={`grid w-full ${TAB_COLUMNS[tabs.length as keyof typeof TAB_COLUMNS]}`}>
+            {tabs.map(tab => (
+              <TabsTrigger key={tab.value} value={tab.value}>
+                {tab.label}
+              </TabsTrigger>
+            ))}
           </TabsList>
 
           <TabsContents>
-            <TabsContent value="profile" className="pt-4">
-              {profilePanel}
-            </TabsContent>
-            <TabsContent value="lastCredit" className="pt-4">
-              <ImagePanel
-                imageUrl={lastCreditImageUrl}
-                imageKey={lastCreditImageKey}
-                isLoading={lastCreditIsLoading}
-                fileName={`maimai-last-credit-${snapshot.displayName || 'export'}.png`}
-                onRefresh={handleLastCreditRefresh}
-                onRefreshFast={handleLastCreditRefreshFast}
-                onLoad={() => setLastCreditIsLoading(false)}
-              />
-            </TabsContent>
-            <TabsContent value="daily" className="pt-4">
-              <div className="flex flex-col items-center space-y-4">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-muted-foreground">
-                    {t('dataContent.exportImageCard.dayLabel')}
-                  </span>
-                  <Select
-                    value={selectedDay ?? ""}
-                    onValueChange={handleDailyDayChange}
-                    disabled={daysLoading || availableDays.length === 0}
-                  >
-                    <SelectTrigger variant="secondary" size="sm" className="min-w-[14rem]">
-                      <SelectValue placeholder={
-                        daysLoading
-                          ? t('dataContent.exportImageCard.dayLoading')
-                          : availableDays.length === 0
-                            ? t('dataContent.exportImageCard.noPlays')
-                            : t('dataContent.exportImageCard.dayPlaceholder')
-                      } />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {availableDays.map(({ day, count }) => (
-                        <SelectItem key={day} value={day}>
-                          {formatDayLabel(day, count, locale)}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                {selectedDay ? (
-                  <ImagePanel
-                    imageUrl={dailyImageUrl}
-                    imageKey={dailyImageKey}
-                    isLoading={dailyIsLoading}
-                    fileName={`maimai-daily-${selectedDay}-${snapshot.displayName || 'export'}.png`}
-                    onRefresh={handleDailyRefresh}
-                    onRefreshFast={handleDailyRefreshFast}
-                    onLoad={() => setDailyIsLoading(false)}
-                  />
-                ) : (
-                  <div className="text-sm text-muted-foreground py-8">
-                    {daysLoading
-                      ? t('dataContent.exportImageCard.dayLoading')
-                      : t('dataContent.exportImageCard.noPlays')}
-                  </div>
-                )}
-              </div>
-            </TabsContent>
+            {tabs.map(tab => (
+              <TabsContent key={tab.value} value={tab.value} className="pt-4">
+                {tab.panel}
+              </TabsContent>
+            ))}
           </TabsContents>
         </Tabs>
       ) : (
