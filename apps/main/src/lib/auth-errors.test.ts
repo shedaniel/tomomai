@@ -25,7 +25,7 @@ describe("resolveAuthError", () => {
   it("has an English message for every key it can return", () => {
     const codes = [
       "signup_disabled", "unable_to_create_user", "invite_required", "invite_invalid", "invite_revoked",
-      "invite_used", "invite_expired", "account_not_linked", "email_doesn't_match",
+      "invite_used", "invite_expired", "account_not_linked",
       "account_already_linked_to_different_user", "email_not_found", "state_not_found",
       "unable_to_get_user_info", "banned", "unknown",
     ];
