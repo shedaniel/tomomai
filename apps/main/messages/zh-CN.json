@@ -169,7 +169,10 @@
     "signedInAs": "当前登录：{name}",
     "switchAccount": "不是你？切换账号",
     "basicAccess": "确认已与你的账号关联",
-    "offlineAccess": {"name": "保持连接", "description": "在你撤销之前，{app} 无需再次询问即可持续访问"},
+    "offlineAccess": {
+      "name": "保持连接",
+      "description": "在你撤销之前，{app} 无需再次询问即可持续访问"
+    },
     "sensitive": "敏感",
     "redirectNotice": "完成后将返回 {host}",
     "trustNotice": "{app} 并非由 tomomai 运营。{links, select, both {你的数据将按照其<terms>服务条款</terms>和<privacy>隐私政策</privacy>处理。} terms {你的数据将按照其<terms>服务条款</terms>处理。} privacy {你的数据将按照其<privacy>隐私政策</privacy>处理。} other {该应用未提供服务条款或隐私政策。}}请仅在信任该应用时继续。",
@@ -683,6 +686,15 @@
       },
       "revokeSuccess": "访问权限已撤销",
       "revokeError": "撤销访问权限失败"
+    },
+    "unsaved": {
+      "bar": "你有未保存的更改",
+      "title": "要不保存就离开吗？",
+      "description": "此页面的更改还没有保存。",
+      "keepEditing": "继续编辑",
+      "discard": "放弃",
+      "saveAndLeave": "保存并离开",
+      "saving": "保存中..."
     }
   },
   "dataBanner": {

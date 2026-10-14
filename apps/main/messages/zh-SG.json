@@ -631,6 +631,15 @@
       },
       "revokeSuccess": "已撤销存取权",
       "revokeError": "撤销存取权失败"
+    },
+    "unsaved": {
+      "bar": "你有未保存的更改",
+      "title": "要不保存就离开吗？",
+      "description": "此页面的更改还没有保存。",
+      "keepEditing": "继续编辑",
+      "discard": "放弃",
+      "saveAndLeave": "保存并离开",
+      "saving": "保存中..."
     }
   },
   "dataBanner": {

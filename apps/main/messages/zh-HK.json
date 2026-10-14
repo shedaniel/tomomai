@@ -169,7 +169,10 @@
     "signedInAs": "目前登入：{name}",
     "switchAccount": "不是你？切換帳戶",
     "basicAccess": "確認已與你的帳戶連結",
-    "offlineAccess": {"name": "保持連線", "description": "在你撤銷之前，{app} 無需再次詢問即可持續存取"},
+    "offlineAccess": {
+      "name": "保持連線",
+      "description": "在你撤銷之前，{app} 無需再次詢問即可持續存取"
+    },
     "sensitive": "敏感",
     "redirectNotice": "完成後將返回 {host}",
     "trustNotice": "{app} 並非由 tomomai 營運。{links, select, both {你的資料將按照其<terms>服務條款</terms>及<privacy>私隱政策</privacy>處理。} terms {你的資料將按照其<terms>服務條款</terms>處理。} privacy {你的資料將按照其<privacy>私隱政策</privacy>處理。} other {此應用程式並未提供服務條款或私隱政策。}}請僅在信任此應用程式時繼續。",
@@ -683,6 +686,15 @@
       },
       "revokeSuccess": "已撤銷存取權",
       "revokeError": "撤銷存取權失敗"
+    },
+    "unsaved": {
+      "bar": "你有未儲存的更改",
+      "title": "要不儲存就離開嗎？",
+      "description": "這個頁面的更改仍未儲存。",
+      "keepEditing": "繼續編輯",
+      "discard": "捨棄",
+      "saveAndLeave": "儲存並離開",
+      "saving": "儲存中……"
     }
   },
   "dataBanner": {

@@ -169,7 +169,10 @@
     "signedInAs": "{name} としてサインイン中",
     "switchAccount": "別のアカウントに切り替える",
     "basicAccess": "アカウントと連携していることの確認",
-    "offlineAccess": {"name": "接続を維持", "description": "取り消すまで、{app} は再確認なしでアクセスを続けられます"},
+    "offlineAccess": {
+      "name": "接続を維持",
+      "description": "取り消すまで、{app} は再確認なしでアクセスを続けられます"
+    },
     "sensitive": "機密",
     "redirectNotice": "完了すると {host} に戻ります",
     "trustNotice": "{app} は tomomai が運営するアプリではありません。{links, select, both {データはこのアプリの<terms>利用規約</terms>と<privacy>プライバシーポリシー</privacy>に基づいて扱われます。} terms {データはこのアプリの<terms>利用規約</terms>に基づいて扱われます。} privacy {データはこのアプリの<privacy>プライバシーポリシー</privacy>に基づいて扱われます。} other {このアプリは利用規約やプライバシーポリシーを公開していません。}}信頼できる場合のみ続行してください。",
@@ -683,6 +686,15 @@
       },
       "revokeSuccess": "アクセスを取り消しました",
       "revokeError": "アクセスの取り消しに失敗しました"
+    },
+    "unsaved": {
+      "bar": "保存されていない変更があります",
+      "title": "保存せずに移動しますか？",
+      "description": "このページの変更はまだ保存されていません。",
+      "keepEditing": "編集を続ける",
+      "discard": "破棄する",
+      "saveAndLeave": "保存して移動",
+      "saving": "保存中…"
     }
   },
   "dataBanner": {
