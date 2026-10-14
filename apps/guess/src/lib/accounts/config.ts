@@ -1,6 +1,6 @@
 const DEFAULT_TOMOMAI = "https://www.tomomai.lol";
 
-/** tomomai origin hosting the OAuth provider; must equal its BETTER_AUTH_URL. */
+/** tomomai origin hosting the OAuth provider and /api/v1. */
 export function tomomaiAuthBase(): string {
   const raw = process.env.TOMOMAI_AUTH_URL ?? process.env.TOMOMAI_API_URL ?? DEFAULT_TOMOMAI;
   return raw.replace(/\/$/, "");

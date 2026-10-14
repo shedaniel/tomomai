@@ -1,5 +1,4 @@
 import { createHash } from "node:crypto";
-import { createRemoteJWKSet, jwtVerify } from "jose";
 import { oauthClient, tomomaiAuthBase } from "./config";
 
 export const OAUTH_SCOPE = "user:metadata:read";
@@ -12,13 +11,6 @@ export type PendingLogin = {
 };
 
 export type TomomaiIdentity = { userId: string; username: string | null; image: string | null };
-
-let jwks: ReturnType<typeof createRemoteJWKSet> | null = null;
-
-function getJwks() {
-  jwks ??= createRemoteJWKSet(new URL(`${tomomaiAuthBase()}/api/auth/jwks`));
-  return jwks;
-}
 
 export function pkceChallenge(verifier: string): string {
   return createHash("sha256").update(verifier).digest("base64url");
@@ -56,12 +48,7 @@ export function sanitizeReturnTo(raw: string | null | undefined): string {
   return raw;
 }
 
-/**
- * Exchanges the code and resolves who signed in. The access token is
- * requested as a JWT (`resource`) because it is the only place the provider
- * exposes a stable user id: `/api/v1/me` returns a nullable, mutable username.
- * The token is used once for `/api/v1/me` and never stored.
- */
+/** Exchanges the code and resolves who signed in. The token is used once and never stored. */
 export async function completeLogin(
   code: string,
   pending: PendingLogin,
@@ -80,7 +67,6 @@ export async function completeLogin(
       redirect_uri: pending.redirectUri,
       client_id: client.clientId,
       client_secret: client.clientSecret,
-      resource: base,
     }),
     cache: "no-store",
   });
@@ -90,19 +76,17 @@ export async function completeLogin(
   const { access_token: accessToken } = (await tokenRes.json()) as { access_token?: string };
   if (!accessToken) throw new Error("token response missing access_token");
 
-  const { payload } = await jwtVerify(accessToken, getJwks(), {
-    issuer: `${base}/api/auth`,
-    audience: base,
-  });
-  if (payload.azp !== client.clientId) throw new Error("token issued to another client");
-  if (typeof payload.sub !== "string" || !payload.sub) throw new Error("token missing sub");
-
   const meRes = await fetch(`${base}/api/v1/me`, {
     headers: { Authorization: `Bearer ${accessToken}` },
     cache: "no-store",
   });
   if (!meRes.ok) throw new Error(`/api/v1/me failed (${meRes.status})`);
-  const me = (await meRes.json()) as { username?: string | null; image?: string | null };
+  const me = (await meRes.json()) as {
+    id?: string;
+    username?: string | null;
+    image?: string | null;
+  };
+  if (typeof me.id !== "string" || !me.id) throw new Error("/api/v1/me returned no id");
 
-  return { userId: payload.sub, username: me.username ?? null, image: safeImage(me.image) };
+  return { userId: me.id, username: me.username ?? null, image: safeImage(me.image) };
 }
