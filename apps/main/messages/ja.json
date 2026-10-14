@@ -471,7 +471,7 @@
         },
         "user:metadata:read": {
           "name": "アカウント情報",
-          "description": "ユーザー名、プロフィール画像、地域、プロフィールの公開設定、ロール"
+          "description": "アカウント ID、ユーザー名、プロフィール画像、地域、プロフィールの公開設定、ロール"
         },
         "snapshot:latest:metadata:read": {
           "name": "最新のスナップショット概要",

@@ -8,11 +8,13 @@ export const spec = defineRoute({
   tag: "Account",
   summary: "Get the authenticated user's profile metadata",
   description:
-    "Returns the username, profile picture, primary region, profile visibility, and account " +
-    "role for the user the token was issued to.",
+    "Returns the account ID, username, profile picture, primary region, profile visibility, " +
+    "and account role for the user the token was issued to. Use `id` to recognise a returning " +
+    "user, since usernames can change or be unset.",
   scope: "user:metadata:read",
   cost: 1,
   response: z.object({
+    id: z.string().describe("Stable account ID. Never changes and is never reused."),
     username: z.string().nullable(),
     image: z.string().nullable().describe("Profile picture URL, or null when the user has none."),
     region: regionSchema.nullable().describe("Primary region, or null until the user picks one."),
@@ -23,6 +25,7 @@ export const spec = defineRoute({
     {
       name: "Success",
       response: {
+        id: "Bx7qK2mZp9TfL4wNcR8vYd3s",
         username: "alice",
         image: "https://cdn.discordapp.com/avatars/123456789012345678/a1b2c3d4e5f6.png",
         region: "intl",

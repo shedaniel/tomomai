@@ -119,6 +119,10 @@ Host: tomomai.lol
 Authorization: Bearer <access_token>
 ```
 
+To use tomomai as a sign-in, request `user:metadata:read` and key your
+accounts on the `id` field of `/api/v1/me`. It never changes and is never
+reused. Don't key on `username`, since a user can change it or have none.
+
 ## 6. Refresh
 
 When `expires_in` runs out, exchange the refresh token:

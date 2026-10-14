@@ -9,6 +9,7 @@ export const GET = withApiKey(["user:metadata:read"], async (_req, key) => {
     return Response.json({ error: "User not found" }, { status: 404 });
   }
   return zodJson(spec.response, {
+    id: key.userId,
     username: userData.username,
     image: userData.image,
     region: userData.region,
