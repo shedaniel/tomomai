@@ -119,7 +119,6 @@
       "inviteUsed": "That invitation has already been used.",
       "inviteExpired": "That invitation has expired.",
       "accountNotLinked": "That provider account isn't linked to your user and couldn't be linked automatically.\n\nYou may already have an account using the same email.\n\nTry signing in with the provider you originally signed up with, then link this one from Settings → Account.",
-      "emailMismatch": "That account's email doesn't match your current account.",
       "alreadyLinked": "That account is already linked to a different user.",
       "emailMissing": "That account didn't share an email address, which tomomai needs to sign you in.",
       "restart": "Your sign-in was interrupted or took too long. Please try again.",
