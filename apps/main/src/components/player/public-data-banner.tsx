@@ -4,7 +4,7 @@ import { RegionSwitcherClient } from "@/components/region-switcher";
 import { Badge } from "@tomomai/ui";
 import { getVersion } from "@/lib/games/versions";
 import type { Region } from "@/lib/games/ids";
-import { User } from "lucide-react";
+import { User, Users } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 interface PublicDataBannerProps {
@@ -16,12 +16,14 @@ interface PublicDataBannerProps {
     gameVersion: number;
   } | null;
   profileUsername: string;
+  friendView?: boolean;
 }
 
 export function PublicDataBanner({
   region,
   snapshotData,
   profileUsername,
+  friendView = false,
 }: PublicDataBannerProps) {
   const t = useTranslations();
   const game = getCurrentGame().id;
@@ -57,6 +59,12 @@ export function PublicDataBanner({
 
         {/* Right side - Profile info */}
         <div className="flex items-center space-x-3">
+          {friendView && (
+            <Badge variant="outline" className="shrink-0 gap-1 whitespace-nowrap font-normal" title={t("dataBanner.friendViewHint")}>
+              <Users className="h-3 w-3" />
+              {t("dataBanner.friendView")}
+            </Badge>
+          )}
           <div className="flex items-center space-x-2 text-sm text-muted-foreground">
             <User className="h-4 w-4" />
             <span>{profileUsername}</span>

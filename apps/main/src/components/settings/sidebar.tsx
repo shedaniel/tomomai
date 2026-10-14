@@ -2,19 +2,25 @@
 
 import { Link, usePathname, useRouter } from "@/i18n/navigation";
 import { Sidebar, SidebarItem } from "@tomomai/ui";
-import { User, Download, Lock, Code, ArrowLeft, AppWindow } from "lucide-react";
+import { User, Download, Lock, Code, ArrowLeft, AppWindow, Users } from "lucide-react";
 import { useTranslations } from "next-intl";
 import type { Flags } from "@/lib/flags";
+import { useGame } from "@/components/providers/game-provider";
+import { supportsGameFeature } from "@/lib/games/frontend";
 
 export function SettingsSidebar({ flags }: { flags: Flags }) {
   const pathname = usePathname();
   const router = useRouter();
   const t = useTranslations();
+  const game = useGame();
 
   const navItems = [
     { key: "account", href: "/settings/account", icon: User },
     { key: "fetch", href: "/settings/fetch", icon: Download },
     { key: "privacy", href: "/settings/privacy", icon: Lock },
+    ...(flags.friends && supportsGameFeature(game, "friends") ? [
+      { key: "friends", href: "/settings/friends", icon: Users },
+    ] : []),
     ...(flags.settingsApplications ? [
       { key: "applications", href: "/settings/applications", icon: AppWindow },
     ] : []),

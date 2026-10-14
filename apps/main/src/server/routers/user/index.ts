@@ -10,6 +10,7 @@ import { albumsRouter } from './albums';
 import { songsRouter } from './songs';
 import { flagsRouter } from './flags';
 import { legalRouter } from './legal';
+import { friendsRouter } from './friends';
 
 export const userRouter = router({
   // Snapshots
@@ -42,6 +43,13 @@ export const userRouter = router({
   createInvite: invitesRouter.createInvite,
   revokeInvite: invitesRouter.revokeInvite,
   validateInvite: invitesRouter.validateInvite,
+
+  // Friends
+  getFriends: friendsRouter.getFriends,
+  setFriendsEnabled: friendsRouter.setFriendsEnabled,
+  updateFriendSharing: friendsRouter.updateFriendSharing,
+  hideFriend: friendsRouter.hideFriend,
+  unhideFriends: friendsRouter.unhideFriends,
 
   // Recents
   getRecentSongs: recentsRouter.getRecentSongs,

@@ -23,6 +23,8 @@ interface ProfilePrivacyFieldsProps {
   onChange(value: ProfilePrivacySettings): void;
   disabled?: boolean;
   idPrefix?: string;
+  /** Fields that do not apply to the chosen visibility. Their stored values are kept. */
+  omit?: readonly (keyof ProfilePrivacySettings)[];
 }
 
 export function ProfilePrivacyFields({
@@ -30,13 +32,14 @@ export function ProfilePrivacyFields({
   onChange,
   disabled = false,
   idPrefix = "profile-privacy",
+  omit = [],
 }: ProfilePrivacyFieldsProps) {
   const t = useTranslations();
   const game = useGame();
 
   return (
     <div className="grid gap-3">
-      {PROFILE_PRIVACY_FIELDS.filter(({ capability }) => !capability || supportsGameFeature(game, capability)).map(({ key, labelKey }) => {
+      {PROFILE_PRIVACY_FIELDS.filter(({ key, capability }) => !omit.includes(key) && (!capability || supportsGameFeature(game, capability))).map(({ key, labelKey }) => {
         const id = `${idPrefix}-${key}`;
         return (
           <SettingsField

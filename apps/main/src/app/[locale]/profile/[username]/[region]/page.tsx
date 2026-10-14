@@ -72,7 +72,8 @@ export async function generateMetadata({ params }: RegionProfilePageProps): Prom
   }
 
   try {
-    const { snapshotData } = await fetchPublicGameProfile(game.id, username, region);
+    const session = await getServerSession();
+    const { profile, snapshotData } = await fetchPublicGameProfile(game.id, username, region, session?.user.id);
     return buildPageMetadata({
       brand: game.brand,
       locale,
@@ -80,6 +81,7 @@ export async function generateMetadata({ params }: RegionProfilePageProps): Prom
       ...await describeProfile({ game, username, region, snapshot: snapshotData?.snapshot }),
       ogType: "profile",
       image: "route",
+      ...(profile.access === "friend" ? { noindex: true } : {}),
     });
   } catch (error) {
     if (error instanceof TRPCError && error.code === "NOT_FOUND") {
@@ -106,9 +108,8 @@ export default async function RegionProfilePage({ params }: RegionProfilePagePro
   if (!isGameRegion(game, region)) notFound();
 
   try {
-    const { profile: profileData, snapshotData } = await fetchPublicGameProfile(game.id, safeDecodeURIComponent(username), region);
-
     const session = await getServerSession();
+    const { profile: profileData, snapshotData } = await fetchPublicGameProfile(game.id, safeDecodeURIComponent(username), region, session?.user.id);
     const isOwner = session?.user.id === profileData.id;
 
     const flags = defaultFlags;
@@ -149,14 +150,18 @@ export default async function RegionProfilePage({ params }: RegionProfilePagePro
 
     return (
       <>
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(profileJsonLd) }}
-        />
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumb) }}
-        />
+        {profileData.access === "public" && (
+          <>
+            <script
+              type="application/ld+json"
+              dangerouslySetInnerHTML={{ __html: JSON.stringify(profileJsonLd) }}
+            />
+            <script
+              type="application/ld+json"
+              dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumb) }}
+            />
+          </>
+        )}
         <ProfilePage
           profileData={profileData}
           snapshotData={snapshotData}
@@ -164,6 +169,7 @@ export default async function RegionProfilePage({ params }: RegionProfilePagePro
           username={decodedUsername}
           flags={flags}
           isOwner={isOwner}
+          friendView={profileData.access === "friend"}
         />
       </>
     );

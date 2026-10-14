@@ -280,6 +280,10 @@
       "applications": {
         "title": "アプリ",
         "description": "アカウントへのアクセスを許可した OAuth アプリ一覧。"
+      },
+      "friends": {
+        "title": "フレンド",
+        "description": "{brand}を使っているゲーム内フレンドです。データ取得時に自動で見つかります。"
       }
     },
     "language": {
@@ -369,6 +373,22 @@
         "description": "プロフィールの共有リンクです。",
         "copied": "プロフィールURLをクリップボードにコピーしました！",
         "copyFailed": "URLのクリップボードへのコピーに失敗しました"
+      },
+      "visibility": {
+        "label": "プロフィールの公開範囲",
+        "description": "ゲーム内フレンドは、データ取得時に{game}のフレンドリストから自動で見つかります。",
+        "private": {
+          "label": "自分のみ",
+          "description": "他の人はプロフィールを見られません"
+        },
+        "friends": {
+          "label": "ゲーム内フレンド",
+          "description": "見つかったフレンドだけが見られます"
+        },
+        "public": {
+          "label": "全員",
+          "description": "リンクを知っている人なら誰でも見られます"
+        }
       }
     },
     "saveChanges": "変更を保存",
@@ -669,6 +689,32 @@
       },
       "revokeSuccess": "アクセスを取り消しました",
       "revokeError": "アクセスの取り消しに失敗しました"
+    },
+    "friends": {
+      "matching": {
+        "label": "ゲーム内フレンドを探す",
+        "description": "データ取得のたびに{game}のフレンドリストを読み込みます（1日1回まで）。フレンドコードが他の人に表示されることはありません。"
+      },
+      "listTitle": "{count, plural, =0 {フレンド} other {フレンド（#人）}}",
+      "lastSynced": "フレンドリスト取得：{date}",
+      "off": "フレンド機能はオフです。オンにすると、{brand}を使っているゲーム内フレンドが表示されます。",
+      "notSynced": "スコアを取得するとフレンドが見つかります。フレンドリストは{game}の公式サイトから読み込みます。",
+      "empty": "{brand}を使っているゲーム内フレンドはまだいません。",
+      "notShared": "プロフィール非公開",
+      "hide": "非表示",
+      "hideTitle": "{name}さんを非表示にしますか？",
+      "hideDescription": "ゲーム内でフレンドのままでも、{brand}上ではフレンドではなくなります。相手に通知はされず、あとで再表示できます。",
+      "hidden": {
+        "title": "非表示",
+        "description": "非表示にしたユーザーです。フレンド限定のプロフィールは見られません。"
+      },
+      "unhide": "再表示",
+      "error": "フレンドを更新できませんでした。もう一度お試しください。",
+      "disable": {
+        "title": "フレンド機能をオフにしますか？",
+        "description": "保存されたフレンドリストは削除され、全員のフレンドから外れます。オンに戻すと、次回のデータ取得でまた見つかります。",
+        "confirm": "オフにする"
+      }
     }
   },
   "dataBanner": {
@@ -678,7 +724,9 @@
     "fetchNewData": "データ取得",
     "fetchingData": "データ取得中...",
     "lastUpdate": "最終更新",
-    "noDataInstructions": "この地域のデータがまだありません。「新しいデータを取得」から{game}スコアを取り込みましょう（ログイン／トークンが必要です）。"
+    "noDataInstructions": "この地域のデータがまだありません。「新しいデータを取得」から{game}スコアを取り込みましょう（ログイン／トークンが必要です）。",
+    "friendView": "フレンド限定",
+    "friendViewHint": "ゲーム内フレンドにだけ公開されています"
   },
   "profileMetadata": {
     "title": "{username} | {brand}",
@@ -1091,7 +1139,7 @@
   "onboarding": {
     "step1": {
       "title": "ユーザー名を決める",
-      "publishToggleLabel": "プロフィールを友達に共有する",
+      "publishToggleLabel": "プロフィールを公開する",
       "publishToggleDescription": "他のユーザーが公開リンクであなたのスコアを見られるようになります。初期設定はオフで、いつでも変更できます。",
       "publicUrlHint": "あなたの公開プロフィール："
     },

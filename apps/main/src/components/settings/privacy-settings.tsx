@@ -30,7 +30,16 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 
-export function PrivacySettings() {
+type Visibility = "private" | "friends" | "public";
+
+const VISIBILITY: Record<Visibility, { publishProfile: boolean; profileShareWithFriends: boolean }> = {
+  private: { publishProfile: false, profileShareWithFriends: false },
+  friends: { publishProfile: false, profileShareWithFriends: true },
+  public: { publishProfile: true, profileShareWithFriends: true },
+};
+
+/** With `friends`, publishing is a choice between only me, in-game friends and everyone. */
+export function PrivacySettings({ friends = false }: { friends?: boolean }) {
   const t = useTranslations();
   return (
     <SettingsForm>
@@ -38,13 +47,13 @@ export function PrivacySettings() {
         title={t("settings.pages.privacy.title")}
         description={t("settings.pages.privacy.description")}
       />
-      <PrivacyFields />
+      <PrivacyFields friends={friends} />
       <SettingsFooter />
     </SettingsForm>
   );
 }
 
-function PrivacyFields() {
+function PrivacyFields({ friends }: { friends: boolean }) {
   const t = useTranslations();
   const game = useGame();
 
@@ -59,10 +68,14 @@ function PrivacyFields() {
   const username = userData?.username ?? undefined;
 
   const [selectedPublishProfile, setSelectedPublishProfile] = useState<boolean | null>(null);
+  const [selectedShareWithFriends, setSelectedShareWithFriends] = useState<boolean | null>(null);
   const [selectedMainRegion, setSelectedMainRegion] = useState<Region | null>(null);
   const [selectedPrivacySettings, setSelectedPrivacySettings] = useState<ProfilePrivacySettings | null>(null);
 
   const effectivePublishProfile = selectedPublishProfile ?? profileSettings?.publishProfile ?? false;
+  const effectiveShareWithFriends = selectedShareWithFriends ?? profileSettings?.profileShareWithFriends ?? false;
+  const visibility: Visibility = effectivePublishProfile ? "public" : effectiveShareWithFriends ? "friends" : "private";
+  const showsProfile = friends ? visibility !== "private" : effectivePublishProfile;
   const effectiveMainRegion = getGameRegion(game, selectedMainRegion ?? profileSettings?.profileMainRegion);
   const effectivePrivacySettings = selectedPrivacySettings ?? {
     profileShowAllScores: profileSettings?.profileShowAllScores ?? true,
@@ -74,10 +87,12 @@ function PrivacyFields() {
   };
 
   const updatePublishProfile = trpc.user.updatePublishProfile.useMutation();
+  const updateFriendSharing = trpc.user.updateFriendSharing.useMutation();
   const updateProfileMainRegion = trpc.user.updateProfileMainRegion.useMutation();
   const updateProfilePrivacySettings = trpc.user.updateProfilePrivacySettings.useMutation();
 
   const publishDirty = !!profileSettings && effectivePublishProfile !== profileSettings.publishProfile;
+  const shareDirty = friends && !!profileSettings && effectiveShareWithFriends !== profileSettings.profileShareWithFriends;
   const regionDirty = !!profileSettings && selectedMainRegion !== null && selectedMainRegion !== profileSettings.profileMainRegion;
   const privacyDirty = !!profileSettings && (
     effectivePrivacySettings.profileShowAllScores !== profileSettings.profileShowAllScores ||
@@ -88,12 +103,13 @@ function PrivacyFields() {
     effectivePrivacySettings.profileShowInSearch !== profileSettings.profileShowInSearch
   );
 
-  useDirtyFlag("privacy", publishDirty || regionDirty || privacyDirty);
+  useDirtyFlag("privacy", publishDirty || shareDirty || regionDirty || privacyDirty);
 
   useSettingsSave("privacy", async () => {
     if (!profileSettings) return;
     const promises: Promise<unknown>[] = [];
     if (publishDirty) promises.push(updatePublishProfile.mutateAsync({ publishProfile: effectivePublishProfile }));
+    if (shareDirty) promises.push(updateFriendSharing.mutateAsync({ profileShareWithFriends: effectiveShareWithFriends }));
     if (regionDirty && effectiveMainRegion) promises.push(updateProfileMainRegion.mutateAsync({ profileMainRegion: effectiveMainRegion }));
     if (privacyDirty) promises.push(updateProfilePrivacySettings.mutateAsync(effectivePrivacySettings));
     await Promise.all(promises);
@@ -101,6 +117,7 @@ function PrivacyFields() {
 
   useSettingsReset("privacy", () => {
     setSelectedPublishProfile(null);
+    setSelectedShareWithFriends(null);
     setSelectedMainRegion(null);
     setSelectedPrivacySettings(null);
   });
@@ -129,24 +146,57 @@ function PrivacyFields() {
 
   return (
     <div className="grid gap-6">
-      <SettingsField
-        layout="inline"
-        icon={Globe}
-        label={t("settings.profile.publishProfile")}
-        description={t("settings.profile.publishDescription", { game: game.brand.displayName })}
-        htmlFor="publish-profile"
-        action={
-          <Switch
-            id="publish-profile"
-            checked={effectivePublishProfile}
-            onCheckedChange={(v) => setSelectedPublishProfile(v)}
+      {friends ? (
+        <SettingsField
+          icon={Globe}
+          label={t("settings.profile.visibility.label")}
+          description={t("settings.profile.visibility.description", { game: game.brand.displayName })}
+          htmlFor="profile-visibility"
+        >
+          <Select
+            value={visibility}
+            onValueChange={value => {
+              const choice = VISIBILITY[value as Visibility];
+              if (!choice) return;
+              setSelectedPublishProfile(choice.publishProfile);
+              setSelectedShareWithFriends(choice.profileShareWithFriends);
+            }}
             disabled={isLoadingSettings}
-          />
-        }
-      />
+          >
+            <SelectTrigger id="profile-visibility" className="bg-background">
+              <SelectValue>{t(`settings.profile.visibility.${visibility}.label`)}</SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              {(Object.keys(VISIBILITY) as Visibility[]).map(option => (
+                <SelectItem key={option} value={option}>
+                  <div className="grid text-left">
+                    <span>{t(`settings.profile.visibility.${option}.label`)}</span>
+                    <span className="text-xs text-muted-foreground">{t(`settings.profile.visibility.${option}.description`)}</span>
+                  </div>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </SettingsField>
+      ) : (
+        <SettingsField
+          layout="inline"
+          icon={Globe}
+          label={t("settings.profile.publishProfile")}
+          description={t("settings.profile.publishDescription", { game: game.brand.displayName })}
+          htmlFor="publish-profile"
+          action={
+            <Switch
+              id="publish-profile"
+              checked={effectivePublishProfile}
+              onCheckedChange={(v) => setSelectedPublishProfile(v)}
+              disabled={isLoadingSettings}
+            />
+          }
+        />
+      )}
 
-
-      {effectivePublishProfile && (
+      {showsProfile && (
         <div className="grid gap-4 pl-4 border-l-2 border-muted">
           {game.regions.length > 1 && (
             <SettingsField
@@ -183,6 +233,7 @@ function PrivacyFields() {
               onChange={setSelectedPrivacySettings}
               disabled={isLoadingSettings}
               idPrefix="settings-profile-privacy"
+              omit={visibility === "friends" ? ["profileShowInSearch"] : []}
             />
           </div>
 
