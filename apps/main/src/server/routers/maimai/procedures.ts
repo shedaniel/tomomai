@@ -30,8 +30,8 @@ export function maimaiRegionProcedure<TContextOverrides extends object>(base: Ba
 export function maimaiPublicSnapshotProcedure<TContextOverrides extends object>(base: BaseProcedure<TContextOverrides>, capability: GameCapability, view: PublicView) {
   return base
     .input(z.object({ snapshotId: z.string() }))
-    .use(async ({ input, next }) => {
-      const snapshot = await resolvePublicSnapshotAccess(MAIMAI, input.snapshotId, { capability, view });
+    .use(async ({ ctx, input, next }) => {
+      const snapshot = await resolvePublicSnapshotAccess(MAIMAI, input.snapshotId, { capability, view, viewerId: ctx.session?.user.id });
       return next({ ctx: { game: MAIMAI, region: snapshot.region, snapshot } });
     });
 }

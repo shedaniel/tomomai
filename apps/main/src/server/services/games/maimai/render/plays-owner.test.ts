@@ -17,8 +17,13 @@ afterEach(() => vi.unstubAllEnvs());
 
 it("shows a visitor the snapshot owner's plays in the snapshot's region, when the owner shares them", async () => {
   await expect(resolvePlaysOwner({ snapshotId: "snapshot" }, "daily-plays")).resolves.toEqual({ userId: "owner", region: "jp" });
-  expect(mocks.access).toHaveBeenCalledWith("maimai", "snapshot", { capability: "daily-plays", view: "recentPlays" });
-  expect(mocks.session).not.toHaveBeenCalled();
+  expect(mocks.access).toHaveBeenCalledWith("maimai", "snapshot", { capability: "daily-plays", view: "recentPlays", viewerId: "viewer" });
+});
+
+it("checks a signed-out visitor's access without a viewer", async () => {
+  mocks.session.mockResolvedValueOnce(null);
+  await expect(resolvePlaysOwner({ snapshotId: "snapshot" }, "daily-plays")).resolves.toEqual({ userId: "owner", region: "jp" });
+  expect(mocks.access).toHaveBeenCalledWith("maimai", "snapshot", { capability: "daily-plays", view: "recentPlays", viewerId: undefined });
 });
 
 it("answers 404 for a snapshot a visitor may not see", async () => {

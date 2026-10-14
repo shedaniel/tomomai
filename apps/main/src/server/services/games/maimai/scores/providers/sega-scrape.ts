@@ -6,10 +6,12 @@ import type { FetchRun } from "@/server/services/games/fetch-run";
 import { mirrorPlayerIcon } from "@/server/services/games/icons";
 import { openGameSite, type GameSiteClient } from "@/server/services/games/sega/http";
 import { openSegaSession } from "@/server/services/games/sega/login";
-import type { Enrichment, ScoreFetchContext, ScoreFetchOutcome } from "@/server/services/games/types";
+import { friendSyncDue, savePlayerFriends } from "@/server/services/friends/sync";
+import type { Enrichment, PersistedSnapshotContext, ScoreFetchContext, ScoreFetchOutcome } from "@/server/services/games/types";
 import { fetchAlbumData } from "../albums/fetch";
 import { persistAlbumData } from "../albums/persist";
 import { fetchEventsData } from "../events/fetch";
+import { fetchFriendData } from "../friends/fetch";
 import { normalizeEvents, normalizePlayer, normalizeRecent, normalizeScore } from "../normalize";
 import { assertMaimaiPage } from "../parse-utils";
 import { parsePlayerData } from "../player/parse";
@@ -76,18 +78,28 @@ async function scrapeMaimaiNet(ctx: ScoreFetchContext, run: FetchRun, signIn: ()
       recents: recents.map(recent => normalizeRecent(recent, ctx)),
       events: events ? normalizeEvents(events) : [],
     },
-    enrich: recents.length > 0 || albums.length > 0 ? playDetailsAndAlbums(site, run, recents, albums) : undefined,
+    enrich: completeSnapshot(ctx, site, run, recents, albums),
   };
 }
 
-/** Saves each recent play's detail page and the album photos through the same site session. */
-function playDetailsAndAlbums(site: GameSiteClient, run: FetchRun, recents: RecentSongData[], albums: AlbumData[]): Enrichment {
+/** Saves each recent play's detail page, the album photos and the friend list through the same site session. */
+function completeSnapshot(ctx: ScoreFetchContext, site: GameSiteClient, run: FetchRun, recents: RecentSongData[], albums: AlbumData[]): Enrichment | undefined {
+  const { friends } = ctx.flags;
+  if (recents.length === 0 && albums.length === 0 && !friends) return undefined;
   return async persisted => {
-    const [details, photos] = await Promise.allSettled([
+    const [details, photos, friendList] = await Promise.allSettled([
       fetchAndInsertRecentSongsData(persisted.userId, persisted.region, site, recents),
       persistAlbumData(persisted.userId, persisted.chartResolution, albums, async album => (await site.bytes(album.imageUrl)).buffer),
+      friends ? syncFriends(site, run, persisted) : undefined,
     ]);
     if (details.status === "rejected") run.log.error({ err: details.reason, stepType: "recentDetails" }, "Could not save maimai recent play details");
     if (photos.status === "rejected") run.log.error({ err: photos.reason, stepType: "albums" }, "Could not save maimai album photos");
+    if (friendList.status === "rejected") run.log.error({ err: friendList.reason, stepType: "friends" }, "Could not save maimai friends");
   };
+}
+
+async function syncFriends(site: GameSiteClient, run: FetchRun, { userId, game, region }: PersistedSnapshotContext): Promise<void> {
+  if (!await friendSyncDue(userId, game, region)) return;
+  const data = await fetchFriendData(site, region);
+  if (data) await savePlayerFriends({ userId, game, region, ...data }, run.log);
 }

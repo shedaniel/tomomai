@@ -280,6 +280,10 @@
       "applications": {
         "title": "Applications",
         "description": "OAuth applications you have granted access to your account."
+      },
+      "friends": {
+        "title": "Friends",
+        "description": "Your in-game friends who also use {brand}, found automatically when you fetch."
       }
     },
     "language": {
@@ -369,6 +373,22 @@
         "description": "Your public profile link that you can share with others.",
         "copied": "Profile URL copied to clipboard!",
         "copyFailed": "Failed to copy URL to clipboard"
+      },
+      "visibility": {
+        "label": "Who can see your profile",
+        "description": "In-game friends are matched from your {game} friend list when you fetch.",
+        "private": {
+          "label": "Only me",
+          "description": "Nobody else can open your profile"
+        },
+        "friends": {
+          "label": "In-game friends",
+          "description": "Friends you're matched with can open it"
+        },
+        "public": {
+          "label": "Everyone",
+          "description": "Anyone with the link can open it"
+        }
       }
     },
     "saveChanges": "Save Changes",
@@ -669,6 +689,32 @@
       },
       "revokeSuccess": "Access revoked",
       "revokeError": "Failed to revoke access"
+    },
+    "friends": {
+      "matching": {
+        "label": "Find my in-game friends",
+        "description": "Each fetch reads your {game} friend list, at most once a day. Friend codes are never shown to anyone."
+      },
+      "listTitle": "{count, plural, =0 {Friends} one {# friend} other {# friends}}",
+      "lastSynced": "Friend list read {date}",
+      "off": "Friends are off. Turn them on to see which of your in-game friends use {brand}.",
+      "notSynced": "Fetch your scores to find your friends. Your friend list is read from {game}'s official site.",
+      "empty": "None of your in-game friends use {brand} yet.",
+      "notShared": "Profile not shared",
+      "hide": "Hide",
+      "hideTitle": "Hide {name}?",
+      "hideDescription": "You'll stop being friends on {brand}, even if you stay friends in game. They aren't told, and you can unhide them later.",
+      "hidden": {
+        "title": "Hidden",
+        "description": "People you hid. They can't open a profile you share with friends."
+      },
+      "unhide": "Unhide",
+      "error": "Couldn't update your friends. Try again.",
+      "disable": {
+        "title": "Turn off friends?",
+        "description": "Your saved friend lists are deleted, and you're removed from everyone's friends. If you turn it back on, your next fetch finds them again.",
+        "confirm": "Turn off"
+      }
     }
   },
   "dataBanner": {
@@ -678,7 +724,9 @@
     "fetchNewData": "Fetch New Data",
     "fetchingData": "Fetching data...",
     "lastUpdate": "Last updated",
-    "noDataInstructions": "No data found for this region. Click \"Fetch New Data\" to import your {game} scores. You'll need your {game} token for this process."
+    "noDataInstructions": "No data found for this region. Click \"Fetch New Data\" to import your {game} scores. You'll need your {game} token for this process.",
+    "friendView": "Friends only",
+    "friendViewHint": "Shared only with in-game friends"
   },
   "profileMetadata": {
     "title": "{username} | {brand}",
@@ -1091,7 +1139,7 @@
   "onboarding": {
     "step1": {
       "title": "Pick a username",
-      "publishToggleLabel": "Share my profile with friends",
+      "publishToggleLabel": "Make my profile public",
       "publishToggleDescription": "Let others view your scores at a public link. It's off by default, and you can change it anytime.",
       "publicUrlHint": "Your public profile:"
     },

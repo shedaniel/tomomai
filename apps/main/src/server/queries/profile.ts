@@ -17,6 +17,8 @@ export async function fetchProfileSettings(game: CanonicalGameId, userId: string
       profileShowPlayCounts: user.profileShowPlayCounts,
       profileShowEvents: user.profileShowEvents,
       profileShowInSearch: user.profileShowInSearch,
+      profileShareWithFriends: user.profileShareWithFriends,
+      friendsEnabled: user.friendsEnabled,
       fetchUseAlbums: user.fetchUseAlbums,
     })
     .from(user)

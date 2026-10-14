@@ -9,6 +9,7 @@ import { getTranslations } from "next-intl/server";
 import { getLocale, setStaticLocale } from "@/i18n/locale-server";
 import { buildPageMetadata } from "@/lib/seo";
 import { safeDecodeURIComponent } from "@/lib/utils";
+import { getServerSession } from "@/lib/auth-server";
 
 // This route looks up the user's main region from the DB and redirects to
 // /profile/[username]/[region]. It can never serve static HTML (the redirect
@@ -55,7 +56,8 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
     // Get the user's profile to find their main region
     const game = getCurrentGame();
     if (!isPlayerAvailable(game)) notFound();
-    const profileData = await resolvePublicUserByUsername(game.id, safeDecodeURIComponent(username));
+    const session = await getServerSession();
+    const profileData = await resolvePublicUserByUsername(game.id, safeDecodeURIComponent(username), session?.user.id);
     const region = getGameRegion(game, profileData.profileMainRegion);
 
     // Redirect to the specific region page using the user's main region

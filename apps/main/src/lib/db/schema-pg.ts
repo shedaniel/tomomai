@@ -55,6 +55,10 @@ export const user = pgTable("user", {
   profileShowEvents: boolean("profileShowEvents").notNull().default(true),
   profileShowInSearch: boolean("profileShowInSearch").notNull().default(true),
   profileDescription: text("profileDescription"),
+  // Matched in-game friends may view the profile even when it is not published.
+  profileShareWithFriends: boolean("profileShareWithFriends").notNull().default(false),
+  // Off keeps no friend list and leaves the user out of everyone's matches.
+  friendsEnabled: boolean("friendsEnabled").notNull().default(true),
   // Fetch settings
   fetchUseAlbums: boolean("fetchUseAlbums"),
   // Feature flag overrides for userSelectable flags. Null = no overrides.
@@ -173,6 +177,40 @@ export const userGamePreferences = pgTable("user_game_preferences", {
   updatedAt: timestamp("updatedAt", { precision: 0 }).notNull().defaultNow(),
 }, (table) => [
   primaryKey({ columns: [table.userId, table.game] }),
+]);
+
+// The in-game player a user's fetch signed in as. Friend codes are only stored as HMACs (server/services/friends/codes.ts).
+export const playerIdentities = pgTable("player_identities", {
+  id: bigint("id", { mode: "bigint" }).primaryKey().generatedAlwaysAsIdentity(),
+  userId: text("userId").notNull().references(() => user.id, { onDelete: "cascade" }),
+  game: gameEnum("game").notNull(),
+  region: regionEnum("region").notNull(),
+  codeHash: varchar("codeHash", { length: 64 }).notNull(),
+  // Null until a friend list is saved. The newer of two players' lists decides whether they are friends.
+  friendsSyncedAt: timestamp("friendsSyncedAt", { precision: 0 }),
+  updatedAt: timestamp("updatedAt", { precision: 0 }).notNull().defaultNow(),
+}, (table) => [
+  unique("player_identities_userid_game_region_unique").on(table.userId, table.game, table.region),
+  unique("player_identities_game_region_codehash_unique").on(table.game, table.region, table.codeHash),
+]);
+
+// One player's in-game friend list, replaced whole on each sync.
+export const playerFriends = pgTable("player_friends", {
+  identityId: bigint("identityId", { mode: "bigint" }).notNull().references(() => playerIdentities.id, { onDelete: "cascade" }),
+  codeHash: varchar("codeHash", { length: 64 }).notNull(),
+}, (table) => [
+  primaryKey({ columns: [table.identityId, table.codeHash] }),
+  index("player_friends_codehash_idx").on(table.codeHash),
+]);
+
+// Hiding removes a match for both users, in every game.
+export const friendHides = pgTable("friend_hides", {
+  userId: text("userId").notNull().references(() => user.id, { onDelete: "cascade" }),
+  hiddenUserId: text("hiddenUserId").notNull().references(() => user.id, { onDelete: "cascade" }),
+  createdAt: timestamp("createdAt", { precision: 0 }).notNull().defaultNow(),
+}, (table) => [
+  primaryKey({ columns: [table.userId, table.hiddenUserId] }),
+  index("friend_hides_hiddenuserid_idx").on(table.hiddenUserId),
 ]);
 
 export const fetchSessions = pgTable("fetch_sessions", {

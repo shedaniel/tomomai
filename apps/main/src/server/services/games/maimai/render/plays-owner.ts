@@ -25,12 +25,13 @@ export async function resolvePlaysOwner(
   capability: GameCapability,
 ): Promise<{ userId: string; region: Region } | Response> {
   try {
+    const session = await getServerSession();
     if ("snapshotId" in query) {
-      const { userId, region } = await resolvePublicSnapshotAccess("maimai", query.snapshotId, { capability, view: "recentPlays" });
+      const viewerId = session?.user?.id;
+      const { userId, region } = await resolvePublicSnapshotAccess("maimai", query.snapshotId, { capability, view: "recentPlays", viewerId });
       return { userId, region };
     }
     const { region } = resolveGameContext("maimai", { region: query.region, capability });
-    const session = await getServerSession();
     if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     return { userId: session.user.id, region };
   } catch (error) {

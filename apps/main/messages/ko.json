@@ -218,6 +218,10 @@
       "applications": {
         "title": "애플리케이션",
         "description": "계정 접근 권한을 부여한 OAuth 애플리케이션입니다."
+      },
+      "friends": {
+        "title": "친구",
+        "description": "{brand}을(를) 사용하는 게임 내 친구입니다. 데이터를 가져올 때 자동으로 찾습니다."
       }
     },
     "language": {
@@ -302,6 +306,22 @@
         "description": "공유 가능한 공개 프로필 링크입니다.",
         "copied": "프로필 URL이 클립보드에 복사되었습니다!",
         "copyFailed": "URL 복사에 실패했습니다."
+      },
+      "visibility": {
+        "label": "프로필 공개 범위",
+        "description": "게임 내 친구는 데이터를 가져올 때 {game} 친구 목록에서 자동으로 찾습니다.",
+        "private": {
+          "label": "나만",
+          "description": "다른 사람은 프로필을 볼 수 없습니다"
+        },
+        "friends": {
+          "label": "게임 내 친구",
+          "description": "찾은 친구만 볼 수 있습니다"
+        },
+        "public": {
+          "label": "모두",
+          "description": "링크가 있는 누구나 볼 수 있습니다"
+        }
       }
     },
     "saveChanges": "변경 사항 저장",
@@ -521,6 +541,32 @@
       },
       "revokeSuccess": "접근 권한이 해제되었습니다",
       "revokeError": "접근 권한 해제에 실패했습니다"
+    },
+    "friends": {
+      "matching": {
+        "label": "게임 내 친구 찾기",
+        "description": "데이터를 가져올 때마다 {game} 친구 목록을 읽습니다(하루 최대 1회). 친구 코드는 누구에게도 표시되지 않습니다."
+      },
+      "listTitle": "{count, plural, =0 {친구} other {친구 #명}}",
+      "lastSynced": "친구 목록 확인: {date}",
+      "off": "친구 기능이 꺼져 있습니다. 켜면 {brand}을(를) 사용하는 게임 내 친구를 볼 수 있습니다.",
+      "notSynced": "점수를 가져오면 친구를 찾을 수 있습니다. 친구 목록은 {game} 공식 사이트에서 읽습니다.",
+      "empty": "아직 {brand}을(를) 사용하는 게임 내 친구가 없습니다.",
+      "notShared": "프로필 비공개",
+      "hide": "숨기기",
+      "hideTitle": "{name}님을 숨길까요?",
+      "hideDescription": "게임에서 친구로 남아 있어도 {brand}에서는 더 이상 친구가 아닙니다. 상대에게 알림이 가지 않으며, 나중에 다시 표시할 수 있습니다.",
+      "hidden": {
+        "title": "숨김",
+        "description": "숨긴 사용자입니다. 친구에게 공유한 프로필을 볼 수 없습니다."
+      },
+      "unhide": "다시 표시",
+      "error": "친구 정보를 업데이트하지 못했습니다. 다시 시도해 주세요.",
+      "disable": {
+        "title": "친구 기능을 끌까요?",
+        "description": "저장된 친구 목록이 삭제되고 모든 사람의 친구 목록에서 빠집니다. 다시 켜면 다음에 데이터를 가져올 때 다시 찾습니다.",
+        "confirm": "끄기"
+      }
     }
   },
   "dataBanner": {
@@ -530,7 +576,9 @@
     "fetchNewData": "데이터 가져오기",
     "fetchingData": "데이터 가져오는 중...",
     "lastUpdate": "최근 업데이트",
-    "noDataInstructions": "이 지역의 데이터가 없습니다. '데이터 가져오기'를 눌러 {game} 성과를 가져오세요 (로그인/토큰 필요)."
+    "noDataInstructions": "이 지역의 데이터가 없습니다. '데이터 가져오기'를 눌러 {game} 성과를 가져오세요 (로그인/토큰 필요).",
+    "friendView": "친구 공개",
+    "friendViewHint": "게임 내 친구에게만 공개된 프로필입니다"
   },
   "profileVisibility": {
     "public": "공개 프로필",
