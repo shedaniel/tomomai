@@ -5,6 +5,7 @@ import { Button } from "@tomomai/ui";
 import { Input } from "@tomomai/ui";
 import { Label } from "@tomomai/ui";
 import { Badge } from "@tomomai/ui";
+import { Switch } from "@tomomai/ui";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -23,6 +24,7 @@ import {
   ResponsiveDialogTitle,
 } from "@tomomai/ui";
 import { trpc } from "@/lib/trpc-client";
+import { useSession } from "@/lib/auth-client";
 import { API_SCOPES, type ScopeKey } from "@/lib/api/scopes";
 import { useEnsureFreshSession, useReauthGuard } from "@/lib/security/use-reauth-guard";
 import { useSearchParams } from "next/navigation";
@@ -30,7 +32,7 @@ import { useRouter } from "@/i18n/navigation";
 import { MAX_OAUTH_APPS_PER_USER, OAUTH_APP_LIMIT_REACHED, OAUTH_APP_NAME_RESERVED } from "@/lib/developer-limits";
 import { SettingsField } from "@/components/settings/primitives";
 import { toast } from "sonner";
-import { Plus, Trash2, Globe, Loader2, RefreshCw, AlertTriangle, X, AppWindow, Pencil } from "lucide-react";
+import { Plus, Trash2, Globe, Loader2, RefreshCw, AlertTriangle, X, AppWindow, Pencil, BadgeCheck } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import {
@@ -55,6 +57,7 @@ type OAuthApp = {
   policy: string | null;
   tos: string | null;
   redirectUris: string[] | null;
+  official: boolean;
   scopes: string[] | null;
   createdAt: Date | null;
   updatedAt: Date | null;
@@ -70,6 +73,7 @@ type OAuthAppFormInit = {
   tos?: string;
   redirectUris?: string[];
   scopes?: string[];
+  official?: boolean;
 };
 
 function useOAuthAppForm(initial: OAuthAppFormInit) {
@@ -79,6 +83,7 @@ function useOAuthAppForm(initial: OAuthAppFormInit) {
   const [policyInput, setPolicyInput] = useState(initial.policy ?? "");
   const [tosInput, setTosInput] = useState(initial.tos ?? "");
   const [redirectUris, setRedirectUris] = useState<string[]>(initial.redirectUris ?? []);
+  const [official, setOfficial] = useState(initial.official ?? false);
   const [redirectInput, setRedirectInput] = useState("");
   const [selectedScopes, setSelectedScopes] = useState<Set<ScopeKey>>(
     initial.scopes
@@ -127,6 +132,7 @@ function useOAuthAppForm(initial: OAuthAppFormInit) {
     setPolicyInput(initial.policy ?? "");
     setTosInput(initial.tos ?? "");
     setRedirectUris(initial.redirectUris ?? []);
+    setOfficial(initial.official ?? false);
     setRedirectInput("");
     setSelectedScopes(
       initial.scopes
@@ -145,6 +151,7 @@ function useOAuthAppForm(initial: OAuthAppFormInit) {
     policyInput, setPolicyInput,
     tosInput, setTosInput,
     redirectUris,
+    official, setOfficial,
     redirectInput, setRedirectInput,
     selectedScopes,
     implied,
@@ -158,6 +165,28 @@ function useOAuthAppForm(initial: OAuthAppFormInit) {
 }
 
 // ── Shared field components ───────────────────────────────────────────────────
+
+function useIsAdmin(): boolean {
+  const { data } = useSession();
+  return (data?.user as { role?: string | null } | undefined)?.role === "admin";
+}
+
+/** Admin-only: the consent screen vouches for official apps instead of warning about them. */
+function OfficialAppField({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) {
+  const t = useTranslations("settings.developer.oauthApps");
+  return (
+    <label className="flex cursor-pointer items-start justify-between gap-4 rounded-lg border border-border px-3 py-2.5">
+      <span className="space-y-0.5">
+        <span className="flex items-center gap-1.5 text-sm font-medium">
+          <BadgeCheck className="h-4 w-4 text-primary" aria-hidden />
+          {t("officialLabel")}
+        </span>
+        <span className="block text-xs text-muted-foreground">{t("officialDescription")}</span>
+      </span>
+      <Switch checked={checked} onCheckedChange={onChange} />
+    </label>
+  );
+}
 
 function RedirectUrisField({
   redirectUris,
@@ -269,6 +298,7 @@ function CreateOAuthAppDialog({
   const t = useTranslations("settings.developer");
   const tc = useTranslations("common");
   const form = useOAuthAppForm(CREATE_INITIAL);
+  const isAdmin = useIsAdmin();
   const [createdApp, setCreatedApp] = useState<{ clientId: string; secret: string } | null>(null);
 
   const createMutation = trpc.developer.createOAuthApp.useMutation({
@@ -296,6 +326,7 @@ function CreateOAuthAppDialog({
       redirectUris: form.redirectUris,
       scopes: Array.from(form.selectedScopes) as [ScopeKey, ...ScopeKey[]],
       uri: form.uriInput || undefined,
+      official: isAdmin ? form.official : undefined,
     });
   }
 
@@ -353,6 +384,8 @@ function CreateOAuthAppDialog({
                 />
                 <p className="text-xs text-muted-foreground">{t("oauthApps.createDialog.nameDescription")}</p>
               </div>
+
+              {isAdmin && <OfficialAppField checked={form.official} onChange={form.setOfficial} />}
 
               <div className="space-y-2">
                 <Label htmlFor="oauth-uri">{t("oauthApps.createDialog.uriLabel")}</Label>
@@ -437,7 +470,9 @@ function EditOAuthAppDialog({
     redirectUris: app.redirectUris ?? [],
     // offline_access is stored on every app but is not a selectable data scope.
     scopes: (app.scopes ?? []).filter((s) => s in API_SCOPES),
+    official: app.official,
   });
+  const isAdmin = useIsAdmin();
 
   const updateMutation = trpc.developer.updateOAuthApp.useMutation({
     ...useReauthGuard({
@@ -465,6 +500,7 @@ function EditOAuthAppDialog({
       policy: form.policyInput || null,
       tos: form.tosInput || null,
       scopes: Array.from(form.selectedScopes) as [ScopeKey, ...ScopeKey[]],
+      official: isAdmin ? form.official : undefined,
     });
   }
 
@@ -527,6 +563,12 @@ function EditOAuthAppDialog({
               addLabel={t("oauthApps.createDialog.redirectAddButton")}
             />
           </div>
+
+          {isAdmin && (
+            <div className="border-t pt-4">
+              <OfficialAppField checked={form.official} onChange={form.setOfficial} />
+            </div>
+          )}
 
           {/* Scopes */}
           <div className="border-t pt-4 space-y-4">
@@ -691,7 +733,15 @@ export function OAuthAppsSection() {
                 )}
               </div>
               <div className="flex-1 min-w-0 space-y-2">
-                <span className="text-sm font-semibold leading-none">{app.name ?? app.clientId}</span>
+                <span className="flex items-center gap-1.5 text-sm font-semibold leading-none">
+                  {app.name ?? app.clientId}
+                  {app.official && (
+                    <Badge variant="secondary" className="gap-1 text-primary">
+                      <BadgeCheck className="h-3 w-3" aria-hidden />
+                      {t("oauthApps.officialBadge")}
+                    </Badge>
+                  )}
+                </span>
                 <p className="font-mono text-xs bg-muted text-muted-foreground px-1.5 py-0.5 rounded-sm border border-border w-fit truncate max-w-xs">
                   {app.clientId}
                 </p>

@@ -17,6 +17,7 @@ function assertInternalScopesAllowed(scopes: readonly ScopeKey[], userRole: stri
 }
 import { z } from "zod";
 import { db } from "@/lib/db";
+import { isOfficialClient, officialMetadata } from "@/lib/oauth-official";
 import { apikey, oauthClient, oauthConsent, oauthRefreshToken, oauthAccessToken } from "@/lib/db/schema-pg";
 import { and, count, eq } from "drizzle-orm";
 import {
@@ -80,6 +81,13 @@ async function assertUnderLimit(
 function assertAppNameAllowed(name: string, role: string | null | undefined) {
   if (role !== "admin" && isReservedAppName(name)) {
     throw new TRPCError({ code: "FORBIDDEN", message: OAUTH_APP_NAME_RESERVED });
+  }
+}
+
+/** The consent screen vouches for official apps, so only admins may mark one. */
+function assertOfficialAllowed(official: boolean | undefined, role: string | null | undefined) {
+  if (official !== undefined && role !== "admin") {
+    throw new TRPCError({ code: "FORBIDDEN", message: "Only admins can mark an app as official" });
   }
 }
 
@@ -163,12 +171,13 @@ export const developerRouter = router({
           scopes: oauthClient.scopes,
           policy: oauthClient.policy,
           tos: oauthClient.tos,
+          metadata: oauthClient.metadata,
           createdAt: oauthClient.createdAt,
           updatedAt: oauthClient.updatedAt,
         })
         .from(oauthClient)
         .where(eq(oauthClient.userId, ctx.session.user.id));
-      return apps;
+      return apps.map(({ metadata, ...app }) => ({ ...app, official: isOfficialClient(metadata) }));
     }),
 
   createOAuthApp: protectedProcedure
@@ -181,11 +190,13 @@ export const developerRouter = router({
         icon: httpsWebUrl.optional(),
         policy: safeWebUrl.optional(),
         tos: safeWebUrl.optional(),
+        official: z.boolean().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
       requireFreshSession(ctx.session);
       assertAppNameAllowed(input.name, ctx.session.user.role);
+      assertOfficialAllowed(input.official, ctx.session.user.role);
       await assertUnderLimit(ctx.session.user.role, oauthClient, oauthClient.userId, ctx.session.user.id, MAX_OAUTH_APPS_PER_USER, OAUTH_APP_LIMIT_REACHED);
       // Delegate creation to Better Auth so it handles client_id generation,
       // secret hashing, and any internal bookkeeping consistently.
@@ -218,7 +229,10 @@ export const developerRouter = router({
       try {
         await db
           .update(oauthClient)
-          .set({ userId: ctx.session.user.id })
+          .set({
+            userId: ctx.session.user.id,
+            ...(input.official !== undefined && { metadata: officialMetadata(input.official) }),
+          })
           .where(eq(oauthClient.clientId, (result as any).client_id));
       } catch (err) {
         const clientId = (result as any).client_id;
@@ -248,9 +262,11 @@ export const developerRouter = router({
         policy: safeWebUrl.optional().nullable(),
         tos: safeWebUrl.optional().nullable(),
         scopes: z.array(oauthScopeKey).min(1).optional(),
+        official: z.boolean().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
+      assertOfficialAllowed(input.official, ctx.session.user.role);
       // Redirect-URI changes can re-target the OAuth flow at an attacker-controlled
       // endpoint, so require a fresh session for them. Pure metadata edits (name,
       // icon, policy/tos) are lower-risk and stay session-only.
@@ -280,6 +296,12 @@ export const developerRouter = router({
       });
 
       if (!result) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to update OAuth application" });
+      if (input.official !== undefined) {
+        await db
+          .update(oauthClient)
+          .set({ metadata: officialMetadata(input.official) })
+          .where(eq(oauthClient.clientId, input.clientId));
+      }
       return result;
     }),
 
@@ -332,11 +354,12 @@ export const developerRouter = router({
           appName: oauthClient.name,
           appIcon: oauthClient.icon,
           appUri: oauthClient.uri,
+          appMetadata: oauthClient.metadata,
         })
         .from(oauthConsent)
         .innerJoin(oauthClient, eq(oauthConsent.clientId, oauthClient.clientId))
         .where(eq(oauthConsent.userId, ctx.session.user.id));
-      return rows;
+      return rows.map(({ appMetadata, ...row }) => ({ ...row, official: isOfficialClient(appMetadata) }));
     }),
 
   revokeOAuthAuthorization: protectedProcedure

@@ -65,7 +65,16 @@
   "security": {
     "reauth": {
       "title": "재인증이 필요합니다",
-      "description": "이 작업을 수행하려면 다시 로그인해야 합니다. 재인증을 위해 제공자 페이지로 이동합니다."
+      "description": "이 작업에는 최근 로그인이 필요합니다. 계속하려면 본인임을 확인하세요.",
+      "noMethod": "이 작업에는 최근 로그인이 필요하지만, 여기서 확인할 수 있는 로그인 방법이 계정에 없습니다. 로그아웃 후 다시 로그인한 다음 다시 시도하세요.",
+      "failed": "본인 확인에 실패했습니다. 다시 시도하세요.",
+      "signOut": "로그아웃",
+      "methods": {
+        "discord": "Discord로 계속",
+        "twitter": "X로 계속",
+        "passkey": "패스키 사용",
+        "dev": "세션 새로 고침 (개발용)"
+      }
     }
   },
   "auth": {
@@ -434,6 +443,9 @@
         }
       },
       "oauthApps": {
+        "officialLabel": "tomomai 공식 앱",
+        "officialDescription": "동의 화면에 서드파티 앱 경고 대신 공식 배지를 표시합니다. 관리자만 설정할 수 있습니다.",
+        "officialBadge": "공식",
         "label": "OAuth 애플리케이션",
         "description": "OAuth 2.1 + PKCE로 사용자를 대신해 접근을 요청할 수 있는 앱을 등록합니다.",
         "createButton": "새 애플리케이션",
@@ -507,6 +519,7 @@
       }
     },
     "applications": {
+      "officialBadge": "공식",
       "noAuthorizations": "아직 인가한 OAuth 애플리케이션이 없습니다.",
       "grantedAt": "{date}에 인가됨",
       "revokeButton": "해제",
@@ -1278,6 +1291,18 @@
     "sensitive": "민감",
     "redirectNotice": "완료하면 {host}(으)로 돌아갑니다",
     "trustNotice": "{app}은(는) tomomai가 운영하는 앱이 아닙니다. {links, select, both {데이터는 이 앱의 <terms>이용약관</terms> 및 <privacy>개인정보 처리방침</privacy>에 따라 처리됩니다.} terms {데이터는 이 앱의 <terms>이용약관</terms>에 따라 처리됩니다.} privacy {데이터는 이 앱의 <privacy>개인정보 처리방침</privacy>에 따라 처리됩니다.} other {이 앱은 이용약관이나 개인정보 처리방침을 제공하지 않습니다.}} 신뢰할 수 있는 경우에만 계속하세요.",
+    "officialBadge": "tomomai 공식 앱",
+    "officialNotice": "{app}은(는) tomomai가 만들고 운영합니다.",
+    "activeSince": "{date}부터 활동 중",
+    "usage": {
+      "lt10": "10명 미만이 사용 중",
+      "lt50": "50명 미만이 사용 중",
+      "lt100": "100명 미만이 사용 중",
+      "gte100": "100명 이상이 사용 중",
+      "gte200": "200명 이상이 사용 중",
+      "gte500": "500명 이상이 사용 중",
+      "gte1000": "1,000명 이상이 사용 중"
+    },
     "revokeNotice": "언제든지 <link>설정</link>에서 접근 권한을 취소할 수 있습니다.",
     "deny": "거부",
     "authorize": "허용",

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { createRoot } from "react-dom/client";
-import { Button } from "@tomomai/ui";
+import { Button, cn } from "@tomomai/ui";
 import {
   ResponsiveDialog,
   ResponsiveDialogContent,
@@ -46,6 +46,7 @@ function Host<T>({
   finish: (v: T) => void;
 }) {
   const [open, setOpen] = useState(true);
+  const stacked = opts.actions.length > 2;
 
   const choose = (v: T) => {
     if (!open) return;
@@ -69,13 +70,14 @@ function Host<T>({
             </ResponsiveDialogDescription>
           ) : null}
         </ResponsiveDialogHeader>
-        <ResponsiveDialogFooter className="flex-col sm:flex-row gap-2">
+        {/* More than two choices read as a list, so they stack instead of overflowing one row. */}
+        <ResponsiveDialogFooter className={cn("flex-col gap-2", stacked ? "sm:flex-col" : "sm:flex-row")}>
           {opts.actions.map((a, i) => (
             <Button
               key={i}
               variant={a.variant ?? "default"}
               onClick={() => choose(a.value)}
-              className="w-full sm:w-auto"
+              className={cn("w-full", !stacked && "sm:w-auto")}
             >
               {a.label}
             </Button>

@@ -3,8 +3,8 @@
 import { Suspense, useCallback, useEffect, useState, type ReactNode } from "react";
 import Image from "next/image";
 import { useSearchParams } from "next/navigation";
-import { useTranslations } from "next-intl";
-import { ArrowDown, Check, ChevronRight, RefreshCw, ExternalLink, Loader2, Pencil, RotateCcw, ShieldAlert, TriangleAlert } from "lucide-react";
+import { useLocale, useTranslations } from "next-intl";
+import { ArrowDown, BadgeCheck, CalendarDays, Check, ChevronRight, RefreshCw, ExternalLink, Loader2, Pencil, RotateCcw, ShieldAlert, TriangleAlert, Users } from "lucide-react";
 import { Button, Skeleton } from "@tomomai/ui";
 import { Link } from "@/i18n/navigation";
 import { authClient, useSession } from "@/lib/auth-client";
@@ -17,6 +17,7 @@ import { consentErrorKind, readOAuthAuthorizeError, type ConsentErrorKind } from
 import { LocaleSwitcher } from "@/components/locale-switcher";
 import { isCNExclusive } from "@/lib/enabled-regions";
 import { clientIconSrc } from "@/lib/oauth-client-icon";
+import type { UsageBucket } from "@/lib/oauth-official";
 import { AnimatePresence, motion } from "motion/react";
 import { getTransition } from "@/lib/animation-constants";
 
@@ -28,6 +29,9 @@ type PublicClient = {
   tos_uri?: string;
   policy_uri?: string;
 };
+
+/** From /api/oauth/client-info. Optional: the screen still works without it. */
+type ClientInfo = { official: boolean; createdAt: string | null; usage: UsageBucket };
 
 type ClientState =
   | { status: "loading" }
@@ -80,7 +84,9 @@ function OAuthConsent() {
   const canAuthorize = unknownScopes.length === 0 && knownScopes.length > 0;
   const redirectHost = hostOf(searchParams.get("redirect_uri"));
 
+  const locale = useLocale();
   const [state, setState] = useState<ClientState>({ status: "loading" });
+  const [info, setInfo] = useState<ClientInfo | null>(null);
   const [submitting, setSubmitting] = useState<"accept" | "deny" | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const { attach: attachScroll, atEnd, reviewed, scrollToEnd } = useScrollReview();
@@ -103,6 +109,10 @@ function OAuthConsent() {
         else setState({ status: "error", kind: (error as { error?: string } | null)?.error === "invalid_signature" ? "tampered" : "loadFailed" });
       })
       .catch(() => !cancelled && setState({ status: "error", kind: "loadFailed" }));
+    fetch(`/api/oauth/client-info/${encodeURIComponent(clientId)}`)
+      .then((res) => (res.ok ? (res.json() as Promise<ClientInfo>) : null))
+      .then((data) => !cancelled && setInfo(data))
+      .catch(() => {});
     return () => {
       cancelled = true;
     };
@@ -131,6 +141,10 @@ function OAuthConsent() {
   const tosHref = safeHref(client.tos_uri);
   const policyHref = safeHref(client.policy_uri);
   const signedIn = !!session?.user;
+  const official = info?.official === true;
+  const activeSince = info?.createdAt
+    ? new Intl.DateTimeFormat(locale, { year: "numeric", month: "short" }).format(new Date(info.createdAt))
+    : null;
 
   // Restarting the request after sign-out lands on the signed-out consent screen, ready for another account.
   async function switchAccount() {
@@ -190,6 +204,12 @@ function OAuthConsent() {
               : t("signedOutTitle", { app: appName })}
           </h1>
           <AppHomepage url={client.client_uri} />
+          {official && (
+            <span className="mt-2 inline-flex items-center gap-1 rounded-full bg-primary/12 px-2.5 py-0.5 text-xs font-medium text-primary">
+              <BadgeCheck className="size-3.5" aria-hidden />
+              {t("officialBadge")}
+            </span>
+          )}
           {signedIn && (
             <>
               <AccountChip name={session.user.name} image={session.user.image} label={t("signedInAs", { name: session.user.name })} />
@@ -224,19 +244,27 @@ function OAuthConsent() {
         </section>
 
         <ul className="space-y-2 px-6 py-5 text-xs text-muted-foreground">
+          {activeSince && (
+            <Notice icon={<CalendarDays className="size-3.5" />}>{t("activeSince", { date: activeSince })}</Notice>
+          )}
+          {info && <Notice icon={<Users className="size-3.5" />}>{t(`usage.${info.usage}`)}</Notice>}
           {redirectHost && (
             <Notice icon={<ExternalLink className="size-3.5" />}>
               {t("redirectNotice", { host: redirectHost })}
             </Notice>
           )}
-          <Notice icon={<ShieldAlert className="size-3.5" />}>
-            {t.rich("trustNotice", {
-              app: appName,
-              links: tosHref && policyHref ? "both" : tosHref ? "terms" : policyHref ? "privacy" : "none",
-              terms: (chunks) => <AppLink href={tosHref}>{chunks}</AppLink>,
-              privacy: (chunks) => <AppLink href={policyHref}>{chunks}</AppLink>,
-            })}
-          </Notice>
+          {official ? (
+            <Notice icon={<BadgeCheck className="size-3.5 text-primary" />}>{t("officialNotice", { app: appName })}</Notice>
+          ) : (
+            <Notice icon={<ShieldAlert className="size-3.5" />}>
+              {t.rich("trustNotice", {
+                app: appName,
+                links: tosHref && policyHref ? "both" : tosHref ? "terms" : policyHref ? "privacy" : "none",
+                terms: (chunks) => <AppLink href={tosHref}>{chunks}</AppLink>,
+                privacy: (chunks) => <AppLink href={policyHref}>{chunks}</AppLink>,
+              })}
+            </Notice>
+          )}
           {signedIn && (
             <Notice icon={<RotateCcw className="size-3.5" />}>
               {t.rich("revokeNotice", {

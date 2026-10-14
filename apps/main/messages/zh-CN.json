@@ -68,7 +68,16 @@
   "security": {
     "reauth": {
       "title": "需要重新认证",
-      "description": "此操作需要重新登录。我们会将你重定向到登录服务提供商以重新进行身份验证。"
+      "description": "此操作需要你最近登录过。请确认是你本人以继续。",
+      "noMethod": "此操作需要你最近登录过，但你的账户没有可在此确认身份的登录方式。请退出并重新登录后再试一次。",
+      "failed": "无法确认你的身份，请重试。",
+      "signOut": "退出登录",
+      "methods": {
+        "discord": "使用 Discord 继续",
+        "twitter": "使用 X 继续",
+        "passkey": "使用通行密钥",
+        "dev": "刷新会话（仅限开发）"
+      }
     }
   },
   "auth": {
@@ -164,6 +173,18 @@
     "sensitive": "敏感",
     "redirectNotice": "完成后将返回 {host}",
     "trustNotice": "{app} 并非由 tomomai 运营。{links, select, both {你的数据将按照其<terms>服务条款</terms>和<privacy>隐私政策</privacy>处理。} terms {你的数据将按照其<terms>服务条款</terms>处理。} privacy {你的数据将按照其<privacy>隐私政策</privacy>处理。} other {该应用未提供服务条款或隐私政策。}}请仅在信任该应用时继续。",
+    "officialBadge": "tomomai 官方应用",
+    "officialNotice": "{app} 由 tomomai 开发和运营。",
+    "activeSince": "自{date}起活跃",
+    "usage": {
+      "lt10": "少于 10 人使用",
+      "lt50": "少于 50 人使用",
+      "lt100": "少于 100 人使用",
+      "gte100": "100 人以上使用",
+      "gte200": "200 人以上使用",
+      "gte500": "500 人以上使用",
+      "gte1000": "1,000 人以上使用"
+    },
     "revokeNotice": "你可以随时在<link>设置</link>中撤销访问权限。",
     "deny": "拒绝",
     "authorize": "授权",
@@ -575,6 +596,9 @@
         }
       },
       "oauthApps": {
+        "officialLabel": "tomomai 官方应用",
+        "officialDescription": "同意页面会显示官方标识，取代第三方应用的提醒。仅管理员可设置。",
+        "officialBadge": "官方",
         "errors": {
           "limitReached": "最多可创建 {max} 个 OAuth 应用。请先删除一个再创建新的。",
           "nameReserved": "应用名称不能包含“tomomai”，以免用户误以为是官方应用。"
@@ -648,6 +672,7 @@
       }
     },
     "applications": {
+      "officialBadge": "官方",
       "noAuthorizations": "你尚未授权任何 OAuth 应用程序。",
       "grantedAt": "于 {date} 授权",
       "revokeButton": "撤销",

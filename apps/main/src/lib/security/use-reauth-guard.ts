@@ -10,8 +10,27 @@ export interface UseReauthGuardOptions {
   errorMessages?: Record<string, string>;
 }
 
+function useReauthStrings() {
+  const c = useTranslations("common");
+  const r = useTranslations("security.reauth");
+  return {
+    title: r("title"),
+    description: r("description"),
+    noMethodDescription: r("noMethod"),
+    methodLabels: {
+      discord: r("methods.discord"),
+      twitter: r("methods.twitter"),
+      passkey: r("methods.passkey"),
+      dev: r("methods.dev"),
+    },
+    signOutLabel: r("signOut"),
+    failedMessage: r("failed"),
+    cancelLabel: c("cancel"),
+  };
+}
+
 /**
- * Hook wrapper around `reauthGuard` that injects shared confirm-dialog strings
+ * Hook wrapper around `reauthGuard` that injects the shared reauth dialog strings
  * from `common.*` and `security.reauth.*`. Spread into a mutation:
  *
  *   const m = useMutation({
@@ -21,15 +40,7 @@ export interface UseReauthGuardOptions {
  *   });
  */
 export function useReauthGuard(opts: UseReauthGuardOptions) {
-  const c = useTranslations("common");
-  const r = useTranslations("security.reauth");
-  return reauthGuard({
-    ...opts,
-    title: r("title"),
-    description: r("description"),
-    confirmLabel: c("continue"),
-    cancelLabel: c("cancel"),
-  });
+  return reauthGuard({ ...opts, ...useReauthStrings() });
 }
 
 /**
@@ -37,15 +48,6 @@ export function useReauthGuard(opts: UseReauthGuardOptions) {
  * to after reauth, ideally one that reopens the form.
  */
 export function useEnsureFreshSession(reauthMessage: string) {
-  const c = useTranslations("common");
-  const r = useTranslations("security.reauth");
-  return (callbackURL: string) =>
-    ensureFreshSession({
-      callbackURL,
-      reauthMessage,
-      title: r("title"),
-      description: r("description"),
-      confirmLabel: c("continue"),
-      cancelLabel: c("cancel"),
-    });
+  const strings = useReauthStrings();
+  return (callbackURL: string) => ensureFreshSession({ callbackURL, reauthMessage, ...strings });
 }

@@ -4,14 +4,14 @@ import { db } from "@/lib/db";
 import { oauthClient } from "@/lib/db/schema-pg";
 import { requestLogger } from "@/lib/request-logger";
 import { fetchPublicImage } from "@/lib/security/public-image";
-import { clientIconLimiter, rateLimit } from "@/lib/security/redis-rate-limit";
+import { oauthClientPublicLimiter, rateLimit } from "@/lib/security/redis-rate-limit";
 
 export const runtime = "nodejs";
 
 const MISS_HEADERS = { "Cache-Control": "public, max-age=300, s-maxage=300" };
 
 export async function GET(request: NextRequest, context: { params: Promise<{ clientId: string }> }) {
-  const limited = await rateLimit(request, clientIconLimiter);
+  const limited = await rateLimit(request, oauthClientPublicLimiter);
   if (limited) return limited;
 
   const { clientId } = await context.params;
