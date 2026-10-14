@@ -95,6 +95,7 @@
     "flags": "^4.0.3",
     "gray-matter": "^4.0.3",
     "ioredis": "^5.11.1",
+    "ipaddr.js": "^2.3.0",
     "jsdom": "^27.4.0",
     "kuromoji": "^0.1.2",
     "kuroshiro": "^1.2.0",

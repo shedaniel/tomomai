@@ -1,6 +1,7 @@
 "use client";
 
 import { Suspense, useCallback, useEffect, useState, type ReactNode } from "react";
+import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { ArrowDown, Check, ChevronRight, RefreshCw, ExternalLink, Loader2, Pencil, RotateCcw, ShieldAlert, TriangleAlert } from "lucide-react";
@@ -11,10 +12,11 @@ import { useAuthDialog } from "@/components/auth/auth-dialog-provider";
 import { API_SCOPES, OFFLINE_ACCESS, type ScopeKey } from "@/lib/api/scopes";
 import { grantedScopeTree, type TreeNode } from "@/lib/api/scope-tree";
 import { safeHref, safeImg } from "@/lib/security/oauth-url";
-import { cn } from "@/lib/utils";
+import { cn, isR2Url } from "@/lib/utils";
 import { consentErrorKind, readOAuthAuthorizeError, type ConsentErrorKind } from "@/lib/oauth-errors";
 import { LocaleSwitcher } from "@/components/locale-switcher";
 import { isCNExclusive } from "@/lib/enabled-regions";
+import { clientIconSrc } from "@/lib/oauth-client-icon";
 import { AnimatePresence, motion } from "motion/react";
 import { getTransition } from "@/lib/animation-constants";
 
@@ -385,7 +387,7 @@ function ConsentShell({ children }: { children: ReactNode }) {
 }
 
 function AppMark({ client, name }: { client: PublicClient; name: string }) {
-  const logo = safeImg(client.logo_uri);
+  const logo = clientIconSrc(client.client_id, safeImg(client.logo_uri));
   return (
     <span className="flex size-14 items-center justify-center overflow-hidden rounded-[1rem] border border-border bg-primary/10 text-xl font-semibold text-primary">
       {logo ? <img src={logo} alt="" className="size-full object-cover" /> : name.charAt(0).toUpperCase()}
@@ -414,7 +416,11 @@ function AccountChip({ name, image, label }: { name: string; image?: string | nu
   return (
     <p className="mt-4 inline-flex max-w-full items-center gap-2 rounded-full bg-background/60 py-1 pr-3.5 pl-1 text-xs text-muted-foreground">
       <span className="flex size-6 shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary/15 text-[0.6875rem] font-semibold text-primary">
-        {image ? <img src={image} alt="" className="size-full object-cover" /> : name.charAt(0).toUpperCase()}
+        {image ? (
+          <Image src={image} alt="" width={24} height={24} unoptimized={isR2Url(image)} className="size-full object-cover" />
+        ) : (
+          name.charAt(0).toUpperCase()
+        )}
       </span>
       <span className="min-w-0 truncate">{label}</span>
     </p>

@@ -320,6 +320,9 @@ importers:
       ioredis:
         specifier: ^5.11.1
         version: 5.11.1
+      ipaddr.js:
+        specifier: ^2.3.0
+        version: 2.3.0
       jsdom:
         specifier: ^27.4.0
         version: 27.4.0(@noble/hashes@2.0.1)

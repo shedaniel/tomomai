@@ -92,3 +92,11 @@ export const passkeyRegisterLimiter = new RedisRateLimiter({
   failClosed: true,
   logger,
 });
+
+/** OAuth app icon proxy. The CDN absorbs repeat views, so this only bounds cache misses. */
+export const clientIconLimiter = new RedisRateLimiter({
+  name: "oauth-client-icon",
+  windowSeconds: 60,
+  max: 60,
+  logger,
+});
