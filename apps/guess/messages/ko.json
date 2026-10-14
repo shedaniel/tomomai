@@ -158,6 +158,7 @@
       "legendSolved": "정답",
       "legendLate": "늦은 정답",
       "legendMissed": "오답",
+      "legendPlaying": "진행 중",
       "legendNone": "미플레이",
       "averageHints": "평균 힌트 수",
       "averageAudio": "평균 음원 길이",

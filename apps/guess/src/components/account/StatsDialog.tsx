@@ -42,7 +42,7 @@ function cellClass(day: CalendarDay, hintCount: number): string {
     return "bg-emerald-500/50";
   }
   if (day.status === "lost") return "bg-rose-500/70";
-  if (day.status === "playing") return "bg-amber-400/70";
+  if (day.status === "playing") return "ring-[1.5px] ring-inset ring-foreground/40";
   return "bg-foreground/[0.07]";
 }
 
@@ -125,6 +125,7 @@ function Calendar({
         <Legend className="bg-emerald-500" label={t("legendSolved")} />
         <Legend className="ring-[1.5px] ring-inset ring-emerald-500/80" label={t("legendLate")} />
         <Legend className="bg-rose-500/70" label={t("legendMissed")} />
+        <Legend className="ring-[1.5px] ring-inset ring-foreground/40" label={t("legendPlaying")} />
         <Legend className="bg-foreground/[0.07]" label={t("legendNone")} />
       </div>
     </div>
