@@ -113,7 +113,8 @@ export const dbRouter = router({
               inArray(snapshotScores.snapshotId, latestSnapshotIds)
             )
             .groupBy(songs.level)
-            .orderBy(songs.level);
+            // Levels are text, so order by the number and then the "+", or "10" would sort before "2".
+            .orderBy(sql`substring(${songs.level} from '^[0-9]+')::int`, sql`${songs.level} like '%+'`);
 
           const averageAchievementByLevel = averageAchievementByLevelQuery.map(item => ({
             level: item.level,

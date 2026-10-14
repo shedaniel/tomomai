@@ -19,6 +19,7 @@ import { Button } from "@tomomai/ui";
 import { motion, AnimatePresence } from "motion/react";
 import { FilterPanel, GenericFilter, getFilterKey } from "@/components/filter-panel";
 import { createRecommendationFilterCategories, createRecommendationFilterLabel, applyRecommendationFilters } from "./recommendation-filters";
+import { useBestBucketLabels } from "./recommendation-buckets";
 import { STAGGER, getTransition } from "@/lib/animation-constants";
 import { logger } from "@/lib/logger";
 import { trpc } from "@/lib/trpc-client";
@@ -119,7 +120,7 @@ export function RecommendationCard({ selectedSnapshotData, flags, region }: { se
   const frontendGame = useGame();
   const game = frontendGame.id;
   const { scoreLabel } = usePresentation();
-  const bestBuckets = Object.fromEntries(getGameRankingBuckets(game).map(bucket => [bucket.key, t('dataContent.rankingBucket.short', { size: bucket.size })]));
+  const bestBuckets = useBestBucketLabels();
   const isDesktop = useMediaQuery("(min-width: 768px)", { initializeWithValue: false });
   const [filterCategory, setFilterCategory] = useState<"all" | "new" | "old" | "best">("all");
   const [advancedFilters, setAdvancedFilters] = useState<GenericFilter[]>([]);

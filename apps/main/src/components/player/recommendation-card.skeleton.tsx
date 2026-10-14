@@ -3,9 +3,11 @@
 import { Heart } from "lucide-react";
 import { Skeleton } from "@tomomai/ui";
 import { useTranslations } from "next-intl";
+import { useBestBucketLabels } from "./recommendation-buckets";
 
 export function RecommendationCardSkeleton() {
   const t = useTranslations();
+  const bestBuckets = useBestBucketLabels();
   return (
     <div className="space-y-6">
       <div>
@@ -14,7 +16,7 @@ export function RecommendationCardSkeleton() {
           {t("dataContent.tabs.recommendations")}
         </h2>
         <div className="text-sm text-muted-foreground">
-          {t("recommendations.description")}
+          {t("recommendations.description", bestBuckets)}
         </div>
       </div>
       <div className="space-y-1">

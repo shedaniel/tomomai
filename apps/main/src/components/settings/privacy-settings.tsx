@@ -183,7 +183,7 @@ function PrivacyFields({ friends }: { friends: boolean }) {
           layout="inline"
           icon={Globe}
           label={t("settings.profile.publishProfile")}
-          description={t("settings.profile.publishDescription", { game: game.brand.displayName })}
+          description={t("settings.profile.publishDescription")}
           htmlFor="publish-profile"
           action={
             <Switch

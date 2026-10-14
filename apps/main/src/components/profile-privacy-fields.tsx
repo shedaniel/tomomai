@@ -47,7 +47,7 @@ export function ProfilePrivacyFields({
             layout="inline"
             htmlFor={id}
             label={t(`settings.profile.privacy.${labelKey}.label`)}
-            description={t(`settings.profile.privacy.${labelKey}.description`, { game: game.brand.displayName })}
+            description={t(`settings.profile.privacy.${labelKey}.description`)}
             labelClassName="text-sm font-normal"
             action={
               <Switch
