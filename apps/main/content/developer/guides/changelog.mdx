@@ -135,6 +135,13 @@ CHUNITHM on tomochu.app. A choice the game does not enable, or no choice at
 all, answers the game's first enabled region. Both fields are `null` only
 while the game enables no region. The other settings are shared by both games.
 
+### Scopes cover every game
+
+A scope is not tied to a game. A key or OAuth grant that may start a fetch,
+remove a saved token or read icons can do so for maimai DX and CHUNITHM alike,
+including grants made before this release. The scope descriptions on the
+consent screen and in developer settings now say they apply to every game.
+
 ### Errors
 
 Errors with a stable cause carry a `code` next to `error`, and that code is

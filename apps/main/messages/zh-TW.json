@@ -329,7 +329,7 @@
     },
     "profile": {
       "publishProfile": "公開個人檔案",
-      "publishDescription": "公開你的 {game} 個人檔案，讓其他玩家可以查看你的分數和進度。",
+      "publishDescription": "公開你的個人檔案，讓其他玩家可以查看你在所有遊戲中的分數和進度。",
       "mainRegion": {
         "label": "主要地區",
         "description": "選擇用於公開 {game} 個人檔案的主要地區。",
@@ -353,7 +353,7 @@
         },
         "showPlayCounts": {
           "label": "顯示遊玩次數",
-          "description": "顯示你的 {game} 遊玩次數。"
+          "description": "顯示你的遊玩次數。"
         },
         "showEvents": {
           "label": "顯示活動",
@@ -499,7 +499,7 @@
         },
         "snapshot:latest:icon:read": {
           "name": "最新頭像",
-          "description": "目前的 {game} 頭像，可能是用遊戲內相機拍攝的臉部照片"
+          "description": "所有遊戲中目前的頭像，可能是用遊戲內相機拍攝的臉部照片"
         },
         "snapshot:all:metadata:read": {
           "name": "快照紀錄",
@@ -519,7 +519,7 @@
         },
         "snapshot:all:icon:read": {
           "name": "頭像紀錄",
-          "description": "所有快照中的 {game} 頭像，可能是用遊戲內相機拍攝的臉部照片"
+          "description": "所有遊戲的所有快照中的頭像，可能是用遊戲內相機拍攝的臉部照片"
         },
         "recent:read": {
           "name": "最近遊玩",
@@ -563,11 +563,11 @@
         },
         "fetch:start": {
           "name": "開始同步",
-          "description": "使用已儲存的 {game} 權杖同步新資料，並新增一個快照"
+          "description": "使用已儲存的權杖同步任何遊戲的新資料，並新增一個快照"
         },
         "fetch:delete": {
-          "name": "刪除已儲存的 {game} 權杖",
-          "description": "重新登入 {game} 前將無法同步"
+          "name": "刪除已儲存的遊戲權杖",
+          "description": "重新登入該遊戲前將無法同步"
         },
         "snapshot:latest:read": {
           "name": "最新快照",

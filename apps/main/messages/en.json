@@ -329,7 +329,7 @@
     },
     "profile": {
       "publishProfile": "Publish Profile",
-      "publishDescription": "Make your {game} profile publicly accessible for others to view your scores and progress.",
+      "publishDescription": "Make your profile publicly accessible for others to view your scores and progress in every game.",
       "mainRegion": {
         "label": "Main Region",
         "description": "Choose the primary region of your published {game} profile.",
@@ -353,7 +353,7 @@
         },
         "showPlayCounts": {
           "label": "Show Play Counts",
-          "description": "Display your {game} play counts."
+          "description": "Display your play counts."
         },
         "showEvents": {
           "label": "Show Events",
@@ -499,7 +499,7 @@
         },
         "snapshot:latest:icon:read": {
           "name": "Latest profile icon",
-          "description": "Your current {game} icon, which may be a photo of your face taken with the in-game camera"
+          "description": "Your current icon in every game, which may be a photo of your face taken with an in-game camera"
         },
         "snapshot:all:metadata:read": {
           "name": "Snapshot history",
@@ -519,7 +519,7 @@
         },
         "snapshot:all:icon:read": {
           "name": "Profile icon history",
-          "description": "Your {game} icon from every snapshot, which may be a photo of your face taken with the in-game camera"
+          "description": "Your icon from every snapshot of every game, which may be a photo of your face taken with an in-game camera"
         },
         "recent:read": {
           "name": "Recent plays",
@@ -563,11 +563,11 @@
         },
         "fetch:start": {
           "name": "Start a fetch",
-          "description": "Fetch new data with your saved {game} token, adding a new snapshot"
+          "description": "Fetch new data for any game with its saved token, adding a new snapshot"
         },
         "fetch:delete": {
-          "name": "Remove saved {game} token",
-          "description": "Fetching stops until you sign in to {game} again"
+          "name": "Remove saved game tokens",
+          "description": "Fetching a game stops until you sign in to it again"
         },
         "snapshot:latest:read": {
           "name": "Latest snapshot",

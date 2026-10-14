@@ -329,7 +329,7 @@
     },
     "profile": {
       "publishProfile": "プロフィールを公開",
-      "publishDescription": "{game}プロフィールを公開して、他のプレイヤーにスコアや進捗を共有しよう。",
+      "publishDescription": "プロフィールを公開して、他のプレイヤーにすべてのゲームのスコアや進捗を共有しよう。",
       "mainRegion": {
         "label": "メイン地域",
         "description": "公開する{game}プロフィールの主要地域を選択してください。",
@@ -353,7 +353,7 @@
         },
         "showPlayCounts": {
           "label": "プレイ回数を表示",
-          "description": "{game}のプレイ回数を表示します。"
+          "description": "プレイ回数を表示します。"
         },
         "showEvents": {
           "label": "ちほーを表示",
@@ -499,7 +499,7 @@
         },
         "snapshot:latest:icon:read": {
           "name": "最新のプロフィールアイコン",
-          "description": "現在の {game} アイコン（ゲーム内カメラで撮影した顔写真の場合があります）"
+          "description": "すべてのゲームの現在のアイコン（ゲーム内カメラで撮影した顔写真の場合があります）"
         },
         "snapshot:all:metadata:read": {
           "name": "スナップショット履歴",
@@ -519,7 +519,7 @@
         },
         "snapshot:all:icon:read": {
           "name": "プロフィールアイコンの履歴",
-          "description": "すべてのスナップショットの {game} アイコン（ゲーム内カメラで撮影した顔写真の場合があります）"
+          "description": "すべてのゲームの全スナップショットのアイコン（ゲーム内カメラで撮影した顔写真の場合があります）"
         },
         "recent:read": {
           "name": "最近のプレイ",
@@ -563,11 +563,11 @@
         },
         "fetch:start": {
           "name": "フェッチの開始",
-          "description": "保存済みの {game} トークンで新しいデータを取得し、スナップショットを追加します"
+          "description": "保存済みのトークンでいずれかのゲームの新しいデータを取得し、スナップショットを追加します"
         },
         "fetch:delete": {
-          "name": "保存済み {game} トークンの削除",
-          "description": "{game} に再度ログインするまでフェッチできなくなります"
+          "name": "保存済みのゲームトークンの削除",
+          "description": "そのゲームに再度ログインするまでフェッチできなくなります"
         },
         "snapshot:latest:read": {
           "name": "最新のスナップショット",

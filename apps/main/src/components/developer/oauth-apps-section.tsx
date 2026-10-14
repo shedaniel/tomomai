@@ -35,7 +35,6 @@ import { toast } from "sonner";
 import { Plus, Trash2, Globe, Loader2, RefreshCw, AlertTriangle, X, AppWindow, Pencil, BadgeCheck } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
-import { useGame } from "@/components/providers/game-provider";
 import {
   SCOPE_TREE,
   ALL_PARENT_KEYS,
@@ -297,7 +296,6 @@ function CreateOAuthAppDialog({
   onCreated: () => void;
 }) {
   const t = useTranslations("settings.developer");
-  const game = useGame().brand.displayName;
   const tc = useTranslations("common");
   const form = useOAuthAppForm(CREATE_INITIAL);
   const isAdmin = useIsAdmin();
@@ -422,8 +420,8 @@ function CreateOAuthAppDialog({
                   toggleExpanded={form.toggleExpanded}
                   idPrefix="scope-oauth"
                   badges={badges}
-                  scopeName={(k) => t(`scopes.${k}.name`, { game })}
-                  scopeDescription={(k) => t(`scopes.${k}.description`, { game })}
+                  scopeName={(k) => t(`scopes.${k}.name`)}
+                  scopeDescription={(k) => t(`scopes.${k}.description`)}
                 />
               </div>
 
@@ -462,7 +460,6 @@ function EditOAuthAppDialog({
   onSaved: () => void;
 }) {
   const t = useTranslations("settings.developer");
-  const game = useGame().brand.displayName;
   const tc = useTranslations("common");
   const form = useOAuthAppForm({
     name: app.name ?? "",
@@ -584,8 +581,8 @@ function EditOAuthAppDialog({
               toggleExpanded={form.toggleExpanded}
               idPrefix="edit-scope-oauth"
               badges={badges}
-              scopeName={(k) => t(`scopes.${k}.name`, { game })}
-              scopeDescription={(k) => t(`scopes.${k}.description`, { game })}
+              scopeName={(k) => t(`scopes.${k}.name`)}
+              scopeDescription={(k) => t(`scopes.${k}.description`)}
             />
             <p className="text-xs text-muted-foreground">{t("oauthApps.editDialog.scopesNote")}</p>
           </div>
@@ -638,7 +635,6 @@ function EditOAuthAppDialog({
 
 export function OAuthAppsSection() {
   const t = useTranslations("settings.developer");
-  const game = useGame().brand.displayName;
   const tc = useTranslations("common");
   const queryClient = useQueryClient();
   const [createOpen, setCreateOpen] = useState(false);
@@ -772,7 +768,7 @@ export function OAuthAppsSection() {
                         .filter((s: string) => s in API_SCOPES && s !== "ready")
                         .map((s: string) => (
                           <Badge key={s} variant="outline" className="text-xs">
-                            {t(`scopes.${s}.name`, { game })}
+                            {t(`scopes.${s}.name`)}
                           </Badge>
                         ))}
                     </div>
