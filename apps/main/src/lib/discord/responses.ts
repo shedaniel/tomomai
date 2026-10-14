@@ -1,7 +1,9 @@
 import { InteractionResponseType, InteractionResponseFlags } from 'discord-interactions';
-import { FETCH_STATUS_ENUM } from '../db/types';
-import { FETCH_STATES } from '../fetch-states';
+import { FETCH_STATES, isSongDataState, songDataDifficulty, type FetchState } from '../fetch-states';
 import { resolveBaseUrl } from '../base-url';
+import { getGameDifficulty } from '../games/presentation';
+import { getGame } from '../games/registry';
+import type { CanonicalGameId } from '../games/ids';
 import { t } from './i18n';
 
 export interface DiscordEmbed {
@@ -50,33 +52,22 @@ export const DISCORD_COLORS = {
   BLURPLE: 0x5865F2,
 } as const;
 
-// Helper function to get user-friendly labels for fetch states
-export function getStateFriendlyName(state: string): string {
+export function getStateFriendlyName(game: CanonicalGameId, state: FetchState): string {
+  if (isSongDataState(state)) {
+    const difficulty = songDataDifficulty(game, state);
+    return difficulty === null ? state : `Loading ${getGameDifficulty(game, difficulty).label} scores`;
+  }
   switch (state) {
     case FETCH_STATES.LOGIN:
-      return 'Logging in to maimai DX NET';
+      return `Logging in to ${getGame(game).brand.netName}`;
     case FETCH_STATES.PLAYER_DATA:
       return 'Fetching player profile';
-    case FETCH_STATES.SONG_DATA_EASY:
-      return 'Loading Easy scores';
-    case FETCH_STATES.SONG_DATA_ADVANCED:
-      return 'Loading Advanced scores';
-    case FETCH_STATES.SONG_DATA_EXPERT:
-      return 'Loading Expert scores';
-    case FETCH_STATES.SONG_DATA_MASTER:
-      return 'Loading Master scores';
-    case FETCH_STATES.SONG_DATA_REMASTER:
-      return 'Loading Re:MASTER scores';
-    case FETCH_STATES.SONG_DATA_UTAGE:
-      return 'Loading Utage scores';
     case FETCH_STATES.ALBUM_DATA:
       return 'Loading album data';
     case FETCH_STATES.HIDDEN_SONGS:
       return 'Loading hidden songs';
     case FETCH_STATES.RECENT_SONGS:
       return 'Loading recent plays';
-    default:
-      return state;
   }
 }
 
@@ -199,7 +190,7 @@ export function createNoDataResponse(regionName: string, locale?: string): Disco
   };
 }
 
-export function createErrorResponse(message: string, locale?: string): DiscordResponse {
+export function createErrorResponse(message: string): DiscordResponse {
   return {
     type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
     data: {

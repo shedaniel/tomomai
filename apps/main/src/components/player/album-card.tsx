@@ -1,0 +1,388 @@
+"use client";
+
+import { formatGameLevel, getGameDifficulty } from "@/lib/games/presentation";
+import type { UserAlbum } from "@/lib/trpc-types";
+import { useGame } from "@/components/providers/game-provider";
+import { trpc } from "@/lib/trpc-client";
+import type { Region } from "@/lib/games/ids";
+import { cn } from "@/lib/utils";
+import { Images, Loader2, AlertCircle, Calendar, MapPin, HardDrive, Info, Trash2 } from "lucide-react";
+import { useTranslations } from "next-intl";
+import { AlbumCardSkeleton } from "./album-card.skeleton";
+
+import { CoverImage } from "@/components/cover-image";
+import { ChartTypeBadge } from "@/components/games/chart-type-badge";
+import { useState, useEffect, useRef, useCallback } from "react";
+import { useInfiniteScroll } from "@/hooks/use-infinite-scroll";
+import { Button } from "@tomomai/ui";
+import {
+  ResponsiveDialog,
+  ResponsiveDialogClose,
+  ResponsiveDialogContent,
+  ResponsiveDialogDescription,
+  ResponsiveDialogFooter,
+  ResponsiveDialogHeader,
+  ResponsiveDialogTitle,
+  ResponsiveDialogTrigger,
+} from "@tomomai/ui";
+import { Checkbox } from "@/components/animate-ui/components/radix/checkbox";
+import { toast } from "sonner";
+
+interface AlbumCardProps {
+  region: Region;
+}
+
+const REGION_STORAGE_COLORS: Record<Region, string> = {
+  intl: "bg-blue-500",
+  jp: "bg-red-500",
+  cn: "bg-amber-500",
+};
+
+/** Lays each region's share of the storage limit end to end, clipped to the bar. */
+function storageSegments(regions: { region: Region; used: number }[], limit: number) {
+  let start = 0;
+  return regions.map(({ region, used }) => {
+    const width = Math.min((used / limit) * 100, 100 - start);
+    const segment = { region, used, start, width };
+    start += width;
+    return segment;
+  });
+}
+
+export function AlbumCard({ region }: AlbumCardProps) {
+  const game = useGame().id;
+  const regionsT = useTranslations('regions');
+  const t = useTranslations('albums');
+  const [albums, setAlbums] = useState<UserAlbum[]>([]);
+  const [offset, setOffset] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
+  const limit = 20;
+
+  const processedOffsetsRef = useRef<Set<number>>(new Set());
+
+  const { data, isLoading, isFetching, error } = trpc.user.getUserAlbums.useQuery({ game,
+    region,
+    limit,
+    offset,
+  });
+
+  useEffect(() => {
+    setOffset(0);
+    setAlbums([]);
+    setHasMore(true);
+    processedOffsetsRef.current = new Set();
+  }, [game, region]);
+
+  useEffect(() => {
+    if (data && !isFetching && !processedOffsetsRef.current.has(offset)) {
+      processedOffsetsRef.current.add(offset);
+      if (offset === 0) {
+        setAlbums(data.albums);
+      } else {
+        setAlbums(prev => [...prev, ...data.albums]);
+      }
+      setHasMore(data.hasMore);
+    }
+  }, [data, offset, isFetching]);
+
+  const loadMore = useCallback(() => {
+    if (hasMore && !isFetching) {
+      setOffset(prev => prev + limit);
+    }
+  }, [hasMore, isFetching]);
+
+  const sentinelRef = useInfiniteScroll(loadMore, hasMore && !isFetching);
+
+  const [albumToDelete, setAlbumToDelete] = useState<string | null>(null);
+  const [showDialog, setShowDialog] = useState(false);
+  const [dontAskAgain, setDontAskAgain] = useState(false);
+
+  const skipConfirmKey = "album-delete-skip-confirm";
+
+  const utils = trpc.useUtils();
+
+  const deleteAlbumMutation = trpc.user.deleteAlbum.useMutation({
+    onSuccess: (_data, variables) => {
+      setAlbums(prev => prev.filter(a => a.id !== variables.albumId));
+      utils.user.getUserAlbums.invalidate();
+      toast.success(t('deleteSuccess'));
+    },
+    onError: () => {
+      toast.error(t('deleteFailed'));
+    },
+  });
+
+  const handleDeleteClick = (albumId: string) => {
+    const skipDate = localStorage.getItem(skipConfirmKey);
+    const today = new Date().toISOString().split('T')[0];
+    if (skipDate === today) {
+      deleteAlbumMutation.mutate({ game, albumId });
+    } else {
+      setAlbumToDelete(albumId);
+      setDontAskAgain(false);
+      setShowDialog(true);
+    }
+  };
+
+  const handleConfirmDelete = () => {
+    if (dontAskAgain) {
+      const today = new Date().toISOString().split('T')[0];
+      localStorage.setItem(skipConfirmKey, today);
+    }
+    if (albumToDelete) {
+      deleteAlbumMutation.mutate({ game, albumId: albumToDelete });
+    }
+    setShowDialog(false);
+    setAlbumToDelete(null);
+  };
+
+  if (isLoading && offset === 0) {
+    return <AlbumCardSkeleton />;
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <h2 className="text-lg font-semibold flex items-center gap-2">
+          <Images className="h-5 w-5" />
+          {t('title')}
+        </h2>
+        <div className="flex items-center justify-center py-12 text-muted-foreground">
+          <AlertCircle className="h-5 w-5 mr-2" />
+          <span>{t('error')}</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (albums.length === 0 && !isLoading && processedOffsetsRef.current.has(0)) {
+    return (
+      <div className="space-y-6">
+        <h2 className="text-lg font-semibold flex items-center gap-2">
+          <Images className="h-5 w-5" />
+          {t('title')}
+        </h2>
+        <div className="flex items-center justify-center py-12 text-muted-foreground">
+          <span>{t('noAlbums')}</span>
+        </div>
+      </div>
+    );
+  }
+
+  const storagePercentage = data?.storage ? (data.storage.used / data.storage.limit) * 100 : 0;
+
+  const formatBytes = (bytes: number) => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i];
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h2 className="text-lg font-semibold flex items-center gap-2">
+          <Images className="h-5 w-5" />
+          {t('title')}
+        </h2>
+          <div className="flex items-center gap-3">
+            {data?.storage && (
+              <ResponsiveDialog>
+                <ResponsiveDialogTrigger asChild>
+                  <Button variant="outline" size="sm" className="gap-2">
+                    <HardDrive className="h-4 w-4" />
+                    <span className="hidden sm:inline">{t('storage')}</span>
+                  </Button>
+                </ResponsiveDialogTrigger>
+                <ResponsiveDialogContent>
+                  <ResponsiveDialogHeader>
+                    <ResponsiveDialogTitle>{t('storageTitle')}</ResponsiveDialogTitle>
+                    <ResponsiveDialogDescription>
+                      {t('storageDescription')}
+                    </ResponsiveDialogDescription>
+                  </ResponsiveDialogHeader>
+                  <div className="space-y-4">
+                    {/* Total Storage with Stacked Progress Bar */}
+                    <div className="space-y-3">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">{t('totalUsed')}</span>
+                        <span className="font-medium">
+                          {formatBytes(data.storage.used)} {t('usedOf')} {formatBytes(data.storage.limit)}
+                        </span>
+                      </div>
+
+                      {/* Custom Stacked Progress Bar */}
+                      <div className="relative h-3 w-full overflow-hidden rounded-full bg-muted">
+                        {storageSegments(data.storage.regions, data.storage.limit).map(segment => (
+                          <div
+                            key={segment.region}
+                            className={cn("absolute top-0 h-full transition-all", REGION_STORAGE_COLORS[segment.region])}
+                            style={{ left: `${segment.start}%`, width: `${segment.width}%` }}
+                          />
+                        ))}
+                      </div>
+
+                      {/* Legend */}
+                      <div className="flex items-center justify-between text-xs">
+                        <div className="flex items-center gap-3">
+                          {data.storage.regions.map(({ region, used }) => (
+                            <div key={region} className="flex items-center gap-1.5">
+                              <span className={cn("w-3 h-3 rounded-full", REGION_STORAGE_COLORS[region])}></span>
+                              <span className="text-muted-foreground">{regionsT(region)}</span>
+                              <span className="font-medium">{formatBytes(used)}</span>
+                            </div>
+                          ))}
+                        </div>
+                        <span className="text-muted-foreground">
+                          {storagePercentage.toFixed(1)}%
+                        </span>
+                      </div>
+                    </div>
+
+                    {storagePercentage > 80 && (
+                      <div className="flex gap-2 p-3 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900 rounded-md">
+                        <AlertCircle className="h-4 w-4 text-red-600 dark:text-red-500 mt-0.5 shrink-0" />
+                        <p className="text-sm text-red-800 dark:text-red-200">
+                          {t('storageWarning')}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </ResponsiveDialogContent>
+              </ResponsiveDialog>
+            )}
+            {albums.length > 0 && (
+              <span className="text-sm font-normal text-muted-foreground">
+                {albums.length} {t('photos')}
+              </span>
+            )}
+          </div>
+      </div>
+      <div>
+        {/* Upload Notice Banner */}
+        <div className="mb-4 flex gap-2 p-3 bg-neutral-50 dark:bg-neutral-700/20 border border-neutral-200 dark:border-neutral-600 rounded-md">
+          <Info className="h-4 w-4 text-neutral-600 dark:text-neutral-400 mt-0.5 shrink-0" />
+          <p className="text-sm text-neutral-800 dark:text-neutral-200">
+            {t('uploadNotice')}
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {albums.map((album) => {
+            const takenAt = new Date(album.takenAt);
+            const difficulty = getGameDifficulty(game, album.difficultyCode);
+
+            return (
+              <div
+                key={album.id}
+                className="flex flex-col gap-3 p-4 border rounded-lg hover:bg-muted/50 transition-colors"
+              >
+                {/* Album Image - 16:9 aspect ratio */}
+                <div className="relative w-full aspect-video overflow-hidden bg-muted">
+                  <img
+                    src={`${process.env.NEXT_PUBLIC_R2_URL}/${album.imageKey}`}
+                    alt={album.songName}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+
+                {/* Album Info */}
+                <div className="flex gap-3">
+                  {/* Song Cover */}
+                  <div className="relative shrink-0 m-1">
+                    <CoverImage
+                      coverUrl={album.cover}
+                      alt={album.songName}
+                      className={cn(
+                        "w-14 h-14 rounded ring-2 ring-offset-2 ring-offset-background object-cover",
+                        difficulty.classes.ring,
+                      )}
+                      width={56}
+                      height={56}
+                      loading="lazy"
+                    />
+                    <div
+                      className={cn(
+                        "absolute top-12 -right-1 px-1.5 py-0.5 rounded rounded-tr-none rounded-br-[8px] text-xs font-semibold text-white",
+                        difficulty.classes.badge,
+                      )}
+                    >
+                      {formatGameLevel(game, album.levelPrecise, album.difficultyCode)}
+                    </div>
+                  </div>
+
+                  {/* Song Details */}
+                  <div className="flex-1 min-w-0">
+                    <h4 className="font-semibold truncate">{album.songName}</h4>
+                    <p className="text-xs text-muted-foreground truncate">{album.artist}</p>
+                    <ChartTypeBadge typeCode={album.typeCode} className="mt-1.5 block" />
+                  </div>
+                </div>
+
+                {/* Metadata */}
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <div className="flex flex-wrap items-center gap-2 flex-1 min-w-0">
+                    <div className="flex items-center gap-1">
+                      <Calendar className="h-3 w-3" />
+                      <span>{takenAt.toLocaleDateString()} {takenAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                    </div>
+                    {album.venue && (
+                      <div className="flex items-center gap-1">
+                        <MapPin className="h-3 w-3" />
+                        <span className="truncate max-w-[200px]">{album.venue}</span>
+                      </div>
+                    )}
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 w-8 p-0 shrink-0 text-muted-foreground hover:text-destructive"
+                    onClick={() => handleDeleteClick(album.id)}
+                    disabled={deleteAlbumMutation.isPending}
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+              </div>
+            );
+          })}
+
+          {/* Infinite scroll sentinel */}
+          {hasMore && (
+            <div ref={sentinelRef} className="col-span-full flex justify-center py-4">
+              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            </div>
+          )}
+        </div>
+      </div>
+
+      <ResponsiveDialog open={showDialog} onOpenChange={setShowDialog}>
+        <ResponsiveDialogContent showCloseButton={false}>
+          <ResponsiveDialogHeader>
+            <ResponsiveDialogTitle>{t('deleteTitle')}</ResponsiveDialogTitle>
+            <ResponsiveDialogDescription>
+              {t('deleteDescription')}
+            </ResponsiveDialogDescription>
+          </ResponsiveDialogHeader>
+          <div className="flex items-center gap-2">
+            <Checkbox
+              id="dont-ask-again"
+              checked={dontAskAgain}
+              onCheckedChange={(checked) => setDontAskAgain(checked === true)}
+            />
+            <label htmlFor="dont-ask-again" className="text-sm cursor-pointer select-none">
+              {t('dontAskAgain')}
+            </label>
+          </div>
+          <ResponsiveDialogFooter>
+            <ResponsiveDialogClose asChild>
+              <Button variant="outline">{t('cancel')}</Button>
+            </ResponsiveDialogClose>
+            <Button onClick={handleConfirmDelete}>{t('delete')}</Button>
+          </ResponsiveDialogFooter>
+        </ResponsiveDialogContent>
+      </ResponsiveDialog>
+    </div>
+  );
+}

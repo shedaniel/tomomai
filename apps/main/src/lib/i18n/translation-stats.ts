@@ -1,3 +1,4 @@
+import type { CanonicalGameId } from "@/lib/games/ids";
 import en from "../../../messages/en.json";
 import enGB from "../../../messages/en-GB.json";
 import ja from "../../../messages/ja.json";
@@ -6,6 +7,38 @@ import zhHK from "../../../messages/zh-HK.json";
 import zhCN from "../../../messages/zh-CN.json";
 import zhSG from "../../../messages/zh-SG.json";
 import ko from "../../../messages/ko.json";
+import maimaiEn from "../../../messages/games/maimai/en.json";
+import maimaiEnGB from "../../../messages/games/maimai/en-GB.json";
+import maimaiJa from "../../../messages/games/maimai/ja.json";
+import maimaiZhTW from "../../../messages/games/maimai/zh-TW.json";
+import maimaiZhHK from "../../../messages/games/maimai/zh-HK.json";
+import maimaiZhCN from "../../../messages/games/maimai/zh-CN.json";
+import maimaiZhSG from "../../../messages/games/maimai/zh-SG.json";
+import maimaiKo from "../../../messages/games/maimai/ko.json";
+import chunithmEn from "../../../messages/games/chunithm/en.json";
+import chunithmEnGB from "../../../messages/games/chunithm/en-GB.json";
+import chunithmJa from "../../../messages/games/chunithm/ja.json";
+import chunithmZhTW from "../../../messages/games/chunithm/zh-TW.json";
+import chunithmZhHK from "../../../messages/games/chunithm/zh-HK.json";
+import chunithmZhCN from "../../../messages/games/chunithm/zh-CN.json";
+import chunithmZhSG from "../../../messages/games/chunithm/zh-SG.json";
+import chunithmKo from "../../../messages/games/chunithm/ko.json";
+
+/** A locale's shared copy together with every game's own copy. */
+function withGames(base: object, games: Record<CanonicalGameId, object>) {
+  return { ...base, games };
+}
+
+const MESSAGES = {
+  "en": withGames(en, { maimai: maimaiEn, chunithm: chunithmEn }),
+  "en-GB": withGames(enGB, { maimai: maimaiEnGB, chunithm: chunithmEnGB }),
+  "ja": withGames(ja, { maimai: maimaiJa, chunithm: chunithmJa }),
+  "zh-TW": withGames(zhTW, { maimai: maimaiZhTW, chunithm: chunithmZhTW }),
+  "zh-HK": withGames(zhHK, { maimai: maimaiZhHK, chunithm: chunithmZhHK }),
+  "zh-CN": withGames(zhCN, { maimai: maimaiZhCN, chunithm: chunithmZhCN }),
+  "zh-SG": withGames(zhSG, { maimai: maimaiZhSG, chunithm: chunithmZhSG }),
+  "ko": withGames(ko, { maimai: maimaiKo, chunithm: chunithmKo }),
+};
 
 function flatten(obj: unknown, prefix = "", out = new Set<string>()): Set<string> {
   if (typeof obj === "string") {
@@ -24,7 +57,7 @@ function flatten(obj: unknown, prefix = "", out = new Set<string>()): Set<string
   return out;
 }
 
-const EN_KEYS = flatten(en);
+const EN_KEYS = flatten(MESSAGES.en);
 const TOTAL = EN_KEYS.size;
 
 function statsFor(locale: unknown) {
@@ -47,13 +80,6 @@ export interface TranslationStat {
   percent: number;
 }
 
-export const TRANSLATION_STATS: Record<string, TranslationStat> = {
-  "en": { locale: "en", ...statsFor(en) },
-  "en-GB": { locale: "en-GB", ...statsFor(enGB) },
-  "ja": { locale: "ja", ...statsFor(ja) },
-  "zh-TW": { locale: "zh-TW", ...statsFor(zhTW) },
-  "zh-HK": { locale: "zh-HK", ...statsFor(zhHK) },
-  "zh-CN": { locale: "zh-CN", ...statsFor(zhCN) },
-  "zh-SG": { locale: "zh-SG", ...statsFor(zhSG) },
-  "ko": { locale: "ko", ...statsFor(ko) },
-};
+export const TRANSLATION_STATS: Record<string, TranslationStat> = Object.fromEntries(
+  Object.entries(MESSAGES).map(([locale, messages]) => [locale, { locale, ...statsFor(messages) }]),
+);

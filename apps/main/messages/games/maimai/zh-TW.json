@@ -1,0 +1,56 @@
+{
+  "dashboard": {
+    "title": "tomomai ともマイ"
+  },
+  "userHeader": {
+    "memberLabel": "ともマイ 成員",
+    "discordPrompt": "遇到問題了嗎？或有想要新增到 tomomai ともマイ 的功能或建議？"
+  },
+  "db": {
+    "songs": {
+      "chartLabel": "maimai でらっくす {type, select, dx {DX} other {標準}}",
+      "detail": {
+        "viewDetails": "在 tomomai DB 查看詳細資訊"
+      }
+    }
+  },
+  "onboarding": {
+    "title": "歡迎來到 tomomai！",
+    "step1": {
+      "description": "使用者名稱是你在 tomomai 的稱呼。如果你選擇公開，也會成為你的公開個人檔案網址。"
+    },
+    "regionTaglines": {
+      "intl": "Asia / International",
+      "jp": "maimai でらっくす",
+      "cn": "舞萌 DX"
+    }
+  },
+  "acceptInvitation": {
+    "title": "tomomai ともマイ",
+    "subtitle": "你已被邀請加入 tomomai ともマイ 社群",
+    "invitedBy": "{name} 邀請你加入 tomomai ともマイ"
+  },
+  "oauthConsent": {
+    "title": "{app} 要求存取你的 <nb>tomomai 帳號</nb>",
+    "signedOutDescription": "{app} 要求存取你的 tomomai 帳號。請登入後查看此請求。",
+    "trustNotice": "{app} 並非由 tomomai 經營。{links, select, both {你的資料將依照其<terms>服務條款</terms>和<privacy>隱私權政策</privacy>處理。} terms {你的資料將依照其<terms>服務條款</terms>處理。} privacy {你的資料將依照其<privacy>隱私權政策</privacy>處理。} other {此應用程式並未提供服務條款或隱私權政策。}}請僅在信任此應用程式時繼續。",
+    "officialBadge": "tomomai 官方應用程式",
+    "officialNotice": "{app} 由 tomomai 開發及營運。",
+    "errors": {
+      "redirect": {
+        "body": "該應用程式嘗試將你送回一個未在 tomomai 註冊的位址，為保護你的帳號，請求已被阻擋。請勿透過此連結登入，並告知應用程式開發者。"
+      },
+      "badRequest": {
+        "body": "該應用程式送出了 tomomai 不支援的請求。請返回應用程式重試，或聯絡其開發者。"
+      }
+    },
+    "backHome": "返回 tomomai"
+  },
+  "settings": {
+    "developer": {
+      "oauthApps": {
+        "officialLabel": "tomomai 官方應用程式"
+      }
+    }
+  }
+}

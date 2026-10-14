@@ -10,8 +10,9 @@ import {
 import { Button } from "@tomomai/ui";
 import { Slider } from "@tomomai/ui";
 import { Switch } from "@tomomai/ui";
-import { themes, getSavedThemeId, saveThemeId, applyTheme, Theme, buildCustomThemeId, isCustomThemeId, parseCustomThemeId } from "@/lib/themes";
+import { themes, getSavedThemeId, getThemeOrDefault, saveThemeId, applyTheme, Theme, buildCustomThemeId, isCustomThemeId, parseCustomThemeId } from "@/lib/themes";
 import { cn } from "@/lib/utils";
+import { useGame } from "@/components/providers/game-provider";
 import { Check } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useState, useCallback } from "react";
@@ -130,10 +131,11 @@ export function ThemeDialog({ open, onOpenChange, customThemesEnabled = false }:
   const [selectedThemeId, setSelectedThemeId] = useState<string | null>(null);
   const [customParams, setCustomParams] = useState(DEFAULT_CUSTOM);
   const [useCustom, setUseCustom] = useState(false);
+  const defaultTheme = useGame().brand.theme;
 
   useEffect(() => {
     if (open) {
-      const savedId = getSavedThemeId() ?? "burnt-brown";
+      const savedId = getSavedThemeId() ?? defaultTheme;
       if (isCustomThemeId(savedId)) {
         const parsed = parseCustomThemeId(savedId);
         if (parsed) {
@@ -174,11 +176,9 @@ export function ThemeDialog({ open, onOpenChange, customThemesEnabled = false }:
     if (enabled) {
       applyCustomTheme(customParams);
     } else {
-      // revert to default preset
-      const fallbackId = "burnt-brown";
-      const fallback = themes.find(t => t.id === fallbackId)!;
-      setSelectedThemeId(fallbackId);
-      saveThemeId(fallbackId);
+      const fallback = getThemeOrDefault(null, defaultTheme);
+      setSelectedThemeId(fallback.id);
+      saveThemeId(fallback.id);
       applyTheme(fallback);
     }
   };

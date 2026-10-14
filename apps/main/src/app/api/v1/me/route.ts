@@ -1,10 +1,13 @@
 import { withApiKey } from "@/lib/api/protect";
 import { zodJson } from "@/lib/api/zod-response";
+import { getCurrentGame } from "@/lib/games/current";
+import { getGameRegion } from "@/lib/games/frontend";
 import { fetchUserData } from "@/server/queries/profile";
 import { spec } from "./spec";
 
-export const GET = withApiKey(["user:metadata:read"], async (_req, key) => {
-  const userData = await fetchUserData(key.userId);
+export const GET = withApiKey(spec, async (_req, key) => {
+  const game = getCurrentGame();
+  const userData = await fetchUserData(game.id, key.userId);
   if (!userData) {
     return Response.json({ error: "User not found" }, { status: 404 });
   }
@@ -12,7 +15,7 @@ export const GET = withApiKey(["user:metadata:read"], async (_req, key) => {
     id: key.userId,
     username: userData.username,
     image: userData.image,
-    region: userData.region,
+    region: getGameRegion(game, userData.region),
     publishProfile: userData.publishProfile,
     role: userData.role,
   });

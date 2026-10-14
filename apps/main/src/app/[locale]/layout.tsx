@@ -6,18 +6,21 @@ import { TurnstilePreclearance } from "@tomomai/ui/turnstile";
 import { VercelToolbar } from "@vercel/toolbar/next";
 import type { Metadata } from "next";
 import { NextIntlClientProvider, hasLocale } from 'next-intl';
-import { getMessages } from 'next-intl/server';
+import { getMessages, getTranslations } from 'next-intl/server';
 import { setStaticLocale } from '@/i18n/locale-server';
 import { notFound } from 'next/navigation';
 import localFont from "next/font/local";
 import { routing } from '@/i18n/routing';
 import type { Locale } from '@tomomai/i18n/locale';
-import { DEFAULT_THEME_ID, getThemeOrDefault, getThemeStyleProperties, themeNoFlashScript } from '@/lib/themes';
+import { getThemeOrDefault, getThemeStyleProperties, themeNoFlashScript } from '@/lib/themes';
 import { resolveBaseUrl } from '@/lib/base-url';
 import { siteJsonLd } from '@/lib/seo';
 import { SiteFooter } from '@/components/site-footer';
 import { PreMaintenanceBanner } from '@/components/pre-maintenance-banner';
+import { GameProvider } from '@/components/providers/game-provider';
 import { AuthDialogProvider } from '@/components/auth/auth-dialog-provider';
+import { getCurrentGame } from '@/lib/games/current';
+import { brandTitle } from '@/lib/games/frontend';
 
 const TURNSTILE_SITE_KEY =
   process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY && process.env.TURNSTILE_SECRET_KEY
@@ -44,14 +47,17 @@ const murecho = localFont({
   preload: false,
 });
 
-export const metadata: Metadata = {
-  metadataBase: new URL(resolveBaseUrl()),
-  title: "tomomai ともマイ",
-  description: "Track and analyze maimai scores with friends.",
-  icons: {
-    apple: "/icon.png",
-  },
-};
+export async function generateMetadata({ params }: Pick<Props, "params">): Promise<Metadata> {
+  const { locale } = await params;
+  const { brand } = getCurrentGame();
+  const t = await getTranslations({ locale: hasLocale(routing.locales, locale) ? locale : routing.defaultLocale, namespace: "dashboard" });
+  return {
+    metadataBase: new URL(resolveBaseUrl()),
+    title: brandTitle(brand),
+    description: t("description", { game: brand.displayName }),
+    icons: { icon: { url: "/favicon.ico", sizes: "any" }, ...(brand.icon && { apple: brand.icon }) },
+  };
+}
 
 // Pre-render every supported locale at build time so the [locale] subtree is
 // statically renderable / ISR-cacheable. Individual pages opt into further
@@ -75,11 +81,12 @@ export default async function LocaleLayout({ children, params }: Props) {
 
   const messages = await getMessages();
   const typedLocale = locale as Locale;
+  const game = getCurrentGame();
 
   // SSR the default theme; the user's saved theme is applied pre-paint by
   // the blocking no-flash script below (cookie read happens in the browser,
   // so this stays static/cacheable instead of forcing the layout dynamic).
-  const theme = getThemeOrDefault(DEFAULT_THEME_ID);
+  const theme = getThemeOrDefault(null, game.brand.theme);
 
   const shouldInjectToolbar = process.env.NODE_ENV === "development";
 
@@ -89,7 +96,7 @@ export default async function LocaleLayout({ children, params }: Props) {
         <script dangerouslySetInnerHTML={{ __html: themeNoFlashScript() }} />
         <link rel="preconnect" href="https://cdn.tomomai.lol" crossOrigin="anonymous" />
         <link rel="dns-prefetch" href="https://cdn.tomomai.lol" />
-        {siteJsonLd().map((entry, i) => (
+        {siteJsonLd(game.brand).map((entry, i) => (
           <script
             key={i}
             type="application/ld+json"
@@ -101,20 +108,22 @@ export default async function LocaleLayout({ children, params }: Props) {
         className={`${inter.variable} ${geistMono.variable} ${murecho.variable} antialiased bg-background flex min-h-dvh flex-col`}
       >
         <NextIntlClientProvider messages={messages}>
-          <LocaleProvider initialLocale={typedLocale}>
-            <ThemeProvider>
-              <TRPCProvider>
-                <AuthDialogProvider>
-                  {TURNSTILE_SITE_KEY && <TurnstilePreclearance siteKey={TURNSTILE_SITE_KEY} />}
-                  <PreMaintenanceBanner />
-                  {children}
-                  <SiteFooter />
-                  {shouldInjectToolbar && <VercelToolbar />}
-                  <Toaster />
-                </AuthDialogProvider>
-              </TRPCProvider>
-            </ThemeProvider>
-          </LocaleProvider>
+          <GameProvider game={game}>
+            <LocaleProvider initialLocale={typedLocale}>
+              <ThemeProvider>
+                <TRPCProvider>
+                  <AuthDialogProvider>
+                    {TURNSTILE_SITE_KEY && <TurnstilePreclearance siteKey={TURNSTILE_SITE_KEY} />}
+                    <PreMaintenanceBanner />
+                    {children}
+                    <SiteFooter />
+                    {shouldInjectToolbar && <VercelToolbar />}
+                    <Toaster />
+                  </AuthDialogProvider>
+                </TRPCProvider>
+              </ThemeProvider>
+            </LocaleProvider>
+          </GameProvider>
         </NextIntlClientProvider>
       </body>
     </html>

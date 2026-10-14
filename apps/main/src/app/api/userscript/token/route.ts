@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { resolveBaseUrlFromHeaders } from "@/lib/base-url";
 import { USERSCRIPT_ALLOWED_ORIGINS } from "@/lib/userscript/allowed-origins";
 import { useUserscriptFetch } from "@/lib/flags";
+import { requireFrontendGame } from "@/lib/games/current";
 
 // Exchanges an OAuth authorization code (issued via the userscript's PKCE
 // flow) for tokens, injecting the confidential client's `client_secret`
@@ -25,6 +26,7 @@ function corsHeaders(origin: string | null): HeadersInit {
 }
 
 export async function OPTIONS(request: NextRequest) {
+  requireFrontendGame("maimai");
   return new NextResponse(null, {
     status: 204,
     headers: corsHeaders(request.headers.get("origin")),
@@ -32,6 +34,7 @@ export async function OPTIONS(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  requireFrontendGame("maimai");
   if (!(await useUserscriptFetch())) return new NextResponse("Not Found", { status: 404 });
   const origin = request.headers.get("origin");
   const cors = corsHeaders(origin);

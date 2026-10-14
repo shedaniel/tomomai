@@ -4,6 +4,7 @@ import { Button } from "@tomomai/ui";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@tomomai/ui";
 import { useSession } from "@/lib/auth-client";
 import { useAuthDialog } from "@/components/auth/auth-dialog-provider";
+import { useGame } from "@/components/providers/game-provider";
 import { trpc } from "@/lib/trpc-client";
 import { AlertCircle, Database, UserCheck } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -26,6 +27,7 @@ export default function AcceptInvitationPage() {
   const params = useParams();
   const router = useRouter();
   const t = useTranslations();
+  const game = useGame();
   const { data: session, isPending } = useSession();
   const { openAuthDialog } = useAuthDialog();
   const [inviteInfo, setInviteInfo] = useState<InviteInfo | null>(null);
@@ -177,7 +179,7 @@ export default function AcceptInvitationPage() {
             <ul className="space-y-1 list-disc list-inside">
               <li>{t('auth.features.trackScores')}</li>
               <li>{t('auth.features.viewHistory')}</li>
-              <li>{t('auth.features.importData')}</li>
+              <li>{t('auth.features.importData', { net: game.brand.netName })}</li>
               <li>{t('auth.features.analyzeProgress')}</li>
             </ul>
           </div>

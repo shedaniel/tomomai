@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { showMessage } from "@/components/imperative-dialog";
 import type { OpenAuthDialogOptions } from "@/components/auth/auth-dialog-provider";
+import { useGame } from "@/components/providers/game-provider";
 import { authClient } from "@/lib/auth-client";
 import { readAuthErrorCode, resolveAuthError, stripAuthErrorParams } from "@/lib/auth-errors";
 
@@ -26,6 +27,7 @@ export function AuthErrorHandler({ openAuthDialog }: { openAuthDialog: (options:
   const t = useTranslations("auth.errors");
   const tc = useTranslations("common");
   const ti = useTranslations("acceptInvitation");
+  const { brand } = useGame();
   const handled = useRef<string | null>(null);
 
   useEffect(() => {
@@ -55,7 +57,7 @@ export function AuthErrorHandler({ openAuthDialog }: { openAuthDialog: (options:
     }
     const message = resolved.messageKey === "generic"
       ? `${t("generic")}\n${t("code", { code })}`
-      : t(resolved.messageKey);
+      : t(resolved.messageKey, { brand: brand.productName });
 
     void authClient.getSession().then(({ data }) => {
       if (data?.session) {
@@ -64,7 +66,7 @@ export function AuthErrorHandler({ openAuthDialog }: { openAuthDialog: (options:
         openAuthDialog({ mode: resolved.panel, error: message });
       }
     });
-  }, [searchParams, openAuthDialog, t, tc, ti]);
+  }, [searchParams, openAuthDialog, t, tc, ti, brand.productName]);
 
   return null;
 }

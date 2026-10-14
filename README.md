@@ -1,12 +1,13 @@
 # tomomai ともマイ
 
-A modern web application for tracking and analyzing your maimai DX scores with friends. Built with Next.js 15, TypeScript, and Tailwind CSS.
+A modern web application for tracking and analyzing your maimai DX and CHUNITHM scores with friends. Built with Next.js 16, TypeScript, and Tailwind CSS.
 
 ## Quick Start
 
 ### Prerequisites
 
-- Node.js 18+
+- Node.js 22.18 or later. The ESLint config and the Discord command script import TypeScript files through Node's built-in type stripping.
+- pnpm
 - PostgreSQL database
 - Redis
 - Discord Application (for OAuth)
@@ -36,15 +37,15 @@ A modern web application for tracking and analyzing your maimai DX scores with f
 
 5. **Register Discord bot commands (optional)**
    ```bash
-   pnpm run discord:register
+   pnpm --filter @tomomai/site discord:register
    ```
 
 6. **Start development server**
    ```bash
-   pnpm run dev
+   pnpm dev:mai
    ```
 
-Visit [http://localhost:3000](http://localhost:3000) to see your application running!
+Visit [http://localhost:3000](http://localhost:3000) to see your application running! `pnpm dev:chu` serves CHUNITHM on port 3001, and [SETUP.md](SETUP.md#running-locally) explains running both.
 
 ## Usage
 
@@ -54,10 +55,13 @@ Visit [http://localhost:3000](http://localhost:3000) to see your application run
 
 ```bash
 # Development
-pnpm run dev              # Start development server with Turbopack
+pnpm dev:mai              # Start the maimai DX site with Turbopack
+pnpm dev:chu              # Start the CHUNITHM site with Turbopack
 pnpm run build            # Build for production
 pnpm run start            # Start production server
-pnpm run lint             # Run ESLint
+pnpm run lint             # Run ESLint in every package
+pnpm run typecheck        # Typecheck every package
+pnpm test                 # Run every package's tests
 
 # Database
 pnpm run db:generate      # Generate migration files
@@ -99,7 +103,7 @@ pnpm run db:studio        # Open Drizzle Studio (database browser)
 
 4. **Register Bot Commands**
    ```bash
-   pnpm run discord:register
+   pnpm --filter @tomomai/site discord:register
    ```
 
 5. **Invite Bot to Server**

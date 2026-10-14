@@ -6,7 +6,7 @@
  *
  * The compact binary format keeps the token URL-safe (~2KB for a B50 render),
  * so it can ride the existing 302 redirect without a callback or DB access in
- * render. See docs/render-token-v2.md for the wire format.
+ * render. See docs/render-token-v3.md for the wire format.
  */
 
 export {
@@ -17,13 +17,17 @@ export {
   encodeMessage,
 } from "./codec";
 export type {
-  ChartRecord,
-  DailyPlaysPayload,
-  ExportImagePayload,
-  LastCreditPayload,
-  RenderHeader,
+  ChunithmChartRecord,
+  ChunithmDailyPlaysPayload,
+  ChunithmExportImagePayload,
+  ChunithmRenderHeader,
+  MaimaiChartRecord,
+  MaimaiDailyPlaysPayload,
+  MaimaiExportImagePayload,
+  MaimaiLastCreditPayload,
+  MaimaiRenderHeader,
+  MaimaiTrackRecord,
   RenderMessage,
-  TrackRecord,
 } from "./message";
 export {
   isExpired,
@@ -35,6 +39,7 @@ export type {
   Difficulty,
   FullCombo,
   FullSync,
+  Game,
   NoteCounts,
   Region,
   Route,

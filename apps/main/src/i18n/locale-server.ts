@@ -1,6 +1,7 @@
 import { getLocale as getIntlLocale, setRequestLocale } from "next-intl/server";
 import { Locale, defaultLocale, locales } from "@tomomai/i18n/locale";
-import { isCNExclusive } from "@/lib/enabled-regions";
+import { getCurrentGame } from "@/lib/games/current";
+import { isGameCnExclusive } from "@/lib/games/frontend";
 
 /** Call in every layout/page using next-intl APIs to enable static rendering. */
 export async function setStaticLocale(locale: string): Promise<void> {
@@ -10,7 +11,7 @@ export async function setStaticLocale(locale: string): Promise<void> {
 }
 
 export async function getLocale(): Promise<Locale> {
-  if (isCNExclusive()) return "zh-CN";
+  if (isGameCnExclusive(getCurrentGame())) return "zh-CN";
 
   try {
     const l = await getIntlLocale();

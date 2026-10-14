@@ -1,5 +1,6 @@
 "use client";
 
+import { useGame } from "@/components/providers/game-provider";
 import { useLocale } from "@/components/providers/locale-provider";
 import { stripLocaleFromPath } from "@tomomai/i18n/client";
 import { ChangeUsernameDialog } from "@/components/settings/change-username-dialog";
@@ -26,7 +27,7 @@ import {
 } from "@tomomai/ui/select-friendly";
 import { Locale, setLocaleCookie } from "@/i18n/locale";
 import { usePathname } from "@/i18n/navigation";
-import { isCNExclusive } from "@/lib/enabled-regions";
+import { isGameCnExclusive } from "@/lib/games/frontend";
 import { trpc } from "@/lib/trpc-client";
 import { getLanguages } from "@/lib/utils";
 import { Languages, Mail, Pencil, User } from "lucide-react";
@@ -39,8 +40,9 @@ interface AccountSettingsProps {
 
 export function AccountSettings({ flags }: AccountSettingsProps) {
   const t = useTranslations();
+  const game = useGame();
 
-  if (isCNExclusive()) {
+  if (isGameCnExclusive(game)) {
     return (
       <div>
         <p className="text-sm text-muted-foreground">暂无账户设置。</p>

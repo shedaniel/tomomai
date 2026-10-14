@@ -1,13 +1,11 @@
-import { db } from '@/lib/db';
-import { account, user } from '@/lib/db/schema-pg';
-import { renderLevelPrecise } from '@/lib/name-utils';
-import { addRatingsAndSort, SongWithRating } from '@/lib/rating-calculator';
-import { SongWithScore, Region } from '@/lib/types';
+import { keyOf } from '@/lib/games/codes';
+import { formatGameLevel, formatGameScore } from '@/lib/games/presentation';
+import { getGame } from '@/lib/games/registry';
+import type { Region } from '@/lib/games/ids';
 import { fetchLatestSnapshotData } from '@/server/queries/snapshots';
-import { generateRecommendations, RecommendationData } from '@/server/queries/recommendations';
+import { formatRecommendationTarget, generateRecommendations, type RecommendationData } from '@/lib/games/recommendations';
 import { getLogger } from '@/lib/request-logger';
 import { waitUntil } from '@vercel/functions';
-import { and, eq } from 'drizzle-orm';
 import {
   createDeferredResponse,
   createErrorResponse,
@@ -17,9 +15,11 @@ import {
   DiscordResponse,
   editDiscordMessage,
 } from '../responses';
-import { regionDisplayName, resolveRegion } from '../region';
+import { resolveRegion } from '../region';
 import { applyStalenessGate } from './staleness';
-import { t } from '../i18n';
+import { regionDisplayName, t } from '../i18n';
+import { DISCORD_GAME } from '../game';
+import { findDiscordUser } from '../user';
 
 export interface RecommendCommandOptions {
   discordUserId: string;
@@ -49,7 +49,7 @@ export async function executeRecommendCommand({
 }: ExecuteRecommendOptions): Promise<void> {
   const regionName = regionDisplayName(region, locale);
   try {
-    const data = await fetchLatestSnapshotData(dbUserId, region);
+    const data = await fetchLatestSnapshotData(DISCORD_GAME, dbUserId, region);
     if (!data) {
       await editDiscordMessage(applicationId, interactionToken, {
         embeds: [createNoDataResponse(regionName, locale).data!.embeds![0]],
@@ -57,12 +57,10 @@ export async function executeRecommendCommand({
       return;
     }
 
-    const { snapshot, songs } = data;
-    const songsWithRating = addRatingsAndSort(songs as SongWithScore[], snapshot.gameVersion) as SongWithRating[];
-    const recommendations = generateRecommendations(songsWithRating, snapshot.gameVersion);
+    const recommendations = generateRecommendations(data);
 
     const deduped = recommendations.filter((rec, index, self) =>
-      index === self.findIndex(r => r.song.songId === rec.song.songId && r.song.difficulty === rec.song.difficulty)
+      index === self.findIndex(r => r.song.songId === rec.song.songId && r.song.difficultyCode === rec.song.difficultyCode)
     );
 
     const embed = deduped.length === 0
@@ -95,25 +93,18 @@ function difficultyShort(difficulty: string): string {
 }
 
 function categoryTag(rec: RecommendationData): string {
-  if (rec.isInBest) return rec.category === 'new' ? 'B15' : 'B35';
-  return rec.category === 'new' ? 'NEW' : 'OLD';
-}
-
-// Floor to 2 decimals so 99.9956% doesn't render as 100.00%
-function formatAccuracy(accuracy: number): string {
-  return (Math.floor(accuracy * 100) / 100).toFixed(2);
+  return rec.isInBest ? `B${getGame(DISCORD_GAME).rating.bucketSizes[rec.category]}` : rec.category.toUpperCase();
 }
 
 function formatRow(rec: RecommendationData, rank: number): string {
-  const { song, currentAccuracy, targetAccuracy, currentRating, targetRating, ratingGain } = rec;
+  const { song, target, targetRating, ratingGain } = rec;
   const tag = categoryTag(rec);
-  const diff = difficultyShort(song.difficulty);
-  const lvl = renderLevelPrecise(song.levelPrecise, song.difficulty);
-  const target = targetAccuracy === 101.0 ? 'AP' : `${formatAccuracy(targetAccuracy)}%`;
+  const diff = difficultyShort(keyOf(DISCORD_GAME, 'difficulty', song.difficultyCode));
+  const lvl = formatGameLevel(DISCORD_GAME, song.levelPrecise, song.difficultyCode);
   const rankStr = `#${rank}`.padEnd(3);
   return [
     `${rankStr} [${tag}] ${song.songName} (${diff} ${lvl})`,
-    `    ${formatAccuracy(currentAccuracy)}% → ${target}   rating ${currentRating} → ${targetRating}   (+${ratingGain})`,
+    `    ${formatGameScore(DISCORD_GAME, song.scoreValue, { precision: "compact" })} → ${formatRecommendationTarget(DISCORD_GAME, target)}   rating ${song.rating} → ${targetRating}   (+${ratingGain})`,
   ].join('\n');
 }
 
@@ -154,33 +145,21 @@ export async function handleRecommendCommand({
 }: RecommendCommandOptions): Promise<DiscordResponse> {
   try {
     if (!discordUserId) {
-      return createErrorResponse(t(locale, 'common.error.unableToIdentify'), locale);
+      return createErrorResponse(t(locale, 'common.error.unableToIdentify'));
     }
 
-    const [dbUser] = await db
-      .select({
-        id: user.id,
-        name: user.name,
-        username: user.username,
-        region: user.region,
-      })
-      .from(user)
-      .innerJoin(account, eq(account.userId, user.id))
-      .where(and(
-        eq(account.accountId, discordUserId),
-        eq(account.providerId, 'discord')
-      ))
-      .limit(1);
+    const dbUser = await findDiscordUser(discordUserId);
 
     if (!dbUser) {
       return createNotRegisteredResponse(locale);
     }
 
     const region = resolveRegion(regionParam, dbUser.region);
+    if (!region) return createErrorResponse(t(locale, 'common.error.noRegion'));
 
     const gate = await applyStalenessGate({
       command: 'recommend',
-      dbUser: { id: dbUser.id, name: dbUser.name, username: dbUser.username, region: dbUser.region },
+      dbUser,
       region,
       discordUserId,
       forceFetch,
@@ -205,6 +184,6 @@ export async function handleRecommendCommand({
     return deferredResponse;
   } catch (error) {
     getLogger().error({ err: error }, 'Error handling recommend command');
-    return createErrorResponse(t(locale, 'recommend.errorGeneric'), locale);
+    return createErrorResponse(t(locale, 'recommend.errorGeneric'));
   }
 }

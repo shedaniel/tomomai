@@ -3,10 +3,14 @@
 import { motion } from "motion/react";
 import { Link } from "@/i18n/navigation"
 
-import { cn, createSafeMaimaiImageUrl, getTypeBadgeUrl } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import { CoverImage } from "@/components/cover-image";
+import { ChartLevel } from "@/components/games/chart-level";
+import { ChartTypeBadge } from "@/components/games/chart-type-badge";
 import { UniqueSong } from "./types";
-import { renderLevelPrecise } from "@/lib/name-utils";
+import { useGame } from "@/components/providers/game-provider";
+import { codeOf } from "@/lib/games/codes";
+import { getGameDifficulty, getGameChartType } from "@/lib/games/presentation";
 
 interface SongCardProps {
   song: UniqueSong;
@@ -18,6 +22,7 @@ interface SongCardProps {
 }
 
 export function SongCard({ song, index, isSelected, onSelect, disableInitialAnimation }: SongCardProps) {
+  const game = useGame().id;
   const href = `/db/songs/${encodeURIComponent(song.slug)}`;
 
   const handleClick = (e: React.MouseEvent) => {
@@ -65,6 +70,9 @@ export function SongCard({ song, index, isSelected, onSelect, disableInitialAnim
 
   const isSingleDifficulty = song.difficulties.length === 1;
   const singleDiff = isSingleDifficulty ? song.difficulties[0] : null;
+  const typeCode = codeOf(game, "chartType", song.type);
+  const chartType = getGameChartType(game, typeCode);
+  const difficultyCode = singleDiff ? codeOf(game, "difficulty", singleDiff.difficulty) : null;
 
   return (
     <motion.div
@@ -82,13 +90,7 @@ export function SongCard({ song, index, isSelected, onSelect, disableInitialAnim
         onClick={handleClick}
         className={cn(
           "block relative rounded-md overflow-hidden cursor-pointer ring-2 transition-all duration-300 ease-out",
-          !singleDiff && (song.type === "dx" ? "ring-amber-400 dark:ring-amber-300/75" : "ring-slate-300 dark:ring-slate-300/75"),
-          singleDiff?.difficulty === "basic" && "ring-green-400 dark:ring-green-600",
-          singleDiff?.difficulty === "advanced" && "ring-yellow-400 dark:ring-yellow-600",
-          singleDiff?.difficulty === "expert" && "ring-red-400 dark:ring-red-600",
-          singleDiff?.difficulty === "master" && "ring-purple-500 dark:ring-purple-600",
-          singleDiff?.difficulty === "remaster" && "ring-purple-200 dark:ring-purple-400",
-          singleDiff?.difficulty === "utage" && "ring-pink-400 dark:ring-pink-600",
+          difficultyCode === null ? chartType.classes.ring : getGameDifficulty(game, difficultyCode).classes.ring,
           isSelected && "ring-4 ring-violet-500"
         )}
         style={{ aspectRatio: '1/1', transformStyle: 'preserve-3d', transform: 'perspective(1000px)' }}
@@ -109,28 +111,16 @@ export function SongCard({ song, index, isSelected, onSelect, disableInitialAnim
 
         {/* Type Badge */}
         <div className="absolute top-2 left-2 z-10">
-          <img
-            src={createSafeMaimaiImageUrl(getTypeBadgeUrl(song.type))}
-            alt={song.type.toUpperCase()}
-            width={32}
-            height={10}
-            className="drop-shadow-md"
-            loading="lazy"
-          />
+          <ChartTypeBadge typeCode={typeCode} size="xs" />
         </div>
 
         {/* Difficulty Badge (only if single difficulty) */}
-        {singleDiff && (
+        {singleDiff && difficultyCode !== null && (
           <div className={cn(
             "absolute top-[-2px] right-[-2px] pl-1.75 pr-3 py-0.75 rounded-tr-md rounded-bl-[8px] overflow-hidden text-[10px] font-semibold text-white z-10",
-            singleDiff.difficulty === "basic" && "bg-green-500 dark:bg-green-600",
-            singleDiff.difficulty === "advanced" && "bg-yellow-500 dark:bg-yellow-600",
-            singleDiff.difficulty === "expert" && "bg-red-500 dark:bg-red-600",
-            singleDiff.difficulty === "master" && "bg-purple-500 dark:bg-purple-600",
-            singleDiff.difficulty === "remaster" && "bg-purple-200 text-purple-900 dark:bg-purple-400 dark:text-purple-900",
-            singleDiff.difficulty === "utage" && "bg-pink-500 dark:bg-pink-600",
+            getGameDifficulty(game, difficultyCode).classes.cardBadge,
           )}>
-            {renderLevelPrecise(singleDiff.levelPrecise, singleDiff.difficulty)}
+            <ChartLevel chart={singleDiff} />
           </div>
         )}
 

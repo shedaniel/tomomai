@@ -93,7 +93,7 @@ function renderTextHint(
     case "difficulty": {
       const diff = t(`difficulty.values.${hint.difficulty}`);
       if (hint.levelPrecise != null)
-        return `${diff} ${hint.levelPrecise.toFixed(1)}`;
+        return `${diff} ${(hint.levelPrecise / 10).toFixed(1)}`;
       if (hint.displayLevel) return `${diff} ${hint.displayLevel}`;
       return diff;
     }

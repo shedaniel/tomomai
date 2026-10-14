@@ -1,7 +1,9 @@
 import { initTRPC, TRPCError } from '@trpc/server';
 import { auth } from '@/lib/auth';
+import { GAME_ERROR_STATUS, GameError } from '@/lib/games/errors';
 import { logger } from '@/lib/logger';
 import { getRequestId, runWithLogger } from '@/lib/request-logger';
+import { FetchStartError } from '@/server/services/games/fetch-errors';
 import superjson from 'superjson';
 import type { NextRequest } from 'next/server';
 
@@ -41,7 +43,8 @@ const SERVER_ERROR_CODES = new Set<TRPCError['code']>([
 // from tRPC picks up route/requestId via getLogger() (see request-logger.ts),
 // and log failures with a level chosen by error code. tRPC catches procedure
 // errors and returns them as responses, so they never reach instrumentation's
-// onRequestError — this middleware is where they get logged.
+// onRequestError — this middleware is where they get logged. A fetch refused
+// before it starts is expected even when its status is 5xx (maintenance).
 const withRequestLogger = t.middleware(({ ctx, path, next }) => {
   const requestId = getRequestId(ctx.req);
   const log = logger.child({ route: `trpc/${path}`, requestId });
@@ -49,7 +52,7 @@ const withRequestLogger = t.middleware(({ ctx, path, next }) => {
     const result = await next();
     if (!result.ok) {
       const { error } = result;
-      if (SERVER_ERROR_CODES.has(error.code)) {
+      if (SERVER_ERROR_CODES.has(error.code) && !(error.cause instanceof FetchStartError)) {
         log.error({ err: error, status: error.code }, 'tRPC procedure failed');
       } else {
         log.warn({ status: error.code }, `tRPC procedure failed: ${error.message}`);
@@ -59,9 +62,20 @@ const withRequestLogger = t.middleware(({ ctx, path, next }) => {
   });
 });
 
+function toTrpcGameError(error: GameError): TRPCError {
+  return new TRPCError({ code: GAME_ERROR_STATUS[error.code].trpc, message: error.message, cause: error });
+}
+
+// A game rejection thrown anywhere below, including deep in a service, answers with its own status instead of a 500.
+const withGameErrors = t.middleware(async ({ next }) => {
+  const result = await next();
+  if (!result.ok && result.error.cause instanceof GameError) throw toTrpcGameError(result.error.cause);
+  return result;
+});
+
 // Export reusable router and procedure helpers
 export const router = t.router;
-export const publicProcedure = t.procedure.use(withRequestLogger);
+export const publicProcedure = t.procedure.use(withRequestLogger).use(withGameErrors);
 export const middleware = t.middleware;
 
 // Protected procedure that requires authentication

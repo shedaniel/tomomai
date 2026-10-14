@@ -1,9 +1,6 @@
-import { db } from '@/lib/db';
-import { account, user } from '@/lib/db/schema-pg';
 import { getLogger } from '@/lib/request-logger';
 import { waitUntil } from '@vercel/functions';
-import { and, eq } from 'drizzle-orm';
-import type { Region } from '@/lib/types';
+import type { Region } from '@/lib/games/ids';
 import {
   createDeferredResponse,
   createErrorResponse,
@@ -11,6 +8,7 @@ import {
   DiscordResponse,
 } from '../responses';
 import { resolveRegion } from '../region';
+import { findDiscordUser } from '../user';
 import { generateAndSendCreditImage } from '../image-utils';
 import { applyStalenessGate } from './staleness';
 import { t } from '../i18n';
@@ -66,36 +64,23 @@ export async function handleRecentsCommand({
 }: RecentsCommandOptions): Promise<DiscordResponse> {
   try {
     if (!discordUserId) {
-      return createErrorResponse(t(locale, 'common.error.unableToIdentify'), locale);
+      return createErrorResponse(t(locale, 'common.error.unableToIdentify'));
     }
 
-    // Find user by Discord ID via account table
-    const [dbUser] = await db
-      .select({
-        id: user.id,
-        name: user.name,
-        username: user.username,
-        region: user.region,
-      })
-      .from(user)
-      .innerJoin(account, eq(account.userId, user.id))
-      .where(and(
-        eq(account.accountId, discordUserId),
-        eq(account.providerId, 'discord')
-      ))
-      .limit(1);
+    const dbUser = await findDiscordUser(discordUserId);
 
     if (!dbUser) {
       return createNotRegisteredResponse(locale);
     }
 
     const region = resolveRegion(regionParam, dbUser.region);
+    if (!region) return createErrorResponse(t(locale, 'common.error.noRegion'));
 
     // Staleness/force-fetch only apply on the initial invocation, not pagination.
     if (!skip) {
       const gate = await applyStalenessGate({
         command: 'recents',
-        dbUser: { id: dbUser.id, name: dbUser.name, username: dbUser.username, region: dbUser.region },
+        dbUser,
         region,
         discordUserId,
         forceFetch,
@@ -124,6 +109,6 @@ export async function handleRecentsCommand({
 
   } catch (error) {
     getLogger().error({ err: error }, 'Error handling recents command');
-    return createErrorResponse(t(locale, 'recents.errorGeneric'), locale);
+    return createErrorResponse(t(locale, 'recents.errorGeneric'));
   }
 }

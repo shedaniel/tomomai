@@ -1,8 +1,10 @@
 import { getPostBySlug } from "@/lib/posts";
-import { createOGImage, OG_SIZE } from "@/lib/og";
+import { getCurrentGame } from "@/lib/games/current";
+import { getCatalogSection } from "@/lib/games/frontend";
+import { createOGImage } from "@/lib/og";
+import { ogImageVariants } from "@/lib/seo";
 import { getTranslations } from "next-intl/server";
 import type { Locale } from "@/i18n/locale";
-import { getOGImageLocales } from "@/i18n/og-locale";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -12,11 +14,12 @@ type Props = {
 };
 
 export async function generateImageMetadata() {
-  const locales = await getOGImageLocales();
-  return locales.map(locale => ({ id: locale, alt: "Post", size: OG_SIZE, contentType: "image/png" as const }));
+  return ogImageVariants("Post");
 }
 
 export default async function Image({ params, id }: Props & { id: Promise<string> }) {
+  const game = getCurrentGame();
+  if (!getCatalogSection(game, "posts")) return new Response(null, { status: 404 });
   const [{ post_id }, locale] = await Promise.all([params, id]) as [{ post_id: string }, Locale];
   const post = getPostBySlug(post_id, locale);
   const t = await getTranslations({ locale, namespace: "db.posts.list" });
@@ -30,8 +33,9 @@ export default async function Image({ params, id }: Props & { id: Promise<string
     : undefined;
 
   return createOGImage({
+    brand: game.brand,
     section: t("title"),
-    title: post?.title ?? "tomomai",
+    title: post?.title ?? game.brand.productName,
     summary: post?.summary,
     label: date,
     locale,

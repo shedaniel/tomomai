@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { NextRequest } from "next/server";
+import { z } from "zod";
 
 const { rows, verifyAccessToken } = vi.hoisted(() => ({
   rows: [] as unknown[][],
@@ -15,7 +16,6 @@ vi.mock("@/lib/db", () => {
   return { db: chain };
 });
 vi.mock("@/lib/request-logger", () => ({ requestLogger: () => ({ log: { error: vi.fn() } }) }));
-vi.mock("@/lib/api/registry", () => ({ findRouteByRequest: () => ({ cost: 1 }) }));
 vi.mock("@/lib/security/redis-rate-limit", () => {
   const limiter = { check: async () => ({ limited: false, limit: 10, remaining: 9, retryAfter: 0 }), reward: async () => {} };
   return { apiKeyLimiter: limiter, apiUserLimiter: limiter };
@@ -27,10 +27,24 @@ vi.mock("@/lib/api/quota", () => ({
 }));
 
 import { withApiKey } from "./protect";
+import { defineRoute } from "./registry";
+import type { ScopeKey } from "./scopes";
 
-const handler = withApiKey(["user:metadata:read"], async (_req, key) => Response.json({ userId: key.userId }));
+function keyedSpec(scope: Exclude<ScopeKey, "public">) {
+  return defineRoute({
+    method: "GET",
+    path: `/api/v1/protect-test/${scope}`,
+    tag: "Test",
+    summary: "Protect test",
+    scope,
+    cost: 1,
+    response: z.object({ userId: z.string() }),
+  });
+}
 
-const readyHandler = withApiKey(["ready"], async (_req, key) => Response.json({ userId: key.userId }));
+const handler = withApiKey(keyedSpec("user:metadata:read"), async (_req, key) => Response.json({ userId: key.userId }));
+
+const readyHandler = withApiKey(keyedSpec("ready"), async (_req, key) => Response.json({ userId: key.userId }));
 
 function call(token: string, route = handler) {
   const req = new NextRequest("https://example.test/api/v1/me", { headers: { authorization: `Bearer ${token}` } });
@@ -66,7 +80,7 @@ describe("OAuth access tokens", () => {
   });
 
   it("never lets an OAuth token use an internal scope, even one stored on the client", async () => {
-    const submitHandler = withApiKey(["snapshot:submit"], async () => Response.json({}));
+    const submitHandler = withApiKey(keyedSpec("snapshot:submit"), async () => Response.json({}));
     rows.push([{ id: "t1", userId: "user-1", scopes: ["snapshot:submit"], expiresAt: future, clientDisabled: false }]);
     expect((await call("opaque-token", submitHandler)).status).toBe(403);
   });

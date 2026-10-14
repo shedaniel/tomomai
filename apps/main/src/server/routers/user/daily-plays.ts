@@ -1,22 +1,15 @@
-import { protectedProcedure, publicProcedure, router } from '@/lib/trpc';
-import { z } from 'zod';
-import { getEnabledRegions } from '@/lib/enabled-regions';
-import { listDailyPlaysAvailableDays } from '@/server/services/daily-plays-data';
-import { resolvePublicSnapshotUserId } from '@/server/queries/public-access';
-
-const regionSchema = z.enum(getEnabledRegions());
+import { protectedProcedure, publicProcedure, router } from "@/lib/trpc";
+import { listDailyPlaysAvailableDays } from "@/server/services/games/images/daily-plays";
+import { gameProcedure, publicSnapshotProcedure } from "../game-procedures";
 
 export const dailyPlaysRouter = router({
-  getAvailableDays: protectedProcedure
-    .input(z.object({ region: regionSchema }))
-    .query(async ({ ctx, input }) => {
-      return await listDailyPlaysAvailableDays(ctx.session.user.id, input.region);
+  getAvailableDays: gameProcedure(protectedProcedure, "daily-plays")
+    .query(({ ctx }) => {
+      return listDailyPlaysAvailableDays(ctx.game, ctx.session.user.id, ctx.region);
     }),
 
-  getPublicAvailableDays: publicProcedure
-    .input(z.object({ snapshotId: z.string(), region: regionSchema }))
-    .query(async ({ input }) => {
-      const { userId } = await resolvePublicSnapshotUserId(input.snapshotId);
-      return await listDailyPlaysAvailableDays(userId, input.region);
+  getPublicAvailableDays: publicSnapshotProcedure(publicProcedure, "daily-plays", "recentPlays")
+    .query(({ ctx }) => {
+      return listDailyPlaysAvailableDays(ctx.game, ctx.snapshot.userId, ctx.region);
     }),
 });

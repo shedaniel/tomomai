@@ -3,6 +3,7 @@ import path from "path";
 import { NextRequest, NextResponse } from "next/server";
 import { resolveBaseUrlFromHeaders } from "@/lib/base-url";
 import { useUserscriptFetch } from "@/lib/flags";
+import { requireFrontendGame } from "@/lib/games/current";
 
 const BUNDLE_PATH = path.join(
   process.cwd(),
@@ -13,6 +14,7 @@ const PLACEHOLDER = "__TOMOMAI_API_BASE__";
 const CLIENT_ID_PLACEHOLDER = "__TOMOMAI_USERSCRIPT_CLIENT_ID__";
 
 export async function GET(request: NextRequest) {
+  requireFrontendGame("maimai");
   if (!(await useUserscriptFetch())) return new NextResponse("Not Found", { status: 404 });
   const clientId = process.env.USERSCRIPT_CLIENT_ID;
   if (!clientId) {

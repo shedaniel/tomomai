@@ -4,7 +4,6 @@ import { alias } from "drizzle-orm/pg-core";
 import { adminProcedure } from "@/lib/admin-middleware";
 import { db } from "@/lib/db";
 import { profileReports, user } from "@/lib/db/schema-pg";
-import { revalidatePublicProfileForUser } from "@/lib/profile-cache";
 import { router } from "@/lib/trpc";
 import {
   dismissProfileReport,
@@ -136,7 +135,6 @@ export const profileReportsRouter = router({
         },
       });
 
-      await revalidatePublicProfileForUser(result.targetUserId);
       return result;
     }),
 });

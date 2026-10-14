@@ -1,17 +1,17 @@
 import { getAllPostsMeta, getPostBySlug, getAvailableTranslations } from "@/lib/posts";
 import { getLocale, setStaticLocale } from "@/i18n/locale-server";
-import { defaultLocale } from "@tomomai/i18n/locale";
 import { ExternalMarkdownLink, markdownBaseComponents } from "@tomomai/markdown";
 import { MDXRemote } from "next-mdx-remote/rsc";
 import { Metadata } from "next";
-import { breadcrumbJsonLd, openGraphLocales, localizePath, ogImageUrl } from "@/lib/seo";
+import { breadcrumbJsonLd, buildPageMetadata, localizePath, MISSING_PAGE_METADATA } from "@/lib/seo";
 import { resolveBaseUrl } from "@/lib/base-url";
 import { Link } from "@/i18n/navigation"
 import { notFound } from "next/navigation";
 import { PostLocaleSwitcher } from "@/components/post-locale-switcher";
 import { getTranslations } from "next-intl/server";
 import { Bot } from "lucide-react";
-import { isCNExclusive } from "@/lib/enabled-regions";
+import { getCurrentGame } from "@/lib/games/current";
+import { getCatalogSection, isGameCnExclusive } from "@/lib/games/frontend";
 import { MdxImageComparison } from "@/components/mdx-image-comparison";
 import { MdxImageCarousel, MdxImageCarouselSlide } from "@/components/mdx-image-carousel";
 import remarkGfm from "remark-gfm";
@@ -24,49 +24,32 @@ type PostPageProps = {
 };
 
 export async function generateStaticParams() {
+  if (!getCatalogSection(getCurrentGame(), "posts")) return [];
   const posts = getAllPostsMeta("en");
   return posts.map((post) => ({ post_id: post.slug }));
 }
 
 export async function generateMetadata({ params }: PostPageProps): Promise<Metadata> {
+  const game = getCurrentGame();
+  if (!getCatalogSection(game, "posts")) return MISSING_PAGE_METADATA;
   const { locale: localeParam, post_id } = await params;
   await setStaticLocale(localeParam);
   const locale = await getLocale();
   const post = getPostBySlug(post_id, locale);
   if (!post) return {};
 
-  const url = `/db/posts/${post.slug}`;
-  const translations = getAvailableTranslations(post.canonicalSlug);
-
-  const languages: Record<string, string> = {};
-  for (const lang of translations) {
-    languages[lang] = localizePath(url, lang);
-  }
-  languages["x-default"] = localizePath(url, defaultLocale);
-
-  return {
-    title: `${post.title} | tomomai`,
+  return buildPageMetadata({
+    brand: game.brand,
+    locale,
+    path: `/db/posts/${post.slug}`,
+    locales: getAvailableTranslations(post.canonicalSlug),
+    title: `${post.title} | ${game.brand.productName}`,
+    ogTitle: post.title,
     description: post.summary,
-    openGraph: {
-      title: post.title,
-      description: post.summary,
-      type: "article",
-      url: localizePath(url, locale),
-      siteName: "tomomai ともマイ",
-      publishedTime: post.date,
-      images: [{ url: ogImageUrl(url, locale) }],
-      ...openGraphLocales(locale),
-    },
-    twitter: {
-      card: "summary_large_image",
-      title: `${post.title} | tomomai`,
-      description: post.summary,
-    },
-    alternates: {
-      canonical: localizePath(url, locale),
-      languages,
-    },
-  };
+    ogType: "article",
+    publishedTime: post.date,
+    image: "route",
+  });
 }
 
 const mdxComponents = {
@@ -75,6 +58,8 @@ const mdxComponents = {
 };
 
 export default async function PostPage({ params }: PostPageProps) {
+  const game = getCurrentGame();
+  if (!getCatalogSection(game, "posts")) notFound();
   const { locale: localeParam, post_id } = await params;
   await setStaticLocale(localeParam);
   const locale = await getLocale();
@@ -101,6 +86,7 @@ export default async function PostPage({ params }: PostPageProps) {
   const localizedPath = localizePath(`/db/posts/${post.slug}`, locale);
   const postUrl = `${baseUrl}${localizedPath}`;
   const tNav = await getTranslations("db.types");
+  const { brand } = game;
 
   const structuredData = {
     "@context": "https://schema.org",
@@ -111,17 +97,17 @@ export default async function PostPage({ params }: PostPageProps) {
     dateModified: post.date,
     inLanguage: post.locale,
     mainEntityOfPage: { "@type": "WebPage", "@id": postUrl },
-    author: { "@type": "Organization", name: "tomomai", url: baseUrl },
+    author: { "@type": "Organization", name: brand.productName, url: baseUrl },
     publisher: {
       "@type": "Organization",
-      name: "tomomai",
-      logo: { "@type": "ImageObject", url: `${baseUrl}/icon.png` },
+      name: brand.productName,
+      ...(brand.icon && { logo: { "@type": "ImageObject", url: `${baseUrl}${brand.icon}` } }),
     },
     image: `${postUrl}/opengraph-image`,
   };
 
   const breadcrumb = breadcrumbJsonLd([
-    { name: "tomomai", url: `${baseUrl}/` },
+    { name: brand.productName, url: `${baseUrl}/` },
     { name: tNav("posts"), url: `${baseUrl}${localizePath("/db/posts", locale)}` },
     { name: post.title, url: postUrl },
   ]);
@@ -146,7 +132,7 @@ export default async function PostPage({ params }: PostPageProps) {
         </Link>
 
         {/* Language switcher (only shows if multiple translations exist) */}
-        {!isCNExclusive() && <PostLocaleSwitcher
+        {!isGameCnExclusive(game) && <PostLocaleSwitcher
           availableLocales={availableTranslations}
           currentLocale={post.locale}
         />}

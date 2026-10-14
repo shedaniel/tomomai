@@ -1,6 +1,5 @@
 {
   "common": {
-    "title": "tomomai ともマイ",
     "loading": "Loading...",
     "save": "Save",
     "cancel": "Cancel",
@@ -40,19 +39,14 @@
       "fri": "Fri",
       "sat": "Sat"
     },
-    "difficulties": {
-      "basic": "Basic",
-      "advanced": "Advanced",
-      "expert": "Expert",
-      "master": "Master",
-      "remaster": "Re:Master",
-      "utage": "Utage"
-    },
     "back": "Back",
     "clipboardError": "Failed to copy to clipboard",
     "selectAnOption": "Select an option",
     "ok": "OK",
-    "email": "Email"
+    "email": "Email",
+    "retry": "Try again",
+    "previous": "Previous",
+    "next": "Next"
   },
   "minigames": {
     "badge": "Minigame",
@@ -98,12 +92,12 @@
       "title": "Features:",
       "trackScores": "Track scores across International and Japan regions",
       "viewHistory": "View historical data snapshots",
-      "importData": "Import data directly from maimai DX NET",
+      "importData": "Import data directly from {net}",
       "analyzeProgress": "Analyse your progress over time"
     },
-    "signInTitle": "Sign in to tomomai",
+    "signInTitle": "Sign in to {brand}",
     "signInDescription": "Welcome back! Continue with the account you signed up with.",
-    "signUpTitle": "Create your tomomai account",
+    "signUpTitle": "Create your {brand} account",
     "signUpDescription": "Review our policies, then choose an account to sign up with.",
     "createAccount": "Create an account",
     "haveAccount": "Already have an account?",
@@ -111,7 +105,7 @@
     "inviteOnlyMessage": "New sign-ups currently need an invitation link from an existing user.",
     "errors": {
       "title": "Authentication error",
-      "noAccount": "There's no tomomai account for that login yet. Create one below to get started.",
+      "noAccount": "There's no {brand} account for that login yet. Create one below to get started.",
       "signupUnavailable": "We couldn't create your account. New sign-ups may be closed right now.",
       "inviteRequired": "An invitation is required to sign up right now. Open the invitation link you received and try again.",
       "inviteInvalid": "That invitation code isn't valid.",
@@ -121,7 +115,7 @@
       "accountNotLinked": "That provider account isn't linked to your user and couldn't be linked automatically.\n\nYou may already have an account using the same email.\n\nTry signing in with the provider you originally signed up with, then link this one from Settings → Account.",
       "emailMismatch": "That account's email doesn't match your current account.",
       "alreadyLinked": "That account is already linked to a different user.",
-      "emailMissing": "That account didn't share an email address, which tomomai needs to sign you in.",
+      "emailMissing": "That account didn't share an email address, which {brand} needs to sign you in.",
       "restart": "Your sign-in was interrupted or took too long. Please try again.",
       "provider": "We couldn't get your account details from the login provider. Please try again.",
       "banned": "This account has been suspended. If you think this is a mistake, contact us on Discord.",
@@ -162,7 +156,6 @@
     "reauthRequired": "Please sign in again before managing passkeys."
   },
   "consent": {
-    "title": "Welcome to tomomai",
     "description": "Before creating your account, please review and agree to our policies",
     "tldr": {
       "title": "TL;DR (Not Legal Advice)",
@@ -194,8 +187,7 @@
     }
   },
   "dashboard": {
-    "title": "tomomai ともマイ",
-    "description": "Track and analyse your maimai scores with friends",
+    "description": "Track and analyse your {game} scores with friends",
     "timezoneUpdateSuccess": "Timezone updated successfully!",
     "timezoneUpdateError": "Failed to update timezone: {error}",
     "languageUpdateSuccess": "Language updated successfully!",
@@ -203,6 +195,9 @@
     "regionUpdateSuccess": "Region updated successfully!",
     "regionUpdateError": "Failed to update region: {error}",
     "tokenUpdateSuccess": "Token saved successfully!"
+  },
+  "game": {
+    "unavailable": "Player features for {game} are not available yet."
   },
   "settings": {
     "pages": {
@@ -212,7 +207,8 @@
       },
       "fetch": {
         "title": "Fetch",
-        "description": "Token and data fetching settings."
+        "description": "Token and data fetching settings for {game}.",
+        "unavailable": "Player fetching for {game} is not available yet."
       },
       "privacy": {
         "title": "Privacy",
@@ -243,11 +239,6 @@
       "zh-SG": "简体中文 (新加坡, 马来西亚)",
       "ko": "한국어 (AI 번역)"
     },
-    "timezone": {
-      "label": "Timezone",
-      "description": "This affects how dates and times are displayed throughout the app. Japan timezone is the default as it matches maimai's server time.",
-      "placeholder": "Select timezone"
-    },
     "account": {
       "label": "Account Authentication",
       "updateToken": "Update Token",
@@ -256,7 +247,7 @@
       "deleteTokenDialogDescription": "Are you sure you want to delete your saved token? You will need to re-authenticate to fetch data again.",
       "deleteTokenSuccess": "Token deleted successfully.",
       "deleteTokenError": "Failed to delete token.",
-      "description": "Update your maimai token for data fetching. This is required to sync your player data."
+      "description": "Update your {game} authentication to sync your player data."
     },
     "albumPrivacy": {
       "title": "Album Photo Privacy Settings",
@@ -281,10 +272,10 @@
     },
     "profile": {
       "publishProfile": "Publish Profile",
-      "publishDescription": "Make your maimai profile publicly accessible for others to view your scores and progress.",
+      "publishDescription": "Make your profile publicly accessible for others to view your scores and progress in every game.",
       "mainRegion": {
         "label": "Main Region",
-        "description": "Choose your primary region for the published profile.",
+        "description": "Choose the primary region of your published {game} profile.",
         "intl": "International",
         "jp": "Japan",
         "cn": "China"
@@ -305,7 +296,7 @@
         },
         "showPlayCounts": {
           "label": "Show Play Counts",
-          "description": "Display your maimai play counts."
+          "description": "Display your play counts."
         },
         "showEvents": {
           "label": "Show Events",
@@ -423,6 +414,7 @@
         "createButton": "Create API Key",
         "createError": "Failed to create API key"
       },
+      "scopeRoutes": "Grants {routes}.",
       "scopes": {
         "ready": {
           "name": "Basic access",
@@ -450,7 +442,7 @@
         },
         "snapshot:latest:icon:read": {
           "name": "Latest profile icon",
-          "description": "Your current maimai icon, which may be a photo of your face taken with the in-game camera"
+          "description": "Your current icon in every game, which may be a photo of your face taken with an in-game camera"
         },
         "snapshot:all:metadata:read": {
           "name": "Snapshot history",
@@ -470,7 +462,7 @@
         },
         "snapshot:all:icon:read": {
           "name": "Profile icon history",
-          "description": "Your maimai icon from every snapshot, which may be a photo of your face taken with the in-game camera"
+          "description": "Your icon from every snapshot of every game, which may be a photo of your face taken with an in-game camera"
         },
         "recent:read": {
           "name": "Recent plays",
@@ -514,11 +506,11 @@
         },
         "fetch:start": {
           "name": "Start a fetch",
-          "description": "Fetch new data with your saved maimai token, adding a new snapshot"
+          "description": "Fetch new data for any game with its saved token, adding a new snapshot"
         },
         "fetch:delete": {
-          "name": "Remove saved maimai token",
-          "description": "Fetching stops until you sign in to maimai again"
+          "name": "Remove saved game tokens",
+          "description": "Fetching a game stops until you sign in to it again"
         },
         "snapshot:latest:read": {
           "name": "Latest snapshot",
@@ -534,7 +526,6 @@
         }
       },
       "oauthApps": {
-        "officialLabel": "Official tomomai app",
         "officialDescription": "The consent screen shows an official badge instead of the third-party warning. Only admins can set this.",
         "officialBadge": "Official",
         "label": "OAuth Applications",
@@ -630,16 +621,15 @@
     "fetchNewData": "Fetch New Data",
     "fetchingData": "Fetching data...",
     "lastUpdate": "Last updated",
-    "noDataInstructions": "No data found for this region. Click \"Fetch New Data\" to import your maimai scores. You'll need your maimai token for this process."
+    "noDataInstructions": "No data found for this region. Click \"Fetch New Data\" to import your {game} scores. You'll need your {game} token for this process."
   },
   "profileMetadata": {
-    "title": "{username} | tomomai ともマイ",
-    "description": "View {username}'s maimai profile for {region}. Track and analyse maimai scores with friends.",
-    "descriptionRich": "{displayName} ({username}) on {region} maimai — rating {rating}. View their B50, recent plays, and chart records on tomomai.",
-    "descriptionUnknownRegion": "View {username}'s maimai profile. Track and analyse maimai scores with friends.",
-    "notFoundTitle": "Profile Not Found | tomomai ともマイ",
+    "title": "{username} | {brand}",
+    "descriptionRich": "{displayName} ({username}) on {region} {game} with a rating of {rating}. View their scores and progress on {brandName}.",
+    "description": "View {username}’s {game} profile on {brandName}.",
+    "notFoundTitle": "Profile Not Found | {brand}",
     "notFoundDescription": "The profile you're looking for doesn't exist or is not publicly accessible.",
-    "errorTitle": "Error | tomomai ともマイ",
+    "errorTitle": "Error | {brand}",
     "errorDescription": "An error occurred while loading this profile."
   },
   "profileVisibility": {
@@ -674,8 +664,11 @@
     "totalPlays": "Total Plays: {count}",
     "songs": "Songs ({count} total)",
     "searchPlaceholder": "Search songs by name, artist, difficulty, or type...",
-    "newSongsB15": "New Songs B15",
-    "oldSongsB35": "Old Songs B35",
+    "rankingBucket": {
+      "new": "New Songs B{size}",
+      "old": "Old Songs B{size}",
+      "short": "B{size}"
+    },
     "newSongs": "New Songs",
     "oldSongs": "Old Songs",
     "displayModes": {
@@ -688,9 +681,11 @@
       "artist": "Artist",
       "level": "Level",
       "achievement": "Achievement",
+      "score": "Score",
       "fc": "FC",
       "fs": "FS",
-      "rating": "Rating"
+      "rating": "Rating",
+      "status": "Status"
     },
     "statistics": {
       "sum": "Sum",
@@ -698,18 +693,32 @@
     },
     "switchToListForAllSongs": "Switch to List or Table view for all songs",
     "noDataAvailable": "No Data Available",
-    "getStartedInstructions": "Get started by fetching your maimai data using the fetch button above.",
+    "getStartedInstructions": "Get started by fetching your {game} data using the fetch button above.",
+    "fetchUnavailable": "Player fetching for {game} is not available yet.",
+    "noPublicRecords": "{username} has no {game} records yet.",
     "history": {
       "title": "Rating History",
       "ratingOverTime": "Rating Over Time",
       "noHistory": "No rating history available",
-      "needMoreData": "Fetch data at least twice to see your rating history"
+      "needMoreData": "Fetch data at least twice to see your rating history",
+      "newInBest": "New in B{size}",
+      "newInBestRating": "New in B{size}: {rating}"
     },
     "developer": {
       "title": "Developer",
       "exportJson": "Export Snapshot as JSON",
       "exporting": "Exporting..."
-    }
+    },
+    "exportImageCard": {
+      "profileImage": "Profile Image",
+      "lastCredit": "Last Credit",
+      "dailyPlays": "Daily Plays",
+      "dayLabel": "Day",
+      "dayPlaceholder": "Select a day",
+      "dayLoading": "Loading days...",
+      "noPlays": "No daily plays available"
+    },
+    "loadError": "Unable to load your scores. Please try again."
   },
   "albums": {
     "title": "Photo Albums",
@@ -743,11 +752,11 @@
     "currentToTarget": "Current → Target",
     "noRecommendations": "No Recommendations Available",
     "allOptimal": "All your scores are already optimal! Keep up the great work.",
-    "description": "Songs recommended to improve your rating based on your current B15/B35 scores.",
+    "description": "Songs recommended to improve your rating based on your current {new}/{old} scores.",
     "filterButton": "Filter",
     "filters": {
       "all": "All",
-      "best": "In B15/B35",
+      "best": "In {new}/{old}",
       "new": "New Songs",
       "old": "Old Songs"
     },
@@ -757,6 +766,7 @@
       "type": "Type",
       "targetRating": "Target Rating",
       "achievement": "Achievement",
+      "score": "Score",
       "version": "Version"
     }
   },
@@ -768,12 +778,15 @@
     "detailsNotFetched": "Detailed play data hasn't been fetched yet. Sync your data again to get detailed breakdown.",
     "detailsFetching": "Detailed play data is still being fetched. Please wait a moment and refresh the page.",
     "labels": {
+      "maxCombo": "Max combo",
+      "judgments": "Judgments",
       "dx": "DX",
       "combo": "Combo",
       "fast": "Fast",
       "late": "Late"
     },
     "notesBreakdown": {
+      "percentages": "Note percentages",
       "type": "Type",
       "total": "Total",
       "totalLoss": "Loss"
@@ -819,8 +832,7 @@
     }
   },
   "tokenDialog": {
-    "title": "Update maimai authentication",
-    "japanDescription": "Enter your SEGA account credentials for the Japan region.",
+    "title": "Update {game} authentication",
     "intlDescription": "Choose your authentication method for the International region.",
     "credentialsStored": "Your credentials will be saved for future use.",
     "username": "Username",
@@ -831,20 +843,20 @@
     "tokenPlaceholder": "clal=your_token_here",
     "tokenValidationError": "Token must start with \"clal=\" followed by letters and numbers only",
     "authenticationNote": "Authentication:",
-    "segaCredentialsNote": "Use your SEGA account credentials to authenticate with maimai DX NET.",
+    "segaCredentialsNote": "Use your SEGA account credentials to authenticate with {net}.",
+    "subscriptionNote": "Fetching {game} ({region}) scores requires an active {subscription} subscription.",
     "credentialsSecureNote": "Your credentials will be stored for future fetches.",
     "savingCredentials": "Saving Credentials...",
     "saveCredentials": "Save Credentials",
     "tokenTab": "Token",
     "passwordTab": "Password",
     "tokenInstructions": {
-      "description": "Cookie value starting with \"clal=\" from maimai DX NET.",
+      "description": "Cookie value starting with \"clal=\" from {net}.",
       "expiration": "The token may get invalidated after a certain period of time, so you may need to update it in the future."
     },
-    "passwordInstructions": "Use your SEGA account username and password directly",
     "secureStorage": "Your credentials will be stored for future fetches.",
     "steps": {
-      "step1Title": "Login to maimai DX NET",
+      "step1Title": "Login to {net}",
       "step2Title": "Go to Not Found page",
       "step3Title": "Execute Code"
     },
@@ -860,7 +872,7 @@
     "segaAccountDescription": "Enter your SEGA account credentials",
     "backToSteps": "Back to Steps",
     "step1": {
-      "description": "Login to maimai DX NET in an <strong>incognito / private window</strong>.",
+      "description": "Login to {net} in an <strong>incognito / private window</strong>.",
       "clickToCopy": "Click the link below to copy to clipboard:",
       "haveCookies": "Have your own cookies already?",
       "enterDirectly": "Enter it directly"
@@ -885,8 +897,8 @@
       "nextStep": "Next Step"
     },
     "recommended": "Recommended",
-    "tokenOptionDescription": "Login to your maimai DX NET account with your browser tokens. Token may expire from time to time. No password required and supports social logins.",
-    "passwordOptionDescription": "Login to your maimai DX NET account with your SEGA account credentials. Never expire. Not recommended.",
+    "tokenOptionDescription": "Login to your {net} account with your browser tokens. Token may expire from time to time. No password required and supports social logins.",
+    "passwordOptionDescription": "Login to your {net} account with your SEGA account credentials. Never expire. Not recommended.",
     "cnTitle": "Update maimai authentication",
     "cnDescription": "Choose your authentication method for the China region.",
     "cnExperimentalWarningTitle": "China region is experimental",
@@ -920,7 +932,7 @@
     },
     "lxns": {
       "title": "落雪咖啡屋查分器",
-      "description": "Authorise tomomai.lol to read your maimai DX data from your 落雪咖啡屋 account. You can revoke authorisation anytime in your account settings.",
+      "description": "Authorise {host} to read your maimai DX data from your 落雪咖啡屋 account. You can revoke authorisation anytime in your account settings.",
       "notConfiguredTitle": "落雪咖啡屋 OAuth Not Configured",
       "notConfiguredMessage": "Please ask an administrator to set the <code>LXNS_CLIENT_ID</code> and <code>LXNS_CLIENT_SECRET</code> environment variables on the server.",
       "instructionsLine1": "Click the button below to open the 落雪咖啡屋 authorisation page in a new window. The window will close automatically after authorisation.",
@@ -933,7 +945,7 @@
     },
     "divingFish": {
       "title": "水鱼查分器",
-      "description": "Bind your 水鱼查分器 account to tomomai. We will read your maimai DX data from 水鱼查分器 after binding. Choose one of the following methods to verify your account ownership.",
+      "description": "Bind your 水鱼查分器 account to this site. We will read your maimai DX data from 水鱼查分器 after binding. Choose one of the following methods to verify your account ownership.",
       "notConfiguredTitle": "水鱼查分器 Not Configured",
       "notConfiguredMessage": "Please ask an administrator to set the <code>DIVINGFISH_DEV_TOKEN</code> environment variable on the server.",
       "importTokenTab": "Import-Token Verification",
@@ -982,7 +994,7 @@
       "step3OrCopy": "Copy link to WeChat",
       "step3OrCopyNote": "Copy the link, send it to any WeChat chat, then tap to open.",
       "step3Copy": "Copy Link",
-      "step3CopyNote": "After authorisation, WeChat will redirect to a result page. Please close that page, return to tomomai to check the import progress, and remember to turn off the proxy in your Wi-Fi settings.",
+      "step3CopyNote": "After authorisation, WeChat will redirect to a result page. Please close that page, return to this site to check the import progress, and remember to turn off the proxy in your Wi-Fi settings.",
       "copySuccess": "Copied",
       "copyFailed": "Copy failed, please copy manually",
       "clashConfigUrl": "Clash Config URL",
@@ -1000,8 +1012,6 @@
     }
   },
   "userHeader": {
-    "memberLabel": "ともマイ member",
-    "discordPrompt": "Facing issues? Or have features or ideas to add to tomomai ともマイ?",
     "joinDiscord": "Join our Community Discord!"
   },
   "publicHeader": {
@@ -1022,17 +1032,15 @@
     }
   },
   "onboarding": {
-    "title": "Welcome to tomomai!",
     "step1": {
       "title": "Pick a username",
-      "description": "Your username is your handle on tomomai. If you choose to share, it also becomes your public profile URL.",
       "publishToggleLabel": "Share my profile with friends",
       "publishToggleDescription": "Let others view your scores at a public link. It's off by default, and you can change it anytime.",
       "publicUrlHint": "Your public profile:"
     },
     "step2": {
       "title": "Choose your region",
-      "description": "Pick where your maimai data lives. You can switch later from the menu."
+      "description": "Pick where your {game} data lives. You can switch later from the menu."
     },
     "step3": {
       "title": "You're all set!",
@@ -1121,12 +1129,9 @@
     }
   },
   "acceptInvitation": {
-    "title": "tomomai ともマイ",
-    "subtitle": "You've been invited to join the tomomai ともマイ community",
     "validating": "Validating invitation...",
     "redirecting": "Redirecting to home page...",
     "invited": "You've been invited!",
-    "invitedBy": "{name} has invited you to join tomomai ともマイ",
     "expiresOn": "Invitation expires on {date}",
     "acceptAndSignUp": "Accept Invitation & Sign Up",
     "backToHome": "Back to Home",
@@ -1156,7 +1161,7 @@
     },
     "events": {
       "title": "Tour Events",
-      "description": "Browse all maimai tour events and their rewards",
+      "description": "Browse all {game} tour events and their rewards",
       "search": "Search events...",
       "noEvents": "No events found.",
       "selectEvent": "Select an event to view details",
@@ -1183,18 +1188,15 @@
     },
     "songs": {
       "metadata": {
-        "title": "Songs Database | maimai DX",
-        "description": "Browse and search all maimai DX songs. Filter by type, genre, and version. View song details, difficulty levels, and regional availability.",
-        "songTitle": "{songName} - {artist} | maimai DX",
-        "songDescription": "View detailed information about \"{songName}\" by {artist}. {chartType} chart • {genre}",
+        "title": "Songs Database | {game}",
+        "description": "Browse and search all {game} songs. Filter by type, genre, and version. View song details, difficulty levels, and regional availability.",
+        "songTitle": "{songName} - {artist} | {game}",
+        "songDescription": "View detailed information about \"{songName}\" by {artist}. {chartLabel} chart • {genre}",
         "songOgDescription": "View detailed information about \"{songName}\" by {artist}.",
-        "songFallbackTitle": "Song Details | maimai DX",
-        "songFallbackDescription": "View detailed information about this maimai DX song including difficulty levels and regional availability.",
-        "chartTypeDx": "DX",
-        "chartTypeStandard": "Standard",
-        "jsonLdChartDescription": "{chartType} chart from maimai DX"
+        "songFallbackTitle": "Song Details | {game}",
+        "songFallbackDescription": "View detailed information about this {game} song including difficulty levels and regional availability.",
+        "jsonLdChartDescription": "{chartLabel} chart"
       },
-      "title": "Songs Database | maimai DX",
       "heading": "Songs Database",
       "searchPlaceholder": "Search songs, artists, genres...",
       "noSongsFound": "No songs found",
@@ -1215,17 +1217,15 @@
         "share": "Share Link",
         "youtube": "YouTube",
         "viewCharts": "View Charts",
-        "viewDetails": "View Details on tomomai DB",
-        "summary": "{songName} is a maimai でらっくす {chartType} chart by {artist} in the {genre} genre, added in {versionName}. Difficulty ranges from {minLevel} to {maxLevel} across {chartCount, plural, =1 {# chart} other {# charts}}{bpmFragment}.",
+        "summary": "{songName} is a {chartLabel} chart by {artist} in the {genre} genre, added in {versionName}. Difficulty ranges from {minLevel} to {maxLevel} across {chartCount, plural, =1 {# chart} other {# charts}}{bpmFragment}.",
         "summaryBpmFragment": " (BPM {bpm})",
-        "loadFailed": "Failed to load song details"
+        "loadFailed": "Failed to load song details",
+        "score": "Score"
       },
       "filter": {
         "type": "Type",
         "genre": "Genre",
         "addedVersion": "Added Version",
-        "std": "STD",
-        "dx": "DX",
         "sort": "Sort",
         "sortVersionDesc": "Version (Latest)",
         "sortVersionAsc": "Version (Oldest)",
@@ -1271,7 +1271,7 @@
     },
     "stats": {
       "title": "Global Statistics",
-      "description": "Explore aggregate maimai DX statistics across all tracked players: rating distributions, top titles, popular songs, and play activity over time.",
+      "description": "Explore aggregate {game} statistics across all tracked players: rating distributions, top titles, popular songs, and play activity over time.",
       "ratingDistribution": "Player Rating Distribution",
       "playCountDistribution": "Player Play Count Distribution",
       "topTitles": "Top Player Titles",
@@ -1348,6 +1348,9 @@
     "title": "Theme"
   },
   "fetchToast": {
+    "errors": {
+      "subscriptionRequired": "Fetching {game} ({region}) scores requires an active {subscription} subscription. Purchase or renew it, then retry. Your saved login and existing data have been kept."
+    },
     "header": {
       "pending": "Fetching data...",
       "completed": "Fetch complete",
@@ -1358,12 +1361,7 @@
       "connected": "Connected",
       "login": "Logged in",
       "playerData": "Fetched player data",
-      "songDataBasic": "Fetched BASIC scores",
-      "songDataAdvanced": "Fetched ADVANCED scores",
-      "songDataExpert": "Fetched EXPERT scores",
-      "songDataMaster": "Fetched MASTER scores",
-      "songDataRemaster": "Fetched Re:MASTER scores",
-      "songDataUtage": "Fetched UTAGE scores",
+      "songDataDifficulty": "Fetched {difficulty} scores",
       "recentSongs": "Fetched recent songs",
       "hiddenSongs": "Fetched hidden songs",
       "albumData": "Fetched album data"
@@ -1545,12 +1543,12 @@
     "youDescription": "You: {rating} Rating, {achievement}"
   },
   "landing": {
-    "headline": "Track your maimai DX scores",
-    "subheadline": "Import from maimai DX NET and see your rating, best scores, and history.",
-    "screenshotAlt": "The tomomai dashboard showing a player's best scores and rating charts",
+    "headline": "Track your {game} scores",
+    "subheadline": "Import from {net} and see your rating, best scores, and history.",
+    "screenshotAlt": "The {brand} dashboard showing a player's best scores and rating charts",
     "links": {
       "db": {
-        "title": "tomomai DB",
+        "title": "{brand} DB",
         "description": "Charts, arcades, and more"
       },
       "profile": {
@@ -1561,9 +1559,7 @@
   },
   "oauthConsent": {
     "loading": "Loading",
-    "title": "{app} wants to access <nb>your tomomai account</nb>",
     "signedOutTitle": "Sign in to continue to {app}",
-    "signedOutDescription": "{app} is asking for access to your tomomai account. Sign in to review the request.",
     "signedInAs": "Signed in as {name}",
     "switchAccount": "Not you? Switch account",
     "basicAccess": "Confirm that it is connected to your account",
@@ -1573,9 +1569,6 @@
     },
     "sensitive": "Sensitive",
     "redirectNotice": "When you're done, you'll go back to {host}",
-    "trustNotice": "{app} is not run by tomomai. {links, select, both {It handles your data under its own <terms>Terms of Service</terms> and <privacy>Privacy Policy</privacy>.} terms {It handles your data under its own <terms>Terms of Service</terms>.} privacy {It handles your data under its own <privacy>Privacy Policy</privacy>.} other {It hasn't published terms or a privacy policy.}} Only continue if you trust it.",
-    "officialBadge": "Official tomomai app",
-    "officialNotice": "{app} is made and run by tomomai.",
     "activeSince": "Active since {date}",
     "usage": {
       "lt10": "Used by fewer than 10 people",
@@ -1595,16 +1588,14 @@
     "loadFailed": "This request has expired or the app is no longer available. Go back to the app and try again.",
     "errors": {
       "redirect": {
-        "title": "This app's return address isn't registered",
-        "body": "The app asked to send you back to an address it never registered with tomomai, so the request was stopped to protect your account. Don't sign in through this link, and let the app's developer know."
+        "title": "This app's return address isn't registered"
       },
       "unavailable": {
         "title": "This app isn't available",
         "body": "It may have been removed or turned off by its developer."
       },
       "badRequest": {
-        "title": "This sign-in link doesn't work",
-        "body": "The app sent a request tomomai doesn't support. Go back to the app and try again, or contact its developer."
+        "title": "This sign-in link doesn't work"
       },
       "tampered": {
         "title": "This link has been changed",
@@ -1614,7 +1605,6 @@
     "genericError": "Something went wrong. Please try again.",
     "unknownScopesTitle": "Unrecognised permissions",
     "unknownScopesBody": "{app} is asking for permissions that don't exist ({scopes}). It needs to fix its request before you can authorise it.",
-    "backHome": "Back to tomomai",
     "defaultAppName": "This app",
     "changeHeading": "Can change your data",
     "readHeading": "Can read your data",

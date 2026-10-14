@@ -1,11 +1,12 @@
 /**
- * Seeds a local database with the public song catalogue from tomomai.lol and
- * mirrors the catalogue JSON into the local S3 bucket, so /api/v1/songs works.
+ * Seeds a local database with the public song catalogues (maimai from tomomai.lol,
+ * CHUNITHM from chu.tomomai.lol) and mirrors the catalogue JSON into the local S3
+ * bucket, so /api/v1/games/{game}/songs works.
  *
  *   pnpm db:seed
  *
  * Env (from .env.local): POSTGRES_URL, R2_* (optional, skips the mirror if unset).
- * SEED_SOURCE_URL overrides the source site (default https://www.tomomai.lol).
+ * SEED_MAIMAI_URL and SEED_CHUNITHM_URL override each game's source site.
  * Refuses to run against anything but a local database.
  */
 import { config } from "dotenv";
@@ -14,8 +15,12 @@ import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 
 config({ path: ".env.local" });
 
-const SOURCE = (process.env.SEED_SOURCE_URL || "https://www.tomomai.lol").replace(/\/$/, "");
-const CATALOG_PREFIX = "api/v1/catalog-parent-v1";
+const SOURCES = {
+  maimai: process.env.SEED_MAIMAI_URL || "https://www.tomomai.lol",
+  chunithm: process.env.SEED_CHUNITHM_URL || "https://chu.tomomai.lol",
+};
+// Must match catalogPrefix() in src/lib/api/catalog-location.ts.
+const CATALOG_PREFIX = "catalog/v2";
 const REGIONS = ["jp", "intl", "cn"];
 const LOCAL_HOSTS = new Set(["localhost", "127.0.0.1", "::1", "[::1]"]);
 
@@ -39,10 +44,25 @@ const s3 = process.env.R2_ENDPOINT && process.env.R2_BUCKET
     })
   : null;
 
-async function fetchText(path) {
-  const res = await fetch(`${SOURCE}${path}`, { redirect: "follow" });
-  if (!res.ok) throw new Error(`GET ${path} -> ${res.status}`);
+function sourceUrl(game, path) {
+  return `${SOURCES[game].replace(/\/$/, "")}/api/v1/games/${game}${path}`;
+}
+
+async function fetchText(game, path) {
+  const url = sourceUrl(game, path);
+  const res = await fetch(url, { redirect: "follow" });
+  if (!res.ok) throw new Error(`GET ${url} -> ${res.status}`);
   return res.text();
+}
+
+// Regions are enabled per deployment, so a region the source does not serve is skipped.
+async function fetchVersions(game, region) {
+  const url = sourceUrl(game, `/songs/versions?region=${region}`);
+  const res = await fetch(url, { redirect: "follow" });
+  const body = await res.json().catch(() => null);
+  if (res.status === 400 && body?.code === "UNSUPPORTED_REGION") return null;
+  if (!res.ok || !body) throw new Error(`GET ${url} -> ${res.status}`);
+  return body.versions;
 }
 
 async function mirror(key, body) {
@@ -74,13 +94,14 @@ function chunk(items, size) {
   return out;
 }
 
-async function seedParents() {
-  const body = await fetchText("/api/v1/parents");
+async function seedParents(game) {
+  const body = await fetchText(game, "/parents");
   const { parents } = JSON.parse(body);
   for (const batch of chunk(parents, 2000)) {
     await sql`
       insert into parent_song ${sql(batch.map((p) => ({
         publicId: p.songId,
+        game,
         songName: p.songName,
         artist: p.artist,
         genre: p.genre,
@@ -96,20 +117,31 @@ async function seedParents() {
         difficulty = excluded.difficulty, disambiguator = excluded.disambiguator
     `;
   }
-  await mirror(`${CATALOG_PREFIX}/parents`, body);
+  await mirror(`${CATALOG_PREFIX}/${game}/parents`, body);
 
-  const rows = await sql`select id, "publicId" from parent_song`;
+  const rows = await sql`select id, "publicId" from parent_song where game = ${game}`;
   return new Map(rows.map((r) => [r.publicId, r.id]));
 }
 
-async function seedSlice(parentIds, region, gameVersion) {
-  const body = await fetchText(`/api/v1/songs?region=${region}&gameVersion=${gameVersion}`);
+// Matches catalogMetadataSchema in src/lib/catalog/chart-metadata.ts: a flag is present only when true.
+function chartMetadata(song) {
+  const metadata = {
+    ...(song.levelPreciseEstimated === true && { levelPreciseEstimated: true }),
+    ...(song.addedVersionEstimated === true && { addedVersionEstimated: true }),
+  };
+  return Object.keys(metadata).length > 0 ? metadata : null;
+}
+
+async function seedSlice(game, parentIds, region, gameVersion) {
+  const body = await fetchText(game, `/songs?region=${region}&gameVersion=${gameVersion}`);
   const { songs } = JSON.parse(body);
   const rows = songs.map((s) => {
     const parentId = parentIds.get(s.songId.split(":")[0]);
     if (parentId === undefined) throw new Error(`Unknown parent for ${s.songId}`);
     return {
       parentId,
+      game,
+      metadata: chartMetadata(s),
       level: s.level,
       levelPrecise: s.levelPrecise,
       region,
@@ -123,24 +155,34 @@ async function seedSlice(parentIds, region, gameVersion) {
       insert into songs ${sql(batch)}
       on conflict ("parentId", region, "gameVersion") do update set
         level = excluded.level, "levelPrecise" = excluded."levelPrecise",
-        "addedVersion" = excluded."addedVersion", "noteDesigner" = excluded."noteDesigner"
+        "addedVersion" = excluded."addedVersion", "noteDesigner" = excluded."noteDesigner",
+        metadata = excluded.metadata
     `;
   }
-  await mirror(`${CATALOG_PREFIX}/songs/${region}/${gameVersion}`, body);
+  await mirror(`${CATALOG_PREFIX}/${game}/songs/${region}/${gameVersion}`, body);
   return rows.length;
 }
 
-async function main() {
-  console.log(`Seeding songs from ${SOURCE}${s3 ? "" : " (no R2_* env, skipping catalogue mirror)"}`);
-  const parentIds = await seedParents();
+async function seedGame(game) {
+  console.log(`Seeding ${game} from ${SOURCES[game]}`);
+  const parentIds = await seedParents(game);
   console.log(`  ${parentIds.size} parent charts`);
 
   for (const region of REGIONS) {
-    const { versions } = JSON.parse(await fetchText(`/api/v1/songs/versions?region=${region}`));
-    const counts = await mapLimit(versions, 4, (v) => seedSlice(parentIds, region, v.id));
+    const versions = await fetchVersions(game, region);
+    if (!versions) {
+      console.log(`  ${region}: not served, skipped`);
+      continue;
+    }
+    const counts = await mapLimit(versions, 4, (v) => seedSlice(game, parentIds, region, v.id));
     const total = counts.reduce((a, b) => a + b, 0);
     console.log(`  ${region}: ${total} charts across ${versions.length} versions`);
   }
+}
+
+async function main() {
+  if (!s3) console.log("No R2_* env, skipping catalogue mirror");
+  for (const game of Object.keys(SOURCES)) await seedGame(game);
 }
 
 try {

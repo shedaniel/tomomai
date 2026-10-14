@@ -1,6 +1,5 @@
 {
   "common": {
-    "title": "tomomai ともマイ",
     "loading": "載入中...",
     "save": "儲存",
     "cancel": "取消",
@@ -30,14 +29,6 @@
     "experiments": "實驗功能",
     "region": "地區",
     "comingSoon": "敬請期待...",
-    "difficulties": {
-      "basic": "Basic",
-      "advanced": "Advanced",
-      "expert": "Expert",
-      "master": "Master",
-      "remaster": "Re:Master",
-      "utage": "Utage"
-    },
     "back": "返回",
     "clipboardError": "複製到剪貼簿失敗",
     "selectAnOption": "選擇選項",
@@ -52,7 +43,10 @@
       "thu": "四",
       "fri": "五",
       "sat": "六"
-    }
+    },
+    "retry": "重試",
+    "previous": "上一頁",
+    "next": "下一頁"
   },
   "minigames": {
     "badge": "迷你遊戲",
@@ -98,12 +92,12 @@
       "title": "功能：",
       "trackScores": "追蹤國際區和日本區的成績",
       "viewHistory": "查看你的歷史遊玩資料",
-      "importData": "從 maimai DX NET 匯入資料",
+      "importData": "從 {net} 匯入資料",
       "analyzeProgress": "分析你的遊玩紀錄"
     },
-    "signInTitle": "登入 tomomai",
+    "signInTitle": "登入 {brand}",
     "signInDescription": "歡迎回來！請使用註冊時的帳號繼續。",
-    "signUpTitle": "建立 tomomai 帳號",
+    "signUpTitle": "建立 {brand} 帳號",
     "signUpDescription": "請先閱讀我們的政策，再選擇用來註冊的帳號。",
     "createAccount": "建立帳號",
     "haveAccount": "已經有帳號了？",
@@ -111,7 +105,7 @@
     "inviteOnlyMessage": "目前註冊新帳號需要現有使用者提供的邀請連結。",
     "errors": {
       "title": "驗證錯誤",
-      "noAccount": "這個登入方式還沒有對應的 tomomai 帳號，請在下方建立帳號開始使用。",
+      "noAccount": "這個登入方式還沒有對應的 {brand} 帳號，請在下方建立帳號開始使用。",
       "signupUnavailable": "無法建立帳號，目前可能暫停開放註冊。",
       "inviteRequired": "目前註冊需要邀請。請打開你收到的邀請連結後再試一次。",
       "inviteInvalid": "這個邀請碼無效。",
@@ -121,7 +115,7 @@
       "accountNotLinked": "這個帳號尚未連結到你的使用者，且無法自動連結。\n\n你可能已經有一個使用相同電子郵件的帳號。\n\n請先用最初註冊時的方式登入，再到「設定 → 帳號」連結此帳號。",
       "emailMismatch": "此帳號的電子郵件與目前帳號不符。",
       "alreadyLinked": "此帳號已連結到其他使用者。",
-      "emailMissing": "此帳號沒有提供電子郵件地址，而登入 tomomai 需要電子郵件地址。",
+      "emailMissing": "此帳號沒有提供電子郵件地址，而登入 {brand} 需要電子郵件地址。",
       "restart": "登入過程被中斷或逾時，請再試一次。",
       "provider": "無法從登入服務取得你的帳號資料，請再試一次。",
       "banned": "此帳號已被停權。如果你認為這是誤會，請透過 Discord 聯絡我們。",
@@ -163,18 +157,16 @@
   },
   "oauthConsent": {
     "loading": "載入中",
-    "title": "{app} 要求存取你的 <nb>tomomai 帳號</nb>",
     "signedOutTitle": "登入以繼續使用 {app}",
-    "signedOutDescription": "{app} 要求存取你的 tomomai 帳號。請登入後查看此請求。",
     "signedInAs": "目前登入：{name}",
     "switchAccount": "不是你？切換帳號",
     "basicAccess": "確認已與你的帳號連結",
-    "offlineAccess": {"name": "保持連線", "description": "在你撤銷之前，{app} 無需再次詢問即可持續存取"},
+    "offlineAccess": {
+      "name": "保持連線",
+      "description": "在你撤銷之前，{app} 無需再次詢問即可持續存取"
+    },
     "sensitive": "敏感",
     "redirectNotice": "完成後將返回 {host}",
-    "trustNotice": "{app} 並非由 tomomai 經營。{links, select, both {你的資料將依照其<terms>服務條款</terms>和<privacy>隱私權政策</privacy>處理。} terms {你的資料將依照其<terms>服務條款</terms>處理。} privacy {你的資料將依照其<privacy>隱私權政策</privacy>處理。} other {此應用程式並未提供服務條款或隱私權政策。}}請僅在信任此應用程式時繼續。",
-    "officialBadge": "tomomai 官方應用程式",
-    "officialNotice": "{app} 由 tomomai 開發及營運。",
     "activeSince": "自{date}起活躍中",
     "usage": {
       "lt10": "少於 10 人使用",
@@ -194,16 +186,14 @@
     "loadFailed": "此請求已過期或此應用程式已無法使用。請返回應用程式重試。",
     "errors": {
       "redirect": {
-        "title": "此應用程式的返回位址未註冊",
-        "body": "該應用程式嘗試將你送回一個未在 tomomai 註冊的位址，為保護你的帳號，請求已被阻擋。請勿透過此連結登入，並告知應用程式開發者。"
+        "title": "此應用程式的返回位址未註冊"
       },
       "unavailable": {
         "title": "此應用程式無法使用",
         "body": "它可能已被開發者刪除或停用。"
       },
       "badRequest": {
-        "title": "此連結無法使用",
-        "body": "該應用程式送出了 tomomai 不支援的請求。請返回應用程式重試，或聯絡其開發者。"
+        "title": "此連結無法使用"
       },
       "tampered": {
         "title": "此連結已被修改",
@@ -213,7 +203,6 @@
     "genericError": "發生問題，請重試。",
     "unknownScopesTitle": "無法辨識的權限",
     "unknownScopesBody": "{app} 要求了不存在的權限（{scopes}）。在應用程式修正請求前無法授權。",
-    "backHome": "返回 tomomai",
     "defaultAppName": "此應用程式",
     "changeHeading": "可以修改你的資料",
     "readHeading": "可以讀取你的資料",
@@ -224,7 +213,6 @@
     "groupCount": "{count} 項權限"
   },
   "consent": {
-    "title": "歡迎來到 tomomai",
     "description": "在建立帳戶前，請先閱讀並同意我們的政策。",
     "tldr": {
       "title": "重點摘要（非法律建議）",
@@ -256,8 +244,7 @@
     }
   },
   "dashboard": {
-    "title": "tomomai ともマイ",
-    "description": "與好友一起分享 maimai 遊玩成績",
+    "description": "與好友一起分享 {game} 遊玩成績",
     "timezoneUpdateSuccess": "時區更新成功！",
     "timezoneUpdateError": "時區更新失敗：{error}",
     "languageUpdateSuccess": "語言更新成功！",
@@ -265,6 +252,9 @@
     "regionUpdateSuccess": "地區更新成功！",
     "regionUpdateError": "地區更新失敗：{error}",
     "tokenUpdateSuccess": "驗證方式儲存成功！"
+  },
+  "game": {
+    "unavailable": "{game} 玩家功能暫未開放。"
   },
   "settings": {
     "pages": {
@@ -274,7 +264,8 @@
       },
       "fetch": {
         "title": "同步",
-        "description": "憑證與資料同步設定。"
+        "description": "{game} 憑證與資料同步設定。",
+        "unavailable": "暫不支援取得 {game} 玩家資料。"
       },
       "privacy": {
         "title": "隱私",
@@ -305,11 +296,6 @@
       "zh-SG": "簡體中文 (新加坡, 馬來西亞)",
       "ko": "한국어 (AI 번역)"
     },
-    "timezone": {
-      "label": "時區",
-      "description": "這會影響日期和時間的顯示方式。預設為日本時區，以配合 maimai 伺服器時間。",
-      "placeholder": "選擇時區"
-    },
     "account": {
       "label": "帳戶驗證",
       "updateToken": "更新驗證方式",
@@ -318,7 +304,7 @@
       "deleteTokenDialogDescription": "確定要刪除已儲存的驗證方式嗎？你將需要重新驗證才能再次匯入資料。",
       "deleteTokenSuccess": "驗證方式已成功刪除。",
       "deleteTokenError": "刪除驗證方式失敗。",
-      "description": "更新你的 maimai 驗證方式以進行資料匯入及同步玩家資料。"
+      "description": "更新你的 {game} 驗證方式以同步玩家資料。"
     },
     "albumPrivacy": {
       "title": "相簿相片隱私設定",
@@ -343,10 +329,10 @@
     },
     "profile": {
       "publishProfile": "公開個人檔案",
-      "publishDescription": "公開你的 maimai 個人檔案，讓其他玩家可以查看你的分數和進度。",
+      "publishDescription": "公開你的個人檔案，讓其他玩家可以查看你在所有遊戲中的分數和進度。",
       "mainRegion": {
         "label": "主要地區",
-        "description": "選擇用於公開個人檔案的主要地區。",
+        "description": "選擇用於公開 {game} 個人檔案的主要地區。",
         "intl": "國際區",
         "jp": "日本區",
         "cn": "大陸區"
@@ -367,7 +353,7 @@
         },
         "showPlayCounts": {
           "label": "顯示遊玩次數",
-          "description": "顯示你的 maimai 遊玩次數。"
+          "description": "顯示你的遊玩次數。"
         },
         "showEvents": {
           "label": "顯示活動",
@@ -485,6 +471,7 @@
         "createButton": "建立 API 金鑰",
         "createError": "建立 API 金鑰失敗"
       },
+      "scopeRoutes": "授予 {routes}。",
       "scopes": {
         "ready": {
           "name": "基本存取",
@@ -512,7 +499,7 @@
         },
         "snapshot:latest:icon:read": {
           "name": "最新頭像",
-          "description": "目前的 maimai 頭像，可能是用遊戲內相機拍攝的臉部照片"
+          "description": "所有遊戲中目前的頭像，可能是用遊戲內相機拍攝的臉部照片"
         },
         "snapshot:all:metadata:read": {
           "name": "快照紀錄",
@@ -532,7 +519,7 @@
         },
         "snapshot:all:icon:read": {
           "name": "頭像紀錄",
-          "description": "所有快照中的 maimai 頭像，可能是用遊戲內相機拍攝的臉部照片"
+          "description": "所有遊戲的所有快照中的頭像，可能是用遊戲內相機拍攝的臉部照片"
         },
         "recent:read": {
           "name": "最近遊玩",
@@ -576,11 +563,11 @@
         },
         "fetch:start": {
           "name": "開始同步",
-          "description": "使用已儲存的 maimai 權杖同步新資料，並新增一個快照"
+          "description": "使用已儲存的權杖同步任何遊戲的新資料，並新增一個快照"
         },
         "fetch:delete": {
-          "name": "刪除已儲存的 maimai 權杖",
-          "description": "重新登入 maimai 前將無法同步"
+          "name": "刪除已儲存的遊戲權杖",
+          "description": "重新登入該遊戲前將無法同步"
         },
         "snapshot:latest:read": {
           "name": "最新快照",
@@ -596,7 +583,6 @@
         }
       },
       "oauthApps": {
-        "officialLabel": "tomomai 官方應用程式",
         "officialDescription": "同意畫面會顯示官方標章，取代第三方應用程式的提醒。只有管理員可以設定。",
         "officialBadge": "官方",
         "errors": {
@@ -692,16 +678,15 @@
     "fetchNewData": "匯入新資料",
     "fetchingData": "匯入資料中...",
     "lastUpdate": "最後更新",
-    "noDataInstructions": "此區域沒有任何資料。點擊「匯入新資料」來匯入你的 maimai 成績。"
+    "noDataInstructions": "此區域沒有任何資料。點擊「匯入新資料」來匯入你的 {game} 成績。"
   },
   "profileMetadata": {
-    "title": "{username} | tomomai ともマイ",
-    "description": "查看 {username} 在 {region} 的 maimai 個人主頁。與朋友一起追蹤並分析 maimai 成績。",
-    "descriptionRich": "{displayName}（{username}）在 {region} maimai——Rating {rating}。在 tomomai 上查看其 B50、最近遊玩和譜面紀錄。",
-    "descriptionUnknownRegion": "查看 {username} 的 maimai 個人主頁。與朋友一起追蹤並分析 maimai 成績。",
-    "notFoundTitle": "找不到個人主頁 | tomomai ともマイ",
+    "title": "{username} | {brand}",
+    "descriptionRich": "{region} 的 {game} 玩家 {displayName}（{username}），Rating {rating}。在 {brandName} 查看成績和進步。",
+    "description": "在 {brandName} 查看 {username} 的 {game} 個人資料。",
+    "notFoundTitle": "找不到個人主頁 | {brand}",
     "notFoundDescription": "你尋找的個人主頁不存在或尚未公開。",
-    "errorTitle": "錯誤 | tomomai ともマイ",
+    "errorTitle": "錯誤 | {brand}",
     "errorDescription": "載入此個人主頁時發生錯誤。"
   },
   "profileVisibility": {
@@ -736,8 +721,11 @@
     "totalPlays": "總遊玩次數：{count}",
     "songs": "歌曲（共 {count} 首）",
     "searchPlaceholder": "以歌曲名稱、藝人、難度或類型搜尋歌曲...",
-    "newSongsB15": "新曲 B15",
-    "oldSongsB35": "舊曲 B35",
+    "rankingBucket": {
+      "new": "新曲 B{size}",
+      "old": "舊曲 B{size}",
+      "short": "B{size}"
+    },
     "newSongs": "新曲",
     "oldSongs": "舊曲",
     "displayModes": {
@@ -750,9 +738,11 @@
       "artist": "藝人",
       "level": "等級",
       "achievement": "達成率",
+      "score": "分數",
       "fc": "FC",
       "fs": "FS",
-      "rating": "R 值"
+      "rating": "R 值",
+      "status": "狀態"
     },
     "statistics": {
       "sum": "總和",
@@ -760,18 +750,32 @@
     },
     "switchToListForAllSongs": "切換至清單或表格檢視以查看所有歌曲",
     "noDataAvailable": "無可用資料",
-    "getStartedInstructions": "點擊上方的匯入按鈕來匯入你的 maimai 資料。",
+    "getStartedInstructions": "點擊上方的匯入按鈕來匯入你的 {game} 資料。",
+    "fetchUnavailable": "暫不支援取得 {game} 玩家資料。",
+    "noPublicRecords": "{username} 目前沒有 {game} 紀錄。",
     "history": {
       "title": "R 值歷史紀錄",
       "ratingOverTime": "R 值變化趨勢",
       "noHistory": "暫無歷史紀錄",
-      "needMoreData": "至少匯入兩次資料才能檢視歷史紀錄"
+      "needMoreData": "至少匯入兩次資料才能檢視歷史紀錄",
+      "newInBest": "新進入 B{size}",
+      "newInBestRating": "新進入 B{size}：{rating}"
     },
     "developer": {
       "title": "開發者",
       "exportJson": "匯出紀錄為 JSON",
       "exporting": "匯出中..."
-    }
+    },
+    "exportImageCard": {
+      "profileImage": "個人檔案圖片",
+      "lastCredit": "最近一次遊玩",
+      "dailyPlays": "每日遊玩",
+      "dayLabel": "日期",
+      "dayPlaceholder": "選擇日期",
+      "dayLoading": "正在載入日期...",
+      "noPlays": "目前沒有每日遊玩紀錄"
+    },
+    "loadError": "無法載入成績，請重試。"
   },
   "albums": {
     "title": "相簿",
@@ -809,7 +813,7 @@
     "filterButton": "篩選",
     "filters": {
       "all": "全部",
-      "best": "B15/B35 內",
+      "best": "{new}/{old} 內",
       "new": "新曲",
       "old": "舊曲"
     },
@@ -819,6 +823,7 @@
       "type": "類型",
       "targetRating": "目標分數",
       "achievement": "達成率",
+      "score": "分數",
       "version": "版本"
     }
   },
@@ -830,12 +835,15 @@
     "detailsNotFetched": "尚未擷取詳細遊玩資料。請重新同步資料以取得詳細分析。",
     "detailsFetching": "正在讀取詳細遊玩資料，請稍候並重新整理頁面。",
     "labels": {
+      "maxCombo": "最大連擊",
+      "judgments": "判定數",
       "dx": "DX",
       "combo": "連擊",
       "fast": "FAST",
       "late": "LATE"
     },
     "notesBreakdown": {
+      "percentages": "各音符達成率",
       "type": "類型",
       "total": "總計",
       "totalLoss": "失分"
@@ -881,9 +889,8 @@
     }
   },
   "tokenDialog": {
-    "title": "更新 maimai 驗證",
-    "japanDescription": "輸入你的 SEGA 帳戶憑證。",
-    "intlDescription": "選擇你的 maimai 登入驗證方式。",
+    "title": "更新 {game} 驗證",
+    "intlDescription": "選擇你的 {game} 登入驗證方式。",
     "credentialsStored": "你的驗證方式將被儲存以供將來使用。",
     "username": "使用者名稱",
     "usernamePlaceholder": "輸入你的 SEGA 帳戶使用者名稱",
@@ -893,20 +900,20 @@
     "tokenPlaceholder": "clal=在此輸入你的 Cookies",
     "tokenValidationError": "Cookies 必須以 \"clal=\" 開頭，後面跟著字母和數字",
     "authenticationNote": "驗證：",
-    "segaCredentialsNote": "使用你的 SEGA 帳戶憑證來驗證 maimai DX NET。",
+    "segaCredentialsNote": "使用你的 SEGA 帳戶憑證來驗證 {net}。",
+    "subscriptionNote": "取得 {game}（{region}）成績需要有效的 {subscription} 服務訂閱。",
     "credentialsSecureNote": "你的驗證方式將被儲存以供將來使用。",
     "savingCredentials": "儲存驗證方式中...",
     "saveCredentials": "儲存驗證方式",
     "tokenTab": "權杖",
     "passwordTab": "密碼",
     "tokenInstructions": {
-      "description": "來自 maimai DX NET 的以 \"clal=\" 為首的 Cookies 值。",
+      "description": "來自 {net} 的以 \"clal=\" 為首的 Cookies 值。",
       "expiration": "Cookies 會在一段時間後失效，你或需要重新登入。"
     },
-    "passwordInstructions": "直接使用你的 SEGA 帳戶使用者名稱和密碼",
     "secureStorage": "你的驗證方式將被儲存以供將來使用。",
     "steps": {
-      "step1Title": "登入 maimai DX NET",
+      "step1Title": "登入 {net}",
       "step2Title": "前往「Not Found」頁面",
       "step3Title": "執行代碼"
     },
@@ -922,7 +929,7 @@
     "segaAccountDescription": "輸入你的 SEGA 帳戶憑證",
     "backToSteps": "回到步驟",
     "step1": {
-      "description": "在<strong>無痕 / 私密視窗</strong>中登入 maimai DX NET。",
+      "description": "在<strong>無痕 / 私密視窗</strong>中登入 {net}。",
       "clickToCopy": "點擊下方的連結以複製到剪貼簿：",
       "haveCookies": "已經有自己的 Cookies 了嗎？",
       "enterDirectly": "直接輸入"
@@ -947,8 +954,8 @@
       "nextStep": "下一步"
     },
     "recommended": "推薦歌曲",
-    "tokenOptionDescription": "使用你的瀏覽器權杖登入你的 maimai DX NET 帳戶。權杖可能會不時過期。無需密碼，並支援社群帳號登入。",
-    "passwordOptionDescription": "使用你的 SEGA 帳戶憑證登入你的 maimai DX NET 帳戶。永久有效。不推薦。",
+    "tokenOptionDescription": "使用你的瀏覽器權杖登入你的 {net} 帳戶。權杖可能會不時過期。無需密碼，並支援社群帳號登入。",
+    "passwordOptionDescription": "使用你的 SEGA 帳戶憑證登入你的 {net} 帳戶。永久有效。不推薦。",
     "cnTitle": "更新舞萌 DX 驗證",
     "cnDescription": "選擇你的舞萌 DX 登入驗證方式。",
     "cnExperimentalWarningTitle": "大陸區為實驗性地區",
@@ -1044,7 +1051,7 @@
       "step3OrCopy": "複製連結到微信",
       "step3OrCopyNote": "複製連結，發送到任意微信聊天，點擊即可開啟。",
       "step3Copy": "複製連結",
-      "step3CopyNote": "授權完成後微信會跳轉到一個結果頁面。屆時請關閉該頁面，回到 tomomai 查看匯入進度，並記得在 Wi-Fi 設定中關閉代理。",
+      "step3CopyNote": "授權完成後微信會跳轉到一個結果頁面。屆時請關閉該頁面，回到本站查看匯入進度，並記得在 Wi-Fi 設定中關閉代理。",
       "copySuccess": "已複製",
       "copyFailed": "複製失敗，請手動複製",
       "clashConfigUrl": "Clash 配置 URL",
@@ -1062,8 +1069,6 @@
     }
   },
   "userHeader": {
-    "memberLabel": "ともマイ 成員",
-    "discordPrompt": "遇到問題了嗎？或有想要新增到 tomomai ともマイ 的功能或建議？",
     "joinDiscord": "加入我們的 Discord 社群！"
   },
   "publicHeader": {
@@ -1084,17 +1089,15 @@
     "followTwitter": "在 X 上追蹤"
   },
   "onboarding": {
-    "title": "歡迎來到 tomomai！",
     "step1": {
       "title": "設定使用者名稱",
-      "description": "使用者名稱是你在 tomomai 的稱呼。如果你選擇公開，也會成為你的公開個人檔案網址。",
       "publishToggleLabel": "與朋友分享我的檔案",
       "publishToggleDescription": "讓其他人透過公開連結查看你的成績。預設為關閉，你可以隨時變更。",
       "publicUrlHint": "你的公開檔案："
     },
     "step2": {
       "title": "選擇你的地區",
-      "description": "選擇你的 maimai 資料所在的地區。之後可以在選單中切換。"
+      "description": "選擇你的 {game} 資料所在的地區。之後可以在選單中切換。"
     },
     "step3": {
       "title": "一切就緒！",
@@ -1183,12 +1186,9 @@
     }
   },
   "acceptInvitation": {
-    "title": "tomomai ともマイ",
-    "subtitle": "你已被邀請加入 tomomai ともマイ 社群",
     "validating": "驗證邀請中...",
     "redirecting": "重新導向至首頁...",
     "invited": "你已被邀請！",
-    "invitedBy": "{name} 邀請你加入 tomomai ともマイ",
     "expiresOn": "邀請於 {date} 過期",
     "acceptAndSignUp": "接受邀請並註冊",
     "backToHome": "返回首頁",
@@ -1218,18 +1218,15 @@
     },
     "songs": {
       "metadata": {
-        "title": "歌曲資料庫 | maimai DX",
-        "description": "瀏覽和搜尋所有 maimai DX 歌曲。依類型、分類和版本篩選。查看歌曲詳情、難度等級和區域開放情形。",
-        "songTitle": "{songName} - {artist} | maimai DX",
-        "songDescription": "查看《{songName}》（{artist}）的詳細資訊。{chartType} 譜面 · {genre}",
+        "title": "歌曲資料庫 | {game}",
+        "description": "瀏覽和搜尋所有 {game} 歌曲。依類型、分類和版本篩選。查看歌曲詳情、難度等級和區域開放情形。",
+        "songTitle": "{songName} - {artist} | {game}",
+        "songDescription": "查看《{songName}》（{artist}）的詳細資訊。{chartLabel} 譜面 · {genre}",
         "songOgDescription": "查看《{songName}》（{artist}）的詳細資訊。",
-        "songFallbackTitle": "歌曲詳情 | maimai DX",
-        "songFallbackDescription": "查看此 maimai DX 歌曲的詳細資訊，包括難度等級與地區可用性。",
-        "chartTypeDx": "DX",
-        "chartTypeStandard": "標準",
-        "jsonLdChartDescription": "來自 maimai DX 的 {chartType} 譜面"
+        "songFallbackTitle": "歌曲詳情 | {game}",
+        "songFallbackDescription": "查看此 {game} 歌曲的詳細資訊，包括難度等級與地區可用性。",
+        "jsonLdChartDescription": "{chartLabel} 譜面"
       },
-      "title": "歌曲資料庫 | maimai DX",
       "heading": "歌曲資料庫",
       "searchPlaceholder": "搜尋歌曲、藝人、分類...",
       "noSongsFound": "找不到歌曲",
@@ -1250,17 +1247,15 @@
         "share": "分享",
         "youtube": "YouTube 搜尋",
         "viewCharts": "查看譜面",
-        "viewDetails": "在 tomomai DB 查看詳細資訊",
-        "summary": "{songName} 是由 {artist} 製作的 maimai でらっくす {chartType} 譜面，屬於 {genre} 類型，於 {versionName} 收錄。難度範圍為 {minLevel} 至 {maxLevel}，共 {chartCount, plural, =1 {# 張譜面} other {# 張譜面}}{bpmFragment}。",
+        "summary": "{songName} 是由 {artist} 製作的 {chartLabel} 譜面，屬於 {genre} 類型，於 {versionName} 收錄。難度範圍為 {minLevel} 至 {maxLevel}，共 {chartCount, plural, =1 {# 張譜面} other {# 張譜面}}{bpmFragment}。",
         "summaryBpmFragment": "（BPM {bpm}）",
-        "loadFailed": "載入歌曲詳情失敗"
+        "loadFailed": "載入歌曲詳情失敗",
+        "score": "分數"
       },
       "filter": {
         "type": "類型",
         "genre": "分類",
         "addedVersion": "追加版本",
-        "std": "STD",
-        "dx": "DX",
         "sort": "排序",
         "sortVersionDesc": "版本（由新到舊）",
         "sortVersionAsc": "版本（由舊到新）",
@@ -1306,7 +1301,7 @@
     },
     "stats": {
       "title": "整體統計",
-      "description": "探索所有追蹤玩家的 maimai DX 整體統計：Rating 分布、熱門稱號、熱門歌曲，以及隨時間變化的遊玩活動。",
+      "description": "探索所有追蹤玩家的 {game} 整體統計：Rating 分布、熱門稱號、熱門歌曲，以及隨時間變化的遊玩活動。",
       "ratingDistribution": "R 值分布",
       "playCountDistribution": "遊玩次數分布",
       "topTitles": "熱門稱號",
@@ -1368,7 +1363,7 @@
     "events": {
       "active": "進行中",
       "back": "返回",
-      "description": "瀏覽所有 maimai 地區活動及其獎勵",
+      "description": "瀏覽所有 {game} 地區活動及其獎勵",
       "distance": "距離",
       "ended": "已結束",
       "noEvents": "找不到活動。",
@@ -1410,6 +1405,9 @@
     "title": "主題"
   },
   "fetchToast": {
+    "errors": {
+      "subscriptionRequired": "取得 {game}（{region}）成績需要有效的 {subscription} 服務訂閱。請購買或續訂後重試。已儲存的登入資訊和現有資料均已保留。"
+    },
     "header": {
       "pending": "匯入資料中...",
       "completed": "匯入完成",
@@ -1420,12 +1418,7 @@
       "connected": "已連線",
       "login": "已登入",
       "playerData": "已匯入玩家資料",
-      "songDataBasic": "已匯入 BASIC 成績",
-      "songDataAdvanced": "已匯入 ADVANCED 成績",
-      "songDataExpert": "已匯入 EXPERT 成績",
-      "songDataMaster": "已匯入 MASTER 成績",
-      "songDataRemaster": "已匯入 Re:MASTER 成績",
-      "songDataUtage": "已匯入 UTAGE 成績",
+      "songDataDifficulty": "已匯入 {difficulty} 成績",
       "recentSongs": "已匯入最近遊玩紀錄",
       "hiddenSongs": "已匯入隱藏歌曲",
       "albumData": "已匯入相簿資料"
@@ -1607,12 +1600,12 @@
     "youDescription": "你：Rating {rating}，達成率 {achievement}"
   },
   "landing": {
-    "headline": "記錄你的 maimai DX 成績",
-    "subheadline": "從 maimai DX NET 匯入，查看你的 R 值、最佳成績與歷史紀錄。",
-    "screenshotAlt": "顯示玩家最佳成績與 R 值圖表的 tomomai 主頁",
+    "headline": "記錄你的 {game} 成績",
+    "subheadline": "從 {net} 匯入，查看你的 R 值、最佳成績與歷史紀錄。",
+    "screenshotAlt": "顯示玩家最佳成績與 R 值圖表的 {brand} 主頁",
     "links": {
       "db": {
-        "title": "tomomai DB",
+        "title": "{brand} DB",
         "description": "譜面、店鋪等資料"
       },
       "profile": {

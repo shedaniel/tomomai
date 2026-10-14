@@ -1,6 +1,5 @@
 {
   "common": {
-    "title": "tomomai ともマイ",
     "loading": "로딩 중...",
     "save": "저장",
     "cancel": "취소",
@@ -38,18 +37,13 @@
       "fri": "금",
       "sat": "토"
     },
-    "difficulties": {
-      "basic": "Basic",
-      "advanced": "Advanced",
-      "expert": "Expert",
-      "master": "Master",
-      "remaster": "Re:Master",
-      "utage": "Utage"
-    },
     "back": "뒤로",
     "selectAnOption": "옵션 선택",
     "ok": "확인",
-    "email": "이메일"
+    "email": "이메일",
+    "retry": "다시 시도",
+    "previous": "이전",
+    "next": "다음"
   },
   "minigames": {
     "badge": "미니게임",
@@ -95,12 +89,12 @@
       "title": "주요 기능:",
       "trackScores": "해외판(International) 및 일본판 성과 추적",
       "viewHistory": "과거 기록 스냅샷 열람",
-      "importData": "maimai DX NET에서 데이터 가져오기",
+      "importData": "{net}에서 데이터 가져오기",
       "analyzeProgress": "플레이 성과 및 성장 분석"
     },
-    "signInTitle": "tomomai에 로그인",
+    "signInTitle": "{brand}에 로그인",
     "signInDescription": "다시 오신 것을 환영합니다! 가입할 때 사용한 계정으로 계속하세요.",
-    "signUpTitle": "tomomai 계정 만들기",
+    "signUpTitle": "{brand} 계정 만들기",
     "signUpDescription": "정책을 확인한 뒤 가입에 사용할 계정을 선택하세요.",
     "createAccount": "계정 만들기",
     "haveAccount": "이미 계정이 있으신가요?",
@@ -108,7 +102,7 @@
     "inviteOnlyMessage": "현재 신규 가입에는 기존 사용자의 초대 링크가 필요합니다.",
     "errors": {
       "title": "인증 오류",
-      "noAccount": "이 로그인에 연결된 tomomai 계정이 아직 없습니다. 아래에서 새 계정을 만들어 시작하세요.",
+      "noAccount": "이 로그인에 연결된 {brand} 계정이 아직 없습니다. 아래에서 새 계정을 만들어 시작하세요.",
       "signupUnavailable": "계정을 만들 수 없습니다. 현재 신규 가입이 닫혀 있을 수 있습니다.",
       "inviteRequired": "현재 가입하려면 초대가 필요합니다. 받은 초대 링크를 연 뒤 다시 시도해 주세요.",
       "inviteInvalid": "유효하지 않은 초대 코드입니다.",
@@ -118,7 +112,7 @@
       "accountNotLinked": "이 계정은 사용자와 연결되어 있지 않으며 자동으로 연결할 수 없습니다.\n\n같은 이메일을 사용하는 계정이 이미 있을 수 있습니다.\n\n처음 가입한 방법으로 로그인한 뒤, 설정 → 계정에서 이 계정을 연결해 주세요.",
       "emailMismatch": "이 계정의 이메일이 현재 계정과 일치하지 않습니다.",
       "alreadyLinked": "이 계정은 이미 다른 사용자와 연결되어 있습니다.",
-      "emailMissing": "이 계정에서 이메일 주소를 받지 못했습니다. tomomai에 로그인하려면 이메일 주소가 필요합니다.",
+      "emailMissing": "이 계정에서 이메일 주소를 받지 못했습니다. {brand}에 로그인하려면 이메일 주소가 필요합니다.",
       "restart": "로그인이 중단되었거나 너무 오래 걸렸습니다. 다시 시도해 주세요.",
       "provider": "로그인 서비스에서 계정 정보를 가져오지 못했습니다. 다시 시도해 주세요.",
       "banned": "이 계정은 정지되었습니다. 잘못된 조치라고 생각되면 Discord로 문의해 주세요.",
@@ -159,7 +153,6 @@
     "reauthRequired": "패스키를 관리하기 전에 다시 로그인해주세요."
   },
   "consent": {
-    "title": "Welcome to tomomai",
     "description": "Before creating your account, please review and agree to our policies",
     "tldr": {
       "title": "TL;DR (Not Legal Advice)",
@@ -191,13 +184,15 @@
     }
   },
   "dashboard": {
-    "title": "tomomai ともマイ",
-    "description": "친구들과 함께 maimai 성과를 공유하고 분석해보세요!",
+    "description": "친구들과 함께 {game} 성과를 공유하고 분석해보세요!",
     "timezoneUpdateSuccess": "시간대가 업데이트되었습니다!",
     "timezoneUpdateError": "시간대 업데이트 실패: {error}",
     "languageUpdateSuccess": "언어가 업데이트되었습니다!",
     "languageUpdateError": "언어 업데이트 실패: {error}",
     "tokenUpdateSuccess": "인증 정보가 저장되었습니다!"
+  },
+  "game": {
+    "unavailable": "{game} 플레이어 기능은 아직 지원되지 않습니다."
   },
   "settings": {
     "pages": {
@@ -207,7 +202,8 @@
       },
       "fetch": {
         "title": "가져오기",
-        "description": "토큰 및 데이터 가져오기 설정."
+        "description": "{game} 인증 정보 및 데이터 가져오기 설정.",
+        "unavailable": "{game} 플레이어 데이터 가져오기는 아직 지원되지 않습니다."
       },
       "privacy": {
         "title": "개인 정보",
@@ -238,15 +234,10 @@
       "zh-SG": "简体中文 (新加坡, 马来西亚)",
       "ko": "한국어 (AI 번역)"
     },
-    "timezone": {
-      "label": "시간대",
-      "description": "사이트 내 날짜 및 시간 표시에 영향을 줍니다. 기본값은 maimai 서버 시간인 일본 시간입니다.",
-      "placeholder": "시간대 선택"
-    },
     "account": {
       "label": "계정 인증",
       "updateToken": "인증 정보 갱신",
-      "description": "데이터 동기화를 위해 maimai 인증 토큰을 갱신합니다."
+      "description": "{game} 플레이어 데이터를 동기화하기 위한 인증 정보를 갱신합니다."
     },
     "albumPrivacy": {
       "title": "Album Photo Privacy Settings",
@@ -271,10 +262,10 @@
     },
     "profile": {
       "publishProfile": "프로필 공개",
-      "publishDescription": "다른 플레이어가 내 성과와 진행 상황을 볼 수 있도록 프로필을 공개합니다.",
+      "publishDescription": "다른 플레이어가 모든 게임의 내 성과와 진행 상황을 볼 수 있도록 프로필을 공개합니다.",
       "mainRegion": {
         "label": "메인 지역",
-        "description": "공개 프로필에 표시할 주 지역을 선택하세요.",
+        "description": "공개 {game} 프로필에 표시할 주 지역을 선택하세요.",
         "intl": "인터내셔널",
         "jp": "일본",
         "cn": "중국"
@@ -295,7 +286,7 @@
         },
         "showPlayCounts": {
           "label": "플레이 횟수 표시",
-          "description": "maimai 총 플레이 횟수를 표시합니다."
+          "description": "총 플레이 횟수를 표시합니다."
         },
         "showEvents": {
           "label": "지방(Chiho) 표시",
@@ -332,6 +323,7 @@
           "limitReached": "API 키는 최대 {max}개까지 만들 수 있습니다. 새로 만들려면 하나를 삭제하세요."
         }
       },
+      "scopeRoutes": "{routes} 권한을 부여합니다.",
       "scopes": {
         "plate:read": {
           "name": "칭호 진행도",
@@ -355,11 +347,11 @@
         },
         "fetch:start": {
           "name": "가져오기 시작",
-          "description": "저장된 maimai 토큰으로 새 데이터를 가져와 새 스냅샷을 추가"
+          "description": "저장된 토큰으로 각 게임의 새 데이터를 가져와 새 스냅샷을 추가"
         },
         "fetch:delete": {
-          "name": "저장된 maimai 토큰 삭제",
-          "description": "maimai에 다시 로그인할 때까지 가져오기가 중단됩니다"
+          "name": "저장된 게임 토큰 삭제",
+          "description": "해당 게임에 다시 로그인할 때까지 가져오기가 중단됩니다"
         },
         "ready": {
           "name": "기본 접근",
@@ -387,7 +379,7 @@
         },
         "snapshot:latest:icon:read": {
           "name": "최신 프로필 아이콘",
-          "description": "현재 maimai 아이콘. 게임 내 카메라로 찍은 얼굴 사진일 수 있습니다"
+          "description": "모든 게임의 현재 아이콘. 게임 내 카메라로 찍은 얼굴 사진일 수 있습니다"
         },
         "snapshot:all:metadata:read": {
           "name": "스냅샷 기록",
@@ -407,7 +399,7 @@
         },
         "snapshot:all:icon:read": {
           "name": "프로필 아이콘 기록",
-          "description": "모든 스냅샷의 maimai 아이콘. 게임 내 카메라로 찍은 얼굴 사진일 수 있습니다"
+          "description": "모든 게임의 모든 스냅샷 아이콘. 게임 내 카메라로 찍은 얼굴 사진일 수 있습니다"
         },
         "recent:read": {
           "name": "최근 플레이",
@@ -443,7 +435,6 @@
         }
       },
       "oauthApps": {
-        "officialLabel": "tomomai 공식 앱",
         "officialDescription": "동의 화면에 서드파티 앱 경고 대신 공식 배지를 표시합니다. 관리자만 설정할 수 있습니다.",
         "officialBadge": "공식",
         "label": "OAuth 애플리케이션",
@@ -539,7 +530,7 @@
     "fetchNewData": "데이터 가져오기",
     "fetchingData": "데이터 가져오는 중...",
     "lastUpdate": "최근 업데이트",
-    "noDataInstructions": "이 지역의 데이터가 없습니다. '데이터 가져오기'를 눌러 maimai 성과를 가져오세요 (로그인/토큰 필요)."
+    "noDataInstructions": "이 지역의 데이터가 없습니다. '데이터 가져오기'를 눌러 {game} 성과를 가져오세요 (로그인/토큰 필요)."
   },
   "profileVisibility": {
     "public": "공개 프로필",
@@ -573,8 +564,11 @@
     "totalPlays": "총 플레이: {count}",
     "songs": "악곡 (총 {count}곡)",
     "searchPlaceholder": "곡명, 아티스트, 난이도, 타입으로 검색...",
-    "newSongsB15": "신곡 B15",
-    "oldSongsB35": "구곡 B35",
+    "rankingBucket": {
+      "new": "신곡 B{size}",
+      "old": "구곡 B{size}",
+      "short": "B{size}"
+    },
     "newSongs": "신곡",
     "oldSongs": "구곡",
     "displayModes": {
@@ -587,9 +581,11 @@
       "artist": "아티스트",
       "level": "레벨",
       "achievement": "달성률",
+      "score": "점수",
       "fc": "FC",
       "fs": "FS",
-      "rating": "레이팅"
+      "rating": "레이팅",
+      "status": "상태"
     },
     "statistics": {
       "sum": "합계",
@@ -597,18 +593,23 @@
     },
     "switchToListForAllSongs": "모든 곡을 보려면 목록 또는 테이블 뷰로 전환하세요.",
     "noDataAvailable": "데이터가 없습니다",
-    "getStartedInstructions": "상단의 가져오기 버튼을 눌러 maimai 데이터를 불러오세요.",
+    "getStartedInstructions": "상단의 가져오기 버튼을 눌러 {game} 데이터를 불러오세요.",
+    "fetchUnavailable": "{game} 플레이어 데이터 가져오기는 아직 지원되지 않습니다.",
+    "noPublicRecords": "{username} 님의 {game} 기록이 아직 없습니다.",
     "history": {
       "title": "레이팅 변동 기록",
       "ratingOverTime": "레이팅 추이",
       "noHistory": "레이팅 기록이 없습니다",
-      "needMoreData": "기록을 보려면 데이터를 최소 2회 이상 가져와야 합니다"
+      "needMoreData": "기록을 보려면 데이터를 최소 2회 이상 가져와야 합니다",
+      "newInBest": "B{size} 신규 진입",
+      "newInBestRating": "B{size} 신규 진입: {rating}"
     },
     "developer": {
       "title": "Developer",
       "exportJson": "Export Snapshot as JSON",
       "exporting": "Exporting..."
-    }
+    },
+    "loadError": "점수를 불러오지 못했습니다. 다시 시도해 주세요."
   },
   "albums": {
     "title": "Photo Albums",
@@ -642,11 +643,11 @@
     "currentToTarget": "현재 → 목표",
     "noRecommendations": "추천 곡 없음",
     "allOptimal": "더 이상 레이팅을 올릴 곡이 없습니다! 대단해요.",
-    "description": "현재 B15/B35 기록을 바탕으로 레이팅 상승에 도움이 될 곡을 추천합니다.",
+    "description": "현재 {new}/{old} 기록을 바탕으로 레이팅 상승에 도움이 될 곡을 추천합니다.",
     "filterButton": "필터",
     "filters": {
       "all": "전체",
-      "best": "B15/B35 진입",
+      "best": "{new}/{old} 진입",
       "new": "신곡",
       "old": "구곡"
     },
@@ -656,6 +657,7 @@
       "type": "타입",
       "targetRating": "목표 레이팅",
       "achievement": "달성률",
+      "score": "점수",
       "version": "버전"
     }
   },
@@ -667,12 +669,15 @@
     "detailsNotFetched": "Detailed play data hasn't been fetched yet. Sync your data again to get detailed breakdown.",
     "detailsFetching": "Detailed play data is still being fetched. Please wait a moment and refresh the page.",
     "labels": {
+      "maxCombo": "최대 콤보",
+      "judgments": "판정 수",
       "dx": "DX",
       "combo": "콤보",
       "fast": "FAST",
       "late": "LATE"
     },
     "notesBreakdown": {
+      "percentages": "노트별 달성률",
       "type": "타입",
       "total": "합계",
       "totalLoss": "감점"
@@ -716,8 +721,7 @@
     }
   },
   "tokenDialog": {
-    "title": "maimai 인증 갱신",
-    "japanDescription": "일본판: SEGA 계정 정보를 입력하세요.",
+    "title": "{game} 인증 갱신",
     "intlDescription": "해외판: 인증 방식을 선택하세요.",
     "credentialsStored": "인증 정보는 나중을 위해 안전하게 저장됩니다.",
     "username": "사용자명",
@@ -728,20 +732,20 @@
     "tokenPlaceholder": "clal=여기에 쿠키 값 입력",
     "tokenValidationError": "쿠키는 \"clal=\"로 시작하고 영문과 숫자로만 구성되어야 합니다.",
     "authenticationNote": "인증:",
-    "segaCredentialsNote": "SEGA 계정 정보로 maimai DX NET에 인증합니다.",
+    "segaCredentialsNote": "SEGA 계정 정보로 {net}에 인증합니다.",
+    "subscriptionNote": "{game}({region}) 점수를 가져오려면 유효한 {subscription} 이용권이 필요합니다.",
     "credentialsSecureNote": "인증 정보는 향후 데이터 갱신을 위해 저장됩니다.",
     "savingCredentials": "인증 정보 저장 중...",
     "saveCredentials": "인증 정보 저장",
     "tokenTab": "토큰",
     "passwordTab": "비밀번호",
     "tokenInstructions": {
-      "description": "maimai DX NET에서 추출한 \"clal=\"로 시작하는 쿠키 값입니다.",
+      "description": "{net}에서 추출한 \"clal=\"로 시작하는 쿠키 값입니다.",
       "expiration": "토큰은 일정 시간이 지나면 만료될 수 있으므로, 나중에 다시 갱신해야 할 수도 있습니다."
     },
-    "passwordInstructions": "SEGA 계정 아이디와 비밀번호를 직접 사용",
     "secureStorage": "인증 정보는 향후 데이터 갱신을 위해 저장됩니다.",
     "steps": {
-      "step1Title": "maimai DX NET 로그인",
+      "step1Title": "{net} 로그인",
       "step2Title": "\"Not Found\" 페이지 이동",
       "step3Title": "코드 실행"
     },
@@ -757,7 +761,7 @@
     "segaAccountDescription": "SEGA 계정 정보를 입력하세요",
     "backToSteps": "이전 단계로",
     "step1": {
-      "description": "<strong>시크릿 모드 / 개인 정보 보호 창</strong>에서 maimai DX NET에 로그인하세요.",
+      "description": "<strong>시크릿 모드 / 개인 정보 보호 창</strong>에서 {net}에 로그인하세요.",
       "clickToCopy": "아래 링크를 클릭하여 복사하세요:",
       "haveCookies": "이미 쿠키를 가지고 계신가요?",
       "enterDirectly": "직접 입력하기"
@@ -782,8 +786,8 @@
       "nextStep": "다음"
     },
     "recommended": "추천 곡",
-    "tokenOptionDescription": "브라우저 토큰을 사용하여 maimai DX NET 계정에 로그인합니다. 토큰은 주기적으로 만료될 수 있습니다. 비밀번호가 필요 없으며 소셜 로그인도 지원합니다.",
-    "passwordOptionDescription": "SEGA 계정 정보를 사용하여 maimai DX NET 계정에 로그인합니다. 만료되지 않습니다. (비권장)"
+    "tokenOptionDescription": "브라우저 토큰을 사용하여 {net} 계정에 로그인합니다. 토큰은 주기적으로 만료될 수 있습니다. 비밀번호가 필요 없으며 소셜 로그인도 지원합니다.",
+    "passwordOptionDescription": "SEGA 계정 정보를 사용하여 {net} 계정에 로그인합니다. 만료되지 않습니다. (비권장)"
   },
   "regions": {
     "intl": "인터내셔널",
@@ -796,8 +800,6 @@
     }
   },
   "userHeader": {
-    "memberLabel": "ともマイ 멤버",
-    "discordPrompt": "문제나 제안 사항이 있으신가요? tomomai ともマイ 디스코드에 참여하세요!",
     "joinDiscord": "커뮤니티 Discord 참여하기"
   },
   "publicHeader": {
@@ -890,12 +892,9 @@
     }
   },
   "acceptInvitation": {
-    "title": "tomomai ともマイ",
-    "subtitle": "tomomai ともマイ 커뮤니티에 초대되었습니다",
     "validating": "초대 확인 중...",
     "redirecting": "메인 페이지로 이동 중...",
     "invited": "초대받으셨습니다!",
-    "invitedBy": "{name}님이 당신을 tomomai ともマイ에 초대했습니다",
     "expiresOn": "이 초대는 {date}에 만료됩니다",
     "acceptAndSignUp": "초대 수락 및 가입",
     "backToHome": "홈으로 돌아가기",
@@ -924,10 +923,9 @@
     },
     "songs": {
       "metadata": {
-        "title": "악곡 데이터베이스 | maimai DX",
-        "description": "maimai DX의 모든 수록곡을 검색하고 열람하세요. 타입, 장르, 버전별 필터링을 지원합니다. 곡 상세 정보, 난이도, 수록 지역을 확인할 수 있습니다."
+        "title": "악곡 데이터베이스 | {game}",
+        "description": "{game}의 모든 수록곡을 검색하고 열람하세요. 타입, 장르, 버전별 필터링을 지원합니다. 곡 상세 정보, 난이도, 수록 지역을 확인할 수 있습니다."
       },
-      "title": "악곡 데이터베이스 | maimai DX",
       "searchPlaceholder": "곡명, 아티스트, 장르 등으로 검색...",
       "noSongsFound": "곡을 찾을 수 없습니다",
       "tryAdjustingSearch": "검색 조건을 변경해 보세요",
@@ -946,15 +944,13 @@
         "share": "링크 공유",
         "youtube": "YouTube 검색",
         "viewCharts": "채보 보기",
-        "viewDetails": "tomomai DB에서 상세 보기",
-        "loadFailed": "곡 상세 정보를 불러오지 못했습니다"
+        "loadFailed": "곡 상세 정보를 불러오지 못했습니다",
+        "score": "점수"
       },
       "filter": {
         "type": "타입",
         "genre": "장르",
         "addedVersion": "추가 버전",
-        "std": "STD",
-        "dx": "DX",
         "sort": "Sort",
         "sortVersionDesc": "Version (Latest)",
         "sortVersionAsc": "Version (Oldest)",
@@ -1067,6 +1063,9 @@
     "title": "Theme"
   },
   "fetchToast": {
+    "errors": {
+      "subscriptionRequired": "{game}({region}) 점수를 가져오려면 유효한 {subscription} 이용권이 필요합니다. 구매 또는 갱신한 후 다시 시도하세요. 저장된 로그인 정보와 기존 데이터는 유지됩니다."
+    },
     "header": {
       "pending": "데이터 가져오는 중...",
       "completed": "Fetch complete",
@@ -1077,11 +1076,7 @@
       "connected": "Connected",
       "login": "Logged in",
       "playerData": "Fetched player data",
-      "songDataBasic": "Fetched BASIC scores",
-      "songDataAdvanced": "Fetched ADVANCED scores",
-      "songDataExpert": "Fetched EXPERT scores",
-      "songDataMaster": "Fetched MASTER scores",
-      "songDataRemaster": "Fetched Re:MASTER scores",
+      "songDataDifficulty": "{difficulty} 점수를 가져왔습니다",
       "recentSongs": "Fetched recent songs",
       "hiddenSongs": "Fetched hidden songs"
     }
@@ -1262,12 +1257,12 @@
     "youDescription": "나: Rating {rating}, 달성률 {achievement}"
   },
   "landing": {
-    "headline": "maimai DX 스코어를 기록하세요",
-    "subheadline": "maimai DX NET에서 가져와 레이팅, 베스트 스코어, 기록을 확인할 수 있습니다.",
-    "screenshotAlt": "베스트 스코어와 레이팅 차트를 보여 주는 tomomai 대시보드",
+    "headline": "{game} 스코어를 기록하세요",
+    "subheadline": "{net}에서 가져와 레이팅, 베스트 스코어, 기록을 확인할 수 있습니다.",
+    "screenshotAlt": "베스트 스코어와 레이팅 차트를 보여 주는 {brand} 대시보드",
     "links": {
       "db": {
-        "title": "tomomai DB",
+        "title": "{brand} DB",
         "description": "채보, 오락실 정보 등"
       },
       "profile": {
@@ -1278,9 +1273,7 @@
   },
   "oauthConsent": {
     "loading": "불러오는 중",
-    "title": "{app}이(가) <nb>tomomai 계정에</nb> 대한 접근을 요청합니다",
     "signedOutTitle": "로그인하고 {app}(으)로 계속하기",
-    "signedOutDescription": "{app}이(가) tomomai 계정에 대한 접근을 요청합니다. 로그인하여 요청을 확인하세요.",
     "signedInAs": "{name}(으)로 로그인됨",
     "switchAccount": "본인이 아닌가요? 계정 전환",
     "basicAccess": "계정과 연결되어 있는지 확인",
@@ -1290,9 +1283,6 @@
     },
     "sensitive": "민감",
     "redirectNotice": "완료하면 {host}(으)로 돌아갑니다",
-    "trustNotice": "{app}은(는) tomomai가 운영하는 앱이 아닙니다. {links, select, both {데이터는 이 앱의 <terms>이용약관</terms> 및 <privacy>개인정보 처리방침</privacy>에 따라 처리됩니다.} terms {데이터는 이 앱의 <terms>이용약관</terms>에 따라 처리됩니다.} privacy {데이터는 이 앱의 <privacy>개인정보 처리방침</privacy>에 따라 처리됩니다.} other {이 앱은 이용약관이나 개인정보 처리방침을 제공하지 않습니다.}} 신뢰할 수 있는 경우에만 계속하세요.",
-    "officialBadge": "tomomai 공식 앱",
-    "officialNotice": "{app}은(는) tomomai가 만들고 운영합니다.",
     "activeSince": "{date}부터 활동 중",
     "usage": {
       "lt10": "10명 미만이 사용 중",
@@ -1312,16 +1302,14 @@
     "loadFailed": "이 요청이 만료되었거나 앱을 더 이상 사용할 수 없습니다. 앱으로 돌아가 다시 시도하세요.",
     "errors": {
       "redirect": {
-        "title": "이 앱의 돌아갈 주소가 등록되어 있지 않습니다",
-        "body": "앱이 tomomai에 등록하지 않은 주소로 돌려보내려고 해서, 계정을 보호하기 위해 요청을 중단했습니다. 이 링크로 로그인하지 말고 앱 개발자에게 알려 주세요."
+        "title": "이 앱의 돌아갈 주소가 등록되어 있지 않습니다"
       },
       "unavailable": {
         "title": "이 앱을 사용할 수 없습니다",
         "body": "개발자가 앱을 삭제했거나 비활성화했을 수 있습니다."
       },
       "badRequest": {
-        "title": "이 로그인 링크가 작동하지 않습니다",
-        "body": "앱이 tomomai에서 지원하지 않는 요청을 보냈습니다. 앱으로 돌아가 다시 시도하거나 개발자에게 문의하세요."
+        "title": "이 로그인 링크가 작동하지 않습니다"
       },
       "tampered": {
         "title": "이 링크가 변경되었습니다",
@@ -1331,7 +1319,6 @@
     "genericError": "문제가 발생했습니다. 다시 시도해 주세요.",
     "unknownScopesTitle": "알 수 없는 권한",
     "unknownScopesBody": "{app}이(가) 존재하지 않는 권한({scopes})을 요청하고 있습니다. 앱이 요청을 수정하기 전까지는 허용할 수 없습니다.",
-    "backHome": "tomomai로 돌아가기",
     "defaultAppName": "이 앱",
     "changeHeading": "데이터를 변경할 수 있음",
     "readHeading": "데이터를 읽을 수 있음",
@@ -1340,5 +1327,10 @@
     "scrollToEnd": "끝으로 스크롤",
     "scrollHint": "스크롤하여 모든 권한 확인",
     "groupCount": "권한 {count}개"
+  },
+  "profileMetadata": {
+    "title": "{username} | {brand}",
+    "descriptionRich": "{region} {game} 플레이어 {displayName} ({username}), 레이팅 {rating}. {brandName}에서 점수와 성장을 확인하세요.",
+    "description": "{brandName}에서 {username}의 {game} 프로필을 확인하세요."
   }
 }

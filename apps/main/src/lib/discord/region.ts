@@ -1,25 +1,15 @@
-import { getEnabledRegions } from '@/lib/enabled-regions';
-import { splitSongs } from '@/lib/rating-calculator';
-import type { Region, SongWithScore } from '@/lib/types';
-import { fetchLatestSnapshotData } from '@/server/queries/snapshots';
+import { getEnabledRegions } from '@/lib/games/regions';
+import type { Region } from '@/lib/games/ids';
+import { userSnapshots } from '@/lib/db/schema-pg';
+import { latestSnapshot } from '@/server/queries/latest-snapshot';
+import { fetchSnapshotRankings } from '@/server/queries/snapshots';
 import { getRatingComment } from './responses';
 import { t } from './i18n';
-
-const REGION_NAMES: Record<Region, string> = {
-  intl: 'International',
-  jp: 'Japan',
-  cn: 'China',
-};
-
-export function regionDisplayName(region: Region, locale?: string): string {
-  if (locale) {
-    return t(locale, `regions.${region}`);
-  }
-  return REGION_NAMES[region] ?? region;
-}
+import { DISCORD_GAME } from './game';
 
 /**
- * Resolve which region a command should operate on.
+ * Resolve which region a command should operate on, or null when the bot's
+ * game has no enabled region.
  *
  * Priority: an explicit param (if it names an enabled region) > the user's
  * selected region from the DB (if enabled) > intl > the first enabled region.
@@ -27,12 +17,13 @@ export function regionDisplayName(region: Region, locale?: string): string {
 export function resolveRegion(
   param: string | null | undefined,
   userRegion: Region | null | undefined
-): Region {
-  const enabled = getEnabledRegions();
-  if (param && enabled.includes(param as Region)) return param as Region;
+): Region | null {
+  const enabled = getEnabledRegions(DISCORD_GAME);
+  const requested = enabled.find(region => region === param);
+  if (requested) return requested;
   if (userRegion && enabled.includes(userRegion)) return userRegion;
   if (enabled.includes('intl')) return 'intl';
-  return enabled[0];
+  return enabled[0] ?? null;
 }
 
 export interface ProfileSummary {
@@ -48,26 +39,32 @@ export interface ProfileSummary {
 }
 
 /**
- * Load the latest snapshot for a user/region and compute the new-charts (B15)
- * and old-charts (B35) rating totals alongside the stored summary fields.
+ * Load the latest snapshot for a user/region and total the new-charts (B15)
+ * and old-charts (B35) ratings stored with it alongside the summary fields.
  */
 export async function getProfileSummary(userId: string, region: Region): Promise<ProfileSummary | null> {
-  const data = await fetchLatestSnapshotData(userId, region);
-  if (!data) return null;
+  const snapshot = await latestSnapshot(DISCORD_GAME, userId, region, {
+    publicId: userSnapshots.publicId,
+    rating: userSnapshots.rating,
+    gameVersion: userSnapshots.gameVersion,
+    stars: userSnapshots.stars,
+    totalPlayCount: userSnapshots.totalPlayCount,
+    fetchedAt: userSnapshots.fetchedAt,
+  });
+  if (!snapshot) return null;
 
-  const { snapshot, songs } = data;
-  const { newSongsB15, oldSongsB35 } = splitSongs(songs as SongWithScore[], snapshot.gameVersion);
-  const newRating = newSongsB15.reduce((sum, s) => sum + s.rating, 0);
-  const oldRating = oldSongsB35.reduce((sum, s) => sum + s.rating, 0);
+  const { newScores, oldScores } = await fetchSnapshotRankings(DISCORD_GAME, userId, snapshot);
+  const newRating = newScores.reduce((sum, s) => sum + s.rating, 0);
+  const oldRating = oldScores.reduce((sum, s) => sum + s.rating, 0);
 
   return {
     publicId: snapshot.publicId,
     rating: snapshot.rating,
     newRating,
-    newCount: newSongsB15.length,
+    newCount: newScores.length,
     oldRating,
-    oldCount: oldSongsB35.length,
-    stars: snapshot.stars,
+    oldCount: oldScores.length,
+    stars: snapshot.stars ?? 0,
     totalPlayCount: snapshot.totalPlayCount,
     fetchedAt: snapshot.fetchedAt,
   };

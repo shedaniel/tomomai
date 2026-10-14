@@ -1,32 +1,10 @@
-// Mirror of `songCatalogueEntry` from apps/main/src/lib/api/schemas.ts.
-// We avoid taking a workspace dep on the main app — duplicating this tiny type
-// is much cheaper than coupling deployment graphs.
-export type Region = "intl" | "jp" | "cn";
-export type Difficulty =
-  | "basic"
-  | "advanced"
-  | "expert"
-  | "master"
-  | "remaster"
-  | "utage";
-export type ChartType = "std" | "dx" | "utage";
+import type { CatalogSong } from "@tomomai/games/catalog-client";
+import type { CodeKey } from "@tomomai/games/codes";
 
-export type Chart = {
-  songId: string;
-  songName: string;
-  artist: string;
-  cover: string | null;
-  type: ChartType;
-  genre: string;
-  difficulty: Difficulty;
-  level: string;
-  levelPrecise: number;
-  region: Region;
-  gameVersion: number;
-  addedVersion: number;
-  bpm: number | null;
-  noteDesigner: string | null;
-};
+export type Difficulty = CodeKey<"maimai", "difficulty">;
+export type ChartType = CodeKey<"maimai", "chartType">;
+
+export type Chart = CatalogSong<"maimai">;
 
 // ---------- Hint plan -----------------------------------------------------
 

@@ -38,9 +38,9 @@ export function AboutDialog({ open, onOpenChange }: AboutDialogProps) {
     <ResponsiveDialog open={open} onOpenChange={onOpenChange}>
       <ResponsiveDialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
         <ResponsiveDialogHeader>
-          <ResponsiveDialogTitle>About ともマイ</ResponsiveDialogTitle>
+          <ResponsiveDialogTitle>About ともマイ and ともチュウ</ResponsiveDialogTitle>
           <ResponsiveDialogDescription>
-            A modern web application for tracking and analyzing your maimai DX scores with friends.
+            A modern web application for tracking and analyzing your maimai DX and CHUNITHM scores with friends.
           </ResponsiveDialogDescription>
         </ResponsiveDialogHeader>
 
@@ -48,13 +48,13 @@ export function AboutDialog({ open, onOpenChange }: AboutDialogProps) {
           <div>
             <h3 className="text-lg font-semibold mb-2">Disclaimer</h3>
             <p className="text-sm">
-              This is an <strong>unofficial project</strong> and is not affiliated with, endorsed by, or connected to SEGA Corporation or any of its subsidiaries. maimai DX is a trademark of SEGA Corporation.
+              This is an <strong>unofficial project</strong> and is not affiliated with, endorsed by, or connected to SEGA Corporation or any of its subsidiaries. maimai DX, CHUNITHM and チュウニズム are trademarks of SEGA Corporation.
             </p>
           </div>
           <div>
             <h3 className="text-lg font-semibold mb-3">Acknowledgments</h3>
             <div className="space-y-2 text-sm">
-              <p><strong>SEGA</strong> for creating maimai DX</p>
+              <p><strong>SEGA</strong> for creating maimai DX and CHUNITHM</p>
               <p><strong><a href="https://github.com/gekichumai/dxrating" target="_blank" rel="noopener noreferrer" className="text-blue-600 dark:text-blue-400 hover:underline">dxrating</a></strong> for providing internal level data</p>
               <p><strong><a href="https://github.com/zvuc/otoge-db" target="_blank" rel="noopener noreferrer" className="text-blue-600 dark:text-blue-400 hover:underline">otoge-db</a></strong> for providing level data</p>
               <p><strong><a href="https://maimai.lxns.net/" target="_blank" rel="noopener noreferrer" className="text-blue-600 dark:text-blue-400 hover:underline">落雪咖啡屋</a></strong> for providing song and chart data for the China region</p>

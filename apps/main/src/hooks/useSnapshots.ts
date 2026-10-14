@@ -1,156 +1,58 @@
+"use client";
+import { useState } from "react";
 import { trpc } from "@/lib/trpc-client";
-import { Region, Snapshot, SnapshotWithSongs } from "@/lib/types";
-import { useEffect, useRef, useState } from "react";
+import { useGame } from "@/components/providers/game-provider";
+import { supportsGameFeature } from "@/lib/games/frontend";
+import { getSnapshotSelection, type GameSnapshotData, type GameSnapshotSummary } from "@/lib/games/player-view";
+import type { Region } from "@/lib/games/ids";
 
 interface UseSnapshotsOptions {
-  initialSnapshots?: Snapshot[];
-  initialSnapshotData?: SnapshotWithSongs;
+  initialSnapshots?: GameSnapshotSummary[];
+  initialSnapshotData?: GameSnapshotData;
 }
 
-export function useSnapshots(
-  region: Region,
-  isAuthenticated: boolean,
-  options?: UseSnapshotsOptions
-) {
-  const { initialSnapshots, initialSnapshotData } = options || {};
-
-  // Initialize selected snapshot with the first snapshot from initial data
-  const [selectedSnapshot, setSelectedSnapshot] = useState<string | null>(
-    initialSnapshots && initialSnapshots.length > 0 ? initialSnapshots[0].id : null
-  );
-  const previousLengthRef = useRef<number>(initialSnapshots?.length || 0);
-
-  // Use tRPC query to fetch snapshots metadata only (with initial data)
-  const {
-    data: snapshotsData,
-    isLoading: isLoadingSnapshots,
-    refetch: refreshSnapshots,
-  } = trpc.user.getSnapshots.useQuery(
-    { region },
-    {
-      enabled: isAuthenticated, // Only run query if authenticated
-      refetchOnWindowFocus: false,
-      staleTime: 5 * 60 * 1000, // 5 minutes
-      initialData: initialSnapshots ? { snapshots: initialSnapshots } : undefined,
-    }
-  );
-
-  // Fetch complete snapshot data only when a snapshot is selected (with initial data)
-  const hasInitialDataForSelected = initialSnapshotData && selectedSnapshot === initialSnapshotData.snapshot.id;
-
-  const {
-    data: selectedSnapshotData,
-    isLoading: isLoadingSnapshotData,
-    refetch: refreshSnapshotData,
-  } = trpc.user.getSnapshotData.useQuery(
-    {
-      snapshotId: selectedSnapshot!,
-      region
-    },
-    {
-      enabled: isAuthenticated && !!selectedSnapshot,
-      refetchOnWindowFocus: false,
-      staleTime: 10 * 60 * 1000, // 10 minutes - snapshot data changes less frequently
-      ...(hasInitialDataForSelected && { initialData: initialSnapshotData as any }),
-    }
-  );
-
-  const snapshots: Snapshot[] = snapshotsData?.snapshots || [];
-  const isLoading = isLoadingSnapshots || (!!selectedSnapshot && isLoadingSnapshotData);
-
-  // Auto-select the latest snapshot if none selected and we have snapshots
-  if (snapshots.length > 0 && !selectedSnapshot) {
-    setSelectedSnapshot(snapshots[0].id);
-  }
-
-  // Auto-select the latest snapshot when new data is fetched (length changes)
-  useEffect(() => {
-    const currentLength = snapshots.length;
-    const previousLength = previousLengthRef.current;
-
-    // If length changed and we have snapshots, select the latest one
-    if (currentLength !== previousLength && currentLength > 0) {
-      setSelectedSnapshot(snapshots[0].id);
-    }
-
-    // Update the ref with current length
-    previousLengthRef.current = currentLength;
-  }, [snapshots]);
-
-  const resetSnapshots = () => {
-    setSelectedSnapshot(null);
-    previousLengthRef.current = 0; // Reset the length tracking
-  };
-
-  // Delete snapshot mutation
-  const deleteSnapshotMutation = trpc.user.deleteSnapshot.useMutation({
-    onSuccess: () => {
-      // Refresh snapshots list after deletion
-      refreshSnapshots();
-    },
-    onError: (error) => {
-      console.error("Failed to delete snapshot:", error);
-      throw error; // Let the caller handle the error
-    },
+export function useSnapshots(region: Region, options?: UseSnapshotsOptions) {
+  const { initialSnapshots = [], initialSnapshotData } = options ?? {};
+  const game = useGame();
+  const [selection, setSelection] = useState<{ region: Region; id: string | null }>({ region, id: initialSnapshots[0]?.publicId ?? null });
+  // A region change refetches the user before the page reloads, so the new region must not reuse the page's snapshots.
+  const [initialRegion] = useState(region);
+  const sameInitialRegion = initialRegion === region;
+  const enabled = supportsGameFeature(game, "scores", region);
+  const snapshotsQuery = trpc.user.getSnapshots.useQuery({ game: game.id, region }, {
+    enabled,
+    initialData: sameInitialRegion ? initialSnapshots : undefined,
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
   });
-
-  // Copy snapshot mutation
-  const copySnapshotMutation = trpc.user.copySnapshotToVersion.useMutation({
-    onSuccess: () => {
-      // Refresh snapshots list after copying
-      refreshSnapshots();
-    },
-    onError: (error) => {
-      console.error("Failed to copy snapshot:", error);
-      throw error; // Let the caller handle the error
-    },
+  const snapshots = snapshotsQuery.data ?? [];
+  const selectedSnapshot = getSnapshotSelection(snapshots, selection.region === region ? selection.id : null);
+  const initialData = sameInitialRegion && initialSnapshotData?.snapshot.publicId === selectedSnapshot ? initialSnapshotData : null;
+  const snapshotQuery = trpc.user.getSnapshotData.useQuery({ game: game.id, region, snapshotId: selectedSnapshot ?? "" }, {
+    enabled: enabled && selectedSnapshot !== null,
+    initialData: initialData ?? undefined,
+    staleTime: 10 * 60 * 1000,
+    refetchOnWindowFocus: false,
   });
-
-  const refreshSnapshotsCallback = () => {
-    refreshSnapshots();
-    if (selectedSnapshot) {
-      refreshSnapshotData();
-    }
+  const showLatest = () => setSelection({ region, id: null });
+  const refresh = () => {
+    showLatest();
+    void snapshotsQuery.refetch();
   };
-
-  const handleSnapshotSelect = (snapshotId: string | null) => {
-    setSelectedSnapshot(snapshotId);
-  };
-
-  const handleDeleteSnapshot = async (snapshotId: string) => {
-    // If we're deleting the currently selected snapshot, clear the selection
-    if (selectedSnapshot === snapshotId) {
-      setSelectedSnapshot(null);
-    }
-
-    // Delete the snapshot
-    await deleteSnapshotMutation.mutateAsync({
-      snapshotId,
-      region,
-    });
-  };
-
-  const handleCopySnapshot = async (snapshotId: string, targetVersion: number) => {
-    // Copy the snapshot to another version
-    const result = await copySnapshotMutation.mutateAsync({
-      snapshotId,
-      region,
-      targetVersion,
-    });
-
-    return result;
-  };
-
+  const deleteMutation = trpc.user.deleteSnapshot.useMutation({ onSuccess: refresh });
+  const copyMutation = trpc.maimai.copySnapshotToVersion.useMutation({ onSuccess: refresh });
   return {
     snapshots,
     selectedSnapshot,
-    selectedSnapshotData: selectedSnapshotData || undefined,
-    setSelectedSnapshot: handleSnapshotSelect,
-    deleteSnapshot: handleDeleteSnapshot,
-    copySnapshot: handleCopySnapshot,
-    isCopying: copySnapshotMutation.isPending,
-    isLoading,
-    resetSnapshots,
-    refreshSnapshots: refreshSnapshotsCallback,
+    selectedSnapshotData: selectedSnapshot ? snapshotQuery.data ?? initialData : null,
+    setSelectedSnapshot: (id: string | null) => setSelection({ region, id }),
+    deleteSnapshot: (snapshotId: string) => {
+      showLatest();
+      return deleteMutation.mutateAsync({ game: game.id, snapshotId, region });
+    },
+    copySnapshot: (snapshotId: string, targetVersion: number) => copyMutation.mutateAsync({ snapshotId, region, targetVersion }),
+    isCopying: copyMutation.isPending,
+    isLoading: enabled && (snapshotsQuery.isLoading || (!!selectedSnapshot && !initialData && snapshotQuery.isLoading)),
+    refreshSnapshots: refresh,
   };
 }

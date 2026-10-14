@@ -1,58 +1,42 @@
 import { db } from '@/lib/db';
 import { user } from '@/lib/db/schema-pg';
-import { protectedProcedure, publicProcedure, router } from '@/lib/trpc';
-import { Region, UserData } from '@/lib/types';
+import { getCurrentGame } from '@/lib/games/current';
+import { isGameCnExclusive, isGameRegion, type FrontendGame } from '@/lib/games/frontend';
+import { regionSchema } from '@/lib/games/schema';
+import { protectedProcedure, router } from '@/lib/trpc';
+import { UserData } from '@/lib/types';
+import type { Region } from '@/lib/games/ids';
 import { TRPCError } from '@trpc/server';
 import { eq } from 'drizzle-orm';
 import { z } from 'zod';
-import { getEnabledRegions, isCNExclusive } from '@/lib/enabled-regions';
-import { resolvePublicUserByUsername } from '@/server/queries/public-access';
-import { fetchProfileSettings } from '@/server/queries/profile';
-import { revalidatePublicProfile, revalidatePublicProfileForUser } from '@/lib/profile-cache';
+import { fetchProfileSettings, fetchUserData } from '@/server/queries/profile';
+import { saveGamePreference } from '@/server/queries/game-preferences';
 import { profileDescriptionInputSchema } from '@/lib/profile-description';
 
-const regionSchema = z.enum(getEnabledRegions());
+// Region choices are offered from the served game's regions, so they are validated against the same list.
+function requireGameRegion(game: FrontendGame, region: Region): void {
+  if (!isGameRegion(game, region)) {
+    throw new TRPCError({ code: 'BAD_REQUEST', message: `${region} is not enabled for ${game.brand.displayName}` });
+  }
+}
 
 export const profileRouter = router({
   getUserData: protectedProcedure
     .query(async ({ ctx }) => {
-      const userRecord = await db
-        .select({
-          username: user.username, email: user.email, publishProfile: user.publishProfile, role: user.role,
-          ...(!isCNExclusive() ? { region: user.region } : {})
-        })
-        .from(user)
-        .where(eq(user.id, ctx.session.user.id))
-        .limit(1);
-
-      if (userRecord.length === 0) {
+      const userData = await fetchUserData(getCurrentGame().id, ctx.session.user.id);
+      if (!userData) {
         throw new TRPCError({
           code: 'NOT_FOUND',
           message: 'User not found',
         });
       }
 
-      return {
-        hasUsername: !!userRecord[0].username,
-        username: userRecord[0].username,
-        email: userRecord[0].email,
-        publishProfile: userRecord[0].publishProfile,
-        region: (!isCNExclusive() ? userRecord[0].region! : 'cn') as Region,
-        role: userRecord[0].role,
-      } satisfies UserData;
-    }),
-
-  getPublicProfile: publicProcedure
-    .input(z.object({
-      username: z.string(),
-    }))
-    .query(async ({ input }) => {
-      return await resolvePublicUserByUsername(input.username);
+      return { hasUsername: !!userData.username, ...userData } satisfies UserData;
     }),
 
   getProfileSettings: protectedProcedure
     .query(async ({ ctx }) => {
-      const settings = await fetchProfileSettings(ctx.session.user.id);
+      const settings = await fetchProfileSettings(getCurrentGame().id, ctx.session.user.id);
       if (!settings) {
         throw new TRPCError({
           code: 'NOT_FOUND',
@@ -73,7 +57,6 @@ export const profileRouter = router({
         })
         .where(eq(user.id, ctx.session.user.id));
 
-      await revalidatePublicProfileForUser(ctx.session.user.id);
       return { success: true };
     }),
 
@@ -82,17 +65,6 @@ export const profileRouter = router({
       publishProfile: z.boolean(),
     }))
     .mutation(async ({ ctx, input }) => {
-      const [current] = await db
-        .select({ username: user.username, publishProfile: user.publishProfile })
-        .from(user)
-        .where(eq(user.id, ctx.session.user.id))
-        .limit(1);
-
-      if (!current) {
-        throw new TRPCError({ code: 'NOT_FOUND', message: 'User not found' });
-      }
-      if (current.publishProfile === input.publishProfile) return { success: true };
-
       await db
         .update(user)
         .set({
@@ -101,22 +73,17 @@ export const profileRouter = router({
         })
         .where(eq(user.id, ctx.session.user.id));
 
-      revalidatePublicProfile([current.username]);
       return { success: true };
     }),
 
   updateRegion: protectedProcedure
     .input(z.object({
-      region: regionSchema.nullable(),
+      region: regionSchema,
     }))
     .mutation(async ({ ctx, input }) => {
-      await db
-        .update(user)
-        .set({
-          region: input.region,
-          updatedAt: new Date(),
-        })
-        .where(eq(user.id, ctx.session.user.id));
+      const game = getCurrentGame();
+      requireGameRegion(game, input.region);
+      await saveGamePreference(game.id, ctx.session.user.id, { region: input.region });
 
       return { success: true };
     }),
@@ -126,25 +93,11 @@ export const profileRouter = router({
       profileMainRegion: regionSchema,
     }))
     .mutation(async ({ ctx, input }) => {
-      if (isCNExclusive()) throw new TRPCError({ code: 'BAD_REQUEST', message: 'Cannot update profile main region in China region' });
-      const [current] = await db
-        .select({ username: user.username, profileMainRegion: user.profileMainRegion })
-        .from(user)
-        .where(eq(user.id, ctx.session.user.id))
-        .limit(1);
+      const game = getCurrentGame();
+      if (isGameCnExclusive(game)) throw new TRPCError({ code: 'BAD_REQUEST', message: 'Cannot update profile main region in China region' });
+      requireGameRegion(game, input.profileMainRegion);
+      await saveGamePreference(game.id, ctx.session.user.id, { profileMainRegion: input.profileMainRegion });
 
-      if (!current) throw new TRPCError({ code: 'NOT_FOUND', message: 'User not found' });
-      if (current.profileMainRegion === input.profileMainRegion) return { success: true };
-
-      await db
-        .update(user)
-        .set({
-          profileMainRegion: input.profileMainRegion,
-          updatedAt: new Date(),
-        })
-        .where(eq(user.id, ctx.session.user.id));
-
-      revalidatePublicProfile([current.username]);
       return { success: true };
     }),
 
@@ -158,26 +111,6 @@ export const profileRouter = router({
       profileShowInSearch: z.boolean(),
     }))
     .mutation(async ({ ctx, input }) => {
-      const [current] = await db
-        .select({
-          username: user.username,
-          profileShowAllScores: user.profileShowAllScores,
-          profileShowScoreDetails: user.profileShowScoreDetails,
-          profileShowPlates: user.profileShowPlates,
-          profileShowPlayCounts: user.profileShowPlayCounts,
-          profileShowEvents: user.profileShowEvents,
-          profileShowInSearch: user.profileShowInSearch,
-        })
-        .from(user)
-        .where(eq(user.id, ctx.session.user.id))
-        .limit(1);
-
-      if (!current) throw new TRPCError({ code: 'NOT_FOUND', message: 'User not found' });
-      const changed = Object.entries(input).some(
-        ([field, next]) => current[field as keyof typeof input] !== next,
-      );
-      if (!changed) return { success: true };
-
       await db
         .update(user)
         .set({
@@ -186,7 +119,6 @@ export const profileRouter = router({
         })
         .where(eq(user.id, ctx.session.user.id));
 
-      revalidatePublicProfile([current.username]);
       return { success: true };
     }),
 
