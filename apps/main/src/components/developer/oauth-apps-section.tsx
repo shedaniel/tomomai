@@ -42,6 +42,7 @@ import {
   SaveWarning,
   ScopeTreeNode,
 } from "@/components/developer/developer-shared";
+import { clientIconSrc } from "@/lib/oauth-client-icon";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -684,7 +685,7 @@ export function OAuthAppsSection() {
             <div key={app.id} className="flex items-start gap-4 px-4 py-3.5">
               <div className="h-9 w-9 rounded-lg bg-muted flex items-center justify-center flex-shrink-0 overflow-hidden mt-0.5">
                 {app.icon ? (
-                  <img src={app.icon} alt={app.name ?? "App"} className="h-full w-full object-cover" />
+                  <img src={clientIconSrc(app.clientId, app.icon)} alt={app.name ?? "App"} className="h-full w-full object-cover" />
                 ) : (
                   <Globe className="h-4 w-4 text-muted-foreground" />
                 )}

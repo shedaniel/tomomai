@@ -21,6 +21,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { useLocale } from "@/components/providers/locale-provider";
 import { SettingsHeader } from "@/components/settings/primitives";
+import { clientIconSrc } from "@/lib/oauth-client-icon";
 
 type Authorization = {
   consentId: string;
@@ -83,7 +84,7 @@ export function ApplicationsSettings() {
             <div key={auth.consentId} className="flex items-start gap-4 px-4 py-3.5">
               <div className="h-9 w-9 rounded-lg bg-muted flex items-center justify-center flex-shrink-0 overflow-hidden mt-0.5">
                 {auth.appIcon ? (
-                  <img src={auth.appIcon} alt={auth.appName ?? "App"} className="h-full w-full object-cover" />
+                  <img src={clientIconSrc(auth.clientId, auth.appIcon)} alt={auth.appName ?? "App"} className="h-full w-full object-cover" />
                 ) : (
                   <Globe className="h-4 w-4 text-muted-foreground" />
                 )}

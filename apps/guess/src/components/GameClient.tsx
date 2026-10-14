@@ -12,16 +12,44 @@ import { IMAGE_KINDS } from "@/lib/hints-meta";
 import {
   blankProgress,
   loadProgress,
+  progressFromResults,
   saveProgress,
   type Persisted,
+  type StepResult,
 } from "@/lib/progress";
-import { buildChartUrl, buildImageUrl, buildSubmitUrl } from "@/lib/api-url";
+import {
+  buildAttemptUrl,
+  buildChartUrl,
+  buildImageUrl,
+  buildSkipUrl,
+  buildSubmitUrl,
+} from "@/lib/api-url";
 import { HintStack } from "./HintStack";
 import { SongInput } from "./SongInput";
 import { ProgressBar } from "./ProgressBar";
 import { ShareButton } from "./ShareButton";
+import { useAccount } from "./account/AccountProvider";
+import { DailyBoard } from "./board/DailyBoard";
+import { ResultActions } from "./board/ResultActions";
 
 type Revealed = { step: number; hint: HintPayload };
+
+/** Server record of this puzzle; null when the deployment doesn't track plays. */
+type ServerAttempt = { results: StepResult[]; status: "playing" | "won" | "lost" } | null;
+
+async function postForAttempt(url: string, body?: unknown): Promise<ServerAttempt> {
+  try {
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: body === undefined ? undefined : JSON.stringify(body),
+    });
+    if (!res.ok) return null;
+    return ((await res.json()) as { attempt?: ServerAttempt }).attempt ?? null;
+  } catch {
+    return null;
+  }
+}
 
 /**
  * Resolve once the browser has the decoded bitmap for `src` in its cache.
@@ -69,6 +97,7 @@ type Props = {
 
 export function GameClient({ dateKey, totalSteps, dateSlug }: Props) {
   const t = useTranslations("guess");
+  const { enabled: tracking, refreshViewer } = useAccount();
   const [progress, setProgress] = useState<Persisted>(() => blankProgress(dateKey));
   const [hints, setHints] = useState<Revealed[]>([]);
   // Ref mirror so the fetch effect can read the latest committed hints
@@ -80,10 +109,41 @@ export function GameClient({ dateKey, totalSteps, dateSlug }: Props) {
   const [guess, setGuess] = useState("");
   const [busy, setBusy] = useState(false);
 
-  // Rehydrate from localStorage after mount (avoid hydration mismatch).
+  /**
+   * The server's record wins when it is ahead of this browser, e.g. the
+   * puzzle was continued on another device. Otherwise local state stands.
+   */
+  const adopt = useCallback(
+    (attempt: ServerAttempt) => {
+      if (!attempt) return;
+      setProgress((p) => {
+        const localDone = p.won || p.results.length >= totalSteps - 1;
+        const ahead =
+          attempt.results.length > p.results.length ||
+          (attempt.status !== "playing" && !localDone);
+        if (!ahead) return p;
+        const next = progressFromResults(dateKey, attempt.results, totalSteps);
+        saveProgress(next);
+        return next;
+      });
+    },
+    [dateKey, totalSteps],
+  );
+
+  // Rehydrate from localStorage after mount (avoid hydration mismatch), then
+  // reconcile with the server, seeding it with any progress it hasn't seen.
   useEffect(() => {
-    setProgress(loadProgress(dateKey));
-  }, [dateKey]);
+    const local = loadProgress(dateKey);
+    setProgress(local);
+    if (!tracking) return;
+    let cancelled = false;
+    postForAttempt(buildAttemptUrl(dateSlug), { results: local.results }).then((attempt) => {
+      if (!cancelled) adopt(attempt);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [dateKey, dateSlug, tracking, adopt]);
 
   // Whenever progress.step advances, fetch the new hint(s). Crucially we
   // *only fetch missing steps* and *merge* into the existing hints array
@@ -145,8 +205,8 @@ export function GameClient({ dateKey, totalSteps, dateSlug }: Props) {
         body: JSON.stringify({ guess }),
       });
       const data = (await res.json()) as
-        | { correct: true; reveal: RevealPayload }
-        | { correct: false };
+        | { correct: true; reveal: RevealPayload; attempt?: ServerAttempt }
+        | { correct: false; attempt?: ServerAttempt };
       if (data.correct) {
         if (data.reveal.cover) await preloadImage(data.reveal.cover);
         setReveal(data.reveal);
@@ -173,17 +233,23 @@ export function GameClient({ dateKey, totalSteps, dateSlug }: Props) {
         });
         setGuess("");
       }
+      adopt(data.attempt ?? null);
+      if (data.correct && data.attempt && !dateSlug) void refreshViewer();
     } finally {
       setBusy(false);
     }
-  }, [guess, busy, progress.won, totalSteps, dateSlug]);
+  }, [guess, busy, progress.won, totalSteps, dateSlug, adopt, refreshViewer]);
 
   const skip = useCallback(() => {
     if (progress.won) return;
     if (progress.step >= totalSteps - 1) {
       // Out of hints — show the reveal. Record "skipped" for the final hint.
       (async () => {
-        const r = await fetchReveal(totalSteps, dateSlug);
+        // Record the loss before the board below the reveal fetches the day's stats.
+        const [r] = await Promise.all([
+          fetchReveal(totalSteps, dateSlug),
+          tracking ? postForAttempt(buildSkipUrl(dateSlug)) : null,
+        ]);
         if (!r) return;
         setReveal(r);
         setProgress((p) => {
@@ -208,7 +274,8 @@ export function GameClient({ dateKey, totalSteps, dateSlug }: Props) {
       saveProgress(next);
       return next;
     });
-  }, [progress.won, progress.step, totalSteps, dateSlug]);
+    if (tracking) void postForAttempt(buildSkipUrl(dateSlug)).then(adopt);
+  }, [progress.won, progress.step, totalSteps, dateSlug, tracking, adopt]);
 
   // Game over when the player has either won or used all their hints. Don't
   // gate on `reveal` here — on refresh after a loss the reveal cover may not
@@ -277,9 +344,12 @@ export function GameClient({ dateKey, totalSteps, dateSlug }: Props) {
               results={progress.results}
               totalHints={totalHints}
             />
+            <ResultActions dateSlug={dateSlug} />
           </>
         )}
       </div>
+
+      {finished && <DailyBoard dateKey={dateKey} dateSlug={dateSlug} won={progress.won} />}
     </div>
   );
 }

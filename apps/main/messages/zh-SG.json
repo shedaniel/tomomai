@@ -431,7 +431,7 @@
         },
         "user:metadata:read": {
           "name": "账号资讯",
-          "description": "用户名、地区、主页公开状态和角色"
+          "description": "账户 ID、用户名、头像、地区、主页公开状态和角色"
         },
         "snapshot:latest:metadata:read": {
           "name": "最新快照概要",

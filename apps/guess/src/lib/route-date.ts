@@ -1,4 +1,4 @@
-import { parsePastDateSlug } from "./date-slug";
+import { getDateKey, parsePastDateSlug } from "./date-slug";
 
 /**
  * Pulls a `?date=YYYYMMDD` query parameter off a route request and validates
@@ -16,4 +16,11 @@ export function readDateOverride(req: Request): string | null | "invalid" {
   if (!slug) return null;
   const dateKey = parsePastDateSlug(slug);
   return dateKey ?? "invalid";
+}
+
+/** Puzzle a play route acts on: the `?date=` override, else today. */
+export function readPlayDateKey(req: Request): string | "invalid" {
+  const override = readDateOverride(req);
+  if (override === "invalid") return override;
+  return override ?? getDateKey();
 }
