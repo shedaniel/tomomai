@@ -158,6 +158,7 @@
       "legendSolved": "Solved",
       "legendLate": "Solved late",
       "legendMissed": "Missed",
+      "legendPlaying": "In progress",
       "legendNone": "Not played",
       "averageHints": "Average hints",
       "averageAudio": "Typical audio",

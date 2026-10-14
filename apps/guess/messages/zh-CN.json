@@ -158,6 +158,7 @@
       "legendSolved": "答对",
       "legendLate": "补答答对",
       "legendMissed": "未答对",
+      "legendPlaying": "进行中",
       "legendNone": "未游玩",
       "averageHints": "平均提示数",
       "averageAudio": "平均音频长度",

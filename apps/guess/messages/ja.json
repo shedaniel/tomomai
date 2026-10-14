@@ -163,6 +163,7 @@
       "legendSolved": "正解",
       "legendLate": "遅れて正解",
       "legendMissed": "不正解",
+      "legendPlaying": "プレイ中",
       "legendNone": "未プレイ",
       "averageHints": "平均ヒント数",
       "averageAudio": "平均の音声",
