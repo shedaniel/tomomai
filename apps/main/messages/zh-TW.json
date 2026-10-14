@@ -68,7 +68,16 @@
   "security": {
     "reauth": {
       "title": "需要重新驗證",
-      "description": "此操作需要重新登入。我們會將你重新導向至登入服務商以完成驗證。"
+      "description": "此操作需要你最近登入過。請確認是你本人以繼續。",
+      "noMethod": "此操作需要你最近登入過，但你的帳戶沒有可在此確認身分的登入方式。請登出並重新登入後再試一次。",
+      "failed": "無法確認你的身分，請再試一次。",
+      "signOut": "登出",
+      "methods": {
+        "discord": "使用 Discord 繼續",
+        "twitter": "使用 X 繼續",
+        "passkey": "使用 Passkey",
+        "dev": "重新整理工作階段（僅限開發）"
+      }
     }
   },
   "auth": {

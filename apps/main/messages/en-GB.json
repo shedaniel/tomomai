@@ -68,7 +68,16 @@
   "security": {
     "reauth": {
       "title": "Re-authentication required",
-      "description": "This action needs a fresh sign-in. You'll be redirected to your provider to re-authenticate."
+      "description": "This action needs a recent sign-in. Confirm it's you to continue.",
+      "noMethod": "This action needs a recent sign-in, but your account has no sign-in method that can confirm it here. Sign out, sign back in, then try again.",
+      "failed": "Couldn't confirm it's you. Try again.",
+      "signOut": "Sign out",
+      "methods": {
+        "discord": "Continue with Discord",
+        "twitter": "Continue with X",
+        "passkey": "Use a passkey",
+        "dev": "Refresh session (dev only)"
+      }
     }
   },
   "auth": {

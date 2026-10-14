@@ -1,8 +1,9 @@
 import type { BetterAuthPlugin } from "better-auth";
-import { APIError, createAuthEndpoint } from "better-auth/api";
+import { APIError, createAuthEndpoint, sessionMiddleware } from "better-auth/api";
 import { setSessionCookie } from "better-auth/cookies";
 import { nanoid } from "nanoid";
 import { logger } from "@/lib/logger";
+import { DEV_REAUTH_PATH } from "@/lib/dev-reauth-path";
 
 export const DEV_ANONYMOUS_SIGN_IN_PATH = "/dev/sign-in-anonymous";
 
@@ -40,6 +41,25 @@ export const devAnonymousAuth = () =>
 
           await setSessionCookie(ctx, { session, user });
           logger.info({ userId: user.id }, "auth.dev-anonymous.signin");
+          return ctx.json({ userId: user.id });
+        },
+      ),
+      // Fresh-session gates otherwise lock out dev accounts, which have no provider or passkey to reauth with.
+      devReauth: createAuthEndpoint(
+        DEV_REAUTH_PATH,
+        { method: "POST", use: [sessionMiddleware] },
+        async (ctx) => {
+          if (process.env.NODE_ENV !== "development") {
+            throw new APIError("NOT_FOUND", { message: "Not Found" });
+          }
+          const { session: old, user } = ctx.context.session;
+          const session = await ctx.context.internalAdapter.createSession(user.id);
+          if (!session) {
+            throw new APIError("INTERNAL_SERVER_ERROR", { message: "Failed to create session" });
+          }
+          await setSessionCookie(ctx, { session, user });
+          await ctx.context.internalAdapter.deleteSession(old.token);
+          logger.info({ userId: user.id }, "auth.dev-reauth");
           return ctx.json({ userId: user.id });
         },
       ),

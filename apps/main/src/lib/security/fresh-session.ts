@@ -16,16 +16,6 @@ export function isSessionFresh(createdAt: Date | string | null | undefined): boo
   return Number.isFinite(t) && Date.now() - t <= FRESH_SESSION_MAX_AGE_MS;
 }
 
-export function pickReauthProvider(
-  accounts: Array<{ providerId: string }> | undefined,
-): ReauthProvider | null {
-  if (!accounts) return null;
-  for (const a of accounts) {
-    if (isReauthProvider(a.providerId)) return a.providerId;
-  }
-  return null;
-}
-
 export function isFreshSessionError(err: unknown): boolean {
   if (!err || typeof err !== "object") return false;
   const e = err as { message?: unknown; cause?: unknown; data?: unknown };
