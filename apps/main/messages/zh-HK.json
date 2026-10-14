@@ -164,6 +164,18 @@
     "sensitive": "敏感",
     "redirectNotice": "完成後將返回 {host}",
     "trustNotice": "{app} 並非由 tomomai 營運。{links, select, both {你的資料將按照其<terms>服務條款</terms>及<privacy>私隱政策</privacy>處理。} terms {你的資料將按照其<terms>服務條款</terms>處理。} privacy {你的資料將按照其<privacy>私隱政策</privacy>處理。} other {此應用程式並未提供服務條款或私隱政策。}}請僅在信任此應用程式時繼續。",
+    "officialBadge": "tomomai 官方應用程式",
+    "officialNotice": "{app} 由 tomomai 開發及營運。",
+    "activeSince": "自{date}起活躍中",
+    "usage": {
+      "lt10": "少於 10 人使用",
+      "lt50": "少於 50 人使用",
+      "lt100": "少於 100 人使用",
+      "gte100": "100 人以上使用",
+      "gte200": "200 人以上使用",
+      "gte500": "500 人以上使用",
+      "gte1000": "1,000 人以上使用"
+    },
     "revokeNotice": "你可以隨時在<link>設定</link>中撤銷存取權。",
     "deny": "拒絕",
     "authorize": "授權",
@@ -575,6 +587,9 @@
         }
       },
       "oauthApps": {
+        "officialLabel": "tomomai 官方應用程式",
+        "officialDescription": "同意畫面會顯示官方標章，取代第三方應用程式的提醒。只有管理員可以設定。",
+        "officialBadge": "官方",
         "errors": {
           "limitReached": "最多可建立 {max} 個 OAuth 應用程式。請先刪除一個再建立新的。",
           "nameReserved": "應用程式名稱不能包含「tomomai」，以免用戶誤以為是官方應用程式。"
@@ -648,6 +663,7 @@
       }
     },
     "applications": {
+      "officialBadge": "官方",
       "noAuthorizations": "你尚未授權任何 OAuth 應用程式。",
       "grantedAt": "於 {date} 授權",
       "revokeButton": "撤銷",

@@ -16,7 +16,7 @@ import {
 import { trpc } from "@/lib/trpc-client";
 import { API_SCOPES, type ScopeKey } from "@/lib/api/scopes";
 import { toast } from "sonner";
-import { Globe, Loader2, AppWindow } from "lucide-react";
+import { Globe, Loader2, AppWindow, BadgeCheck } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { useLocale } from "@/components/providers/locale-provider";
@@ -32,6 +32,7 @@ type Authorization = {
   appName: string | null;
   appIcon: string | null;
   appUri: string | null;
+  official: boolean;
 };
 
 export function ApplicationsSettings() {
@@ -94,6 +95,12 @@ export function ApplicationsSettings() {
                   <span className="text-sm font-semibold leading-none">
                     {auth.appName ?? auth.clientId}
                   </span>
+                  {auth.official && (
+                    <span className="inline-flex items-center gap-1 text-xs font-medium text-primary">
+                      <BadgeCheck className="h-3.5 w-3.5" aria-hidden />
+                      {ta("officialBadge")}
+                    </span>
+                  )}
                 </div>
                 <p className="font-mono text-xs bg-muted text-muted-foreground px-1.5 py-0.5 rounded-sm border border-border w-fit truncate max-w-xs">
                   {auth.clientId}

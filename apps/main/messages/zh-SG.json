@@ -535,6 +535,9 @@
         }
       },
       "oauthApps": {
+        "officialLabel": "tomomai 官方应用",
+        "officialDescription": "同意页面会显示官方标识，取代第三方应用的提醒。仅管理员可设置。",
+        "officialBadge": "官方",
         "label": "OAuth 应用程式",
         "description": "注册可透过 OAuth 2.1 + PKCE 代表用户请求存取的应用程式。",
         "createButton": "新增应用程式",
@@ -608,6 +611,7 @@
       }
     },
     "applications": {
+      "officialBadge": "官方",
       "noAuthorizations": "你尚未授权任何 OAuth 应用程式。",
       "grantedAt": "于 {date} 授权",
       "revokeButton": "撤销",
@@ -1561,6 +1565,18 @@
     "sensitive": "敏感",
     "redirectNotice": "完成后将返回 {host}",
     "trustNotice": "{app} 并非由 tomomai 运营。{links, select, both {你的资料将按照其<terms>服务条款</terms>和<privacy>隐私政策</privacy>处理。} terms {你的资料将按照其<terms>服务条款</terms>处理。} privacy {你的资料将按照其<privacy>隐私政策</privacy>处理。} other {该应用程式未提供服务条款或隐私政策。}}请仅在信任该应用程式时继续。",
+    "officialBadge": "tomomai 官方应用",
+    "officialNotice": "{app} 由 tomomai 开发和运营。",
+    "activeSince": "自{date}起活跃",
+    "usage": {
+      "lt10": "少于 10 人使用",
+      "lt50": "少于 50 人使用",
+      "lt100": "少于 100 人使用",
+      "gte100": "100 人以上使用",
+      "gte200": "200 人以上使用",
+      "gte500": "500 人以上使用",
+      "gte1000": "1,000 人以上使用"
+    },
     "revokeNotice": "你可以随时在<link>设定</link>中撤销访问权限。",
     "deny": "拒绝",
     "authorize": "授权",

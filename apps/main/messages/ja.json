@@ -164,6 +164,18 @@
     "sensitive": "機密",
     "redirectNotice": "完了すると {host} に戻ります",
     "trustNotice": "{app} は tomomai が運営するアプリではありません。{links, select, both {データはこのアプリの<terms>利用規約</terms>と<privacy>プライバシーポリシー</privacy>に基づいて扱われます。} terms {データはこのアプリの<terms>利用規約</terms>に基づいて扱われます。} privacy {データはこのアプリの<privacy>プライバシーポリシー</privacy>に基づいて扱われます。} other {このアプリは利用規約やプライバシーポリシーを公開していません。}}信頼できる場合のみ続行してください。",
+    "officialBadge": "tomomai 公式アプリ",
+    "officialNotice": "{app} は tomomai が開発・運営しています。",
+    "activeSince": "{date}より活動中",
+    "usage": {
+      "lt10": "利用者 10 人未満",
+      "lt50": "利用者 50 人未満",
+      "lt100": "利用者 100 人未満",
+      "gte100": "利用者 100 人以上",
+      "gte200": "利用者 200 人以上",
+      "gte500": "利用者 500 人以上",
+      "gte1000": "利用者 1,000 人以上"
+    },
     "revokeNotice": "アクセスはいつでも<link>設定</link>から取り消せます。",
     "deny": "拒否",
     "authorize": "許可する",
@@ -575,6 +587,9 @@
         }
       },
       "oauthApps": {
+        "officialLabel": "tomomai 公式アプリ",
+        "officialDescription": "同意画面に、第三者アプリの注意書きの代わりに公式バッジを表示します。管理者のみ設定できます。",
+        "officialBadge": "公式",
         "errors": {
           "limitReached": "OAuth アプリは最大 {max} 個まで作成できます。新しく作成するには既存のアプリを削除してください。",
           "nameReserved": "利用者が公式アプリと誤解する恐れがあるため、アプリ名に「tomomai」を含めることはできません。"
@@ -648,6 +663,7 @@
       }
     },
     "applications": {
+      "officialBadge": "公式",
       "noAuthorizations": "まだ OAuth アプリを認可していません。",
       "grantedAt": "{date}に認可",
       "revokeButton": "取り消す",
