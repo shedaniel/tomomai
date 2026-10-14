@@ -20,6 +20,7 @@ import {
   ResponsiveDialog,
   ResponsiveDialogContent,
   ResponsiveDialogDescription,
+  ResponsiveDialogFooter,
   ResponsiveDialogHeader,
   ResponsiveDialogTitle,
 } from "@tomomai/ui";
@@ -261,7 +262,7 @@ function ScopePickerField({
 }) {
   return (
     <div className="border rounded-md">
-      <div className="max-h-64 overflow-y-auto p-1">
+      <div className="p-1">
         {SCOPE_TREE.map((node) => (
           <ScopeTreeNode
             key={node.key}
@@ -425,22 +426,22 @@ function CreateOAuthAppDialog({
                 />
               </div>
 
-              <div className="flex justify-end gap-2">
-                <Button variant="outline" onClick={handleClose} disabled={createMutation.isPending}>
-                  {tc("cancel")}
-                </Button>
-                <Button onClick={handleCreate} disabled={createMutation.isPending}>
-                  {createMutation.isPending ? (
-                    <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      {t("oauthApps.createDialog.creating")}
-                    </>
-                  ) : (
-                    t("oauthApps.createDialog.createButton")
-                  )}
-                </Button>
-              </div>
             </div>
+            <ResponsiveDialogFooter>
+              <Button variant="outline" onClick={handleClose} disabled={createMutation.isPending}>
+                {tc("cancel")}
+              </Button>
+              <Button onClick={handleCreate} disabled={createMutation.isPending}>
+                {createMutation.isPending ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    {t("oauthApps.createDialog.creating")}
+                  </>
+                ) : (
+                  t("oauthApps.createDialog.createButton")
+                )}
+              </Button>
+            </ResponsiveDialogFooter>
           </>
         )}
       </ResponsiveDialogContent>
@@ -610,22 +611,22 @@ function EditOAuthAppDialog({
             </div>
           </div>
 
-          <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={() => onOpenChange(false)} disabled={updateMutation.isPending}>
-              {tc("cancel")}
-            </Button>
-            <Button onClick={handleSave} disabled={updateMutation.isPending}>
-              {updateMutation.isPending ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  {t("oauthApps.editDialog.saving")}
-                </>
-              ) : (
-                t("oauthApps.editDialog.saveButton")
-              )}
-            </Button>
-          </div>
         </div>
+        <ResponsiveDialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={updateMutation.isPending}>
+            {tc("cancel")}
+          </Button>
+          <Button onClick={handleSave} disabled={updateMutation.isPending}>
+            {updateMutation.isPending ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                {t("oauthApps.editDialog.saving")}
+              </>
+            ) : (
+              t("oauthApps.editDialog.saveButton")
+            )}
+          </Button>
+        </ResponsiveDialogFooter>
       </ResponsiveDialogContent>
     </ResponsiveDialog>
   );

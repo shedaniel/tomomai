@@ -299,3 +299,30 @@
         animation-timeline: scroll(self inline);
     }
 }
+
+@keyframes scroll-edge-bottom {
+    from {
+        background-color: var(--edge-cover);
+        box-shadow: 0 -1px 0 0 var(--border);
+    }
+
+    to {
+        background-color: transparent;
+        box-shadow: 0 -1px 0 0 transparent;
+    }
+}
+
+/* A sticky footer over scrolling content: it covers the content with a hairline above until the
+ * scroller reaches the bottom, and is invisible when nothing scrolls, so short dialogs look unchanged.
+ * Without scroll-driven animations it always covers. */
+@utility scroll-edge-bottom {
+    --edge-cover: oklch(from var(--glass-strong) l c h / 1);
+    background-color: var(--edge-cover);
+
+    @supports (animation-timeline: scroll()) {
+        background-color: transparent;
+        animation: scroll-edge-bottom linear both;
+        animation-timeline: scroll();
+        animation-range: calc(100% - 1.5rem) 100%;
+    }
+}

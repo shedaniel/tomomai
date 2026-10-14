@@ -101,7 +101,7 @@ function ResponsiveDialogContent({
   }
 
   return (
-    <AnimatedDialogContent className={cn("overflow-y-auto max-h-[95dvh] [scrollbar-gutter:stable_both-edges]", className)} showCloseButton={showCloseButton} {...props}>
+    <AnimatedDialogContent className={cn("overflow-y-auto max-h-[95dvh]", className)} showCloseButton={showCloseButton} {...props}>
       {children}
     </AnimatedDialogContent>
   )
@@ -119,14 +119,15 @@ function ResponsiveDialogHeader({ className, ...props }: React.ComponentProps<"d
 }
 
 // --- Footer ---
+// Sticks to the bottom of the scrolling content, so a long dialog keeps its actions in view.
 function ResponsiveDialogFooter({ className, ...props }: React.ComponentProps<"div">) {
   const { isMobile } = useDialogFriendly()
 
   if (isMobile) {
-    return <DrawerFooter className={cn("px-0 pt-4 pb-2", className)} {...props} />
+    return <DrawerFooter className={cn("scroll-edge-bottom sticky -bottom-8 z-10 -mx-4 -mb-8 px-4 pt-4 pb-8", className)} {...props} />
   }
 
-  return <DialogFooter className={className} {...props} />
+  return <DialogFooter className={cn("scroll-edge-bottom sticky -bottom-6 z-10 -mx-6 -mb-6 px-6 pt-4 pb-6", className)} {...props} />
 }
 
 // --- Title ---

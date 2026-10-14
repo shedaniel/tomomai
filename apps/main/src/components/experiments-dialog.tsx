@@ -5,6 +5,7 @@ import {
   ResponsiveDialog,
   ResponsiveDialogContent,
   ResponsiveDialogDescription,
+  ResponsiveDialogFooter,
   ResponsiveDialogHeader,
   ResponsiveDialogTitle,
 } from "@tomomai/ui";
@@ -162,11 +163,11 @@ export function ExperimentsDialog({ open, onOpenChange }: ExperimentsDialogProps
               })}
             </div>
 
-            <div className="flex justify-end pt-4">
+            <ResponsiveDialogFooter>
               <Button onClick={handleApply} disabled={!hasChanges || setOverrides.isPending}>
                 Apply
               </Button>
-            </div>
+            </ResponsiveDialogFooter>
           </>
         )}
       </ResponsiveDialogContent>
