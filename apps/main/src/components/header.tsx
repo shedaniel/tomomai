@@ -345,12 +345,14 @@ function UserIcon({ user, menu, onAbout, onTheme, onDiscordInvite, onSignIn }: P
                   <span>{t('common.theme')}</span>
                 </button>
               </DrawerClose>
-              <DrawerClose asChild>
-                <button className={drawerItemClass} onClick={onDiscordInvite}>
-                  <DiscordIcon className="h-4 w-4" />
-                  <span>{t('header.addDiscordBot')}</span>
-                </button>
-              </DrawerClose>
+              {supportsGameFeature(game, "discord-bot") && (
+                <DrawerClose asChild>
+                  <button className={drawerItemClass} onClick={onDiscordInvite}>
+                    <DiscordIcon className="h-4 w-4" />
+                    <span>{t('header.addDiscordBot')}</span>
+                  </button>
+                </DrawerClose>
+              )}
               {(menu || user) && (
                 <Separator className="my-1" />
               )}
@@ -461,10 +463,12 @@ function UserIcon({ user, menu, onAbout, onTheme, onDiscordInvite, onSignIn }: P
               <Palette className="mr-2 h-4 w-4" />
               <span>{t('common.theme')}</span>
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={onDiscordInvite}>
-              <DiscordIcon className="mr-2 h-4 w-4" />
-              <span>{t('header.addDiscordBot')}</span>
-            </DropdownMenuItem>
+            {supportsGameFeature(game, "discord-bot") && (
+              <DropdownMenuItem onClick={onDiscordInvite}>
+                <DiscordIcon className="mr-2 h-4 w-4" />
+                <span>{t('header.addDiscordBot')}</span>
+              </DropdownMenuItem>
+            )}
             {menu && SIGNUP_TYPE === 'invite-only' && (
               <>
                 <DropdownMenuItem onClick={menu.onInvites}>
