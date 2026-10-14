@@ -5,7 +5,7 @@ import { getEnabledRegions, getSupportedRegions } from "./regions";
 import { getGame } from "./registry";
 import type { GameCapability, GameRegionContext } from "./types";
 
-/** Player requests accept the regions a deployment enables. Catalog administration accepts every region the game has a site for. */
+/** Player requests accept the regions a deployment enables. Catalog reads and administration accept every region the game has a site for. */
 export type RegionPolicy = "enabled" | "supported";
 
 type GameAccess = {

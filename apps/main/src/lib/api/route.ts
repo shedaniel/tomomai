@@ -61,6 +61,8 @@ export function bindGameRoute<Q extends z.ZodObject | undefined, R extends z.Zod
 ): (req: NextRequest, context: RouteContext, extra: Extra) => Promise<Response> {
   const ownParams = spec.params.omit({ game: true });
   const cacheHeaders = spec.cacheSeconds === undefined ? undefined : publicCacheHeaders(spec.cacheSeconds);
+  // Every deployment serves every game's published catalog, whichever regions it enables for players.
+  const regionPolicy = spec.capability === "catalog" ? "supported" : "enabled";
 
   return async (req, context, extra) => {
     const raw = await context.params;
@@ -73,7 +75,7 @@ export function bindGameRoute<Q extends z.ZodObject | undefined, R extends z.Zod
 
     try {
       const region = (query as { region?: Region } | undefined)?.region;
-      resolveGameContext(game.data, { region, capability: spec.capability });
+      resolveGameContext(game.data, { region, capability: spec.capability, regionPolicy });
       const ctx = { ...extra, req, game: game.data, params, query } as GameHandlerContext<Q, P> & Extra;
       const result = await handler(ctx);
       if (!(result instanceof Response)) return zodJson(spec.response, { game: game.data, ...result }, { headers: cacheHeaders });

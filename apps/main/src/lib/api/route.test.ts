@@ -36,6 +36,7 @@ import { GET as getAlbums } from "@/app/api/v1/games/[game]/albums/route";
 import { GET as getPlates } from "@/app/api/v1/games/[game]/plates/route";
 import { GET as getRecents } from "@/app/api/v1/games/[game]/recents/route";
 import { GET as getStats } from "@/app/api/v1/games/[game]/stats/route";
+import { GET as getVersions } from "@/app/api/v1/games/[game]/songs/versions/route";
 import { defineGameHandler } from "./protect";
 import { defineGameRoute, defineRoute } from "./registry";
 import { definePublicGameHandler } from "./route";
@@ -241,6 +242,18 @@ describe("public game routes", () => {
     const missing = await GET(request("maimai/route-test"), context({ game: "maimai" }));
     expect(missing.status).toBe(404);
     expect(missing.headers.get("Cache-Control")).toBeNull();
+  });
+
+  it("serves every region a game has a site for from the catalog, whatever the deployment enables", async () => {
+    vi.stubEnv("NEXT_PUBLIC_ENABLED_CHUNITHM_REGIONS", "");
+    const versions = (game: string, region: string) =>
+      getVersions(request(`${game}/songs/versions?region=${region}`), context({ game }));
+
+    expect((await versions("chunithm", "jp")).status).toBe(200);
+    expect((await versions("maimai", "cn")).status).toBe(200);
+    const noSite = await versions("chunithm", "cn");
+    expect(noSite.status).toBe(400);
+    expect((await noSite.json()).code).toBe("UNSUPPORTED_REGION");
   });
 
   it("keeps public and keyed specs on their own factories", () => {
