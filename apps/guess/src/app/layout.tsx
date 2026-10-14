@@ -9,6 +9,11 @@ import { TurnstilePreclearance } from "@tomomai/ui/turnstile";
 import { LocaleProvider } from "@tomomai/i18n/client";
 import { getLocale } from "@tomomai/i18n/server";
 import { ThemeProvider } from "@/components/providers/theme-provider";
+import { AccountProvider } from "@/components/account/AccountProvider";
+import { SignInToast } from "@/components/account/SignInToast";
+import { accountsEnabled } from "@/lib/accounts/config";
+import { getPlayer } from "@/lib/accounts/session";
+import { loadViewer } from "@/lib/accounts/load-viewer";
 import { isHeardle } from "@/lib/heardle-config";
 import "./globals.css";
 
@@ -74,6 +79,8 @@ export default async function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   const locale = await getLocale();
   const messages = await getMessages();
+  const player = await getPlayer();
+  const viewer = player ? await loadViewer(player) : null;
   const turnstileSiteKey =
     process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY && process.env.TURNSTILE_SECRET_KEY
       ? process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY
@@ -94,7 +101,13 @@ export default async function RootLayout({
         <NextIntlClientProvider messages={messages}>
           <LocaleProvider initialLocale={locale} pathMode="cookie">
             <ThemeProvider>
-              {children}
+              <AccountProvider
+                enabled={accountsEnabled()}
+                initialViewer={viewer}
+              >
+                {children}
+                <SignInToast />
+              </AccountProvider>
               {turnstileSiteKey ? (
                 <TurnstilePreclearance siteKey={turnstileSiteKey} />
               ) : null}

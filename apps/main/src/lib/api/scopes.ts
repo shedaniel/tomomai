@@ -10,7 +10,7 @@ export const API_SCOPES = {
   // ── User ──────────────────────────────────────────────────────────────────
   "user:metadata:read": {
     name: "User Metadata (Read)",
-    description: "Read your username, region, profile visibility, and role.",
+    description: "Read your account ID, username, profile picture, region, profile visibility, and role.",
     destructive: false,
     sensitive: false,
     default: false,

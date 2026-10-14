@@ -33,6 +33,7 @@ export interface UserData {
   hasUsername: boolean;
   username: string | null;
   email: string;
+  image: string | null;
   publishProfile: boolean;
   /** The dashboard region preference for the served game, null when none is set. */
   region: Region | null;

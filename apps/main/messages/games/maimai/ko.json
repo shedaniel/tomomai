@@ -22,6 +22,8 @@
     "title": "{app}이(가) <nb>tomomai 계정에</nb> 대한 접근을 요청합니다",
     "signedOutDescription": "{app}이(가) tomomai 계정에 대한 접근을 요청합니다. 로그인하여 요청을 확인하세요.",
     "trustNotice": "{app}은(는) tomomai가 운영하는 앱이 아닙니다. {links, select, both {데이터는 이 앱의 <terms>이용약관</terms> 및 <privacy>개인정보 처리방침</privacy>에 따라 처리됩니다.} terms {데이터는 이 앱의 <terms>이용약관</terms>에 따라 처리됩니다.} privacy {데이터는 이 앱의 <privacy>개인정보 처리방침</privacy>에 따라 처리됩니다.} other {이 앱은 이용약관이나 개인정보 처리방침을 제공하지 않습니다.}} 신뢰할 수 있는 경우에만 계속하세요.",
+    "officialBadge": "tomomai 공식 앱",
+    "officialNotice": "{app}은(는) tomomai가 만들고 운영합니다.",
     "errors": {
       "redirect": {
         "body": "앱이 tomomai에 등록하지 않은 주소로 돌려보내려고 해서, 계정을 보호하기 위해 요청을 중단했습니다. 이 링크로 로그인하지 말고 앱 개발자에게 알려 주세요."
@@ -31,5 +33,12 @@
       }
     },
     "backHome": "tomomai로 돌아가기"
+  },
+  "settings": {
+    "developer": {
+      "oauthApps": {
+        "officialLabel": "tomomai 공식 앱"
+      }
+    }
   }
 }

@@ -34,6 +34,8 @@
     "title": "{app} 请求访问你的 <nb>tomomai 账号</nb>",
     "signedOutDescription": "{app} 请求访问你的 tomomai 账号。请登入后查看此请求。",
     "trustNotice": "{app} 并非由 tomomai 运营。{links, select, both {你的资料将按照其<terms>服务条款</terms>和<privacy>隐私政策</privacy>处理。} terms {你的资料将按照其<terms>服务条款</terms>处理。} privacy {你的资料将按照其<privacy>隐私政策</privacy>处理。} other {该应用程式未提供服务条款或隐私政策。}}请仅在信任该应用程式时继续。",
+    "officialBadge": "tomomai 官方应用程式",
+    "officialNotice": "{app} 由 tomomai 开发和运营。",
     "errors": {
       "redirect": {
         "body": "该应用程式试图将你送回一个未在 tomomai 注册的地址，为保护你的账号，请求已被阻止。请勿透过此链接登入，并告知应用程式开发者。"
@@ -43,5 +45,12 @@
       }
     },
     "backHome": "返回 tomomai"
+  },
+  "settings": {
+    "developer": {
+      "oauthApps": {
+        "officialLabel": "tomomai 官方应用程式"
+      }
+    }
   }
 }

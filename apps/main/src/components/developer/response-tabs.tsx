@@ -3,20 +3,21 @@
 import { useState, type ReactNode } from "react";
 import { Check, Copy } from "lucide-react";
 import { Button, Tabs, TabsContent, TabsList, TabsTrigger } from "@tomomai/ui";
+import { HighlightedCode } from "./highlighted-code";
 
 type Tab = "schema" | "typescript" | "zod";
 
 interface ResponseTabsProps {
   /** The rendered schema tree. */
   tree: ReactNode;
-  typescript: string;
-  zod: string;
+  typescript: { code: string; html: string };
+  zod: { code: string; html: string };
 }
 
 export function ResponseTabs({ tree, typescript, zod }: ResponseTabsProps) {
   const [tab, setTab] = useState<Tab>("schema");
   const [copied, setCopied] = useState(false);
-  const code = tab === "typescript" ? typescript : tab === "zod" ? zod : null;
+  const code = tab === "typescript" ? typescript.code : tab === "zod" ? zod.code : null;
 
   return (
     <div className="rounded-lg border border-border bg-muted/30">
@@ -49,9 +50,7 @@ export function ResponseTabs({ tree, typescript, zod }: ResponseTabsProps) {
         </TabsContent>
         {([["typescript", typescript], ["zod", zod]] as const).map(([value, source]) => (
           <TabsContent key={value} value={value} className="mt-0">
-            <pre className="overflow-x-auto p-4 text-xs">
-              <code>{source}</code>
-            </pre>
+            <HighlightedCode html={source.html} />
           </TabsContent>
         ))}
       </Tabs>

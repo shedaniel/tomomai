@@ -1,4 +1,5 @@
 import { Link } from "@/i18n/navigation"
+import { cn } from "@/lib/utils";
 import { ExternalMarkdownLink, markdownBaseComponents } from "@tomomai/markdown";
 import { Fragment, type ComponentProps, type ReactNode } from "react";
 import { AlertTriangle, Info, CheckCircle2, AlertCircle } from "lucide-react";
@@ -130,16 +131,15 @@ export const mdxComponents = {
     }
     return <a {...props} rel="noopener noreferrer" />;
   },
-  pre: (props: ComponentProps<"pre">) => (
+  pre: ({ className, ...props }: ComponentProps<"pre">) => (
     <pre
       {...props}
-      className="overflow-x-auto rounded-lg border border-border bg-muted/40 p-4 text-sm"
+      className={cn(className, "overflow-x-auto rounded-lg border border-border bg-muted/40 p-4 text-sm")}
     />
   ),
   code: ({ className, children, ...props }: ComponentProps<"code">) => {
-    const hasLanguageClass = typeof className === "string" && className.length > 0;
-    const hasNewline = typeof children === "string" && children.includes("\n");
-    if (hasLanguageClass || hasNewline) {
+    // Inline code is always a plain string; fenced blocks arrive as Shiki's token spans.
+    if (typeof children !== "string" || children.includes("\n")) {
       return <code {...props} className={className}>{children}</code>;
     }
     return <InlineCode {...props}>{children}</InlineCode>;

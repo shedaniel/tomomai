@@ -16,12 +16,13 @@ import {
 import { trpc } from "@/lib/trpc-client";
 import { API_SCOPES, type ScopeKey } from "@/lib/api/scopes";
 import { toast } from "sonner";
-import { Globe, Loader2, AppWindow } from "lucide-react";
+import { Globe, Loader2, AppWindow, BadgeCheck } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { useGame } from "@/components/providers/game-provider";
 import { useLocale } from "@/components/providers/locale-provider";
 import { SettingsHeader } from "@/components/settings/primitives";
+import { clientIconSrc } from "@/lib/oauth-client-icon";
 
 type Authorization = {
   consentId: string;
@@ -32,6 +33,7 @@ type Authorization = {
   appName: string | null;
   appIcon: string | null;
   appUri: string | null;
+  official: boolean;
 };
 
 export function ApplicationsSettings() {
@@ -85,7 +87,7 @@ export function ApplicationsSettings() {
             <div key={auth.consentId} className="flex items-start gap-4 px-4 py-3.5">
               <div className="h-9 w-9 rounded-lg bg-muted flex items-center justify-center flex-shrink-0 overflow-hidden mt-0.5">
                 {auth.appIcon ? (
-                  <img src={auth.appIcon} alt={auth.appName ?? "App"} className="h-full w-full object-cover" />
+                  <img src={clientIconSrc(auth.clientId, auth.appIcon)} alt={auth.appName ?? "App"} className="h-full w-full object-cover" />
                 ) : (
                   <Globe className="h-4 w-4 text-muted-foreground" />
                 )}
@@ -95,6 +97,12 @@ export function ApplicationsSettings() {
                   <span className="text-sm font-semibold leading-none">
                     {auth.appName ?? auth.clientId}
                   </span>
+                  {auth.official && (
+                    <span className="inline-flex items-center gap-1 text-xs font-medium text-primary">
+                      <BadgeCheck className="h-3.5 w-3.5" aria-hidden />
+                      {ta("officialBadge")}
+                    </span>
+                  )}
                 </div>
                 <p className="font-mono text-xs bg-muted text-muted-foreground px-1.5 py-0.5 rounded-sm border border-border w-fit truncate max-w-xs">
                   {auth.clientId}

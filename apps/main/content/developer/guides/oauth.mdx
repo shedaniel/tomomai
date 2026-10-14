@@ -43,15 +43,11 @@ After creation you receive:
 - `client_secret`: **shown only once**, server-side only. Store like a
   password.
 
-> **Public clients** (mobile, SPA, anything that can't keep a secret):
-> create the app with `token_endpoint_auth_method: "none"` via dynamic
-> registration (see below). The token endpoint will then accept PKCE-only
-> requests with no `client_secret`.
-
-Dynamic registration ([RFC 7591](https://datatracker.ietf.org/doc/html/rfc7591))
-is supported at `POST /api/auth/oauth2/register`. Discovery metadata is at
-`/.well-known/oauth-authorization-server/api/auth` and
-`/.well-known/openid-configuration/api/auth`.
+Every app is a confidential client: the token endpoint always requires the
+`client_secret`, sent either in the form body or as HTTP Basic auth. Public
+(PKCE-only) clients and dynamic client registration are not supported, so an
+app that can't keep a secret (mobile, SPA, userscript) should exchange the
+code through a small backend you control.
 
 ## 2. Authorization request
 
@@ -97,7 +93,7 @@ grant_type=authorization_code
 &code_verifier=<the verifier you generated in step 2>
 &redirect_uri=<must match step 2>
 &client_id=<your client_id>
-&client_secret=<your client_secret>          ← omit for public clients
+&client_secret=<your client_secret>
 ```
 
 Response:
@@ -122,6 +118,10 @@ GET /api/v1/me HTTP/1.1
 Host: tomomai.lol
 Authorization: Bearer <access_token>
 ```
+
+To use tomomai as a sign-in, request `user:metadata:read` and key your
+accounts on the `id` field of `/api/v1/me`. It never changes and is never
+reused. Don't key on `username`, since a user can change it or have none.
 
 ## 6. Refresh
 
@@ -166,4 +166,5 @@ token immediately.
 
 See [`packages/userscript`](https://github.com/shedaniel/tomomai/tree/main/packages/userscript)
 in the source. It's a tomomai-authored userscript that performs the full
-OAuth flow (PKCE, popup callback, refresh) from scratch.
+OAuth flow (PKCE, popup callback, refresh) and exchanges codes through a
+server route, so its `client_secret` never reaches the browser.

@@ -32,6 +32,7 @@ export async function fetchUserData(game: CanonicalGameId, userId: string) {
     .select({
       username: user.username,
       email: user.email,
+      image: user.image,
       publishProfile: user.publishProfile,
       role: user.role,
       region: gamePreference(game, "region"),

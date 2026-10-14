@@ -26,6 +26,7 @@ const MAIMAI_BRAND_ON_EVERY_SITE = new Set([
   "settings.developer.apiKeys.description",
   "settings.developer.apiKeys.emptySuffix",
   "settings.developer.createDialog.description",
+  "settings.pages.developer.portalDescription",
   "settings.albumPrivacy.noteText",
   "db.posts.list.description",
   "settings.developer.oauthApps.errors.nameReserved",

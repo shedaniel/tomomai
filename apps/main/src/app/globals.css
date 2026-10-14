@@ -90,3 +90,13 @@ altcha-widget {
     --altcha-shadow: none;
     --altcha-padding: 0.75rem;
 }
+
+.shiki,
+.shiki span {
+    color: var(--shiki-light);
+}
+
+.dark .shiki,
+.dark .shiki span {
+    color: var(--shiki-dark);
+}

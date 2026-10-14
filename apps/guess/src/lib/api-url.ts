@@ -31,3 +31,11 @@ export function buildImageUrl(
 export function buildSubmitUrl(dateSlug?: string): string {
   return `/api/submit${dateQuery(dateSlug)}`;
 }
+
+export function buildAttemptUrl(dateSlug?: string): string {
+  return `/api/attempt${dateQuery(dateSlug)}`;
+}
+
+export function buildSkipUrl(dateSlug?: string): string {
+  return `/api/skip${dateQuery(dateSlug)}`;
+}

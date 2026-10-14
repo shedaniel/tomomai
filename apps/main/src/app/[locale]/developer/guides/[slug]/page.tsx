@@ -4,6 +4,7 @@ import remarkGfm from "remark-gfm";
 import type { Metadata } from "next";
 import { listGuides, readGuide } from "@/lib/developer/guides";
 import { mdxComponents } from "@/components/developer/mdx-components";
+import { rehypeShiki } from "@/lib/developer/highlight";
 
 // Refuse slugs not produced by generateStaticParams(). Combined with the
 // SLUG_RE allow-list in readGuide(), this defeats path-traversal at both the
@@ -48,7 +49,7 @@ export default async function GuidePage({
         source={guide.content}
         components={mdxComponents}
         options={{
-          mdxOptions: { remarkPlugins: [remarkGfm] },
+          mdxOptions: { remarkPlugins: [remarkGfm], rehypePlugins: [await rehypeShiki()] },
         }}
       />
     </article>

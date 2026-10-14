@@ -57,6 +57,7 @@ export default async function Home() {
     hasUsername: false,
     username: null,
     email: "",
+    image: null,
     publishProfile: false,
     region: "intl" as const,
     role: "user" as const,

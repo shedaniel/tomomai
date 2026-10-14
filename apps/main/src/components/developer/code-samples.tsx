@@ -3,29 +3,29 @@
 import { useState } from "react";
 import { Check, Copy } from "lucide-react";
 import { Button, Tabs, TabsList, TabsTrigger, TabsContent } from "@tomomai/ui";
+import type { SampleLang } from "@/lib/developer/code-samples";
+import { HighlightedCode } from "./highlighted-code";
 
-interface CodeSamplesProps {
-  method: string;
-  url: string;
-  needsAuth: boolean;
+export interface CodeSample {
+  lang: SampleLang;
+  code: string;
+  html: string;
 }
 
-type Lang = "curl" | "fetch" | "python";
-
-export function CodeSamples({ method, url, needsAuth }: CodeSamplesProps) {
-  const [lang, setLang] = useState<Lang>("curl");
+export function CodeSamples({ samples }: { samples: CodeSample[] }) {
+  const [lang, setLang] = useState<SampleLang>(samples[0].lang);
   const [copied, setCopied] = useState(false);
 
-  const snippet = renderSnippet(lang, method, url, needsAuth);
+  const snippet = samples.find((s) => s.lang === lang)?.code ?? "";
 
   return (
     <div className="rounded-lg border border-border bg-muted/30">
-      <Tabs value={lang} onValueChange={(v) => setLang(v as Lang)}>
+      <Tabs value={lang} onValueChange={(v) => setLang(v as SampleLang)}>
         <div className="flex items-center justify-between border-b border-border px-3 py-2">
           <TabsList className="h-8">
-            <TabsTrigger value="curl" className="text-xs">curl</TabsTrigger>
-            <TabsTrigger value="fetch" className="text-xs">fetch</TabsTrigger>
-            <TabsTrigger value="python" className="text-xs">python</TabsTrigger>
+            {samples.map((s) => (
+              <TabsTrigger key={s.lang} value={s.lang} className="text-xs">{s.lang}</TabsTrigger>
+            ))}
           </TabsList>
           <Button
             type="button"
@@ -42,35 +42,12 @@ export function CodeSamples({ method, url, needsAuth }: CodeSamplesProps) {
             {copied ? "Copied" : "Copy"}
           </Button>
         </div>
-        {(["curl", "fetch", "python"] as const).map((l) => (
-          <TabsContent key={l} value={l} className="mt-0">
-            <pre className="overflow-x-auto p-3 text-xs">
-              <code>{renderSnippet(l, method, url, needsAuth)}</code>
-            </pre>
+        {samples.map((s) => (
+          <TabsContent key={s.lang} value={s.lang} className="mt-0">
+            <HighlightedCode html={s.html} className="[&_pre]:p-3" />
           </TabsContent>
         ))}
       </Tabs>
     </div>
   );
-}
-
-function renderSnippet(lang: Lang, method: string, url: string, needsAuth: boolean): string {
-  const authHeader = needsAuth ? "Authorization: Bearer tmk_<your-key>" : null;
-
-  if (lang === "curl") {
-    let cmd = `curl ${method === "GET" ? "" : `-X ${method} `}"${url}"`;
-    if (authHeader) cmd += ` \\\n  -H "${authHeader}"`;
-    return cmd;
-  }
-  if (lang === "fetch") {
-    const headers = authHeader
-      ? `  headers: { Authorization: "Bearer tmk_<your-key>" },\n`
-      : "";
-    const opts = method !== "GET" || headers;
-    return opts
-      ? `const res = await fetch("${url}", {\n${method !== "GET" ? `  method: "${method}",\n` : ""}${headers}});\nconst data = await res.json();`
-      : `const res = await fetch("${url}");\nconst data = await res.json();`;
-  }
-  const headerLine = authHeader ? `, headers={"Authorization": "Bearer tmk_<your-key>"}` : "";
-  return `import requests\nres = requests.${method.toLowerCase()}("${url}"${headerLine})\nres.raise_for_status()\ndata = res.json()`;
 }

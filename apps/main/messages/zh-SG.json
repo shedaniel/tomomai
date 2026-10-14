@@ -71,7 +71,16 @@
   "security": {
     "reauth": {
       "title": "需要重新认证",
-      "description": "此操作需要重新登入。我们会将你重定向到登入服务提供商以重新进行身份验证。"
+      "description": "此操作需要你最近登录过。请确认是你本人以继续。",
+      "noMethod": "此操作需要你最近登录过，但你的账户没有可在此确认身份的登录方式。请退出并重新登录后再试一次。",
+      "failed": "无法确认你的身份，请重试。",
+      "signOut": "退出登录",
+      "methods": {
+        "discord": "使用 Discord 继续",
+        "twitter": "使用 X 继续",
+        "passkey": "使用通行密钥",
+        "dev": "刷新会话（仅限开发）"
+      }
     }
   },
   "auth": {
@@ -216,7 +225,9 @@
       },
       "developer": {
         "title": "开发者",
-        "description": "管理 API 密钥和 OAuth 应用程式。"
+        "description": "管理 API 密钥和 OAuth 应用程式。",
+        "portalTitle": "开发者中心",
+        "portalDescription": "使用 tomomai API 开发所需的指南、接口参考和权限范围。"
       },
       "applications": {
         "title": "应用程式",
@@ -420,7 +431,7 @@
         },
         "user:metadata:read": {
           "name": "账号资讯",
-          "description": "用户名、地区、主页公开状态和角色"
+          "description": "账户 ID、用户名、头像、地区、主页公开状态和角色"
         },
         "snapshot:latest:metadata:read": {
           "name": "最新快照概要",
@@ -524,6 +535,8 @@
         }
       },
       "oauthApps": {
+        "officialDescription": "同意页面会显示官方标识，取代第三方应用的提醒。仅管理员可设置。",
+        "officialBadge": "官方",
         "label": "OAuth 应用程式",
         "description": "注册可透过 OAuth 2.1 + PKCE 代表用户请求存取的应用程式。",
         "createButton": "新增应用程式",
@@ -597,6 +610,7 @@
       }
     },
     "applications": {
+      "officialBadge": "官方",
       "noAuthorizations": "你尚未授权任何 OAuth 应用程式。",
       "grantedAt": "于 {date} 授权",
       "revokeButton": "撤销",
@@ -1555,6 +1569,16 @@
     },
     "sensitive": "敏感",
     "redirectNotice": "完成后将返回 {host}",
+    "activeSince": "自{date}起活跃",
+    "usage": {
+      "lt10": "少于 10 人使用",
+      "lt50": "少于 50 人使用",
+      "lt100": "少于 100 人使用",
+      "gte100": "100 人以上使用",
+      "gte200": "200 人以上使用",
+      "gte500": "500 人以上使用",
+      "gte1000": "1,000 人以上使用"
+    },
     "revokeNotice": "你可以随时在<link>设定</link>中撤销访问权限。",
     "deny": "拒绝",
     "authorize": "授权",

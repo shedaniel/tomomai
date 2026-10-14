@@ -58,9 +58,9 @@ describe("region preferences", () => {
   });
 
   it("reads the served game's region", async () => {
-    answerFor({ username: "player", email: "player@example.test", publishProfile: true, role: "user", region: "jp" });
+    answerFor({ username: "player", email: "player@example.test", image: null, publishProfile: true, role: "user", region: "jp" });
     await expect(caller.getUserData()).resolves.toEqual({
-      hasUsername: true, username: "player", email: "player@example.test", publishProfile: true, role: "user", region: "jp",
+      hasUsername: true, username: "player", email: "player@example.test", image: null, publishProfile: true, role: "user", region: "jp",
     });
   });
 

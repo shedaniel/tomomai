@@ -5,6 +5,7 @@ export POSTGRES_PORT REDIS_PORT S3_PORT
 
 # Always the docker compose services, never whatever .env.local points at.
 LOCAL_DB_ENV = POSTGRES_URL=postgres://tomomai:tomomai@localhost:$(POSTGRES_PORT)/tomomai
+LOCAL_GUESS_DB_ENV = POSTGRES_URL=postgres://tomomai:tomomai@localhost:$(POSTGRES_PORT)/guess
 LOCAL_S3_ENV = R2_ENDPOINT=http://localhost:$(S3_PORT) R2_FORCE_PATH_STYLE=true \
 	R2_ACCESS_KEY_ID=tomomai R2_SECRET_ACCESS_KEY=tomomai-dev-secret R2_BUCKET=tomomai
 
@@ -25,6 +26,10 @@ down:
 
 migrate:
 	cd apps/main && $(LOCAL_DB_ENV) pnpm exec drizzle-kit migrate
+	@docker compose exec -T postgres psql -U tomomai -d tomomai -tAc \
+		"SELECT 1 FROM pg_database WHERE datname = 'guess'" | grep -q 1 \
+		|| docker compose exec -T postgres createdb -U tomomai guess
+	cd apps/guess && $(LOCAL_GUESS_DB_ENV) pnpm exec drizzle-kit migrate
 
 seed:
 	cd apps/main && $(LOCAL_DB_ENV) $(LOCAL_S3_ENV) pnpm db:seed

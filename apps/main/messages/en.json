@@ -51,7 +51,16 @@
   "security": {
     "reauth": {
       "title": "Re-authentication required",
-      "description": "This action needs a fresh sign-in. You'll be redirected to your provider to re-authenticate."
+      "description": "This action needs a recent sign-in. Confirm it's you to continue.",
+      "noMethod": "This action needs a recent sign-in, but your account has no sign-in method that can confirm it here. Sign out, sign back in, then try again.",
+      "failed": "Couldn't confirm it's you. Try again.",
+      "signOut": "Sign out",
+      "methods": {
+        "discord": "Continue with Discord",
+        "twitter": "Continue with X",
+        "passkey": "Use a passkey",
+        "dev": "Refresh session (dev only)"
+      }
     }
   },
   "minigames": {
@@ -158,6 +167,16 @@
     },
     "sensitive": "Sensitive",
     "redirectNotice": "When you're done, you'll go back to {host}",
+    "activeSince": "Active since {date}",
+    "usage": {
+      "lt10": "Used by fewer than 10 people",
+      "lt50": "Used by fewer than 50 people",
+      "lt100": "Used by fewer than 100 people",
+      "gte100": "Used by 100+ people",
+      "gte200": "Used by 200+ people",
+      "gte500": "Used by 500+ people",
+      "gte1000": "Used by 1,000+ people"
+    },
     "revokeNotice": "You can revoke access at any time in <link>Settings</link>.",
     "deny": "Deny",
     "authorize": "Authorize",
@@ -254,7 +273,9 @@
       },
       "developer": {
         "title": "Developer",
-        "description": "Manage API keys and OAuth applications."
+        "description": "Manage API keys and OAuth applications.",
+        "portalTitle": "Developer Center",
+        "portalDescription": "Guides, endpoint reference and scopes for building on the tomomai API."
       },
       "applications": {
         "title": "Applications",
@@ -458,7 +479,7 @@
         },
         "user:metadata:read": {
           "name": "Account info",
-          "description": "Your username, region, profile visibility and role"
+          "description": "Your account ID, username, profile picture, region, profile visibility and role"
         },
         "snapshot:latest:metadata:read": {
           "name": "Latest snapshot details",
@@ -562,6 +583,8 @@
         }
       },
       "oauthApps": {
+        "officialDescription": "The consent screen shows an official badge instead of the third-party warning. Only admins can set this.",
+        "officialBadge": "Official",
         "errors": {
           "limitReached": "You can have up to {max} OAuth apps. Delete one to create another.",
           "nameReserved": "App names can't include \"tomomai\", because users could mistake the app for an official one."
@@ -635,6 +658,7 @@
       }
     },
     "applications": {
+      "officialBadge": "Official",
       "noAuthorizations": "You haven't authorized any OAuth applications yet.",
       "grantedAt": "Authorized {date}",
       "revokeButton": "Revoke",

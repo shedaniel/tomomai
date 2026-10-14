@@ -42,3 +42,17 @@ export const readLimiter = new RedisRateLimiter({
   windowSeconds: 60,
   max: 180,
 });
+
+/** OAuth sign-in starts; each one mints a state cookie and a tomomai redirect. */
+export const authLimiter = new RedisRateLimiter({
+  name: "guess-auth",
+  windowSeconds: 60,
+  max: 10,
+});
+
+/** Leaderboard and stats reads, polled at most once per finished game. */
+export const boardLimiter = new RedisRateLimiter({
+  name: "guess-board",
+  windowSeconds: 60,
+  max: 60,
+});

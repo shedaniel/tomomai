@@ -34,6 +34,8 @@
     "title": "{app} wants to access <nb>your tomomai account</nb>",
     "signedOutDescription": "{app} is asking for access to your tomomai account. Sign in to review the request.",
     "trustNotice": "{app} is not run by tomomai. {links, select, both {It handles your data under its own <terms>Terms of Service</terms> and <privacy>Privacy Policy</privacy>.} terms {It handles your data under its own <terms>Terms of Service</terms>.} privacy {It handles your data under its own <privacy>Privacy Policy</privacy>.} other {It hasn't published terms or a privacy policy.}} Only continue if you trust it.",
+    "officialBadge": "Official tomomai app",
+    "officialNotice": "{app} is made and run by tomomai.",
     "errors": {
       "redirect": {
         "body": "The app asked to send you back to an address it never registered with tomomai, so the request was stopped to protect your account. Don't sign in through this link, and let the app's developer know."
@@ -43,5 +45,12 @@
       }
     },
     "backHome": "Back to tomomai"
+  },
+  "settings": {
+    "developer": {
+      "oauthApps": {
+        "officialLabel": "Official tomomai app"
+      }
+    }
   }
 }

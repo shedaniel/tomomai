@@ -62,7 +62,16 @@
   "security": {
     "reauth": {
       "title": "再認証が必要です",
-      "description": "この操作には新しいサインインが必要です。再認証のためプロバイダーにリダイレクトされます。"
+      "description": "この操作には最近のサインインが必要です。続行するには本人確認をしてください。",
+      "noMethod": "この操作には最近のサインインが必要ですが、ここで本人確認できるサインイン方法がアカウントにありません。サインアウトしてサインインし直してから、もう一度お試しください。",
+      "failed": "本人確認できませんでした。もう一度お試しください。",
+      "signOut": "サインアウト",
+      "methods": {
+        "discord": "Discord で続行",
+        "twitter": "X で続行",
+        "passkey": "パスキーを使う",
+        "dev": "セッションを更新（開発用）"
+      }
     }
   },
   "auth": {
@@ -158,6 +167,16 @@
     },
     "sensitive": "機密",
     "redirectNotice": "完了すると {host} に戻ります",
+    "activeSince": "{date}より活動中",
+    "usage": {
+      "lt10": "利用者 10 人未満",
+      "lt50": "利用者 50 人未満",
+      "lt100": "利用者 100 人未満",
+      "gte100": "利用者 100 人以上",
+      "gte200": "利用者 200 人以上",
+      "gte500": "利用者 500 人以上",
+      "gte1000": "利用者 1,000 人以上"
+    },
     "revokeNotice": "アクセスはいつでも<link>設定</link>から取り消せます。",
     "deny": "拒否",
     "authorize": "許可する",
@@ -254,7 +273,9 @@
       },
       "developer": {
         "title": "開発者",
-        "description": "API キーと OAuth アプリケーションを管理します。"
+        "description": "API キーと OAuth アプリケーションを管理します。",
+        "portalTitle": "開発者センター",
+        "portalDescription": "ともマイ API で開発するためのガイド、エンドポイントリファレンス、スコープ一覧です。"
       },
       "applications": {
         "title": "アプリ",
@@ -458,7 +479,7 @@
         },
         "user:metadata:read": {
           "name": "アカウント情報",
-          "description": "ユーザー名、地域、プロフィールの公開設定、ロール"
+          "description": "アカウント ID、ユーザー名、プロフィール画像、地域、プロフィールの公開設定、ロール"
         },
         "snapshot:latest:metadata:read": {
           "name": "最新のスナップショット概要",
@@ -562,6 +583,8 @@
         }
       },
       "oauthApps": {
+        "officialDescription": "同意画面に、第三者アプリの注意書きの代わりに公式バッジを表示します。管理者のみ設定できます。",
+        "officialBadge": "公式",
         "errors": {
           "limitReached": "OAuth アプリは最大 {max} 個まで作成できます。新しく作成するには既存のアプリを削除してください。",
           "nameReserved": "利用者が公式アプリと誤解する恐れがあるため、アプリ名に「tomomai」を含めることはできません。"
@@ -635,6 +658,7 @@
       }
     },
     "applications": {
+      "officialBadge": "公式",
       "noAuthorizations": "まだ OAuth アプリを認可していません。",
       "grantedAt": "{date}に認可",
       "revokeButton": "取り消す",

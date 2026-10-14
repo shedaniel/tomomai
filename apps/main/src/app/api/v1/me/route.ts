@@ -12,7 +12,9 @@ export const GET = withApiKey(spec, async (_req, key) => {
     return Response.json({ error: "User not found" }, { status: 404 });
   }
   return zodJson(spec.response, {
+    id: key.userId,
     username: userData.username,
+    image: userData.image,
     region: getGameRegion(game, userData.region),
     publishProfile: userData.publishProfile,
     role: userData.role,

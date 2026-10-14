@@ -1,0 +1,71 @@
+{
+  "id": "917c3125-e589-407d-a472-e9c55f930a5b",
+  "prevId": "00000000-0000-0000-0000-000000000000",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.daily_puzzles": {
+      "name": "daily_puzzles",
+      "schema": "",
+      "columns": {
+        "mode": {
+          "name": "mode",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "date_key": {
+          "name": "date_key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "chart": {
+          "name": "chart",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "plan": {
+          "name": "plan",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {
+        "daily_puzzles_mode_date_key_pk": {
+          "name": "daily_puzzles_mode_date_key_pk",
+          "columns": [
+            "mode",
+            "date_key"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    }
+  },
+  "enums": {},
+  "schemas": {},
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "views": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}
