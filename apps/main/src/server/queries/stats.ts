@@ -4,15 +4,36 @@ import { and, desc, eq, sql } from "drizzle-orm";
 import { getAchievementRate } from "@/lib/difficulty";
 import type { Region } from "@/lib/types";
 
-export type StatsResult = {
-  stats: Record<string, Record<string, {
-    grades: Record<string, number>;
-    fc: Record<string, number>;
-    fs: Record<string, number>;
-    total: number;
-  }>>;
-  totalSongs: Record<string, Record<string, number>>;
+type StatsBucket = {
+  grades: Record<string, number>;
+  fc: Record<string, number>;
+  fs: Record<string, number>;
+  total: number;
 };
+
+export type LevelStatsBucket = StatsBucket & {
+  /** Charts at this level in the game version, played or not. */
+  charts: number;
+};
+
+export type StatsResult = {
+  stats: Record<string, Record<string, StatsBucket>>;
+  totalSongs: Record<string, Record<string, number>>;
+  /** addedVersion → difficulty → level, for breaking a filtered view down by level. */
+  levels: Record<string, Record<string, Record<string, LevelStatsBucket>>>;
+};
+
+function emptyBucket(): StatsBucket {
+  return { grades: {}, fc: {}, fs: {}, total: 0 };
+}
+
+function addScore(bucket: StatsBucket, score: { achievement: number; fc: string; fs: string }) {
+  const grade = getAchievementRate(score.achievement);
+  bucket.grades[grade] = (bucket.grades[grade] ?? 0) + 1;
+  if (score.fc !== "none") bucket.fc[score.fc] = (bucket.fc[score.fc] ?? 0) + 1;
+  if (score.fs !== "none") bucket.fs[score.fs] = (bucket.fs[score.fs] ?? 0) + 1;
+  bucket.total++;
+}
 
 export async function computeStatsForSnapshot(
   snapshotInternalId: number,
@@ -24,6 +45,7 @@ export async function computeStatsForSnapshot(
       achievement: scoreData.achievement,
       addedVersion: songs.addedVersion,
       difficulty: parentSong.difficulty,
+      level: songs.level,
       fc: scoreData.fc,
       fs: scoreData.fs,
     })
@@ -37,6 +59,7 @@ export async function computeStatsForSnapshot(
     .select({
       addedVersion: songs.addedVersion,
       difficulty: parentSong.difficulty,
+      level: songs.level,
       count: sql<number>`count(*)`.mapWith(Number),
     })
     .from(songs)
@@ -47,39 +70,33 @@ export async function computeStatsForSnapshot(
         eq(songs.gameVersion, gameVersion)
       )
     )
-    .groupBy(songs.addedVersion, parentSong.difficulty);
+    .groupBy(songs.addedVersion, parentSong.difficulty, songs.level);
 
-  const totalSongs: Record<string, Record<string, number>> = {};
+  const totalSongs: StatsResult["totalSongs"] = {};
+  const levels: StatsResult["levels"] = {};
+  const levelBucket = (version: string, difficulty: string, level: string) => {
+    levels[version] ??= {};
+    levels[version][difficulty] ??= {};
+    return levels[version][difficulty][level] ??= { ...emptyBucket(), charts: 0 };
+  };
+
   for (const song of allSongs) {
     const version = song.addedVersion.toString();
-    if (!totalSongs[version]) totalSongs[version] = {};
-    totalSongs[version][song.difficulty] = song.count;
+    totalSongs[version] ??= {};
+    totalSongs[version][song.difficulty] = (totalSongs[version][song.difficulty] ?? 0) + song.count;
+    levelBucket(version, song.difficulty, song.level).charts += song.count;
   }
 
   const stats: StatsResult["stats"] = {};
 
   for (const score of scores) {
     const version = score.addedVersion.toString();
-    const difficulty = score.difficulty;
-
-    if (!stats[version]) stats[version] = {};
-    if (!stats[version][difficulty]) {
-      stats[version][difficulty] = { grades: {}, fc: {}, fs: {}, total: 0 };
-    }
-
-    const grade = getAchievementRate(score.achievement);
-    stats[version][difficulty].grades[grade] = (stats[version][difficulty].grades[grade] ?? 0) + 1;
-
-    if (score.fc !== "none") {
-      stats[version][difficulty].fc[score.fc] = (stats[version][difficulty].fc[score.fc] ?? 0) + 1;
-    }
-    if (score.fs !== "none") {
-      stats[version][difficulty].fs[score.fs] = (stats[version][difficulty].fs[score.fs] ?? 0) + 1;
-    }
-    stats[version][difficulty].total++;
+    stats[version] ??= {};
+    addScore(stats[version][score.difficulty] ??= emptyBucket(), score);
+    addScore(levelBucket(version, score.difficulty, score.level), score);
   }
 
-  return { stats, totalSongs };
+  return { stats, totalSongs, levels };
 }
 
 export async function fetchPlayerStats(userId: string, region: Region): Promise<StatsResult> {
@@ -96,7 +113,7 @@ export async function fetchPlayerStats(userId: string, region: Region): Promise<
     .limit(1);
 
   if (snapshot.length === 0) {
-    return { stats: {}, totalSongs: {} };
+    return { stats: {}, totalSongs: {}, levels: {} };
   }
 
   return computeStatsForSnapshot(snapshot[0].id, snapshot[0].gameVersion, region);
