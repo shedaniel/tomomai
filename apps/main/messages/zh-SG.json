@@ -52,7 +52,8 @@
     "selectAnOption": "选择选项",
     "guest": "访客",
     "ok": "确定",
-    "email": "邮箱"
+    "email": "邮箱",
+    "resetToDefault": "恢复默认"
   },
   "minigames": {
     "badge": "迷你游戏",
@@ -648,7 +649,9 @@
     "fetchNewData": "导入新数据",
     "fetchingData": "导入数据中...",
     "lastUpdate": "最后更新",
-    "noDataInstructions": "此区域没有任何数据。点击“导入新数据”来导入你的 maimai 成绩。"
+    "noDataInstructions": "此区域没有任何数据。点击“导入新数据”来导入你的 maimai 成绩。",
+    "deleteSnapshot": "删除所选快照",
+    "moreOptions": "更多选项"
   },
   "profileVisibility": {
     "public": "公开主页",
@@ -1287,6 +1290,8 @@
       "fetchActivityHeatmap": "按小时和星期划分的取得活动",
       "playActivityHeatmap": "按小时和星期划分的游玩活动",
       "heatmapTimezoneNote": "时间以 JST（UTC+9）显示，过去 90 天。",
+      "heatmapCell": "{slot} · {count}",
+      "heatmapPeak": "最活跃：{slot} · {count}",
       "topSongsWindow": {
         "label": "时间范围",
         "all": "全部时间",

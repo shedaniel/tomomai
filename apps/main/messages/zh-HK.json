@@ -52,7 +52,8 @@
       "thu": "四",
       "fri": "五",
       "sat": "六"
-    }
+    },
+    "resetToDefault": "還原預設"
   },
   "minigames": {
     "badge": "迷你遊戲",
@@ -703,7 +704,9 @@
     "fetchNewData": "匯入新資料",
     "fetchingData": "匯入資料中……",
     "lastUpdate": "最後更新",
-    "noDataInstructions": "此區域沒有任何資料。點擊「匯入新資料」以匯入你的 maimai 成績。"
+    "noDataInstructions": "此區域沒有任何資料。點擊「匯入新資料」以匯入你的 maimai 成績。",
+    "deleteSnapshot": "刪除所選快照",
+    "moreOptions": "更多選項"
   },
   "profileMetadata": {
     "title": "{username} | tomomai ともマイ",
@@ -1352,6 +1355,8 @@
       "fetchActivityHeatmap": "按小時及星期劃分的同步活動",
       "playActivityHeatmap": "按小時及星期劃分的遊玩活動",
       "heatmapTimezoneNote": "時間以 JST（UTC+9）顯示，過去 90 日。",
+      "heatmapCell": "{slot} · {count}",
+      "heatmapPeak": "最活躍：{slot} · {count}",
       "topSongsWindow": {
         "label": "時間範圍",
         "all": "全部時間",

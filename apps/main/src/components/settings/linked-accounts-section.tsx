@@ -115,6 +115,9 @@ export function LinkedAccountsSection({ enabledProviders }: LinkedAccountsSectio
                   <p className="text-xs text-muted-foreground">
                     {isLinked ? t("linked") : t("notLinked")}
                   </p>
+                  {isLinked && !canUnlink && (
+                    <p className="mt-0.5 text-xs text-muted-foreground/80">{t("cannotUnlinkLast")}</p>
+                  )}
                 </div>
                 {isLinked ? (
                   <Button
@@ -122,7 +125,6 @@ export function LinkedAccountsSection({ enabledProviders }: LinkedAccountsSectio
                     size="sm"
                     onClick={() => unlinkMutation.mutate(id)}
                     disabled={!canUnlink || isUnlinking}
-                    title={!canUnlink ? t("cannotUnlinkLast") : undefined}
                     className="text-muted-foreground hover:text-destructive shrink-0"
                   >
                     {isUnlinking ? (

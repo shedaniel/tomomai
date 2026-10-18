@@ -52,7 +52,8 @@
       "thu": "木",
       "fri": "金",
       "sat": "土"
-    }
+    },
+    "resetToDefault": "デフォルトに戻す"
   },
   "minigames": {
     "badge": "ミニゲーム",
@@ -703,7 +704,9 @@
     "fetchNewData": "データ取得",
     "fetchingData": "データ取得中...",
     "lastUpdate": "最終更新",
-    "noDataInstructions": "この地域のデータがまだありません。「新しいデータを取得」からmaimaiスコアを取り込みましょう（ログイン／トークンが必要です）。"
+    "noDataInstructions": "この地域のデータがまだありません。「新しいデータを取得」からmaimaiスコアを取り込みましょう（ログイン／トークンが必要です）。",
+    "deleteSnapshot": "選択中のスナップショットを削除",
+    "moreOptions": "その他のオプション"
   },
   "profileMetadata": {
     "title": "{username} | tomomai ともマイ",
@@ -1352,6 +1355,8 @@
       "fetchActivityHeatmap": "時間帯×曜日 別データ取得アクティビティ",
       "playActivityHeatmap": "時間帯×曜日 別プレイアクティビティ",
       "heatmapTimezoneNote": "時刻は JST (UTC+9)、過去90日間。",
+      "heatmapCell": "{slot} · {count}",
+      "heatmapPeak": "最多：{slot} · {count}",
       "topSongsWindow": {
         "label": "期間",
         "all": "全期間",

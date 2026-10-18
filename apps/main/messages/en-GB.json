@@ -52,7 +52,8 @@
     "clipboardError": "Failed to copy to clipboard",
     "selectAnOption": "Select an option",
     "ok": "OK",
-    "email": "Email"
+    "email": "Email",
+    "resetToDefault": "Reset to default"
   },
   "minigames": {
     "badge": "Minigame",
@@ -638,7 +639,9 @@
     "fetchNewData": "Fetch New Data",
     "fetchingData": "Fetching data...",
     "lastUpdate": "Last updated",
-    "noDataInstructions": "No data found for this region. Click \"Fetch New Data\" to import your maimai scores. You'll need your maimai token for this process."
+    "noDataInstructions": "No data found for this region. Click \"Fetch New Data\" to import your maimai scores. You'll need your maimai token for this process.",
+    "deleteSnapshot": "Delete selected snapshot",
+    "moreOptions": "More options"
   },
   "profileMetadata": {
     "title": "{username} | tomomai ともマイ",
@@ -1314,6 +1317,8 @@
       "fetchActivityHeatmap": "Fetch Activity by Hour & Weekday",
       "playActivityHeatmap": "Play Activity by Hour & Weekday",
       "heatmapTimezoneNote": "Hours shown in JST (UTC+9), last 90 days.",
+      "heatmapCell": "{slot} · {count}",
+      "heatmapPeak": "Busiest: {slot} · {count}",
       "topSongsWindow": {
         "label": "Time Range",
         "all": "All time",

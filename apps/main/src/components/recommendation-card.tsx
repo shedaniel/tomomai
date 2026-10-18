@@ -10,7 +10,7 @@ import { CoverImage } from "@/components/cover-image";
 import { createContext, memo, useContext, useState, useCallback, useMemo } from "react";
 import { Select, SelectContent, SelectTrigger, SelectItem, SelectValue } from "@tomomai/ui/select-friendly";
 import { Flags } from "@/lib/flags";
-import { Button } from "@tomomai/ui";
+import { Button, TooltipFriendly, TooltipFriendlyContent, TooltipFriendlyTrigger } from "@tomomai/ui";
 import { motion, AnimatePresence } from "motion/react";
 import {
   FilterPanel,
@@ -177,10 +177,17 @@ function UnplayedRow({ recommendation }: { recommendation: UnplayedRecommendatio
 
           <div className="text-right ml-4 mr-2 space-y-0.5 w-20">
             {peerMedianAccuracy != null && (
-              <div className="text-xs text-muted-foreground flex items-center gap-1" title={t('peerTypical', { accuracy: formatAccuracy(peerMedianAccuracy) })}>
-                <Users className="h-3 w-3 shrink-0 text-sky-500" />
-                <span>{formatAccuracy(peerMedianAccuracy)}%</span>
-              </div>
+              <TooltipFriendly>
+                <TooltipFriendlyTrigger asChild>
+                  <div className="text-xs text-muted-foreground flex items-center gap-1 cursor-help">
+                    <Users className="h-3 w-3 shrink-0 text-sky-500" />
+                    <span>{formatAccuracy(peerMedianAccuracy)}%</span>
+                  </div>
+                </TooltipFriendlyTrigger>
+                <TooltipFriendlyContent side="top" className="max-w-64" title={song.songName}>
+                  {t('peerTypical', { accuracy: formatAccuracy(peerMedianAccuracy) })}
+                </TooltipFriendlyContent>
+              </TooltipFriendly>
             )}
             <div className="text-xs flex items-center gap-1">
               <Zap className="h-3 w-3 shrink-0 text-green-500" />
