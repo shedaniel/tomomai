@@ -9,7 +9,6 @@ export type AuthErrorMessageKey =
   | "inviteUsed"
   | "inviteExpired"
   | "accountNotLinked"
-  | "emailMismatch"
   | "alreadyLinked"
   | "emailMissing"
   | "restart"
@@ -35,7 +34,6 @@ const AUTH_ERRORS: Record<string, Omit<ResolvedAuthError, "code">> = {
   invite_used: { messageKey: "inviteUsed", panel: "signup" },
   invite_expired: { messageKey: "inviteExpired", panel: "signup" },
   account_not_linked: { messageKey: "accountNotLinked", panel: "signin" },
-  "email_doesn't_match": { messageKey: "emailMismatch", panel: "signin" },
   account_already_linked_to_different_user: { messageKey: "alreadyLinked", panel: "signin" },
   email_not_found: { messageKey: "emailMissing", panel: "signin" },
   state_mismatch: { messageKey: "restart", panel: "signin" },

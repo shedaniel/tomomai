@@ -342,6 +342,8 @@ export const auth = betterAuth({
       // Blocks the signup-callback auto-merge by email; explicit /link-social still works.
       trustedProviders: ["discord"],
       disableImplicitLinking: true,
+      // Email is never a sign-in or recovery channel, and linked accounts sign in by provider id.
+      allowDifferentEmails: true,
     },
   },
   plugins: [
