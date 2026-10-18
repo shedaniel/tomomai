@@ -746,12 +746,23 @@
   },
   "recommendations": {
     "peerAchieved": "Achieved by ≈{percent} peers",
+    "stretchBadge": "Stretch",
     "newBadge": "New",
     "oldBadge": "Old",
     "currentToTarget": "Current → Target",
     "noRecommendations": "No Recommendations Available",
     "allOptimal": "All your scores are already optimal! Keep up the great work.",
     "description": "Songs recommended to improve your rating based on your current B15/B35 scores.",
+    "tryNewDescription": "Charts you haven't played yet that could raise your Rating, ranked by the Rating you'd likely gain based on how players near your Rating score on them. The people icon shows their typical score, and Stretch marks targets above it.",
+    "tabs": {
+      "improve": "Improve scores",
+      "tryNew": "Try new charts"
+    },
+    "target": "Target",
+    "peerTypical": "Players near your Rating usually get {accuracy}%",
+    "noUnplayed": "No New Charts to Suggest",
+    "noUnplayedDescription": "None of the charts you haven't played would raise your Rating right now.",
+    "loadError": "Couldn't load recommendations. Please try again later.",
     "filterButton": "Filter",
     "filters": {
       "all": "All",
@@ -1536,6 +1547,7 @@
     "title": "Score comparison",
     "view": "Comparison view",
     "you": "You · {achievement}",
+    "notPlayed": "Not played yet",
     "curveTab": "Score curve",
     "ratingTab": "By Rating",
     "ratingHeading": "Achievement by player Rating",
@@ -1549,6 +1561,7 @@
     "lessThan": "<{percent}",
     "ratingDescription": "Achievement versus Rating for {count} players, based on all play records. Dots group sampled scores into 125 Rating points and 0.1% achievement, with approximate positions spread within each bin. Your Rating is {rating}, achievement {achievement}.",
     "curveDescription": "Estimated share of players with similar Rating scoring at or below each achievement. {percent} scored at or below your {achievement}. Ties are included.",
+    "unplayedDescription": "Best scores of players on this chart. You haven't played it yet.",
     "clusterDescription": "Rating {ratingMin}–{ratingMax}; {achievementMin}–{achievementMax}: {count, plural, one {# sampled score} other {# sampled scores}}",
     "youDescription": "You: {rating} Rating, {achievement}"
   },

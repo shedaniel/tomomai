@@ -811,12 +811,23 @@
   },
   "recommendations": {
     "peerAchieved": "同Rating帯の約{percent}が達成",
+    "stretchBadge": "背伸び",
     "newBadge": "新曲",
     "oldBadge": "旧曲",
     "currentToTarget": "現在 → 目標",
     "noRecommendations": "おすすめがありません",
     "allOptimal": "レート値を伸ばせる曲はもうありません！",
     "description": "現在のB15/B35スコアに基づき、レート値を伸ばしやすい楽曲をおすすめします。",
+    "tryNewDescription": "まだプレイしていない譜面のうち、レート値を伸ばせそうなものを、同Rating帯のプレイヤーのスコアから見込める上昇量の順に表示します。人型アイコンはその代表的なスコア、「背伸び」はそれを上回る目標です。",
+    "tabs": {
+      "improve": "スコアを伸ばす",
+      "tryNew": "新しい譜面に挑戦"
+    },
+    "target": "目標",
+    "peerTypical": "同Rating帯のプレイヤーは{accuracy}%前後が多いです",
+    "noUnplayed": "おすすめできる未プレイ譜面がありません",
+    "noUnplayedDescription": "未プレイの譜面で、今レート値を伸ばせるものはありません。",
+    "loadError": "おすすめを読み込めませんでした。しばらくしてから再度お試しください。",
     "filterButton": "フィルター",
     "filters": {
       "all": "すべて",
@@ -1601,6 +1612,7 @@
     "title": "スコア比較",
     "view": "比較表示",
     "you": "あなた · {achievement}",
+    "notPlayed": "未プレイ",
     "curveTab": "スコア曲線",
     "ratingTab": "Rating別",
     "ratingHeading": "プレイヤーのRatingと達成率",
@@ -1614,6 +1626,7 @@
     "lessThan": "{percent}未満",
     "ratingDescription": "すべてのプレイ記録をもとに、{count}人のRatingと達成率を比較しています。点はRating幅125、達成率幅0.1%のサンプルをまとめ、各範囲内に分散して表示しています。位置は概算です。あなたのRatingは{rating}、達成率は{achievement}です。",
     "curveDescription": "近いRatingのプレイヤーのうち、各達成率以下の割合の推定値です。あなたの達成率{achievement}以下は{percent}です。同点を含みます。",
+    "unplayedDescription": "この譜面でのプレイヤーのベストスコアです。あなたはまだプレイしていません。",
     "clusterDescription": "Rating {ratingMin}～{ratingMax}、達成率{achievementMin}～{achievementMax}：{count}件のサンプル",
     "youDescription": "あなた：Rating {rating}、達成率{achievement}"
   },

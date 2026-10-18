@@ -299,7 +299,12 @@ export function DataContent({
               />
             )}
             {selectedTab === "recommendations" && (
-              <RecommendationCard selectedSnapshotData={selectedSnapshotData} flags={flags} region={region} />
+              <RecommendationCard
+                selectedSnapshotData={selectedSnapshotData}
+                flags={flags}
+                region={region}
+                source={visitedBySelf || !profileUsername ? { kind: "own" } : { kind: "public", username: profileUsername }}
+              />
             )}
             {selectedTab === "history" && visitedBySelf && flags.historyCard && (
               <HistoryCard region={region} />

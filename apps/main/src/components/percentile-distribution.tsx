@@ -20,7 +20,8 @@ export function PercentileDistribution({ data, withSeparator = true }: {
     style: 'percent', minimumFractionDigits: digits === 4 ? 4 : 0, maximumFractionDigits: digits,
   });
   const percentLabel = (share: number) => format.number(share, { style: 'percent', maximumFractionDigits: 0 });
-  const achievement = scoreLabel(data.userAchievement, 4);
+  const userAchievement = data.userAchievement;
+  const achievement = userAchievement == null ? '' : scoreLabel(userAchievement, 4);
   const curveAvailable = data.percentile != null && data.distribution.length > 0;
   const [selectedView, setSelectedView] = useState<'rating' | 'curve' | null>(null);
   const [errorOpen, setErrorOpen] = useState(false);
@@ -28,14 +29,14 @@ export function PercentileDistribution({ data, withSeparator = true }: {
   const titleId = useId();
   const isRating = view === 'rating';
   const scores = isRating ? data.ratingDistribution.map(point => point.achievementLo) : data.distribution.map(point => point.lo);
-  const { min, max } = achievementRange(scores, data.userAchievement, false);
+  const { min, max } = achievementRange(scores, userAchievement ?? 1010000, false);
   const ratingMin = Math.floor(Math.min(data.userRating, ...data.ratingDistribution.map(point => point.ratingLo)) / 1000) * 1000;
   const ratingMax = Math.max(ratingMin + 1000, Math.ceil(Math.max(data.userRating, ...data.ratingDistribution.map(point => point.ratingLo + 125)) / 1000) * 1000);
   const x = (value: number) => PLOT.left + (value - (isRating ? ratingMin : min)) / (isRating ? ratingMax - ratingMin : max - min) * (PLOT.right - PLOT.left);
   const y = (value: number) => PLOT.bottom - (value - (isRating ? min : 0)) / (isRating ? max - min : 100) * (PLOT.bottom - PLOT.top);
-  const userX = x(isRating ? data.userRating : data.userAchievement);
-  const cumulativeShare = shareAtOrBelow(data.distribution, data.userAchievement);
-  const userY = y(isRating ? data.userAchievement : cumulativeShare * 100);
+  const userX = x(isRating ? data.userRating : userAchievement ?? 0);
+  const cumulativeShare = shareAtOrBelow(data.distribution, userAchievement ?? 0);
+  const userY = y(isRating ? userAchievement ?? 0 : cumulativeShare * 100);
   const gradeStops = GRADE_STOPS.filter(score => score >= min && score <= max);
   const xTicks = !isRating && min >= 940000 ? [...(min < 970000 ? [min] : []), ...gradeStops] : Array.from({ length: 5 }, (_, i) => (isRating ? ratingMin : min) + i * (isRating ? ratingMax - ratingMin : max - min) / 4);
   const yTicks = Array.from({ length: 5 }, (_, i) => isRating ? min + i * (max - min) / 4 : i * 25);
@@ -43,9 +44,11 @@ export function PercentileDistribution({ data, withSeparator = true }: {
   const rank = peerRank(data.percentile ?? 0, cumulativeShare);
   const rankPercent = rank.share < 0.01 ? t('lessThan', { percent: percentLabel(0.01) }) : percentLabel(rank.share);
   const rankLabel = rank.kind === 'median' ? t('median') : t(rank.kind, { percent: rankPercent });
-  const description = isRating
-    ? t('ratingDescription', { count: format.number(data.totalPlayerCount), rating: format.number(data.userRating), achievement })
-    : t('curveDescription', { percent: percentLabel(cumulativeShare), achievement });
+  const description = userAchievement == null
+    ? t('unplayedDescription')
+    : isRating
+      ? t('ratingDescription', { count: format.number(data.totalPlayerCount), rating: format.number(data.userRating), achievement })
+      : t('curveDescription', { percent: percentLabel(cumulativeShare), achievement });
 
   return (
     <>
@@ -57,7 +60,9 @@ export function PercentileDistribution({ data, withSeparator = true }: {
       }} className="space-y-2" aria-label={t('title')}>
         <div className="flex items-center justify-between gap-2 text-xs">
           <span className="font-medium">{t('title')}</span>
-          <span className="text-primary font-semibold tabular-nums">{t('you', { achievement })}</span>
+          {userAchievement == null
+            ? <span className="text-muted-foreground">{t('notPlayed')}</span>
+            : <span className="text-primary font-semibold tabular-nums">{t('you', { achievement })}</span>}
         </div>
         <TabsList className="flex h-auto w-full rounded-full p-0.5" aria-label={t('view')}>
           <Popover.Root open={errorOpen && !curveAvailable} onOpenChange={setErrorOpen}>
@@ -108,17 +113,21 @@ export function PercentileDistribution({ data, withSeparator = true }: {
                 })}</title>
               </circle>
             }) : <path d={curve} fill="none" stroke="var(--muted-foreground)" strokeWidth="1.8" strokeLinejoin="round" />}
-            <line x1={PLOT.left} x2={userX} y1={userY} y2={userY} stroke="var(--primary)" strokeDasharray="3 3" opacity="0.65" />
-            <line x1={userX} x2={userX} y1={userY} y2={PLOT.bottom} stroke="var(--primary)" strokeDasharray="3 3" opacity="0.65" />
-            {!isRating && data.percentile != null && (
-              <text x={PLOT.left + 5} y={userY - 7} fontSize="11" fontWeight="600" fill="var(--primary)"
-                stroke="var(--background)" strokeWidth="3" paintOrder="stroke" strokeLinejoin="round">
-                {rankLabel}
-              </text>
+            {userAchievement != null && (
+              <>
+                <line x1={PLOT.left} x2={userX} y1={userY} y2={userY} stroke="var(--primary)" strokeDasharray="3 3" opacity="0.65" />
+                <line x1={userX} x2={userX} y1={userY} y2={PLOT.bottom} stroke="var(--primary)" strokeDasharray="3 3" opacity="0.65" />
+                {!isRating && data.percentile != null && (
+                  <text x={PLOT.left + 5} y={userY - 7} fontSize="11" fontWeight="600" fill="var(--primary)"
+                    stroke="var(--background)" strokeWidth="3" paintOrder="stroke" strokeLinejoin="round">
+                    {rankLabel}
+                  </text>
+                )}
+                <path d={`M${userX},${userY - 5} l5,5 l-5,5 l-5,-5 Z`} fill="var(--primary)" stroke="var(--background)" strokeWidth="1.5">
+                  <title>{t('youDescription', { rating: format.number(data.userRating), achievement })}</title>
+                </path>
+              </>
             )}
-            <path d={`M${userX},${userY - 5} l5,5 l-5,5 l-5,-5 Z`} fill="var(--primary)" stroke="var(--background)" strokeWidth="1.5">
-              <title>{t('youDescription', { rating: format.number(data.userRating), achievement })}</title>
-            </path>
           </svg>
         </TabsContent>
       </Tabs>

@@ -811,12 +811,23 @@
   },
   "recommendations": {
     "peerAchieved": "约 {percent} 同水平玩家达成",
+    "stretchBadge": "挑战",
     "newBadge": "新曲",
     "oldBadge": "旧曲",
     "currentToTarget": "当前 → 目标",
     "noRecommendations": "无推荐歌曲",
     "allOptimal": "没有其他能提升 R 值的歌曲了。做得很好！",
     "description": "根据你当前的成绩计算出可提升 R 值的歌曲。",
+    "tryNewDescription": "你还没玩过、可提升 R 值的谱面，按同水平玩家成绩估算的提升量排序。人形图标表示他们的常见成绩，“挑战”表示目标高于该成绩。",
+    "tabs": {
+      "improve": "提升成绩",
+      "tryNew": "尝试新谱面"
+    },
+    "target": "目标",
+    "peerTypical": "同水平玩家通常达到 {accuracy}%",
+    "noUnplayed": "暂无可推荐的新谱面",
+    "noUnplayedDescription": "目前没有未玩过的谱面能提升你的 R 值。",
+    "loadError": "无法加载推荐，请稍后再试。",
     "filterButton": "筛选",
     "filters": {
       "all": "全部",
@@ -1601,6 +1612,7 @@
     "title": "成绩比较",
     "view": "比较视图",
     "you": "你 · {achievement}",
+    "notPlayed": "尚未游玩",
     "curveTab": "成绩曲线",
     "ratingTab": "按 Rating",
     "ratingHeading": "玩家 Rating 与达成率",
@@ -1614,6 +1626,7 @@
     "lessThan": "低于 {percent}",
     "ratingDescription": "根据所有游玩记录，比较 {count} 位玩家的 Rating 与达成率。圆点将样本按 125 点 Rating 和 0.1% 达成率分组，并分散在各组范围内显示，位置为近似值。你的 Rating 为 {rating}，达成率为 {achievement}。",
     "curveDescription": "估计相近 Rating 玩家中，达成率不高于各数值的比例。有 {percent} 的玩家达成率不高于你的 {achievement}，包含同分。",
+    "unplayedDescription": "玩家在此谱面的最佳成绩。你还没有玩过这个谱面。",
     "clusterDescription": "Rating {ratingMin}–{ratingMax}；达成率 {achievementMin}–{achievementMax}：{count} 条样本",
     "youDescription": "你：Rating {rating}，达成率 {achievement}"
   },

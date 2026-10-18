@@ -1,10 +1,10 @@
 import { db } from '@/lib/db';
 import { account, user } from '@/lib/db/schema-pg';
 import { renderLevelPrecise } from '@/lib/name-utils';
-import { addRatingsAndSort, SongWithRating } from '@/lib/rating-calculator';
 import { SongWithScore, Region } from '@/lib/types';
 import { fetchLatestSnapshotData } from '@/server/queries/snapshots';
-import { generateRecommendations, RecommendationData } from '@/server/queries/recommendations';
+import type { RecommendationData } from '@/server/queries/recommendations';
+import { buildRecommendations } from '@/server/services/recommendations';
 import { getLogger } from '@/lib/request-logger';
 import { waitUntil } from '@vercel/functions';
 import { and, eq } from 'drizzle-orm';
@@ -58,8 +58,14 @@ export async function executeRecommendCommand({
     }
 
     const { snapshot, songs } = data;
-    const songsWithRating = addRatingsAndSort(songs as SongWithScore[], snapshot.gameVersion) as SongWithRating[];
-    const recommendations = generateRecommendations(songsWithRating, snapshot.gameVersion);
+    const { improve: recommendations } = await buildRecommendations({
+      songs: songs as SongWithScore[],
+      gameVersion: snapshot.gameVersion,
+      region,
+      rating: snapshot.rating,
+      usePeers: true,
+      includeUnplayed: false,
+    });
 
     const deduped = recommendations.filter((rec, index, self) =>
       index === self.findIndex(r => r.song.songId === rec.song.songId && r.song.difficulty === rec.song.difficulty)

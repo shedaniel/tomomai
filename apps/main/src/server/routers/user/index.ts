@@ -11,6 +11,7 @@ import { platesRouter } from './plates';
 import { albumsRouter } from './albums';
 import { songsRouter } from './songs';
 import { percentileRouter } from './percentile';
+import { recommendationsRouter } from './recommendations';
 import { flagsRouter } from './flags';
 import { legalRouter } from './legal';
 import { miscRouter } from './misc';
@@ -81,7 +82,10 @@ export const userRouter = router({
 
   // Percentile
   getChartPercentiles: percentileRouter.getChartPercentiles,
-  getRecommendationPeers: percentileRouter.getRecommendationPeers,
+
+  // Recommendations
+  getRecommendations: recommendationsRouter.getRecommendations,
+  getPublicRecommendations: recommendationsRouter.getPublicRecommendations,
 
   // Flags
   getUserSelectableFlags: flagsRouter.getUserSelectableFlags,
