@@ -27,6 +27,14 @@ interface StatsCardProps {
 
 type Tier = { key: string; label: string; color: string; includes: string[] };
 
+// Closes every bar: played charts that miss the last tier, so the empty track is only unplayed charts
+const PLAYED_TIER: Tier = {
+  key: "played",
+  label: "",
+  color: "bg-[repeating-linear-gradient(135deg,var(--color-zinc-400)_0_2px,transparent_2px_5px)] dark:bg-[repeating-linear-gradient(135deg,var(--color-zinc-500)_0_2px,transparent_2px_5px)]",
+  includes: [],
+};
+
 // Cumulative steps from best to worst; A also counts AA and AAA, lower grades are left out
 const GRADE_TIERS: Tier[] = [
   { key: "SSS+", label: "SSS+", color: "bg-amber-300", includes: ["SSS+"] },
@@ -55,29 +63,36 @@ const FS_TIERS: Tier[] = [
 
 const MAX_LEVEL_ROWS = 8;
 
-type Counts = { grades: Record<string, number>; fc: Record<string, number>; fs: Record<string, number>; charts: number };
+type Counts = { grades: Record<string, number>; fc: Record<string, number>; fs: Record<string, number>; charts: number; played: number };
 type LevelRow = Counts & { key: string; label: string };
 
 function emptyCounts(): Counts {
-  return { grades: {}, fc: {}, fs: {}, charts: 0 };
+  return { grades: {}, fc: {}, fs: {}, charts: 0, played: 0 };
 }
 
-function mergeCounts(target: Counts, source: Partial<Counts> & { charts?: number }) {
+function mergeCounts(target: Counts, source: Partial<Counts> & { total?: number }) {
   for (const field of ["grades", "fc", "fs"] as const) {
     for (const [key, count] of Object.entries(source[field] ?? {})) {
       target[field][key] = (target[field][key] ?? 0) + count;
     }
   }
   target.charts += source.charts ?? 0;
+  target.played += source.played ?? source.total ?? 0;
 }
 
 function levelValue(level: string) {
   return parseFloat(level) + (level.endsWith("+") ? 0.5 : 0);
 }
 
+function tierPhrase(t: (key: string, values?: Record<string, string>) => string, tier: Tier) {
+  return tier === PLAYED_TIER ? t("played") : t("orBetter", { tier: tier.label });
+}
+
 function tierSegments(row: Counts, tiers: Tier[], field: "grades" | "fc" | "fs") {
   const counts = tiers.map(tier => tier.includes.reduce((sum, key) => sum + (row[field][key] ?? 0), 0));
-  return tiers.map((tier, index) => ({
+  const reached = counts.reduce((sum, count) => sum + count, 0);
+  counts.push(Math.max(0, row.played - reached));
+  return [...tiers, PLAYED_TIER].map((tier, index) => ({
     tier,
     count: counts[index],
     cumulative: counts.slice(0, index + 1).reduce((sum, count) => sum + count, 0),
@@ -102,7 +117,7 @@ function OrBetterRow({ segment, percent, isTouch }: { segment: ReturnType<typeof
     <>
       <span className="inline-flex items-center gap-1.5 font-medium">
         <span className={cn("rounded-sm", isTouch ? "h-2.5 w-2.5" : "h-2 w-2", segment.tier.color)} />
-        {t("orBetter", { tier: segment.tier.label })}
+        {tierPhrase(t, segment.tier)}
       </span>
       <span className="text-right text-muted-foreground">{segment.cumulative.toLocaleString()}</span>
       <span className="text-right w-14">{percent.toFixed(1)}%</span>
@@ -115,7 +130,7 @@ function StatsBar({ row, tiers, field, className }: { row: LevelRow; tiers: Tier
   const segments = tierSegments(row, tiers, field);
   const percent = (count: number) => row.charts > 0 ? (count / row.charts) * 100 : 0;
   const describe = (segment: typeof segments[number]) => t("tierTooltip", {
-    tier: segment.tier.label,
+    tier: tierPhrase(t, segment.tier),
     count: segment.cumulative.toLocaleString(),
     total: row.charts.toLocaleString(),
     percent: percent(segment.cumulative).toFixed(1),
@@ -200,7 +215,7 @@ function StatsSection({ title, breakdown, tiers, field }: {
           {tierSegments(all, tiers, field).map(({ tier, cumulative }) => (
             <span key={tier.key} className="inline-flex items-center gap-1.5">
               <span className={cn("h-2.5 w-2.5 rounded-sm", tier.color)} />
-              <span className="font-medium">{tier.label}</span>
+              <span className="font-medium">{tier === PLAYED_TIER ? t("played") : tier.label}</span>
               <span className="text-muted-foreground tabular-nums">
                 {all.charts > 0 ? ((cumulative / all.charts) * 100).toFixed(0) : 0}%
               </span>
