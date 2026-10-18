@@ -620,6 +620,15 @@
       },
       "revokeSuccess": "Access revoked",
       "revokeError": "Failed to revoke access"
+    },
+    "unsaved": {
+      "bar": "You have unsaved changes",
+      "title": "Leave without saving?",
+      "description": "Your changes on this page haven't been saved yet.",
+      "keepEditing": "Keep editing",
+      "discard": "Discard",
+      "saveAndLeave": "Save and leave",
+      "saving": "Saving..."
     }
   },
   "dataBanner": {

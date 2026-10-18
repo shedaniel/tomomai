@@ -25,7 +25,7 @@ const Sidebar = React.forwardRef<HTMLElement, SidebarProps>(
       <nav
         ref={ref}
         className={cn(
-          "flex sm:flex-col flex-row gap-x-1 sm:w-48 w-full shrink-0 overflow-x-auto",
+          "flex sm:flex-col flex-row gap-x-1 sm:w-48 w-full shrink-0 overflow-x-auto scrollbar-none scroll-fade-x",
           className
         )}
         {...props}

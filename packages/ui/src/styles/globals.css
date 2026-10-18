@@ -120,6 +120,7 @@
     --sidebar-accent-foreground: oklch(0.205 0 0);
     --sidebar-border: oklch(0.922 0 0);
     --sidebar-ring: oklch(0.708 0 0);
+    --scrollbar-thumb: color-mix(in oklab, var(--foreground) 22%, transparent);
 }
 
 .dark {
@@ -182,6 +183,7 @@
     --sidebar-accent-foreground: var(--foreground);
     --sidebar-border: var(--border);
     --sidebar-ring: var(--ring);
+    --scrollbar-thumb: color-mix(in oklab, var(--foreground) 24%, transparent);
 }
 
 @keyframes shimmer {
@@ -231,5 +233,96 @@
         font-optical-sizing: auto;
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
+    }
+}
+
+/* Thin, theme-coloured scrollbars for mouse users. The standard properties keep macOS
+ * overlay scrollbars, which ::-webkit-scrollbar styling would force always visible.
+ * scrollbar-width is not inherited, so it is set on every element. */
+@layer base {
+    @media (pointer: fine) {
+        * {
+            scrollbar-width: thin;
+            scrollbar-color: var(--scrollbar-thumb) transparent;
+        }
+    }
+}
+
+/* For strips that scroll sideways, such as tab rows, where a bar looks broken. */
+@utility scrollbar-none {
+    scrollbar-width: none;
+
+    &::-webkit-scrollbar {
+        display: none;
+    }
+}
+
+@property --scroll-fade-start {
+    syntax: "<length>";
+    inherits: false;
+    initial-value: 0px;
+}
+
+@property --scroll-fade-end {
+    syntax: "<length>";
+    inherits: false;
+    initial-value: 0px;
+}
+
+@keyframes scroll-fade-x {
+    0% {
+        --scroll-fade-start: 0px;
+        --scroll-fade-end: 1.5rem;
+    }
+
+    8% {
+        --scroll-fade-start: 1.5rem;
+    }
+
+    92% {
+        --scroll-fade-end: 1.5rem;
+    }
+
+    100% {
+        --scroll-fade-start: 1.5rem;
+        --scroll-fade-end: 0px;
+    }
+}
+
+/* Fades whichever edge of a sideways strip still has content beyond it. Without scroll-driven
+ * animations, or when the strip fits, nothing fades. */
+@utility scroll-fade-x {
+    mask-image: linear-gradient(to right, transparent, #000 var(--scroll-fade-start), #000 calc(100% - var(--scroll-fade-end)), transparent);
+
+    @supports (animation-timeline: scroll()) {
+        animation: scroll-fade-x linear both;
+        animation-timeline: scroll(self inline);
+    }
+}
+
+@keyframes scroll-edge-bottom {
+    from {
+        background-color: var(--edge-cover);
+        box-shadow: 0 -1px 0 0 var(--border);
+    }
+
+    to {
+        background-color: transparent;
+        box-shadow: 0 -1px 0 0 transparent;
+    }
+}
+
+/* A sticky footer over scrolling content: it covers the content with a hairline above until the
+ * scroller reaches the bottom, and is invisible when nothing scrolls, so short dialogs look unchanged.
+ * Without scroll-driven animations it always covers. */
+@utility scroll-edge-bottom {
+    --edge-cover: oklch(from var(--glass-strong) l c h / 1);
+    background-color: var(--edge-cover);
+
+    @supports (animation-timeline: scroll()) {
+        background-color: transparent;
+        animation: scroll-edge-bottom linear both;
+        animation-timeline: scroll();
+        animation-range: calc(100% - 1.5rem) 100%;
     }
 }
