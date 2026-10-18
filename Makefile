@@ -9,7 +9,7 @@ LOCAL_GUESS_DB_ENV = POSTGRES_URL=postgres://tomomai:tomomai@localhost:$(POSTGRE
 LOCAL_S3_ENV = R2_ENDPOINT=http://localhost:$(S3_PORT) R2_FORCE_PATH_STYLE=true \
 	R2_ACCESS_KEY_ID=tomomai R2_SECRET_ACCESS_KEY=tomomai-dev-secret R2_BUCKET=tomomai
 
-.PHONY: setup env up down migrate seed reset
+.PHONY: setup env up down migrate seed reset discord-tunnel discord-register
 
 setup: env up migrate seed
 	@echo "Local stack ready. Run: pnpm dev"
@@ -38,3 +38,12 @@ seed:
 reset:
 	docker compose down -v
 	$(MAKE) up migrate seed
+
+# Public URL for Discord's Interactions Endpoint, pointing at `pnpm dev`.
+# FORCE=1 replaces an endpoint that is not a quick tunnel.
+discord-tunnel:
+	@./scripts/discord-tunnel.sh
+
+# Needs NEXT_PUBLIC_DISCORD_APPLICATION_ID and DISCORD_BOT_TOKEN in .env.local.
+discord-register:
+	cd apps/main && pnpm discord:register
