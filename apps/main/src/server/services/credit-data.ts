@@ -165,13 +165,17 @@ function toSummary(rowsNewestFirst: SummaryRow[]): CreditSummary {
   };
 }
 
-/** Newest-first page of credits. `cursor` is the `at` of the last credit on the previous page. */
+/**
+ * Newest-first page of credits started before `before`. `cursor` is the `at`
+ * of the last credit on the previous page.
+ */
 export async function listCreditSummaries(
   userId: string,
   region: Region,
-  opts: { cursor?: number; limit: number },
+  opts: { before?: number; cursor?: number; limit: number },
 ): Promise<{ credits: CreditSummary[]; nextCursor: number | null }> {
   const rowLimit = opts.limit * 4 + 4;
+  const bound = opts.cursor ?? opts.before;
   const rows = await db
     .select(summaryColumns)
     .from(userRecentSongs)
@@ -180,7 +184,7 @@ export async function listCreditSummaries(
     .where(and(
       eq(userRecentSongs.userId, userId),
       eq(songs.region, region),
-      opts.cursor !== undefined ? lt(userRecentSongs.playedAt, new Date(opts.cursor * 1000)) : undefined,
+      bound !== undefined ? lt(userRecentSongs.playedAt, new Date(bound * 1000)) : undefined,
     ))
     .orderBy(desc(userRecentSongs.playedAt))
     .limit(rowLimit);

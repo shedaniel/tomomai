@@ -251,18 +251,17 @@ export function ExportImageCard({ selectedSnapshotData, region, showLastCredit =
   const [creditIsLoading, setCreditIsLoading] = useState(true);
   const [creditUrlExtra, setCreditUrlExtra] = useState<Record<string, string>>({});
 
-  // Credits up to the selected snapshot, matching the recent plays tab
-  const creditQueryOptions = {
-    initialCursor: Math.floor(snapshotFetchedAt.getTime() / 1000) + 1,
-    getNextPageParam: (page: { nextCursor: number | null }) => page.nextCursor ?? undefined,
-  };
+  // Credits up to the selected snapshot, matching the recent plays tab. The bound
+  // is part of the input so each snapshot gets its own cached list.
+  const creditsBefore = Math.floor(snapshotFetchedAt.getTime() / 1000) + 1;
+  const getNextPageParam = (page: { nextCursor: number | null }) => page.nextCursor ?? undefined;
   const ownCreditsQuery = trpc.user.getCredits.useInfiniteQuery(
-    { region, limit: CREDIT_PAGE_SIZE },
-    { ...creditQueryOptions, enabled: showLastCredit && !isPublic },
+    { region, limit: CREDIT_PAGE_SIZE, before: creditsBefore },
+    { getNextPageParam, enabled: showLastCredit && !isPublic },
   );
   const publicCreditsQuery = trpc.user.getPublicCredits.useInfiniteQuery(
-    { region, limit: CREDIT_PAGE_SIZE, snapshotId: publicSnapshotId! },
-    { ...creditQueryOptions, enabled: showLastCredit && isPublic },
+    { region, limit: CREDIT_PAGE_SIZE, before: creditsBefore, snapshotId: publicSnapshotId! },
+    { getNextPageParam, enabled: showLastCredit && isPublic },
   );
   const creditsQuery = isPublic ? publicCreditsQuery : ownCreditsQuery;
   const credits = useMemo(
@@ -307,7 +306,7 @@ export function ExportImageCard({ selectedSnapshotData, region, showLastCredit =
   );
   const publicDaysQuery = trpc.user.getPublicDailyPlaysAvailableDays.useQuery(
     { snapshotId: publicSnapshotId!, region },
-    { enabled: isPublic },
+    { enabled: isPublic && showLastCredit },
   );
   const availableDays = (isPublic ? publicDaysQuery.data : ownDaysQuery.data) ?? [];
   const daysLoading = (isPublic ? publicDaysQuery.isFetching : ownDaysQuery.isFetching) && availableDays.length === 0;

@@ -1,8 +1,6 @@
 import { getServerSession } from '@/lib/auth-server';
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/db';
-import { user, userSnapshots } from '@/lib/db/schema-pg';
-import { and, eq } from 'drizzle-orm';
+import { resolvePlayHistoryOwner } from '@/server/queries/public-access';
 import { renderRedirectUrl } from '@/lib/render-token';
 import { buildDailyPlaysMessage } from '@/lib/render-data';
 import { requestLogger } from '@/lib/request-logger';
@@ -33,21 +31,16 @@ export async function GET(request: NextRequest) {
   }
   const { region, snapshotId, day } = parsed.data;
 
+  const session = await getServerSession();
   let userId: string;
   if (snapshotId) {
-    const snapshot = await db
-      .select({ userId: userSnapshots.userId })
-      .from(userSnapshots)
-      .innerJoin(user, eq(userSnapshots.userId, user.id))
-      .where(and(eq(userSnapshots.publicId, snapshotId), eq(user.publishProfile, true)))
-      .limit(1);
-    if (snapshot.length === 0) {
+    const ownerId = await resolvePlayHistoryOwner(snapshotId, session?.user?.id);
+    if (!ownerId) {
       return NextResponse.json({ error: 'Snapshot not found or not public' }, { status: 404 });
     }
-    userId = snapshot[0].userId;
+    userId = ownerId;
     log.info({ userId, snapshotId }, 'Public mode');
   } else {
-    const session = await getServerSession();
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }

@@ -344,6 +344,9 @@ export function RecommendationCard({ selectedSnapshotData, flags, region, source
   }), [data?.improve, songsById]);
   const tryNew = data?.tryNew ?? null;
   const activeTab: RecommendationTab = tab === "tryNew" && tryNew ? "tryNew" : "improve";
+  // Unplayed charts can't be in B15/B35, so that option falls back to all there and returns on Improve
+  const tryNewFilter: FilterCategory = filterCategory === "best" ? "all" : filterCategory;
+  const activeFilter = activeTab === "tryNew" ? tryNewFilter : filterCategory;
   const activeList = useMemo<(RecommendationData | UnplayedRecommendationData)[]>(
     () => activeTab === "tryNew" ? tryNew ?? [] : improve,
     [activeTab, tryNew, improve],
@@ -397,8 +400,8 @@ export function RecommendationCard({ selectedSnapshotData, flags, region, source
     [improve, flags.recommendationFilters, advancedFilters, filterCategory],
   );
   const filteredTryNew = useMemo(
-    () => filterRecommendations(tryNew ?? [], flags.recommendationFilters, advancedFilters, filterCategory).slice(0, MAX_ROWS),
-    [tryNew, flags.recommendationFilters, advancedFilters, filterCategory],
+    () => filterRecommendations(tryNew ?? [], flags.recommendationFilters, advancedFilters, tryNewFilter).slice(0, MAX_ROWS),
+    [tryNew, flags.recommendationFilters, advancedFilters, tryNewFilter],
   );
 
   if (isPending) return <RecommendationCardSkeleton />;
@@ -443,7 +446,7 @@ export function RecommendationCard({ selectedSnapshotData, flags, region, source
               </Button>
             )}
             {!flags.recommendationFilters && (
-              <Select value={filterCategory} onValueChange={(value) => setFilterCategory(value as typeof filterCategory)}>
+              <Select value={activeFilter} onValueChange={(value) => setFilterCategory(value as typeof filterCategory)}>
                 <SelectTrigger className="w-40 h-8">
                   <SelectValue />
                 </SelectTrigger>

@@ -52,7 +52,8 @@ export async function resolvePublicUserByUsername(username: string) {
   return userData;
 }
 
-export async function resolvePublicSnapshotUserId(snapshotPublicId: string) {
+/** `requireScoreDetails` gates play history (recents, credits, daily plays) behind the owner's score-details setting. */
+export async function resolvePublicSnapshotUserId(snapshotPublicId: string, opts?: { requireScoreDetails?: boolean }) {
   const snapshotRecord = await db
     .select({
       userId: userSnapshots.userId,
@@ -64,7 +65,8 @@ export async function resolvePublicSnapshotUserId(snapshotPublicId: string) {
     .where(
       and(
         eq(userSnapshots.publicId, snapshotPublicId),
-        eq(user.publishProfile, true)
+        eq(user.publishProfile, true),
+        opts?.requireScoreDetails ? eq(user.profileShowScoreDetails, true) : undefined,
       )
     )
     .limit(1);
@@ -77,4 +79,24 @@ export async function resolvePublicSnapshotUserId(snapshotPublicId: string) {
   }
 
   return snapshotRecord[0];
+}
+
+/**
+ * Owner of a snapshot whose play history the viewer may render: the owner
+ * themselves, or anyone when the profile is public with score details shown.
+ */
+export async function resolvePlayHistoryOwner(snapshotPublicId: string, viewerId: string | undefined): Promise<string | null> {
+  const [row] = await db
+    .select({
+      userId: userSnapshots.userId,
+      publishProfile: user.publishProfile,
+      showScoreDetails: user.profileShowScoreDetails,
+    })
+    .from(userSnapshots)
+    .innerJoin(user, eq(userSnapshots.userId, user.id))
+    .where(eq(userSnapshots.publicId, snapshotPublicId))
+    .limit(1);
+  if (!row) return null;
+  if (row.userId === viewerId || (row.publishProfile && row.showScoreDetails)) return row.userId;
+  return null;
 }

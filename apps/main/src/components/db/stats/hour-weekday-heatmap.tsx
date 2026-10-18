@@ -73,7 +73,11 @@ export function HourWeekdayHeatmap({ data }: HourWeekdayHeatmapProps) {
                       active?.dow === dow && active.hour === h && "ring-2 ring-foreground",
                     )}
                     onPointerEnter={(event) => { if (event.pointerType === "mouse") setActive({ dow, hour: h }); }}
-                    onClick={() => setActive(current => current?.dow === dow && current.hour === h ? null : { dow, hour: h })}
+                    // Hover already selects for a mouse, so only taps toggle
+                    onPointerUp={(event) => {
+                      if (event.pointerType === "mouse") return;
+                      setActive(current => current?.dow === dow && current.hour === h ? null : { dow, hour: h });
+                    }}
                   >
                     {/* Opacity encodes the count, so it lives on an inner layer to keep the highlight ring solid */}
                     <div className="h-full w-full rounded-sm bg-primary" style={{ opacity: v === 0 ? 0.08 : 0.15 + intensity * 0.85 }} />

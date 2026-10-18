@@ -8,6 +8,7 @@ const regionSchema = z.enum(getEnabledRegions());
 
 const listInput = z.object({
   region: regionSchema,
+  before: z.number().int().positive().optional(),
   cursor: z.number().int().positive().optional(),
   limit: z.number().int().min(1).max(50).default(20),
 });
@@ -18,7 +19,7 @@ const findInput = z.object({
 });
 
 function list(userId: string, input: z.infer<typeof listInput>) {
-  return listCreditSummaries(userId, input.region, { cursor: input.cursor, limit: input.limit });
+  return listCreditSummaries(userId, input.region, { before: input.before, cursor: input.cursor, limit: input.limit });
 }
 
 export const creditsRouter = router({
@@ -29,7 +30,7 @@ export const creditsRouter = router({
   getPublicCredits: publicProcedure
     .input(listInput.extend({ snapshotId: z.string() }))
     .query(async ({ input }) => {
-      const { userId } = await resolvePublicSnapshotUserId(input.snapshotId);
+      const { userId } = await resolvePublicSnapshotUserId(input.snapshotId, { requireScoreDetails: true });
       return list(userId, input);
     }),
 
@@ -40,7 +41,7 @@ export const creditsRouter = router({
   getPublicCredit: publicProcedure
     .input(findInput.extend({ snapshotId: z.string() }))
     .query(async ({ input }) => {
-      const { userId } = await resolvePublicSnapshotUserId(input.snapshotId);
+      const { userId } = await resolvePublicSnapshotUserId(input.snapshotId, { requireScoreDetails: true });
       return findCreditSummary(userId, input.region, input.at);
     }),
 });
