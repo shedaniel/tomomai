@@ -119,7 +119,6 @@
       "inviteUsed": "這個邀請已被使用。",
       "inviteExpired": "這個邀請已過期。",
       "accountNotLinked": "這個帳號尚未連結到你的使用者，且無法自動連結。\n\n你可能已經有一個使用相同電子郵件的帳號。\n\n請先用最初註冊時的方式登入，再到「設定 → 帳號」連結此帳號。",
-      "emailMismatch": "此帳號的電子郵件與目前帳號不符。",
       "alreadyLinked": "此帳號已連結到其他使用者。",
       "emailMissing": "此帳號沒有提供電子郵件地址，而登入 tomomai 需要電子郵件地址。",
       "restart": "登入過程被中斷或逾時，請再試一次。",
@@ -686,6 +685,15 @@
       },
       "revokeSuccess": "已撤銷存取權",
       "revokeError": "撤銷存取權失敗"
+    },
+    "unsaved": {
+      "bar": "你有尚未儲存的變更",
+      "title": "要不儲存就離開嗎？",
+      "description": "這個頁面的變更還沒有儲存。",
+      "keepEditing": "繼續編輯",
+      "discard": "捨棄",
+      "saveAndLeave": "儲存並離開",
+      "saving": "儲存中……"
     }
   },
   "dataBanner": {
