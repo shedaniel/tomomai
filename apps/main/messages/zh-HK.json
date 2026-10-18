@@ -785,6 +785,18 @@
       "title": "開發者",
       "exportJson": "匯出紀錄為 JSON",
       "exporting": "匯出中……"
+    },
+    "exportImageCard": {
+      "profileImage": "個人檔案圖片",
+      "lastCredit": "遊玩紀錄",
+      "dailyPlays": "每日遊玩",
+      "dayLabel": "日期",
+      "dayPlaceholder": "選擇日期",
+      "dayLoading": "正在載入日期...",
+      "noPlays": "沒有每日遊玩紀錄",
+      "chooseCredit": "選擇一局",
+      "creditLoading": "正在載入...",
+      "noCredits": "沒有遊玩紀錄"
     }
   },
   "albums": {
@@ -866,7 +878,8 @@
       "totalLoss": "失分"
     },
     "clickToExpand": "點擊展開詳情",
-    "clickToCollapse": "點擊收起"
+    "clickToCollapse": "點擊收起",
+    "exportCredit": "匯出這一局"
   },
   "events": {
     "title": "活動地圖",

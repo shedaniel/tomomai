@@ -785,6 +785,18 @@
       "title": "開発者",
       "exportJson": "スナップショットをJSONでエクスポート",
       "exporting": "エクスポート中..."
+    },
+    "exportImageCard": {
+      "profileImage": "プロフィール画像",
+      "lastCredit": "クレジット",
+      "dailyPlays": "日別プレイ",
+      "dayLabel": "日付",
+      "dayPlaceholder": "日付を選択",
+      "dayLoading": "日付を読み込み中...",
+      "noPlays": "この日のプレイ記録がありません",
+      "chooseCredit": "クレジットを選択",
+      "creditLoading": "クレジットを読み込み中...",
+      "noCredits": "クレジットがありません"
     }
   },
   "albums": {
@@ -866,7 +878,8 @@
       "totalLoss": "ロス"
     },
     "clickToExpand": "クリックして詳細を展開",
-    "clickToCollapse": "クリックして折りたたむ"
+    "clickToCollapse": "クリックして折りたたむ",
+    "exportCredit": "このクレジットを画像出力"
   },
   "events": {
     "title": "ちほー",

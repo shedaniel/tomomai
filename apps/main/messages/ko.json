@@ -619,6 +619,18 @@
       "title": "Developer",
       "exportJson": "Export Snapshot as JSON",
       "exporting": "Exporting..."
+    },
+    "exportImageCard": {
+      "profileImage": "프로필 이미지",
+      "lastCredit": "크레딧",
+      "dailyPlays": "일별 플레이",
+      "dayLabel": "날짜",
+      "dayPlaceholder": "날짜 선택",
+      "dayLoading": "날짜 불러오는 중...",
+      "noPlays": "일별 플레이 기록이 없습니다",
+      "chooseCredit": "크레딧 선택",
+      "creditLoading": "크레딧 불러오는 중...",
+      "noCredits": "크레딧이 없습니다"
     }
   },
   "albums": {
@@ -698,7 +710,8 @@
       "type": "타입",
       "total": "합계",
       "totalLoss": "감점"
-    }
+    },
+    "exportCredit": "이 크레딧 내보내기"
   },
   "events": {
     "title": "지방(Chiho)",

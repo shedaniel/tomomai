@@ -793,7 +793,10 @@
       "dayLabel": "Day",
       "dayPlaceholder": "Select a day",
       "dayLoading": "Loading days...",
-      "noPlays": "No daily plays available"
+      "noPlays": "No daily plays available",
+      "chooseCredit": "Choose a credit",
+      "creditLoading": "Loading credits...",
+      "noCredits": "No credits available"
     }
   },
   "albums": {
@@ -875,7 +878,8 @@
       "totalLoss": "Loss"
     },
     "clickToExpand": "Click to expand details",
-    "clickToCollapse": "Click to collapse"
+    "clickToCollapse": "Click to collapse",
+    "exportCredit": "Export this credit"
   },
   "events": {
     "title": "Events",

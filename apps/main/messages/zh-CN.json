@@ -785,6 +785,18 @@
       "title": "开发者",
       "exportJson": "导出记录为 JSON",
       "exporting": "导出中..."
+    },
+    "exportImageCard": {
+      "profileImage": "个人资料图片",
+      "lastCredit": "游玩记录",
+      "dailyPlays": "每日游玩",
+      "dayLabel": "日期",
+      "dayPlaceholder": "选择日期",
+      "dayLoading": "正在加载日期...",
+      "noPlays": "暂无每日游玩记录",
+      "chooseCredit": "选择一局",
+      "creditLoading": "正在加载...",
+      "noCredits": "暂无游玩记录"
     }
   },
   "albums": {
@@ -866,7 +878,8 @@
       "totalLoss": "失分"
     },
     "clickToExpand": "点击展开详情",
-    "clickToCollapse": "点击折叠"
+    "clickToCollapse": "点击折叠",
+    "exportCredit": "导出这一局"
   },
   "events": {
     "title": "活动地图",

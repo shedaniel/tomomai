@@ -6,6 +6,7 @@ import { fetchRouter } from './fetch';
 import { invitesRouter } from './invites';
 import { recentsRouter } from './recents';
 import { dailyPlaysRouter } from './daily-plays';
+import { creditsRouter } from './credits';
 import { statsRouter } from './stats';
 import { platesRouter } from './plates';
 import { albumsRouter } from './albums';
@@ -61,6 +62,12 @@ export const userRouter = router({
   // Daily plays
   getDailyPlaysAvailableDays: dailyPlaysRouter.getAvailableDays,
   getPublicDailyPlaysAvailableDays: dailyPlaysRouter.getPublicAvailableDays,
+
+  // Credits
+  getCredits: creditsRouter.getCredits,
+  getPublicCredits: creditsRouter.getPublicCredits,
+  getCredit: creditsRouter.getCredit,
+  getPublicCredit: creditsRouter.getPublicCredit,
 
   // Stats
   getPlayerStats: statsRouter.getPlayerStats,

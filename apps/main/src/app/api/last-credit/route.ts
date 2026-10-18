@@ -15,6 +15,7 @@ const searchParams = z.object({
   region: z.enum(getEnabledRegions()),
   snapshotId: z.string().min(1).optional(),
   beforeDate: z.iso.datetime().optional(),
+  at: z.coerce.number().int().positive().optional(),
 });
 
 /**
@@ -31,7 +32,7 @@ export async function GET(request: NextRequest) {
       { status: 400 },
     );
   }
-  const { region, snapshotId, beforeDate } = parsed.data;
+  const { region, snapshotId, beforeDate, at } = parsed.data;
 
   let userId: string;
   if (snapshotId) {
@@ -59,6 +60,7 @@ export async function GET(request: NextRequest) {
     userId,
     region,
     beforeDate: beforeDate ? new Date(beforeDate) : undefined,
+    startAt: at ? new Date(at * 1000) : undefined,
     scale: 2,
   });
   if (!result.ok) {
