@@ -1,3 +1,4 @@
+import { env } from '@/env';
 import { db } from '@/lib/db';
 import { fetchMaimaiData } from '@/lib/maimai';
 import { fetchSessions, userTokens, user } from '@/lib/db/schema-pg';
@@ -86,7 +87,7 @@ export async function demoFetch(userId: string, region: Region): Promise<StartFe
 // Extract startFetch logic from tRPC procedure
 export async function startFetchServer(userId: string, region: Region, token?: string, options?: { skipAfter?: boolean }): Promise<StartFetchResult> {
   // Check if demo mode is enabled
-  if (process.env.DEMO_FETCH === 'true') {
+  if (env.DEMO_FETCH === 'true') {
     return demoFetch(userId, region);
   }
 

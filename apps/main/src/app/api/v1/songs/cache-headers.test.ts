@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { SONG_CATALOG_CACHE_HEADERS } from "./cache-headers";
 import { GET } from "./route";
 import { NextRequest } from "next/server";
@@ -6,14 +6,11 @@ import { GET as getParents } from "../parents/route";
 
 const EXPECTED_SONG_CATALOG_CACHE_VALUE = "public, max-age=3600, stale-while-revalidate=86400";
 
-const originalR2Url = process.env.NEXT_PUBLIC_R2_URL;
+const env = vi.hoisted(() => ({ NEXT_PUBLIC_R2_URL: undefined as string | undefined }));
+vi.mock("@/env", () => ({ env }));
 
 afterEach(() => {
-  if (originalR2Url === undefined) {
-    delete process.env.NEXT_PUBLIC_R2_URL;
-  } else {
-    process.env.NEXT_PUBLIC_R2_URL = originalR2Url;
-  }
+  env.NEXT_PUBLIC_R2_URL = undefined;
 });
 
 describe("SONG_CATALOG_CACHE_HEADERS", () => {
@@ -26,7 +23,7 @@ describe("SONG_CATALOG_CACHE_HEADERS", () => {
   });
 
   it("redirects the stable API path to the R2 catalog with the shared cache policy", () => {
-    process.env.NEXT_PUBLIC_R2_URL = "https://cdn.example.test/";
+    env.NEXT_PUBLIC_R2_URL = "https://cdn.example.test/";
 
     const response = GET(new NextRequest("https://example.test/api/v1/songs?region=jp&gameVersion=11"));
 
@@ -43,7 +40,7 @@ describe("SONG_CATALOG_CACHE_HEADERS", () => {
   });
 
   it("redirects the parent dictionary to the new R2 namespace", () => {
-    process.env.NEXT_PUBLIC_R2_URL = "https://cdn.example.test";
+    env.NEXT_PUBLIC_R2_URL = "https://cdn.example.test";
     const response = getParents();
     expect(response.headers.get("location")).toBe("https://cdn.example.test/api/v1/catalog-parent-v1/parents");
     expect(response.headers.get("Cache-Control")).toBe(EXPECTED_SONG_CATALOG_CACHE_VALUE);

@@ -1,3 +1,4 @@
+import { env } from "@/env";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 
@@ -49,8 +50,8 @@ export function safeDecodeURIComponent(value: string): string {
 
 // R2 CDN URLs are pre-optimized WebP — skip Next.js image optimization for them
 export function isR2Url(url: string): boolean {
-  const r2Base = process.env.NEXT_PUBLIC_R2_URL;
-  const r2BaseCN = process.env.NEXT_PUBLIC_R2_URL_CN;
+  const r2Base = env.NEXT_PUBLIC_R2_URL;
+  const r2BaseCN = env.NEXT_PUBLIC_R2_URL_CN;
   return (!!r2Base && url.startsWith(r2Base)) || (!!r2BaseCN && url.startsWith(r2BaseCN));
 }
 
@@ -67,8 +68,8 @@ function getCountryFromCookie(): string | null {
 // the GFW. No-op on the server, when the cookie isn't set, or when the URL
 // isn't on the default R2 base.
 function maybeRewriteR2ForCN(url: string): string {
-  const base = process.env.NEXT_PUBLIC_R2_URL;
-  const cnBase = process.env.NEXT_PUBLIC_R2_URL_CN;
+  const base = env.NEXT_PUBLIC_R2_URL;
+  const cnBase = env.NEXT_PUBLIC_R2_URL_CN;
   if (!base || !cnBase || !url.startsWith(base)) return url;
   if (getCountryFromCookie() !== 'CN') return url;
   return cnBase + url.slice(base.length);
@@ -76,7 +77,7 @@ function maybeRewriteR2ForCN(url: string): string {
 
 export function getTypeBadgeUrl(type: "dx" | "std" | string): string {
   const basename = type === "dx" ? "music_dx" : "music_standard";
-  return `${process.env.NEXT_PUBLIC_R2_URL}/covers/${basename}.webp`;
+  return `${env.NEXT_PUBLIC_R2_URL}/covers/${basename}.webp`;
 }
 
 export function getLogoUrl(gameVersion: number, region: "intl" | "jp" | "cn"): string {

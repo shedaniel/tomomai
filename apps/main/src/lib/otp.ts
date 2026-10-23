@@ -1,3 +1,4 @@
+import { env } from "@/env";
 import { totp } from "otplib";
 import { createHmac, timingSafeEqual } from "crypto";
 
@@ -9,21 +10,13 @@ const configuredTotp = totp.clone({
   step: OTP_PERIOD_SECONDS,
 });
 
-function getMasterSecret(): string {
-  const secret = process.env.MAIMAI_TOTP_SECRET;
-  if (!secret) {
-    throw new Error("MAIMAI_TOTP_SECRET environment variable is not set");
-  }
-  return secret;
-}
-
 function deriveUserKey(userId: string): string {
-  return createHmac("sha256", getMasterSecret()).update(userId).digest("hex");
+  return createHmac("sha256", env.MAIMAI_TOTP_SECRET).update(userId).digest("hex");
 }
 
 export function createOpaqueUserId(userId: string): string {
   const payload = Buffer.from(userId, "utf8").toString("base64url");
-  const signature = createHmac("sha256", getMasterSecret())
+  const signature = createHmac("sha256", env.MAIMAI_TOTP_SECRET)
     .update(userId)
     .digest("base64url");
   return `${payload}.${signature}`;
@@ -42,7 +35,7 @@ export function decodeOpaqueUserId(opaque: string): string | null {
     return null;
   }
 
-  const expectedSignature = createHmac("sha256", getMasterSecret())
+  const expectedSignature = createHmac("sha256", env.MAIMAI_TOTP_SECRET)
     .update(userId)
     .digest("base64url");
 

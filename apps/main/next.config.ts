@@ -6,6 +6,7 @@ import { execSync } from "node:child_process";
 import fs from "node:fs";
 import matter from "gray-matter";
 import path from 'path';
+import "./src/env";
 
 const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts');
 const withAnalyzer = withBundleAnalyzer({ enabled: process.env.ANALYZE === 'true' });

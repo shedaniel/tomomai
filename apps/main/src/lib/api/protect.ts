@@ -1,3 +1,4 @@
+import { env } from "@/env";
 import { type NextRequest } from "next/server";
 import { createHash } from "crypto";
 import { requestLogger } from "@/lib/request-logger";
@@ -73,7 +74,7 @@ async function verifyOAuthToken(
   // ── JWT fast-path ──────────────────────────────────────────────────────
   if ((token.match(/\./g) ?? []).length === 2) {
     const baseUrl =
-      process.env.BETTER_AUTH_URL ?? process.env.NEXT_PUBLIC_APP_URL ?? resolveBaseUrl();
+      env.BETTER_AUTH_URL ?? env.NEXT_PUBLIC_APP_URL ?? resolveBaseUrl();
     const issuer = `${baseUrl}/api/auth`;
     try {
       const payload = await verifyAccessToken(token, {

@@ -1,3 +1,4 @@
+import { env } from "@/env";
 import { NextRequest, NextResponse } from "next/server";
 import { nanoid } from "nanoid";
 import { getServerSession } from "@/lib/auth-server";
@@ -11,8 +12,8 @@ const STATE_TTL_SECONDS = 600;
 
 export async function GET(req: NextRequest) {
   const { log } = requestLogger(req, "oauth/lxns/start");
-  const clientId = process.env.LXNS_CLIENT_ID;
-  const clientSecret = process.env.LXNS_CLIENT_SECRET;
+  const clientId = env.LXNS_CLIENT_ID;
+  const clientSecret = env.LXNS_CLIENT_SECRET;
   if (!clientId || !clientSecret) {
     log.warn("start blocked: env vars not configured");
     return NextResponse.json(
@@ -29,7 +30,7 @@ export async function GET(req: NextRequest) {
 
   const baseUrl = resolveBaseUrlFromHeaders(req.headers);
   const redirectUri =
-    process.env.LXNS_REDIRECT_URI || `${baseUrl}/api/oauth/lxns/callback`;
+    env.LXNS_REDIRECT_URI || `${baseUrl}/api/oauth/lxns/callback`;
   const state = nanoid(32);
 
   const params = new URLSearchParams({

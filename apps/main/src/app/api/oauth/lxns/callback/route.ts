@@ -1,3 +1,4 @@
+import { env } from "@/env";
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "@/lib/auth-server";
 import { resolveBaseUrlFromHeaders } from "@/lib/base-url";
@@ -18,8 +19,8 @@ function html(body: { ok: boolean; error?: string }): NextResponse {
 
 export async function GET(req: NextRequest) {
   const { log } = requestLogger(req, "oauth/lxns/callback");
-  const clientId = process.env.LXNS_CLIENT_ID;
-  const clientSecret = process.env.LXNS_CLIENT_SECRET;
+  const clientId = env.LXNS_CLIENT_ID;
+  const clientSecret = env.LXNS_CLIENT_SECRET;
   if (!clientId || !clientSecret) {
     log.warn("callback blocked: env vars not configured");
     return html({ ok: false, error: "lxns_oauth_not_configured" });
@@ -65,7 +66,7 @@ export async function GET(req: NextRequest) {
 
   const baseUrl = resolveBaseUrlFromHeaders(req.headers);
   const redirectUri =
-    process.env.LXNS_REDIRECT_URI || `${baseUrl}/api/oauth/lxns/callback`;
+    env.LXNS_REDIRECT_URI || `${baseUrl}/api/oauth/lxns/callback`;
 
   const result = await exchangeLxnsCode(code, redirectUri);
   if (!result.isValid || !result.token) {

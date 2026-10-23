@@ -1,5 +1,6 @@
 "use client";
 
+import { env } from "@/env";
 import { Button } from "@tomomai/ui";
 import {
   ResponsiveDialog,
@@ -15,7 +16,7 @@ import { format } from "date-fns";
 import { trpc } from "@/lib/trpc-client";
 import { useTranslations } from "next-intl";
 
-const SIGNUP_TYPE = process.env.NEXT_PUBLIC_ACCOUNT_SIGNUP_TYPE || 'disabled';
+const SIGNUP_TYPE = env.NEXT_PUBLIC_ACCOUNT_SIGNUP_TYPE;
 
 interface Invite {
   id: string;

@@ -1,13 +1,8 @@
+import { env } from "@/env";
 import crypto from "node:crypto";
 
 function getSecret(): string {
-  const secret = process.env.GUESS_DAILY_SECRET;
-  if (!secret || secret.length < 16) {
-    throw new Error(
-      "GUESS_DAILY_SECRET is missing or too short. Set it in apps/guess/.env.local — see .env.example.",
-    );
-  }
-  return secret;
+  return env.GUESS_DAILY_SECRET;
 }
 
 /**

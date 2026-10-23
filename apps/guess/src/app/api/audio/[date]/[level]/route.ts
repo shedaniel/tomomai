@@ -1,3 +1,4 @@
+import { env } from "@/env";
 import { spawn } from "node:child_process";
 import { NextRequest, NextResponse } from "next/server";
 import ffmpegPath from "ffmpeg-static";
@@ -49,7 +50,7 @@ function cacheSet(key: string, buf: Buffer): void {
  */
 function resolveSlug(slug: string): string | null {
   if (slug.startsWith("debug")) {
-    const debugKey = process.env.DEBUG_KEY;
+    const debugKey = env.DEBUG_KEY;
     if (!debugKey) return null;
     if (slug !== `debug${debugKey}`) return null;
     return `debug-${debugKey}`;

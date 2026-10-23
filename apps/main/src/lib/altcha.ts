@@ -1,9 +1,10 @@
+import { env } from "@/env";
 import { createChallenge, verifySolution, randomInt, HmacAlgorithm, type Challenge, type Payload } from "altcha-lib";
 import { deriveKey } from "altcha-lib/algorithms/argon2id";
 import { redis } from "@/lib/redis";
 
 function getHmacKey(): string {
-  const key = process.env.ALTCHA_HMAC_KEY;
+  const key = env.ALTCHA_HMAC_KEY;
   if (!key && process.env.NODE_ENV !== "development") {
     throw new Error("ALTCHA_HMAC_KEY must be set in non-development environments");
   }

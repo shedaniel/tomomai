@@ -1,4 +1,5 @@
 import pino, { type Logger } from "pino";
+import { env } from "../env";
 
 /**
  * Service logger. Unlike apps/main's logger (which juggles edge/serverless
@@ -13,7 +14,7 @@ import pino, { type Logger } from "pino";
 const isProd = process.env.NODE_ENV === "production";
 
 export const logger: Logger = pino({
-  level: process.env.LOG_LEVEL || (isProd ? "info" : "debug"),
+  level: env.LOG_LEVEL ?? (isProd ? "info" : "debug"),
   ...(isProd
     ? {}
     : {

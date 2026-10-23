@@ -1,3 +1,4 @@
+import { env } from "@/env";
 import { count } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { user } from "@/lib/db/schema-pg";
@@ -5,7 +6,7 @@ import { user } from "@/lib/db/schema-pg";
 export type SignupType = "disabled" | "invite-only" | "enabled";
 
 export const SIGNUP_TYPE: SignupType = (() => {
-  const raw = process.env.NEXT_PUBLIC_ACCOUNT_SIGNUP_TYPE;
+  const raw = env.NEXT_PUBLIC_ACCOUNT_SIGNUP_TYPE;
   return raw === "enabled" || raw === "invite-only" ? raw : "disabled";
 })();
 

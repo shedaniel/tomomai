@@ -1,3 +1,4 @@
+import { env } from "@/env";
 import { get } from "@vercel/edge-config";
 
 /**
@@ -35,7 +36,7 @@ export async function getCachedEdgeConfig<T>(
   ttlMs: number = DEFAULT_TTL_MS,
 ): Promise<T | undefined> {
   // Local dev has no Edge Config store; every flag reads as unset (maintenance off).
-  if (!process.env.EDGE_CONFIG) return undefined;
+  if (!env.EDGE_CONFIG) return undefined;
 
   const now = Date.now();
   const hit = cache.get(key);

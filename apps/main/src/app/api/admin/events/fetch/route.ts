@@ -1,3 +1,4 @@
+import { env } from "@/env";
 import { generateText, tool, stepCountIs, hasToolCall } from "ai";
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import { load } from "cheerio";
@@ -191,7 +192,7 @@ Rules:
 const FALLBACK_MODEL = "google/gemini-3.1-flash-lite-preview";
 
 async function runScraper(modelId: string, content: string, url: string, log: any): Promise<Event[]> {
-  const openrouter = createOpenRouter({ apiKey: process.env.OPENROUTER_KEY! });
+  const openrouter = createOpenRouter({ apiKey: env.OPENROUTER_KEY! });
   const model = openrouter(modelId);
   const extractedEvents: Event[] = [];
 
@@ -223,7 +224,7 @@ async function runScraper(modelId: string, content: string, url: string, log: an
 }
 
 async function scrapePageForEvents(content: string, url: string, log: any): Promise<Event[]> {
-  const primaryModel = process.env.AI_MODEL || "anthropic/claude-sonnet-4-5-20250514";
+  const primaryModel = env.AI_MODEL;
 
   log.debug({ url, size: content.length }, "Starting scraper agent");
 
@@ -276,8 +277,8 @@ export function extractLinks(content: string, alreadyVisited: Set<string>): stri
 
 /** Use AI to determine whether a page should be scraped for event data */
 async function shouldScrapePage(content: string, url: string, log: any): Promise<boolean> {
-  const openrouter = createOpenRouter({ apiKey: process.env.OPENROUTER_KEY! });
-  const model = openrouter(process.env.AI_MODEL || "anthropic/claude-sonnet-4-5-20250514");
+  const openrouter = createOpenRouter({ apiKey: env.OPENROUTER_KEY! });
+  const model = openrouter(env.AI_MODEL);
 
   let shouldScrape = false;
 
@@ -357,7 +358,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const adminToken = process.env.ADMIN_UPDATE_TOKEN;
+    const adminToken = env.ADMIN_UPDATE_TOKEN;
     if (!adminToken) {
       log.error("ADMIN_UPDATE_TOKEN environment variable not set");
       return NextResponse.json(

@@ -1,3 +1,5 @@
+import { env } from "@/env";
+
 /**
  * Resolve the canonical base URL for this deployment. Mirrors the helper in
  * `apps/main/src/lib/base-url.ts` so robots / sitemap / metadata all agree.
@@ -8,9 +10,9 @@
  *   3. Hardcoded production URL.
  */
 export function resolveBaseUrl(): string {
-  const explicit = process.env.NEXT_PUBLIC_SITE_URL;
+  const explicit = env.NEXT_PUBLIC_SITE_URL;
   if (explicit) return explicit.replace(/\/$/, "");
-  const vercel = process.env.VERCEL_PROJECT_PRODUCTION_URL;
+  const vercel = env.VERCEL_PROJECT_PRODUCTION_URL;
   if (vercel) return `https://${vercel}`;
   return "https://guesser.tomomai.lol";
 }

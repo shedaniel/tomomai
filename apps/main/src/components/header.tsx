@@ -1,5 +1,6 @@
 "use client";
 
+import { env } from "@/env";
 import { AboutDialog } from "@/components/about-dialog";
 import { ThemeDialog } from "@/components/theme-dialog";
 import { Button } from "@tomomai/ui";
@@ -46,8 +47,8 @@ function ThreadsIcon({ className }: { className?: string }) {
   )
 }
 
-const APPLICATION_ID = process.env.NEXT_PUBLIC_DISCORD_APPLICATION_ID;
-const SIGNUP_TYPE = process.env.NEXT_PUBLIC_ACCOUNT_SIGNUP_TYPE || 'disabled';
+const APPLICATION_ID = env.NEXT_PUBLIC_DISCORD_APPLICATION_ID;
+const SIGNUP_TYPE = env.NEXT_PUBLIC_ACCOUNT_SIGNUP_TYPE;
 
 type CurrentTab = "dashboard" | "db";
 const ALL_TABS: CurrentTab[] = ["dashboard", "db"];

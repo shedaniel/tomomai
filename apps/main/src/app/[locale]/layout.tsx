@@ -1,3 +1,4 @@
+import { env } from '@/env';
 import { LocaleProvider } from '@/components/providers/locale-provider';
 import { ThemeProvider } from '@/components/providers/theme-provider';
 import { TRPCProvider } from "@/components/providers/trpc-provider";
@@ -20,8 +21,8 @@ import { PreMaintenanceBanner } from '@/components/pre-maintenance-banner';
 import { AuthDialogProvider } from '@/components/auth/auth-dialog-provider';
 
 const TURNSTILE_SITE_KEY =
-  process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY && process.env.TURNSTILE_SECRET_KEY
-    ? process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY
+  env.NEXT_PUBLIC_TURNSTILE_SITE_KEY && env.TURNSTILE_SECRET_KEY
+    ? env.NEXT_PUBLIC_TURNSTILE_SITE_KEY
     : undefined;
 
 const inter = localFont({

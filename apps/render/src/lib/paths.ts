@@ -1,4 +1,5 @@
 import path from 'path';
+import { env } from '../env';
 
 /**
  * Root of the static image/font assets the renderer reads from disk (the
@@ -9,4 +10,4 @@ import path from 'path';
  * `PUBLIC_DIR` only to override (Docker points it at /app/public).
  */
 export const PUBLIC_DIR =
-  process.env.PUBLIC_DIR ?? path.join(process.cwd(), 'public');
+  env.PUBLIC_DIR ?? path.join(process.cwd(), 'public');

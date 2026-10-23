@@ -1,3 +1,4 @@
+import { env } from "@/env";
 import { buildOpenApiDocument } from "@/lib/api/openapi";
 import { resolveBaseUrl } from "@/lib/base-url";
 import { useDeveloperPortal } from "@/lib/flags";
@@ -9,7 +10,7 @@ export async function GET() {
     return new Response("Not Found", { status: 404 });
   }
   const baseUrl =
-    process.env.BETTER_AUTH_URL ?? process.env.NEXT_PUBLIC_APP_URL ?? resolveBaseUrl();
+    env.BETTER_AUTH_URL ?? env.NEXT_PUBLIC_APP_URL ?? resolveBaseUrl();
   const doc = buildOpenApiDocument(baseUrl);
   return Response.json(doc, {
     headers: {

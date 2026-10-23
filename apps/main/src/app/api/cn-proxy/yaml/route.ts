@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
+import { env } from "@/env";
 
 export const dynamic = "force-dynamic";
 
-const { CN_PROXY_HOST, CN_PROXY_PORT = "2560" } = process.env;
+const { CN_PROXY_HOST, CN_PROXY_PORT } = env;
 
 export async function GET() {
   if (!CN_PROXY_HOST) {

@@ -1,10 +1,11 @@
+import { env } from "@/env";
 import crypto from "node:crypto";
 
 const TTL_SECONDS = 15 * 60;
 const MAC_BYTES = 16; // 128-bit truncated HMAC-SHA256
 
 function getSecret(): string {
-  const secret = process.env.CN_PROXY_TOKEN_SECRET;
+  const secret = env.CN_PROXY_TOKEN_SECRET;
   if (!secret) throw new Error("CN_PROXY_TOKEN_SECRET must be set to sign cn-proxy tokens.");
   return secret;
 }

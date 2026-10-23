@@ -130,7 +130,6 @@ else
     -e "s|^RENDER_TOKEN_SECRET=.*|RENDER_TOKEN_SECRET=$render_secret|" \
     -e "s|^# CATALOG_URL=.*|CATALOG_URL=http://localhost:3000|" \
     -e "s|^NEXT_PUBLIC_R2_URL=.*|NEXT_PUBLIC_R2_URL=http://localhost:${S3_PORT:-9000}/tomomai|" \
-    -e "s|^NEXT_PUBLIC_R2_URL_CN=.*|NEXT_PUBLIC_R2_URL_CN=http://localhost:${S3_PORT:-9000}/tomomai|" \
     apps/render/.env.example > apps/render/.env.local
   echo "created apps/render/.env.local"
   if [ "$root_existed" = true ]; then

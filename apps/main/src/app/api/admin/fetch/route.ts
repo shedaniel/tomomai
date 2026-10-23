@@ -1,3 +1,4 @@
+import { env } from "@/env";
 import { NextRequest, NextResponse } from "next/server";
 import { load } from "cheerio";
 import { isServerless } from "@/lib/utils";
@@ -24,7 +25,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Validate token against environment variable
-    const adminToken = process.env.ADMIN_UPDATE_TOKEN;
+    const adminToken = env.ADMIN_UPDATE_TOKEN;
     if (!adminToken) {
       log.error("ADMIN_UPDATE_TOKEN environment variable not set");
       return NextResponse.json(

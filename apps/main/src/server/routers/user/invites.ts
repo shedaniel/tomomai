@@ -1,3 +1,4 @@
+import { env } from '@/env';
 import { db } from '@/lib/db';
 import { invites, user } from '@/lib/db/schema-pg';
 import { getLogger } from '@/lib/request-logger';
@@ -22,7 +23,7 @@ export const invitesRouter = router({
 
   getInvites: protectedProcedure
     .query(async ({ ctx }) => {
-      const SIGNUP_TYPE = process.env.NEXT_PUBLIC_ACCOUNT_SIGNUP_TYPE || 'disabled';
+      const SIGNUP_TYPE = env.NEXT_PUBLIC_ACCOUNT_SIGNUP_TYPE;
 
       if (SIGNUP_TYPE !== 'invite-only') {
         throw new TRPCError({
@@ -118,7 +119,7 @@ export const invitesRouter = router({
 
   createInvite: protectedProcedure
     .mutation(async ({ ctx }) => {
-      const SIGNUP_TYPE = process.env.NEXT_PUBLIC_ACCOUNT_SIGNUP_TYPE || 'disabled';
+      const SIGNUP_TYPE = env.NEXT_PUBLIC_ACCOUNT_SIGNUP_TYPE;
 
       if (SIGNUP_TYPE !== 'invite-only') {
         throw new TRPCError({
@@ -212,7 +213,7 @@ export const invitesRouter = router({
 
       return {
         invite: newInvite,
-        inviteUrl: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/accept/${code}`,
+        inviteUrl: `${env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/accept/${code}`,
       };
     }),
 
@@ -221,7 +222,7 @@ export const invitesRouter = router({
       inviteId: z.string(),
     }))
     .mutation(async ({ ctx, input }) => {
-      const SIGNUP_TYPE = process.env.NEXT_PUBLIC_ACCOUNT_SIGNUP_TYPE || 'disabled';
+      const SIGNUP_TYPE = env.NEXT_PUBLIC_ACCOUNT_SIGNUP_TYPE;
 
       if (SIGNUP_TYPE !== 'invite-only') {
         throw new TRPCError({
@@ -274,7 +275,7 @@ export const invitesRouter = router({
       userId: z.string().optional(),
     }))
     .query(async ({ input }) => {
-      const SIGNUP_TYPE = process.env.NEXT_PUBLIC_ACCOUNT_SIGNUP_TYPE || 'disabled';
+      const SIGNUP_TYPE = env.NEXT_PUBLIC_ACCOUNT_SIGNUP_TYPE;
 
       if (SIGNUP_TYPE !== 'invite-only') {
         throw new TRPCError({

@@ -1,3 +1,4 @@
+import { env } from "@/env";
 import { NextRequest, NextResponse } from "next/server";
 import { resolveBaseUrlFromHeaders } from "@/lib/base-url";
 import { USERSCRIPT_ALLOWED_ORIGINS } from "@/lib/userscript/allowed-origins";
@@ -36,8 +37,8 @@ export async function POST(request: NextRequest) {
   const origin = request.headers.get("origin");
   const cors = corsHeaders(origin);
 
-  const clientId = process.env.USERSCRIPT_CLIENT_ID;
-  const clientSecret = process.env.USERSCRIPT_CLIENT_SECRET;
+  const clientId = env.USERSCRIPT_CLIENT_ID;
+  const clientSecret = env.USERSCRIPT_CLIENT_SECRET;
   if (!clientId || !clientSecret) {
     return NextResponse.json(
       { error: "server_misconfigured" },

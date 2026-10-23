@@ -1,3 +1,4 @@
+import { env } from "@/env";
 import { NextRequest, NextResponse } from "next/server";
 import { verifyCnProxyToken } from "@/lib/cn-proxy-token";
 import { deleteToken, formatCnCookiesToken, saveCnCookiesToken } from "@/server/services/maimai-login";
@@ -88,7 +89,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: false, error: "invalid token" }, { status: 401 });
   }
 
-  if (process.env.DEBUG_CN_FETCH) {
+  if (env.DEBUG_CN_FETCH) {
     const debugUrl = `${CN_BASE}/maimai-mobile/?t=${encodeURIComponent(body.maimaiToken)}`;
     log.info({ url: debugUrl }, "DEBUG_CN_FETCH — open in your browser to capture cookies manually");
     return NextResponse.json({ ok: true, debug: true, url: debugUrl });
