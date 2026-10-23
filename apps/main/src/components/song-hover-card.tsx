@@ -27,6 +27,8 @@ interface SongHoverCardProps {
   children: React.ReactNode;
   song: MinimalSong;
   percentile?: PercentileDistributionData | null;
+  /** Fetches the score comparison when the card opens, for lists that don't preload it. */
+  percentileSource?: { userRating: number; achievement: number | null };
   side?: "top" | "bottom" | "left" | "right";
   className?: string;
 }
@@ -93,6 +95,7 @@ function SongCardContent({
   addedVersionInfo,
   t,
   percentile,
+  percentileLoading,
 }: {
   song: SongHoverCardProps['song'],
   songDetails: any,
@@ -100,6 +103,7 @@ function SongCardContent({
   addedVersionInfo: any,
   t: any,
   percentile?: SongHoverCardProps['percentile'],
+  percentileLoading?: boolean,
 }) {
   return (
     <div className="p-4 space-y-3">
@@ -168,6 +172,12 @@ function SongCardContent({
       </div>
 
       {percentile && <PercentileDistribution data={percentile} />}
+      {!percentile && percentileLoading && (
+        <>
+          <Separator />
+          <div className="h-60 bg-muted animate-pulse rounded" />
+        </>
+      )}
 
       {/* Action */}
       <div className="pt-1 flex items-center gap-2 flex-col">
@@ -198,7 +208,7 @@ function SongCardContent({
   );
 }
 
-export function SongHoverCard({ children, song, percentile, side, className }: SongHoverCardProps) {
+export function SongHoverCard({ children, song, percentile, percentileSource, side, className }: SongHoverCardProps) {
   const t = useTranslations();
   const [isOpen, setIsOpen] = useState(false);
   const isDesktop = useMediaQuery("(min-width: 768px)", { initializeWithValue: false });
@@ -215,6 +225,21 @@ export function SongHoverCard({ children, song, percentile, side, className }: S
 
   const addedVersionInfo = songDetails ? getVersionInfo(songDetails.addedVersion) : null;
 
+  const loadPercentile = isOpen && !percentile && !!percentileSource && percentileSource.userRating > 0;
+  const { data: loadedPercentiles, isFetching: percentileLoading } = trpc.user.getChartPercentiles.useQuery(
+    {
+      songs: [{ publicSongId: song.songId, achievement: percentileSource?.achievement ?? 0 }],
+      userRating: percentileSource?.userRating ?? 0,
+    },
+    {
+      enabled: loadPercentile,
+      staleTime: 1000 * 60 * 5,
+    }
+  );
+  const loadedEntry = loadedPercentiles?.percentiles[song.songId];
+  const resolvedPercentile = percentile
+    ?? (loadedEntry && percentileSource ? { ...loadedEntry, userAchievement: percentileSource.achievement } : null);
+
   const content = (
     <SongCardContent
       song={song}
@@ -222,7 +247,8 @@ export function SongHoverCard({ children, song, percentile, side, className }: S
       isLoading={isLoading}
       addedVersionInfo={addedVersionInfo}
       t={t}
-      percentile={percentile}
+      percentile={resolvedPercentile}
+      percentileLoading={loadPercentile && percentileLoading}
     />
   );
 

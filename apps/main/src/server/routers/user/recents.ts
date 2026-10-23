@@ -59,7 +59,7 @@ export const recentsRouter = router({
       beforeDate: z.date().optional(),
     }))
     .query(async ({ input }) => {
-      const { userId } = await resolvePublicSnapshotUserId(input.snapshotId);
+      const { userId } = await resolvePublicSnapshotUserId(input.snapshotId, { requireScoreDetails: true });
 
       return await fetchAndMapRecents(
         userId,

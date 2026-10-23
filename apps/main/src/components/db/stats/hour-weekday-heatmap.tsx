@@ -1,7 +1,8 @@
 "use client";
 
-import { useTranslations } from "next-intl";
-import { useMemo } from "react";
+import { useFormatter, useTranslations } from "next-intl";
+import { useMemo, useState } from "react";
+import { cn } from "@/lib/utils";
 
 interface HourWeekdayHeatmapProps {
   data: { dow: number; hour: number; count: number }[];
@@ -11,6 +12,9 @@ const DAYS = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"] as const;
 
 export function HourWeekdayHeatmap({ data }: HourWeekdayHeatmapProps) {
   const tDays = useTranslations("common.weekdays");
+  const t = useTranslations("db.stats");
+  const format = useFormatter();
+  const [active, setActive] = useState<{ dow: number; hour: number } | null>(null);
 
   const { grid, max } = useMemo(() => {
     const grid = Array.from({ length: 7 }, () => Array<number>(24).fill(0));
@@ -23,9 +27,29 @@ export function HourWeekdayHeatmap({ data }: HourWeekdayHeatmapProps) {
     return { grid, max };
   }, [data]);
 
+  const peak = useMemo(() => {
+    let best: { dow: number; hour: number } | null = null;
+    grid.forEach((row, dow) => row.forEach((count, hour) => {
+      if (count > 0 && (!best || count > grid[best.dow][best.hour])) best = { dow, hour };
+    }));
+    return best as { dow: number; hour: number } | null;
+  }, [grid]);
+
+  const slot = ({ dow, hour }: { dow: number; hour: number }) => ({
+    slot: `${tDays(DAYS[dow])} ${String(hour).padStart(2, "0")}:00`,
+    count: format.number(grid[dow][hour]),
+  });
+  // Hovering (or tapping on touch) shows a cell; otherwise the busiest slot is summarised
+  const readout = active ? t("heatmapCell", slot(active)) : peak ? t("heatmapPeak", slot(peak)) : null;
+
   return (
     <div className="overflow-x-auto">
-      <div className="inline-grid gap-[2px]" style={{ gridTemplateColumns: "auto repeat(24, minmax(14px, 1fr))" }}>
+      <p className="mb-2 h-4 text-xs text-muted-foreground tabular-nums" aria-live="polite">{readout}</p>
+      <div
+        className="inline-grid gap-[2px]"
+        style={{ gridTemplateColumns: "auto repeat(24, minmax(14px, 1fr))" }}
+        onPointerLeave={(event) => { if (event.pointerType === "mouse") setActive(null); }}
+      >
           <div />
           {Array.from({ length: 24 }, (_, h) => (
             <div key={`h-${h}`} className="text-[10px] text-muted-foreground text-center">
@@ -44,10 +68,20 @@ export function HourWeekdayHeatmap({ data }: HourWeekdayHeatmapProps) {
                 return (
                   <div
                     key={`c-${dow}-${h}`}
-                    className="aspect-square rounded-sm bg-primary"
-                    style={{ opacity: v === 0 ? 0.08 : 0.15 + intensity * 0.85 }}
-                    title={`${tDays(day)} ${String(h).padStart(2, "0")}:00 — ${v}`}
-                  />
+                    className={cn(
+                      "aspect-square rounded-sm transition-shadow",
+                      active?.dow === dow && active.hour === h && "ring-2 ring-foreground",
+                    )}
+                    onPointerEnter={(event) => { if (event.pointerType === "mouse") setActive({ dow, hour: h }); }}
+                    // Hover already selects for a mouse, so only taps toggle
+                    onPointerUp={(event) => {
+                      if (event.pointerType === "mouse") return;
+                      setActive(current => current?.dow === dow && current.hour === h ? null : { dow, hour: h });
+                    }}
+                  >
+                    {/* Opacity encodes the count, so it lives on an inner layer to keep the highlight ring solid */}
+                    <div className="h-full w-full rounded-sm bg-primary" style={{ opacity: v === 0 ? 0.08 : 0.15 + intensity * 0.85 }} />
+                  </div>
                 );
               })}
             </div>

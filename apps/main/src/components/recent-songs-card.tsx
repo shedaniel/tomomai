@@ -3,7 +3,7 @@
 import { trpc } from "@/lib/trpc-client";
 import { Region } from "@/lib/types";
 import { cn, createSafeMaimaiImageUrl, getTypeBadgeUrl } from "@/lib/utils";
-import { Activity, Calendar, ChevronDown, ChevronRight, ChevronUp, Clock, Loader2, AlertCircle, TrendingUp, TrendingDown, Trophy, FastForward, Rewind, ArrowBigUpDash, ArrowBigDownDash, Grip, Sparkle, MapPin, SeparatorVertical, Slash, Star, Music, CloudOff } from "lucide-react";
+import { Activity, ImageDown, Calendar, ChevronDown, ChevronRight, ChevronUp, Clock, Loader2, AlertCircle, TrendingUp, TrendingDown, Trophy, FastForward, Rewind, ArrowBigUpDash, ArrowBigDownDash, Grip, Sparkle, MapPin, SeparatorVertical, Slash, Star, Music, CloudOff } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { RecentSongsCardSkeleton } from "./recent-songs-card.skeleton";
 
@@ -28,6 +28,8 @@ interface RecentSongsCardProps {
   region: Region;
   beforeDate?: Date;
   snapshotId?: string;
+  /** Opens the export tab on a credit, keyed by its first track's unix time. */
+  onOpenCredit?: (at: number) => void;
 }
 
 interface RecentSongRowProps {
@@ -37,9 +39,11 @@ interface RecentSongRowProps {
   isLast: boolean;
   onToggleExpand: (id: string) => void;
   isExpanded: boolean;
+  creditAt: number | null;
+  onOpenCredit?: (at: number) => void;
 }
 
-function RecentSongRow({ play, index, isFirst, isLast, onToggleExpand, isExpanded }: RecentSongRowProps) {
+function RecentSongRow({ play, index, isFirst, isLast, onToggleExpand, isExpanded, creditAt, onOpenCredit }: RecentSongRowProps) {
   const t = useTranslations('recentPlays');
   const isDesktop = useMediaQuery("(min-width: 768px)", { initializeWithValue: false });
   const [isRowHovered, setIsRowHovered] = useState(false);
@@ -210,19 +214,31 @@ function RecentSongRow({ play, index, isFirst, isLast, onToggleExpand, isExpande
         </div>
       </div>
 
-      {/* Expand hint */}
-      {!isExpanded && (
-        <div className="flex items-center justify-center gap-1 text-xs text-muted-foreground mt-4 md:mt-2">
-          <ChevronDown className="h-3 w-3" />
-          <span>{t('clickToExpand')}</span>
+      {/* Expand hint, centred between equal side columns */}
+      <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 mt-4 md:mt-2">
+        <div />
+        <div className="flex items-center justify-center gap-1 text-xs text-muted-foreground">
+          {isExpanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+          <span>{isExpanded ? t('clickToCollapse') : t('clickToExpand')}</span>
         </div>
-      )}
-      {isExpanded && (
-        <div className="flex items-center justify-center gap-1 text-xs text-muted-foreground mt-4 md:mt-2">
-          <ChevronUp className="h-3 w-3" />
-          <span>{t('clickToCollapse')}</span>
+        <div className="flex justify-end">
+          {creditAt !== null && onOpenCredit && (
+            <Button
+              variant="outline"
+              size="sm"
+              aria-label={t('exportCredit')}
+              className="h-7 gap-1.5 px-2 text-xs"
+              onClick={(event) => {
+                event.stopPropagation();
+                onOpenCredit(creditAt);
+              }}
+            >
+              <ImageDown className="h-3.5 w-3.5" />
+              <span className="max-sm:hidden">{t('exportCredit')}</span>
+            </Button>
+          )}
         </div>
-      )}
+      </div>
 
       {/* Animated expandable content */}
       <AutoHeight deps={[isExpanded, isDetailed]}>
@@ -542,7 +558,23 @@ function RecentSongRow({ play, index, isFirst, isLast, onToggleExpand, isExpande
   );
 }
 
-export function RecentSongsCard({ region, beforeDate, snapshotId }: RecentSongsCardProps) {
+// Track numbers count down within a credit, so each play's credit starts at the
+// end of its descending run. Unknown when that run may continue on the next page.
+function creditStartTimes(plays: { track: number; playedAt: Date | string }[], hasMore: boolean): (number | null)[] {
+  const starts: (number | null)[] = new Array(plays.length).fill(null);
+  let runStart = 0;
+  for (let i = 0; i < plays.length; i++) {
+    const endsRun = i === plays.length - 1 || plays[i + 1].track >= plays[i].track;
+    if (!endsRun) continue;
+    const cutOff = i === plays.length - 1 && hasMore && plays[i].track > 1;
+    const at = cutOff ? null : Math.floor(new Date(plays[i].playedAt).getTime() / 1000);
+    starts.fill(at, runStart, i + 1);
+    runStart = i + 1;
+  }
+  return starts;
+}
+
+export function RecentSongsCard({ region, beforeDate, snapshotId, onOpenCredit }: RecentSongsCardProps) {
   const t = useTranslations('recentPlays');
   const [allPlays, setAllPlays] = useState<inferRouterOutputs<AppRouter>['user']['getRecentSongs']['recentPlays']>([]);
   const [offset, setOffset] = useState(0);
@@ -612,6 +644,7 @@ export function RecentSongsCard({ region, beforeDate, snapshotId }: RecentSongsC
   }, []);
 
   const sentinelRef = useInfiniteScroll(loadMore, hasMore && !isFetching);
+  const creditStarts = useMemo(() => creditStartTimes(allPlays, hasMore), [allPlays, hasMore]);
 
   if (isLoading && offset === 0) {
     return <RecentSongsCardSkeleton />;
@@ -666,6 +699,8 @@ export function RecentSongsCard({ region, beforeDate, snapshotId }: RecentSongsC
               isLast={i === allPlays.length - 1}
               onToggleExpand={toggleExpand}
               isExpanded={expandedIds.has(play.recentSongId.toString())}
+              creditAt={creditStarts[i]}
+              onOpenCredit={onOpenCredit}
             />
           ))}
 

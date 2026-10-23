@@ -176,13 +176,15 @@ export async function buildLastCreditMessage(opts: {
   userId: string;
   region: Region;
   beforeDate?: Date;
+  /** First-track time of a specific credit, takes precedence over beforeDate. */
+  startAt?: Date;
   scale: 1 | 2;
   ttlSeconds?: number;
 }): Promise<LastCreditResult> {
-  const { userId, region, beforeDate, scale } = opts;
+  const { userId, region, beforeDate, startAt, scale } = opts;
   const exp = expFromTtl(opts.ttlSeconds ?? DEFAULT_TTL);
 
-  const result = await prepareCreditData(userId, region, beforeDate);
+  const result = await prepareCreditData(userId, region, beforeDate, startAt);
   if (result.type === "error") {
     return { ok: false, status: 404, error: result.error };
   }

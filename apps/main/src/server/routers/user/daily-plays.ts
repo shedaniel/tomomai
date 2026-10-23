@@ -16,7 +16,7 @@ export const dailyPlaysRouter = router({
   getPublicAvailableDays: publicProcedure
     .input(z.object({ snapshotId: z.string(), region: regionSchema }))
     .query(async ({ input }) => {
-      const { userId } = await resolvePublicSnapshotUserId(input.snapshotId);
+      const { userId } = await resolvePublicSnapshotUserId(input.snapshotId, { requireScoreDetails: true });
       return await listDailyPlaysAvailableDays(userId, input.region);
     }),
 });

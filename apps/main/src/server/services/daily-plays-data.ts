@@ -175,7 +175,8 @@ export async function prepareDailyPlaysData(
   }
 
   const gameVersion = snapshotRow.gameVersion as VersionId;
-  const plays: DailyPlay[] = rows.map(row => ({
+  // Fetched newest first so the cap keeps the latest plays, shown oldest first to read as the day's order
+  const plays: DailyPlay[] = rows.toReversed().map(row => ({
     id: row.id,
     playedAt: row.playedAt,
     achievement: row.achievement,

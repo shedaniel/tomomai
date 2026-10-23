@@ -134,6 +134,9 @@ export function DataContent({
   const updateTabUrl = (value: string) => {
     if (typeof window === "undefined") return;
     const params = new URLSearchParams(window.location.search);
+    if (value !== "exportImage") {
+      for (const key of ["export", "credit", "day"]) params.delete(key);
+    }
     if (value === "info") {
       params.delete('tab');
     } else {
@@ -148,6 +151,15 @@ export function DataContent({
   const handleTabChange = (value: string) => {
     setSelectedTab(value);
     updateTabUrl(value);
+  };
+
+  const openCreditExport = (at: number) => {
+    const params = new URLSearchParams(window.location.search);
+    params.set('export', 'credit');
+    params.set('credit', String(at));
+    params.delete('day');
+    window.history.replaceState(null, "", `${window.location.pathname}?${params.toString()}`);
+    handleTabChange("exportImage");
   };
 
   // Define visible tabs based on privacy settings
@@ -296,10 +308,16 @@ export function DataContent({
                 region={region}
                 beforeDate={selectedSnapshotData?.snapshot.fetchedAt}
                 snapshotId={visitedBySelf ? undefined : selectedSnapshotData?.snapshot.id}
+                onOpenCredit={visitedBySelf || localPrivacySettings.profileShowScoreDetails ? openCreditExport : undefined}
               />
             )}
             {selectedTab === "recommendations" && (
-              <RecommendationCard selectedSnapshotData={selectedSnapshotData} flags={flags} region={region} />
+              <RecommendationCard
+                selectedSnapshotData={selectedSnapshotData}
+                flags={flags}
+                region={region}
+                source={visitedBySelf || !profileUsername ? { kind: "own" } : { kind: "public", username: profileUsername }}
+              />
             )}
             {selectedTab === "history" && visitedBySelf && flags.historyCard && (
               <HistoryCard region={region} />

@@ -52,7 +52,8 @@
       "thu": "四",
       "fri": "五",
       "sat": "六"
-    }
+    },
+    "resetToDefault": "恢復預設"
   },
   "minigames": {
     "badge": "迷你遊戲",
@@ -703,7 +704,9 @@
     "fetchNewData": "匯入新資料",
     "fetchingData": "匯入資料中...",
     "lastUpdate": "最後更新",
-    "noDataInstructions": "此區域沒有任何資料。點擊「匯入新資料」來匯入你的 maimai 成績。"
+    "noDataInstructions": "此區域沒有任何資料。點擊「匯入新資料」來匯入你的 maimai 成績。",
+    "deleteSnapshot": "刪除所選快照",
+    "moreOptions": "更多選項"
   },
   "profileMetadata": {
     "title": "{username} | tomomai ともマイ",
@@ -782,6 +785,18 @@
       "title": "開發者",
       "exportJson": "匯出紀錄為 JSON",
       "exporting": "匯出中..."
+    },
+    "exportImageCard": {
+      "profileImage": "個人檔案圖片",
+      "lastCredit": "遊玩紀錄",
+      "dailyPlays": "每日遊玩",
+      "dayLabel": "日期",
+      "dayPlaceholder": "選擇日期",
+      "dayLoading": "正在載入日期...",
+      "noPlays": "沒有每日遊玩紀錄",
+      "chooseCredit": "選擇一局",
+      "creditLoading": "正在載入...",
+      "noCredits": "沒有遊玩紀錄"
     }
   },
   "albums": {
@@ -811,12 +826,23 @@
   },
   "recommendations": {
     "peerAchieved": "約 {percent} 同程度玩家達成",
+    "stretchBadge": "挑戰",
     "newBadge": "新曲",
     "oldBadge": "舊曲",
     "currentToTarget": "目前 → 目標",
     "noRecommendations": "無推薦歌曲",
     "allOptimal": "沒有其他能夠提升 R 值的歌曲了。做得很好！",
     "description": "根據你目前的成績推薦可提升 R 值的歌曲。",
+    "tryNewDescription": "你還沒玩過、能提升 R 值的譜面，依同程度玩家成績估算的提升幅度排序。人形圖示表示他們的常見成績，「挑戰」表示目標高於該成績。",
+    "tabs": {
+      "improve": "提升成績",
+      "tryNew": "嘗試新譜面"
+    },
+    "target": "目標",
+    "peerTypical": "同程度玩家通常達到 {accuracy}%",
+    "noUnplayed": "暫無可推薦的新譜面",
+    "noUnplayedDescription": "目前沒有未玩過的譜面能提升你的 R 值。",
+    "loadError": "無法載入推薦，請稍後再試。",
     "filterButton": "篩選",
     "filters": {
       "all": "全部",
@@ -852,7 +878,8 @@
       "totalLoss": "失分"
     },
     "clickToExpand": "點擊展開詳情",
-    "clickToCollapse": "點擊收起"
+    "clickToCollapse": "點擊收起",
+    "exportCredit": "匯出這一局"
   },
   "events": {
     "title": "活動地圖",
@@ -879,6 +906,16 @@
     "achievementGrades": "達成等級",
     "fullCombo": "Full Combo",
     "fullSync": "Full Sync",
+    "allLevels": "全部",
+    "level": "Lv {level}",
+    "levelAndBelow": "≤ Lv {level}",
+    "expandLevels": "展開 Lv {level} 及以下的各等級",
+    "collapseLevels": "收起 Lv {level} 及以下的等級",
+    "tierTooltip": "{tier}：{count} / {total}（{percent}%）",
+    "orBetter": "{tier} 及以上",
+    "played": "已遊玩",
+    "chartCount": "{count, plural, other {# 個譜面}}",
+    "breakdownDescription": "此等級中達到各級別及以上的譜面數量",
     "noDataAvailable": "無可用資料",
     "noMatchingScores": "沒有符合篩選條件的成績",
     "selectVersionForPlates": "請選擇特定版本以查看稱號進度",
@@ -1332,6 +1369,8 @@
       "fetchActivityHeatmap": "依時段與星期分布的同步活動",
       "playActivityHeatmap": "依時段與星期分布的遊玩活動",
       "heatmapTimezoneNote": "時段以 JST（UTC+9）顯示，近 90 天。",
+      "heatmapCell": "{slot} · {count}",
+      "heatmapPeak": "最活躍：{slot} · {count}",
       "topSongsWindow": {
         "label": "時間範圍",
         "all": "全部時間",
@@ -1601,6 +1640,7 @@
     "title": "成績比較",
     "view": "比較檢視",
     "you": "你 · {achievement}",
+    "notPlayed": "尚未遊玩",
     "curveTab": "成績曲線",
     "ratingTab": "依 Rating",
     "ratingHeading": "玩家 Rating 與達成率",
@@ -1614,6 +1654,7 @@
     "lessThan": "低於 {percent}",
     "ratingDescription": "依據所有遊玩紀錄，比較 {count} 位玩家的 Rating 與達成率。圓點將樣本按 125 點 Rating 和 0.1% 達成率分組，並分散在各組範圍內顯示，位置為概略值。你的 Rating 為 {rating}，達成率為 {achievement}。",
     "curveDescription": "估計相近 Rating 玩家中，達成率不高於各數值的比例。有 {percent} 的玩家達成率不高於你的 {achievement}，包含同分。",
+    "unplayedDescription": "玩家在此譜面的最佳成績。你還沒玩過這個譜面。",
     "clusterDescription": "Rating {ratingMin}–{ratingMax}；達成率 {achievementMin}–{achievementMax}：{count} 筆樣本",
     "youDescription": "你：Rating {rating}，達成率 {achievement}"
   },

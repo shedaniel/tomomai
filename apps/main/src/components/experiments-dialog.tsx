@@ -1,6 +1,6 @@
 "use client";
 
-import { Button } from "@tomomai/ui";
+import { Button, TooltipLabel } from "@tomomai/ui";
 import {
   ResponsiveDialog,
   ResponsiveDialogContent,
@@ -139,15 +139,17 @@ export function ExperimentsDialog({ open, onOpenChange }: ExperimentsDialogProps
                             <Label className="text-sm font-medium cursor-pointer">{flagKey}</Label>
                             <div className="flex items-center gap-2">
                               {overridden && (
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="h-4 w-4 p-0"
-                                  onClick={() => handleReset(flagKey)}
-                                  title="Reset to default"
-                                >
-                                  <X className="h-3 w-3" />
-                                </Button>
+                                <TooltipLabel label={t('common.resetToDefault')}>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-4 w-4 p-0"
+                                    onClick={() => handleReset(flagKey)}
+                                    aria-label={t('common.resetToDefault')}
+                                  >
+                                    <X className="h-3 w-3" />
+                                  </Button>
+                                </TooltipLabel>
                               )}
                               <Switch
                                 checked={isEnabled}

@@ -1,14 +1,14 @@
 "use client";
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@tomomai/ui/select-friendly";
-import { Progress } from "@tomomai/ui";
+import { Progress, TooltipFriendly, TooltipFriendlyContent, TooltipFriendlyTrigger, useTooltipFriendly } from "@tomomai/ui";
 import { Button } from "@tomomai/ui";
-import { ACHIEVEMENTS, DIFFICULTY_COLORS } from "@/lib/difficulty";
-import { DIFFICULTY_ENUM, FC_ENUM, FS_ENUM } from "@/lib/db/types";
+import { DIFFICULTY_COLORS } from "@/lib/difficulty";
+import { DIFFICULTY_ENUM } from "@/lib/db/types";
 import { getVersionInfo, VERSIONS } from "@/lib/metadata";
 import { Region, SnapshotWithSongs } from "@/lib/types";
 import { trpc } from "@/lib/trpc-client";
-import { ArrowLeft, Award, ChevronRight, Loader2 } from "lucide-react";
+import { ArrowLeft, Award, ChevronDown, ChevronRight, Loader2 } from "lucide-react";
 import { StatsCardSkeleton } from "./stats-card.skeleton";
 import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
@@ -25,46 +25,266 @@ interface StatsCardProps {
   snapshotId?: string;
 }
 
-// Grade colors for display
-const GRADE_COLORS: Record<string, { bg: string; text: string }> = {
-  "SSS+": { bg: "bg-yellow-500", text: "text-yellow-600" },
-  "SSS": { bg: "bg-yellow-500", text: "text-yellow-600" },
-  "SS+": { bg: "bg-orange-500", text: "text-orange-600" },
-  "SS": { bg: "bg-orange-500", text: "text-orange-600" },
-  "S+": { bg: "bg-red-500", text: "text-red-600" },
-  "S": { bg: "bg-red-500", text: "text-red-600" },
-  "AAA": { bg: "bg-purple-500", text: "text-purple-600" },
-  "AA": { bg: "bg-purple-500", text: "text-purple-600" },
-  "A": { bg: "bg-blue-500", text: "text-blue-600" },
-  "BBB": { bg: "bg-green-500", text: "text-green-600" },
-  "BB": { bg: "bg-green-500", text: "text-green-600" },
-  "B": { bg: "bg-emerald-500", text: "text-emerald-600" },
-  "C": { bg: "bg-gray-500", text: "text-gray-600" },
-  "D": { bg: "bg-gray-400", text: "text-gray-500" },
+type Tier = { key: string; label: string; color: string; includes: string[] };
+
+// Closes every bar: played charts that miss the last tier, so the empty track is only unplayed charts
+const PLAYED_TIER: Tier = {
+  key: "played",
+  label: "",
+  color: "bg-[repeating-linear-gradient(135deg,var(--color-zinc-400)_0_2px,transparent_2px_5px)] dark:bg-[repeating-linear-gradient(135deg,var(--color-zinc-500)_0_2px,transparent_2px_5px)]",
+  includes: [],
 };
 
-// FC colors for display
-const FC_COLORS: Record<string, { bg: string; text: string }> = {
-  "ap+": { bg: "bg-yellow-500", text: "text-yellow-600" },
-  "ap": { bg: "bg-yellow-600", text: "text-yellow-700" },
-  "fc+": { bg: "bg-green-500", text: "text-green-600" },
-  "fc": { bg: "bg-green-600", text: "text-green-700" },
-};
+// Cumulative steps from best to worst; A also counts AA and AAA, lower grades are left out
+const GRADE_TIERS: Tier[] = [
+  { key: "SSS+", label: "SSS+", color: "bg-amber-300", includes: ["SSS+"] },
+  { key: "SSS", label: "SSS", color: "bg-amber-500", includes: ["SSS"] },
+  { key: "SS+", label: "SS+", color: "bg-orange-400", includes: ["SS+"] },
+  { key: "SS", label: "SS", color: "bg-orange-600", includes: ["SS"] },
+  { key: "S+", label: "S+", color: "bg-rose-400", includes: ["S+"] },
+  { key: "S", label: "S", color: "bg-rose-600", includes: ["S"] },
+  { key: "A", label: "A", color: "bg-sky-500", includes: ["AAA", "AA", "A"] },
+];
 
-// FS colors for display
-const FS_COLORS: Record<string, { bg: string; text: string }> = {
-  "fdx+": { bg: "bg-purple-400", text: "text-purple-500" },
-  "fdx": { bg: "bg-purple-500", text: "text-purple-600" },
-  "fs+": { bg: "bg-blue-400", text: "text-blue-500" },
-  "fs": { bg: "bg-blue-500", text: "text-blue-600" },
-  "sync": { bg: "bg-cyan-500", text: "text-cyan-600" },
-};
+const FC_TIERS: Tier[] = [
+  { key: "ap+", label: "AP+", color: "bg-amber-300", includes: ["ap+"] },
+  { key: "ap", label: "AP", color: "bg-amber-500", includes: ["ap"] },
+  { key: "fc+", label: "FC+", color: "bg-emerald-400", includes: ["fc+"] },
+  { key: "fc", label: "FC", color: "bg-emerald-600", includes: ["fc"] },
+];
 
-// FC and FS order (from best to worst, excluding "none")
-const FC_ORDER = FC_ENUM.filter(fc => fc !== "none").reverse();
-const FS_ORDER = FS_ENUM.filter(fs => fs !== "none").reverse();
+const FS_TIERS: Tier[] = [
+  { key: "fdx+", label: "FDX+", color: "bg-violet-300", includes: ["fdx+"] },
+  { key: "fdx", label: "FDX", color: "bg-violet-500", includes: ["fdx"] },
+  { key: "fs+", label: "FS+", color: "bg-sky-300", includes: ["fs+"] },
+  { key: "fs", label: "FS", color: "bg-sky-500", includes: ["fs"] },
+  { key: "sync", label: "SYNC", color: "bg-cyan-700", includes: ["sync"] },
+];
 
-// FC and FS labels
+const MAX_LEVEL_ROWS = 8;
+
+type Counts = { grades: Record<string, number>; fc: Record<string, number>; fs: Record<string, number>; charts: number; played: number };
+type LevelRow = Counts & { key: string; label: string };
+
+function emptyCounts(): Counts {
+  return { grades: {}, fc: {}, fs: {}, charts: 0, played: 0 };
+}
+
+function mergeCounts(target: Counts, source: Partial<Counts> & { total?: number }) {
+  for (const field of ["grades", "fc", "fs"] as const) {
+    for (const [key, count] of Object.entries(source[field] ?? {})) {
+      target[field][key] = (target[field][key] ?? 0) + count;
+    }
+  }
+  target.charts += source.charts ?? 0;
+  target.played += source.played ?? source.total ?? 0;
+}
+
+function levelValue(level: string) {
+  return parseFloat(level) + (level.endsWith("+") ? 0.5 : 0);
+}
+
+function tierPhrase(t: (key: string, values?: Record<string, string>) => string, tier: Tier) {
+  return tier === PLAYED_TIER ? t("played") : t("orBetter", { tier: tier.label });
+}
+
+function tierSegments(row: Counts, tiers: Tier[], field: "grades" | "fc" | "fs") {
+  const counts = tiers.map(tier => tier.includes.reduce((sum, key) => sum + (row[field][key] ?? 0), 0));
+  const reached = counts.reduce((sum, count) => sum + count, 0);
+  counts.push(Math.max(0, row.played - reached));
+  return [...tiers, PLAYED_TIER].map((tier, index) => ({
+    tier,
+    count: counts[index],
+    cumulative: counts.slice(0, index + 1).reduce((sum, count) => sum + count, 0),
+  }));
+}
+
+function TierBreakdown({ row, segments }: { row: LevelRow; segments: ReturnType<typeof tierSegments> }) {
+  const { isTouch } = useTooltipFriendly();
+  const percent = (count: number) => row.charts > 0 ? (count / row.charts) * 100 : 0;
+  return (
+    <div className={cn("grid grid-cols-[auto_1fr_auto] items-center tabular-nums", isTouch ? "gap-x-4 gap-y-2.5 text-sm" : "gap-x-3 gap-y-1 text-xs")}>
+      {segments.map(segment => (
+        <OrBetterRow key={segment.tier.key} segment={segment} percent={percent(segment.cumulative)} isTouch={isTouch} />
+      ))}
+    </div>
+  );
+}
+
+function OrBetterRow({ segment, percent, isTouch }: { segment: ReturnType<typeof tierSegments>[number]; percent: number; isTouch: boolean }) {
+  const t = useTranslations("playerStats");
+  return (
+    <>
+      <span className="inline-flex items-center gap-1.5 font-medium">
+        <span className={cn("rounded-sm", isTouch ? "h-2.5 w-2.5" : "h-2 w-2", segment.tier.color)} />
+        {tierPhrase(t, segment.tier)}
+      </span>
+      <span className="text-right text-muted-foreground">{segment.cumulative.toLocaleString()}</span>
+      <span className="text-right w-14">{percent.toFixed(1)}%</span>
+    </>
+  );
+}
+
+function StatsBar({ row, tiers, field, className }: { row: LevelRow; tiers: Tier[]; field: "grades" | "fc" | "fs"; className?: string }) {
+  const t = useTranslations("playerStats");
+  const segments = tierSegments(row, tiers, field);
+  const percent = (count: number) => row.charts > 0 ? (count / row.charts) * 100 : 0;
+  const describe = (segment: typeof segments[number]) => t("tierTooltip", {
+    tier: tierPhrase(t, segment.tier),
+    count: segment.cumulative.toLocaleString(),
+    total: row.charts.toLocaleString(),
+    percent: percent(segment.cumulative).toFixed(1),
+  });
+  return (
+    <TooltipFriendly delayDuration={0}>
+      <TooltipFriendlyTrigger asChild>
+        {/* Padding widens the hover target beyond the thin bar */}
+        <div className="-my-1.5 py-1.5 cursor-default" role="img" aria-label={`${row.label}: ${segments.map(describe).join(", ")}`}>
+          <div className={cn("flex h-3 w-full overflow-hidden rounded-full bg-muted outline outline-1 -outline-offset-1 outline-black/10 dark:outline-transparent", className)}>
+            {segments.map(segment => segment.count > 0 && (
+              <div
+                key={segment.tier.key}
+                className={cn("h-full transition-[width] duration-500 ease-out", segment.tier.color)}
+                style={{ width: `${percent(segment.count)}%` }}
+              />
+            ))}
+          </div>
+        </div>
+      </TooltipFriendlyTrigger>
+      <TooltipFriendlyContent
+        side="top"
+        className="min-w-52"
+        title={
+          <span className="flex items-baseline justify-between gap-4">
+            <span>{row.label}</span>
+            <span className="font-normal text-muted-foreground">{t("chartCount", { count: row.charts })}</span>
+          </span>
+        }
+        description={t("breakdownDescription")}
+      >
+        <TierBreakdown row={row} segments={segments} />
+      </TooltipFriendlyContent>
+    </TooltipFriendly>
+  );
+}
+
+type LevelBreakdown = { all: LevelRow; top: LevelRow[]; group: LevelRow | null; rest: LevelRow[] };
+
+const ROW_GRID = "grid grid-cols-[4rem_1fr_2.75rem] sm:grid-cols-[5.5rem_1fr_4.5rem] items-center gap-2 sm:gap-3";
+
+function StatsRowContent({ row, tiers, field, emphasized = false, nested = false, label }: {
+  row: LevelRow;
+  tiers: Tier[];
+  field: "grades" | "fc" | "fs";
+  emphasized?: boolean;
+  nested?: boolean;
+  label?: React.ReactNode;
+}) {
+  return (
+    <>
+      <span className={cn(
+        "text-sm truncate text-left",
+        emphasized ? "font-semibold" : "font-medium",
+        nested && "pl-3.5 text-muted-foreground",
+      )}>{label ?? row.label}</span>
+      <StatsBar row={row} tiers={tiers} field={field} className={emphasized ? "h-4" : undefined} />
+      <span className="text-xs text-muted-foreground text-right tabular-nums">{row.charts.toLocaleString()}</span>
+    </>
+  );
+}
+
+function StatsSection({ title, breakdown, tiers, field }: {
+  title: string;
+  breakdown: LevelBreakdown;
+  tiers: Tier[];
+  field: "grades" | "fc" | "fs";
+}) {
+  const t = useTranslations("playerStats");
+  const [expanded, setExpanded] = useState(false);
+  const { all, top, group, rest } = breakdown;
+  const rowMotion = (index: number) => ({
+    initial: { opacity: 0, x: -10 },
+    animate: { opacity: 1, x: 0 },
+    transition: { duration: 0.2, delay: STAGGER.calculateDelay(index, 0.03) },
+  });
+  return (
+    <div className="space-y-3">
+      <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-2">
+        <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">{title}</h3>
+        <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs">
+          {tierSegments(all, tiers, field).map(({ tier, cumulative }) => (
+            <span key={tier.key} className="inline-flex items-center gap-1.5">
+              <span className={cn("h-2.5 w-2.5 rounded-sm", tier.color)} />
+              <span className="font-medium">{tier === PLAYED_TIER ? t("played") : tier.label}</span>
+              <span className="text-muted-foreground tabular-nums">
+                {all.charts > 0 ? ((cumulative / all.charts) * 100).toFixed(0) : 0}%
+              </span>
+            </span>
+          ))}
+        </div>
+      </div>
+      <div className="space-y-2.5">
+        <motion.div {...rowMotion(0)} className={cn(ROW_GRID, "pb-2.5 border-b border-dashed")}>
+          <StatsRowContent row={all} tiers={tiers} field={field} emphasized />
+        </motion.div>
+        {top.map((row, index) => (
+          <motion.div key={row.key} {...rowMotion(index + 1)} className={ROW_GRID}>
+            <StatsRowContent row={row} tiers={tiers} field={field} />
+          </motion.div>
+        ))}
+        {group && (
+          <motion.div {...rowMotion(top.length + 1)}>
+            <button
+              type="button"
+              onClick={() => setExpanded(value => !value)}
+              aria-expanded={expanded}
+              aria-label={t(expanded ? "collapseLevels" : "expandLevels", { level: rest[0]?.key ?? "" })}
+              className={cn(ROW_GRID, "w-[calc(100%+1rem)] -mx-2 px-2 py-1 rounded-md transition-colors hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring")}
+            >
+              <StatsRowContent
+                row={group}
+                tiers={tiers}
+                field={field}
+                label={
+                  <span className="inline-flex items-center gap-1">
+                    {group.label}
+                    <ChevronDown className={cn("h-3.5 w-3.5 shrink-0 text-muted-foreground transition-transform duration-300 ease-out", expanded && "rotate-180")} />
+                  </span>
+                }
+              />
+            </button>
+            <AnimatePresence initial={false}>
+              {expanded && (
+                <motion.div
+                  key="rest"
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+                  className="overflow-hidden"
+                >
+                  <div className="relative space-y-2.5 pt-2.5 before:absolute before:left-1 before:top-2.5 before:bottom-1 before:w-px before:bg-border">
+                    {rest.map((row, index) => (
+                      <motion.div
+                        key={row.key}
+                        initial={{ opacity: 0, y: -4 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.2, delay: 0.05 + index * 0.025 }}
+                        className={ROW_GRID}
+                      >
+                        <StatsRowContent row={row} tiers={tiers} field={field} nested />
+                      </motion.div>
+                    ))}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </motion.div>
+        )}
+      </div>
+    </div>
+  );
+}
 
 // Plate types
 type PlateType = "kiwami" | "shou" | "shin" | "maimai";
@@ -314,7 +534,6 @@ function PlatesGrid({ data, selectedVersion, region, snapshotId }: PlatesGridPro
 
 export function StatsCard({ region, selectedSnapshotData, snapshotId }: StatsCardProps) {
   const t = useTranslations();
-  const isDesktop = useMediaQuery("(min-width: 768px)", { initializeWithValue: false });
   const { data: ownData, isLoading: ownLoading } = trpc.user.getPlayerStats.useQuery(
     { region },
     { enabled: !snapshotId }
@@ -330,95 +549,33 @@ export function StatsCard({ region, selectedSnapshotData, snapshotId }: StatsCar
   const [selectedDifficulty, setSelectedDifficulty] = useState<string>("all");
   const [viewMode, setViewMode] = useState<"stats" | "plates">("stats");
 
-  // Compute filtered stats
-  const filteredStats = useMemo(() => {
-    if (!data) return { grades: {}, fc: {}, fs: {}, scoredTotal: 0, dbTotal: 0 };
-
-    const aggregatedGrades: Record<string, number> = {};
-    const aggregatedFC: Record<string, number> = {};
-    const aggregatedFS: Record<string, number> = {};
-    let scoredTotal = 0;
-    let dbTotal = 0;
-
-    // Aggregate across all versions and difficulties based on filters
-    for (const [version, difficulties] of Object.entries(data.stats)) {
-      // Skip if version filter is active and doesn't match
-      if (selectedVersion !== "all" && version !== selectedVersion) {
-        continue;
-      }
-
-      for (const [difficulty, stats] of Object.entries(difficulties)) {
-        // Skip if difficulty filter is active and doesn't match
-        if (selectedDifficulty !== "all" && difficulty !== selectedDifficulty) {
-          continue;
+  const levelBreakdown = useMemo<LevelBreakdown | null>(() => {
+    if (!data) return null;
+    const byLevel = new Map<string, Counts>();
+    for (const [version, difficulties] of Object.entries(data.levels)) {
+      if (selectedVersion !== "all" && version !== selectedVersion) continue;
+      for (const [difficulty, levels] of Object.entries(difficulties)) {
+        if (selectedDifficulty !== "all" && difficulty !== selectedDifficulty) continue;
+        for (const [level, bucket] of Object.entries(levels)) {
+          if (!byLevel.has(level)) byLevel.set(level, emptyCounts());
+          mergeCounts(byLevel.get(level)!, bucket);
         }
-
-        // Aggregate grade counts
-        for (const [grade, count] of Object.entries(stats.grades)) {
-          aggregatedGrades[grade] = (aggregatedGrades[grade] || 0) + count;
-        }
-
-        // Aggregate FC counts
-        for (const [fc, count] of Object.entries(stats.fc)) {
-          aggregatedFC[fc] = (aggregatedFC[fc] || 0) + count;
-        }
-
-        // Aggregate FS counts
-        for (const [fs, count] of Object.entries(stats.fs)) {
-          aggregatedFS[fs] = (aggregatedFS[fs] || 0) + count;
-        }
-
-        scoredTotal += stats.total;
       }
     }
 
-    // Calculate total songs in database based on filters
-    for (const [version, difficulties] of Object.entries(data.totalSongs)) {
-      // Skip if version filter is active and doesn't match
-      if (selectedVersion !== "all" && version !== selectedVersion) {
-        continue;
-      }
+    const levels = [...byLevel.keys()].sort((a, b) => levelValue(b) - levelValue(a));
+    const toRow = (level: string): LevelRow => ({ ...byLevel.get(level)!, key: level, label: t('playerStats.level', { level }) });
+    const all: LevelRow = { ...emptyCounts(), key: "all", label: t('playerStats.allLevels') };
+    for (const counts of byLevel.values()) mergeCounts(all, counts);
 
-      for (const [difficulty, count] of Object.entries(difficulties)) {
-        // Skip if difficulty filter is active and doesn't match
-        if (selectedDifficulty !== "all" && difficulty !== selectedDifficulty) {
-          continue;
-        }
-
-        dbTotal += count;
-      }
+    const rest = levels.slice(MAX_LEVEL_ROWS).map(toRow);
+    let group: LevelRow | null = null;
+    if (rest.length > 0) {
+      group = { ...emptyCounts(), key: "rest", label: t('playerStats.levelAndBelow', { level: rest[0].key }) };
+      for (const row of rest) mergeCounts(group, row);
     }
-
-    // Make grades cumulative (each grade includes all better grades)
-    const gradeOrder = ACHIEVEMENTS.map(a => a.rate);
-    const cumulativeGrades: Record<string, number> = {};
-    let gradRunningTotal = 0;
-
-    for (const grade of gradeOrder) {
-      gradRunningTotal += aggregatedGrades[grade] || 0;
-      cumulativeGrades[grade] = gradRunningTotal;
-    }
-
-    // Make FC cumulative (each FC includes all better FCs)
-    const cumulativeFC: Record<string, number> = {};
-    let fcRunningTotal = 0;
-
-    for (const fc of FC_ORDER) {
-      fcRunningTotal += aggregatedFC[fc] || 0;
-      cumulativeFC[fc] = fcRunningTotal;
-    }
-
-    // Make FS cumulative (each FS includes all better FSs)
-    const cumulativeFS: Record<string, number> = {};
-    let fsRunningTotal = 0;
-
-    for (const fs of FS_ORDER) {
-      fsRunningTotal += aggregatedFS[fs] || 0;
-      cumulativeFS[fs] = fsRunningTotal;
-    }
-
-    return { grades: cumulativeGrades, fc: cumulativeFC, fs: cumulativeFS, scoredTotal, dbTotal };
-  }, [data, selectedVersion, selectedDifficulty]);
+    return { all, top: levels.slice(0, MAX_LEVEL_ROWS).map(toRow), group, rest };
+  }, [data, selectedVersion, selectedDifficulty, t]);
 
   // Get available versions from data
   const availableVersions = useMemo(() => {
@@ -436,17 +593,6 @@ export function StatsCard({ region, selectedSnapshotData, snapshotId }: StatsCar
   const availableDifficulties = useMemo(() => {
     return DIFFICULTY_ENUM;
   }, []);
-
-  // Sort grades by achievement threshold (highest to lowest)
-  const sortedGrades = useMemo(() => {
-    const gradeOrder = ACHIEVEMENTS.map(a => a.rate);
-    return Object.entries(filteredStats.grades)
-      .sort((a, b) => {
-        const indexA = gradeOrder.indexOf(a[0]);
-        const indexB = gradeOrder.indexOf(b[0]);
-        return indexA - indexB;
-      });
-  }, [filteredStats.grades]);
 
   if (isLoading) {
     return <StatsCardSkeleton />;
@@ -522,130 +668,17 @@ export function StatsCard({ region, selectedSnapshotData, snapshotId }: StatsCar
           <PlatesGrid data={data} selectedVersion={selectedVersion} region={region} snapshotId={snapshotId} />
         ) : (
           <>
-            {/* Grades Section */}
-            <div className="space-y-4">
-              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">{t('playerStats.achievementGrades')}</h3>
-              {sortedGrades.length === 0 ? (
-                <p className="text-center text-muted-foreground py-8">
-                  {t('playerStats.noMatchingScores')}
-                </p>
-              ) : (
-                sortedGrades.map(([grade, count], index) => {
-                  const percentage = filteredStats.dbTotal > 0 ? (count / filteredStats.dbTotal) * 100 : 0;
-                  const gradeColor = GRADE_COLORS[grade] || GRADE_COLORS["D"];
-
-                  return (
-                    <motion.div
-                      key={grade}
-                      initial={{ opacity: 0, x: -10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{
-                        duration: 0.2,
-                        delay: STAGGER.calculateDelay(index, 0.03),
-                      }}
-                      className="space-y-2"
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <span
-                            className={`inline-flex items-center justify-center w-12 h-6 text-xs font-bold text-white rounded ${gradeColor.bg}`}
-                          >
-                            {grade}
-                          </span>
-                          <span className="text-sm font-medium">
-                            {count.toLocaleString()} / {filteredStats.dbTotal.toLocaleString()}
-                          </span>
-                        </div>
-                        <span className="text-sm text-muted-foreground">
-                          {percentage.toFixed(1)}%
-                        </span>
-                      </div>
-                      <Progress value={percentage} className="h-2" />
-                    </motion.div>
-                  );
-                })
-              )}
-            </div>
-
-            {/* Full Combo Section */}
-            <div className="space-y-4">
-              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">{t('playerStats.fullCombo')}</h3>
-              {FC_ORDER.map((fc, index) => {
-                const count = filteredStats.fc[fc] || 0;
-                const percentage = filteredStats.dbTotal > 0 ? (count / filteredStats.dbTotal) * 100 : 0;
-                const fcColor = FC_COLORS[fc];
-
-                return (
-                  <motion.div
-                    key={fc}
-                    initial={{ opacity: 0, ...(isDesktop ? { x: -10 } : { y: 10 }) }}
-                    animate={{ opacity: 1, x: 0, y: 0 }}
-                    transition={{
-                      duration: 0.2,
-                      delay: STAGGER.calculateDelay(index, 0.03),
-                    }}
-                    className="space-y-2"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <span
-                          className={`inline-flex items-center justify-center w-12 h-6 text-xs font-bold text-white rounded ${fcColor.bg}`}
-                        >
-                          {fc.toUpperCase()}
-                        </span>
-                        <span className="text-sm font-medium">
-                          {count.toLocaleString()} / {filteredStats.dbTotal.toLocaleString()}
-                        </span>
-                      </div>
-                      <span className="text-sm text-muted-foreground">
-                        {percentage.toFixed(1)}%
-                      </span>
-                    </div>
-                    <Progress value={percentage} className="h-2" />
-                  </motion.div>
-                );
-              })}
-            </div>
-
-            {/* Full Sync Section */}
-            <div className="space-y-4">
-              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">{t('playerStats.fullSync')}</h3>
-              {FS_ORDER.map((fs, index) => {
-                const count = filteredStats.fs[fs] || 0;
-                const percentage = filteredStats.dbTotal > 0 ? (count / filteredStats.dbTotal) * 100 : 0;
-                const fsColor = FS_COLORS[fs];
-
-                return (
-                  <motion.div
-                    key={fs}
-                    initial={{ opacity: 0, ...(isDesktop ? { x: -10 } : { y: 10 }) }}
-                    animate={{ opacity: 1, x: 0, y: 0 }}
-                    transition={{
-                      duration: 0.2,
-                      delay: STAGGER.calculateDelay(index, 0.03),
-                    }}
-                    className="space-y-2"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <span
-                          className={`inline-flex items-center justify-center w-12 h-6 text-xs font-bold text-white rounded ${fsColor.bg}`}
-                        >
-                          {fs.toUpperCase()}
-                        </span>
-                        <span className="text-sm font-medium">
-                          {count.toLocaleString()} / {filteredStats.dbTotal.toLocaleString()}
-                        </span>
-                      </div>
-                      <span className="text-sm text-muted-foreground">
-                        {percentage.toFixed(1)}%
-                      </span>
-                    </div>
-                    <Progress value={percentage} className="h-2" />
-                  </motion.div>
-                );
-              })}
-            </div>
+            {!levelBreakdown || levelBreakdown.all.charts === 0 ? (
+              <p className="text-center text-muted-foreground py-8">
+                {t('playerStats.noMatchingScores')}
+              </p>
+            ) : (
+              <>
+                <StatsSection title={t('playerStats.achievementGrades')} breakdown={levelBreakdown} tiers={GRADE_TIERS} field="grades" />
+                <StatsSection title={t('playerStats.fullCombo')} breakdown={levelBreakdown} tiers={FC_TIERS} field="fc" />
+                <StatsSection title={t('playerStats.fullSync')} breakdown={levelBreakdown} tiers={FS_TIERS} field="fs" />
+              </>
+            )}
           </>
         )}
       </div>

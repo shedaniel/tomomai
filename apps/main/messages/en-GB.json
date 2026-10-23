@@ -52,7 +52,8 @@
     "clipboardError": "Failed to copy to clipboard",
     "selectAnOption": "Select an option",
     "ok": "OK",
-    "email": "Email"
+    "email": "Email",
+    "resetToDefault": "Reset to default"
   },
   "minigames": {
     "badge": "Minigame",
@@ -638,7 +639,9 @@
     "fetchNewData": "Fetch New Data",
     "fetchingData": "Fetching data...",
     "lastUpdate": "Last updated",
-    "noDataInstructions": "No data found for this region. Click \"Fetch New Data\" to import your maimai scores. You'll need your maimai token for this process."
+    "noDataInstructions": "No data found for this region. Click \"Fetch New Data\" to import your maimai scores. You'll need your maimai token for this process.",
+    "deleteSnapshot": "Delete selected snapshot",
+    "moreOptions": "More options"
   },
   "profileMetadata": {
     "title": "{username} | tomomai ともマイ",
@@ -746,12 +749,23 @@
   },
   "recommendations": {
     "peerAchieved": "Achieved by ≈{percent} peers",
+    "stretchBadge": "Stretch",
     "newBadge": "New",
     "oldBadge": "Old",
     "currentToTarget": "Current → Target",
     "noRecommendations": "No Recommendations Available",
     "allOptimal": "All your scores are already optimal! Keep up the great work.",
     "description": "Songs recommended to improve your rating based on your current B15/B35 scores.",
+    "tryNewDescription": "Charts you haven't played yet that could raise your Rating, ranked by the Rating you'd likely gain based on how players near your Rating score on them. The people icon shows their typical score, and Stretch marks targets above it.",
+    "tabs": {
+      "improve": "Improve scores",
+      "tryNew": "Try new charts"
+    },
+    "target": "Target",
+    "peerTypical": "Players near your Rating usually get {accuracy}%",
+    "noUnplayed": "No New Charts to Suggest",
+    "noUnplayedDescription": "None of the charts you haven't played would raise your Rating right now.",
+    "loadError": "Couldn't load recommendations. Please try again later.",
     "filterButton": "Filter",
     "filters": {
       "all": "All",
@@ -814,6 +828,16 @@
     "achievementGrades": "Achievement Grades",
     "fullCombo": "Full Combo",
     "fullSync": "Full Sync",
+    "allLevels": "All",
+    "level": "Lv {level}",
+    "levelAndBelow": "≤ Lv {level}",
+    "expandLevels": "Show each level from Lv {level} down",
+    "collapseLevels": "Hide levels from Lv {level} down",
+    "tierTooltip": "{tier}: {count} of {total} ({percent}%)",
+    "orBetter": "{tier} or better",
+    "played": "Played",
+    "chartCount": "{count, plural, one {# chart} other {# charts}}",
+    "breakdownDescription": "How many charts at this level reach each tier or better",
     "noDataAvailable": "No data available",
     "noMatchingScores": "No scores match the selected filters",
     "selectVersionForPlates": "Please select a specific version to view plate progress",
@@ -1294,6 +1318,8 @@
       "fetchActivityHeatmap": "Fetch Activity by Hour & Weekday",
       "playActivityHeatmap": "Play Activity by Hour & Weekday",
       "heatmapTimezoneNote": "Hours shown in JST (UTC+9), last 90 days.",
+      "heatmapCell": "{slot} · {count}",
+      "heatmapPeak": "Busiest: {slot} · {count}",
       "topSongsWindow": {
         "label": "Time Range",
         "all": "All time",
@@ -1536,6 +1562,7 @@
     "title": "Score comparison",
     "view": "Comparison view",
     "you": "You · {achievement}",
+    "notPlayed": "Not played yet",
     "curveTab": "Score curve",
     "ratingTab": "By Rating",
     "ratingHeading": "Achievement by player Rating",
@@ -1549,6 +1576,7 @@
     "lessThan": "<{percent}",
     "ratingDescription": "Achievement versus Rating for {count} players, based on all play records. Dots group sampled scores into 125 Rating points and 0.1% achievement, with approximate positions spread within each bin. Your Rating is {rating}, achievement {achievement}.",
     "curveDescription": "Estimated share of players with similar Rating scoring at or below each achievement. {percent} scored at or below your {achievement}. Ties are included.",
+    "unplayedDescription": "Best scores of players on this chart. You haven't played it yet.",
     "clusterDescription": "Rating {ratingMin}–{ratingMax}; {achievementMin}–{achievementMax}: {count, plural, one {# sampled score} other {# sampled scores}}",
     "youDescription": "You: {rating} Rating, {achievement}"
   },

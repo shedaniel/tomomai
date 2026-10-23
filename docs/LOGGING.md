@@ -115,7 +115,8 @@ Aggregate namespaces (intentional nested objects — **bounded, fixed keys**; do
 > `totalMasterNamesNormalized`, `originalName`, `ttlSec`, `scope`, `dateKey`, `mode`) are also registered — keep this
 > list current when you add one.
 
-Browser recommendation diagnostics (temporary, scalar fields):
+Retired browser recommendation diagnostics (no longer logged, but already in the
+schema, so they still count toward the budget):
 `userRating`, `percentileEnabled`, `potentialEnabled`, `fetchStatus`,
 `requestedCharts`, `potentialCharts`, `qualifyingTargets`, `displayedPotential`.
 `recommendationRows` is an array of strings describing the displayed rows in
