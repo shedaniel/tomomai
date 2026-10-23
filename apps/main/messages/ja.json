@@ -52,7 +52,8 @@
     "clipboardError": "クリップボードへのコピーに失敗しました",
     "selectAnOption": "オプションを選択",
     "ok": "OK",
-    "email": "メールアドレス"
+    "email": "メールアドレス",
+    "resetToDefault": "デフォルトに戻す"
   },
   "security": {
     "reauth": {
@@ -703,7 +704,9 @@
     "fetchNewData": "データ取得",
     "fetchingData": "データ取得中...",
     "lastUpdate": "最終更新",
-    "noDataInstructions": "この地域のデータがまだありません。「新しいデータを取得」からmaimaiスコアを取り込みましょう（ログイン／トークンが必要です）。"
+    "noDataInstructions": "この地域のデータがまだありません。「新しいデータを取得」からmaimaiスコアを取り込みましょう（ログイン／トークンが必要です）。",
+    "deleteSnapshot": "選択中のスナップショットを削除",
+    "moreOptions": "その他のオプション"
   },
   "profileMetadata": {
     "title": "{username} | tomomai ともマイ",
@@ -784,13 +787,16 @@
       "exporting": "エクスポート中..."
     },
     "exportImageCard": {
-      "profileImage": "Profile Image",
-      "lastCredit": "Last Credit",
-      "dailyPlays": "Daily Plays",
-      "dayLabel": "Day",
-      "dayPlaceholder": "Select a day",
-      "dayLoading": "Loading days...",
-      "noPlays": "No daily plays available"
+      "profileImage": "プロフィール画像",
+      "lastCredit": "クレジット",
+      "dailyPlays": "日別プレイ",
+      "dayLabel": "日付",
+      "dayPlaceholder": "日付を選択",
+      "dayLoading": "日付を読み込み中...",
+      "noPlays": "この日のプレイ記録がありません",
+      "chooseCredit": "クレジットを選択",
+      "creditLoading": "クレジットを読み込み中...",
+      "noCredits": "クレジットがありません"
     }
   },
   "albums": {
@@ -820,12 +826,23 @@
   },
   "recommendations": {
     "peerAchieved": "同Rating帯の約{percent}が達成",
+    "stretchBadge": "背伸び",
     "newBadge": "新曲",
     "oldBadge": "旧曲",
     "currentToTarget": "現在 → 目標",
     "noRecommendations": "おすすめがありません",
     "allOptimal": "レート値を伸ばせる曲はもうありません！",
     "description": "現在のB15/B35スコアに基づき、レート値を伸ばしやすい楽曲をおすすめします。",
+    "tryNewDescription": "まだプレイしていない譜面のうち、レート値を伸ばせそうなものを、同Rating帯のプレイヤーのスコアから見込める上昇量の順に表示します。人型アイコンはその代表的なスコア、「背伸び」はそれを上回る目標です。",
+    "tabs": {
+      "improve": "スコアを伸ばす",
+      "tryNew": "新しい譜面に挑戦"
+    },
+    "target": "目標",
+    "peerTypical": "同Rating帯のプレイヤーは{accuracy}%前後が多いです",
+    "noUnplayed": "おすすめできる未プレイ譜面がありません",
+    "noUnplayedDescription": "未プレイの譜面で、今レート値を伸ばせるものはありません。",
+    "loadError": "おすすめを読み込めませんでした。しばらくしてから再度お試しください。",
     "filterButton": "フィルター",
     "filters": {
       "all": "すべて",
@@ -861,7 +878,8 @@
       "totalLoss": "ロス"
     },
     "clickToExpand": "クリックして詳細を展開",
-    "clickToCollapse": "クリックして折りたたむ"
+    "clickToCollapse": "クリックして折りたたむ",
+    "exportCredit": "このクレジットを画像出力"
   },
   "events": {
     "title": "ちほー",
@@ -888,6 +906,16 @@
     "achievementGrades": "達成ランク",
     "fullCombo": "フルコンボ",
     "fullSync": "フルシンク",
+    "allLevels": "すべて",
+    "level": "Lv {level}",
+    "levelAndBelow": "≤ Lv {level}",
+    "expandLevels": "Lv {level}以下をレベル別に表示",
+    "collapseLevels": "Lv {level}以下のレベル別表示を閉じる",
+    "tierTooltip": "{tier}：{total}譜面中{count}（{percent}%）",
+    "orBetter": "{tier}以上",
+    "played": "プレイ済み",
+    "chartCount": "{count, plural, other {#譜面}}",
+    "breakdownDescription": "このレベルで各ランク以上を達成した譜面の数",
     "noDataAvailable": "データがありません",
     "noMatchingScores": "条件に一致するスコアがありません",
     "selectVersionForPlates": "プレートの進捗を確認するには、バージョンを指定してください",
@@ -1368,6 +1396,8 @@
       "fetchActivityHeatmap": "時間帯×曜日 別データ取得アクティビティ",
       "playActivityHeatmap": "時間帯×曜日 別プレイアクティビティ",
       "heatmapTimezoneNote": "時刻は JST (UTC+9)、過去90日間。",
+      "heatmapCell": "{slot} · {count}",
+      "heatmapPeak": "最多：{slot} · {count}",
       "topSongsWindow": {
         "label": "期間",
         "all": "全期間",
@@ -1610,6 +1640,7 @@
     "title": "スコア比較",
     "view": "比較表示",
     "you": "あなた · {achievement}",
+    "notPlayed": "未プレイ",
     "curveTab": "スコア曲線",
     "ratingTab": "Rating別",
     "ratingHeading": "プレイヤーのRatingと達成率",
@@ -1623,6 +1654,7 @@
     "lessThan": "{percent}未満",
     "ratingDescription": "すべてのプレイ記録をもとに、{count}人のRatingと達成率を比較しています。点はRating幅125、達成率幅0.1%のサンプルをまとめ、各範囲内に分散して表示しています。位置は概算です。あなたのRatingは{rating}、達成率は{achievement}です。",
     "curveDescription": "近いRatingのプレイヤーのうち、各達成率以下の割合の推定値です。あなたの達成率{achievement}以下は{percent}です。同点を含みます。",
+    "unplayedDescription": "この譜面でのプレイヤーのベストスコアです。あなたはまだプレイしていません。",
     "clusterDescription": "Rating {ratingMin}–{ratingMax}; {achievementMin}–{achievementMax}: {count, plural, one {# sampled score} other {# sampled scores}}",
     "youDescription": "あなた：Rating {rating}、達成率{achievement}"
   },
