@@ -2,20 +2,36 @@
 
 ## Environment Variables
 
+Each app validates its environment at startup with a zod schema, so a missing or
+malformed required variable fails fast with a list of what is wrong:
+
+| App    | Schema                   |
+| ------ | ------------------------ |
+| main   | `apps/main/src/env.ts`   |
+| guess  | `apps/guess/src/env.ts`  |
+| render | `apps/render/src/env.ts` |
+
+Read variables through the exported `env` object instead of `process.env`. Set
+`SKIP_ENV_VALIDATION=1` only for builds that run without real secrets.
+
+For local development, `make setup` generates working `.env.local` files for all
+three apps (see `scripts/dev-env.sh`).
+
 ### Database
 
 | Variable | Required | Description |
 |---|---|---|
 | `POSTGRES_URL` | Yes | PostgreSQL connection string |
-| `REDIS_URL` | Yes | Redis connection string |
+| `REDIS_URL` | Yes | Redis connection string. Also enables rate limiting |
 
 ### Auth
 
 | Variable | Required | Description |
 |---|---|---|
 | `BETTER_AUTH_SECRET` | Yes | Secret key for Better Auth. Generate with `openssl rand -base64 32` |
-| `DISCORD_CLIENT_ID` | Yes | Discord OAuth application client ID |
-| `DISCORD_CLIENT_SECRET` | Yes | Discord OAuth application client secret |
+| `BETTER_AUTH_URL` | No | Auth base URL. Falls back to the resolved site URL |
+| `DISCORD_CLIENT_ID` | For Discord login | Discord OAuth application client ID |
+| `DISCORD_CLIENT_SECRET` | For Discord login | Discord OAuth application client secret |
 | `TWITTER_CLIENT_ID` | No | X (Twitter) OAuth 2.0 client ID. Required to enable X login |
 | `TWITTER_CLIENT_SECRET` | No | X (Twitter) OAuth 2.0 client secret. Required to enable X login |
 | `ALTCHA_HMAC_KEY` | Recommended | HMAC secret for ALTCHA captcha challenges used during passkey registration. Generate with `openssl rand -hex 32`. Required in non-development environments |
@@ -47,10 +63,11 @@ When enabled, the widget must have [pre-clearance enabled](https://developers.cl
 
 | Variable | Required | Description |
 |---|---|---|
-| `DISCORD_PUBLIC_KEY` | Yes | Discord application public key for interaction verification |
-| `NEXT_PUBLIC_DISCORD_APPLICATION_ID` | Yes | Discord application ID (public, used client-side) |
+| `DISCORD_PUBLIC_KEY` | For the bot | Discord application public key for interaction verification |
+| `NEXT_PUBLIC_DISCORD_APPLICATION_ID` | For the bot | Discord application ID (public, used client-side) |
 | `DISCORD_BOT_TOKEN` | Scripts | Bot token for registering slash commands |
 | `DISCORD_UPDATE_WEBHOOK` | No | Webhook URL for posting update notifications |
+| `DISCORD_UPDATE_WEBHOOK_INTL` / `_JP` / `_CN` | No | Per-region override of `DISCORD_UPDATE_WEBHOOK` |
 | `DISCORD_UPDATE_WEBHOOK_NOTICE` | No | Webhook URL for posting update notices. The channel should never be publicly accessible as it contains admin confirmation buttons |
 
 ### Cloudflare R2
@@ -62,20 +79,23 @@ When enabled, the widget must have [pre-clearance enabled](https://developers.cl
 | `R2_SECRET_ACCESS_KEY` | Yes | R2 secret access key |
 | `R2_BUCKET` | Yes | R2 bucket name |
 | `NEXT_PUBLIC_R2_URL` | Yes | Public base URL for R2 assets |
+| `NEXT_PUBLIC_R2_URL_CN` | No | Public base URL for R2 assets served to CN visitors |
+| `R2_FORCE_PATH_STYLE` | No | Set to `true` for S3 stand-ins that only serve path-style URLs (local RustFS) |
 
 ### Admin
 
 | Variable | Required | Description |
 |---|---|---|
-| `ADMIN_UPDATE_TOKEN` | Yes | Bearer token for admin API routes. Generate with `openssl rand -base64 32` |
+| `ADMIN_UPDATE_TOKEN` | For admin routes | Bearer token for admin API routes. Admin routes return 500 when unset. Generate with `openssl rand -base64 32` |
+| `CRON_SECRET` | For cron routes | Bearer token Vercel Cron sends to `/api/cron/*` |
 
 ### Crypto / Tokens
 
 | Variable | Required | Description |
 |---|---|---|
-| `TOKEN_SECRET` | Yes | Secret for encrypting/decrypting user tokens. Generate with `openssl rand -base64 32` |
+| `TOKEN_SECRET` | Yes | AES-256 key for encrypting user tokens, exactly 64 hex characters. Generate with `openssl rand -hex 32` |
 | `MAIMAI_TOTP_SECRET` | Yes | Secret for TOTP code generation. Generate with `openssl rand -hex 32` |
-| `FLAGS_SECRET` | Yes | Secret for feature flags. Generate with `node -e "console.log(crypto.randomBytes(32).toString('base64url'))"` |
+| `FLAGS_SECRET` | For the Vercel Toolbar flags | Secret for feature flags. Generate with `node -e "console.log(crypto.randomBytes(32).toString('base64url'))"` |
 
 ### Render Service
 
@@ -113,10 +133,13 @@ that service.
 
 | Variable | Required | Description |
 |---|---|---|
-| `NEXT_PUBLIC_APP_URL` | No | Public app URL (defaults to `http://localhost:3000`) |
+| `NEXT_PUBLIC_SITE_URL` | No | Canonical site URL override. Otherwise resolved from the Vercel URLs, then `http://localhost:3000` |
+| `NEXT_PUBLIC_APP_URL` | No | Public app URL used in invite links and the CORS allowlist (defaults to `http://localhost:3000`) |
 | `NEXT_PUBLIC_ACCOUNT_SIGNUP_TYPE` | No | Signup mode: `disabled`, `invite-only`, or `enabled` (defaults to `disabled`). Set to `enabled` to allow account registration |
 | `NEXT_PUBLIC_ENABLED_REGIONS` | No | Comma-separated list of enabled regions |
 | `DEMO_FETCH` | No | Set to `true` to use demo data for fetching |
+| `USERSCRIPT_CLIENT_ID` | For the userscript | OAuth client (from `/settings/developer`) the userscript import flow signs in with |
+| `USERSCRIPT_CLIENT_SECRET` | For the userscript | Secret of that OAuth client |
 | `TRUSTED_ORIGINS` | No | Comma-separated list of additional origins (e.g. `https://tomomai.lol,https://cn.tomomai.lol`). Read by Better Auth (`trustedOrigins`) and the CORS allowlist. Required when fronting the app with the [`cn/` reverse proxy](#cn-reverse-proxy-hk-cn2) so the proxy hostname is accepted for OAuth callbacks and CORS. |
 | `AUTH_COOKIE_DOMAIN` | No | Cookie domain for cross-subdomain Better Auth sessions (e.g. `.tomomai.lol`). Set this when serving the same app under multiple hostnames (apex + `cn.` proxy) so a session set on one is valid on the other. Omit for single-hostname deployments. |
 
@@ -136,6 +159,7 @@ These power the four options in the CN token dialog. All variables are optional 
 |---|---|---|
 | `LXNS_CLIENT_ID` | For lxns | OAuth client ID issued by lxns |
 | `LXNS_CLIENT_SECRET` | For lxns | OAuth client secret issued by lxns |
+| `LXNS_REDIRECT_URI` | No | OAuth redirect URI override (defaults to `<site>/api/oauth/lxns/callback`) |
 
 #### HTTP Proxy (CN OAuth interception)
 
@@ -162,9 +186,10 @@ Not yet implemented; no env vars.
 |---|---|
 | `EDGE_CONFIG` | Vercel Edge Config connection string (implicitly required by the `@vercel/edge-config` package). Set up via the Vercel dashboard at vercel.com |
 | `VERCEL` | Set to `1` when running on Vercel |
+| `VERCEL_ENV` | `production`, `preview` or `development` |
 | `VERCEL_URL` | Auto-assigned deployment URL |
+| `VERCEL_BRANCH_URL` | Auto-assigned branch alias URL |
 | `VERCEL_PROJECT_PRODUCTION_URL` | Auto-assigned production URL |
-| `NEXTAUTH_URL` | Base URL override for auth callbacks |
 
 ## CN Reverse Proxy (HK CN2)
 

@@ -1,3 +1,4 @@
+import { env } from "@/env";
 import { logger } from "../../logger";
 
 const DIVING_FISH_BASE = "https://www.diving-fish.com/api/maimaidxprober";
@@ -63,7 +64,7 @@ export interface DivingFishIdentifier {
 }
 
 function getDevToken(): string {
-  const token = process.env.DIVINGFISH_DEV_TOKEN;
+  const token = env.DIVINGFISH_DEV_TOKEN;
   if (!token) {
     throw new DivingFishAuthError("diving-fish is not configured on the server.");
   }

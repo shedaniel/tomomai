@@ -1,8 +1,9 @@
+import { env } from "@/env";
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 import * as schema from "./db/schema-pg";
 
-const client = postgres(process.env.POSTGRES_URL!, {
+const client = postgres(env.POSTGRES_URL, {
   prepare: false,
 });
 

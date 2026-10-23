@@ -1,3 +1,4 @@
+import { env } from "@/env";
 import fs from "fs";
 import path from "path";
 import { NextRequest, NextResponse } from "next/server";
@@ -14,7 +15,7 @@ const CLIENT_ID_PLACEHOLDER = "__TOMOMAI_USERSCRIPT_CLIENT_ID__";
 
 export async function GET(request: NextRequest) {
   if (!(await useUserscriptFetch())) return new NextResponse("Not Found", { status: 404 });
-  const clientId = process.env.USERSCRIPT_CLIENT_ID;
+  const clientId = env.USERSCRIPT_CLIENT_ID;
   if (!clientId) {
     return new NextResponse(
       "USERSCRIPT_CLIENT_ID is not set on the server. Set it in the environment so the userscript can authenticate.",

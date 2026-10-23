@@ -1,3 +1,4 @@
+import { env } from "@/env";
 import { NextRequest, NextResponse } from "next/server";
 import { clientIp, rateLimit } from "@tomomai/security/rate-limit";
 import { verifyTurnstileToken } from "@tomomai/security/turnstile";
@@ -12,10 +13,10 @@ export async function POST(req: NextRequest) {
   const body = (await req.json().catch(() => null)) as { token?: unknown } | null;
   const result = await verifyTurnstileToken({
     token: body?.token,
-    secretKey: process.env.TURNSTILE_SECRET_KEY,
+    secretKey: env.TURNSTILE_SECRET_KEY,
     remoteIp: clientIp(req),
     expectedAction: "site-access",
-    expectedHostname: process.env.TURNSTILE_EXPECTED_HOSTNAME,
+    expectedHostname: env.TURNSTILE_EXPECTED_HOSTNAME,
   });
 
   if (result.success) {

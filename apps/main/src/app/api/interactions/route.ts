@@ -1,3 +1,4 @@
+import { env } from '@/env';
 import { NextRequest } from 'next/server';
 import {
   InteractionType,
@@ -10,8 +11,8 @@ import { flushLogger } from '@/lib/logger';
 import { requestLogger } from '@/lib/request-logger';
 
 // Discord bot configuration
-const DISCORD_PUBLIC_KEY = process.env.DISCORD_PUBLIC_KEY!;
-const APPLICATION_ID = process.env.NEXT_PUBLIC_DISCORD_APPLICATION_ID!;
+const DISCORD_PUBLIC_KEY = env.DISCORD_PUBLIC_KEY!;
+const APPLICATION_ID = env.NEXT_PUBLIC_DISCORD_APPLICATION_ID!;
 
 export async function POST(request: NextRequest) {
   const { log, requestId } = requestLogger(request, "discord/interactions");

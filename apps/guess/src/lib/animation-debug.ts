@@ -1,3 +1,5 @@
+import { env } from "@/env";
+
 /**
  * Animation slowdown for debugging. Set `NEXT_PUBLIC_DEBUG_ANIMATION` in
  * `apps/guess/.env.local` to any positive number (e.g. `8`) to make all
@@ -14,7 +16,7 @@
  *   so the animation still feels "gentle" / "snappy" / etc., just slower.
  * - Tweens: multiply `duration` and `delay` by k.
  */
-const RAW = process.env.NEXT_PUBLIC_DEBUG_ANIMATION;
+const RAW = env.NEXT_PUBLIC_DEBUG_ANIMATION;
 
 export const ANIMATION_SLOWDOWN: number = (() => {
   if (!RAW) return 1;

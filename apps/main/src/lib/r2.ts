@@ -1,19 +1,20 @@
+import { env } from "@/env";
 import { S3Client, PutObjectCommand, DeleteObjectCommand, ListObjectsV2Command, HeadObjectCommand } from "@aws-sdk/client-s3";
 import { createHash } from "crypto";
 import { nanoid } from "nanoid";
 
 export const r2Client = new S3Client({
   region: "auto",
-  endpoint: process.env.R2_ENDPOINT,
+  endpoint: env.R2_ENDPOINT,
   // Local S3 stand-ins (RustFS) only serve path-style URLs.
-  forcePathStyle: process.env.R2_FORCE_PATH_STYLE === "true",
+  forcePathStyle: env.R2_FORCE_PATH_STYLE === "true",
   credentials: {
-    accessKeyId: process.env.R2_ACCESS_KEY_ID!,
-    secretAccessKey: process.env.R2_SECRET_ACCESS_KEY!,
+    accessKeyId: env.R2_ACCESS_KEY_ID,
+    secretAccessKey: env.R2_SECRET_ACCESS_KEY,
   },
 });
 
-export const R2_BUCKET = process.env.R2_BUCKET!;
+export const R2_BUCKET = env.R2_BUCKET;
 
 export interface PutR2ObjectOptions {
   abortSignal?: AbortSignal;
@@ -159,14 +160,12 @@ export async function uploadIconToR2(
 }
 
 function iconPublicUrl(key: string): string {
-  const base = process.env.NEXT_PUBLIC_R2_URL;
-  if (!base) throw new Error("NEXT_PUBLIC_R2_URL is not set");
-  return `${base.replace(/\/$/, "")}/${key}`;
+  return `${env.NEXT_PUBLIC_R2_URL.replace(/\/$/, "")}/${key}`;
 }
 
 export function isR2IconUrl(url: string): boolean {
-  const base = process.env.NEXT_PUBLIC_R2_URL;
-  const baseCn = process.env.NEXT_PUBLIC_R2_URL_CN;
+  const base = env.NEXT_PUBLIC_R2_URL;
+  const baseCn = env.NEXT_PUBLIC_R2_URL_CN;
   const prefixes = [base, baseCn].filter(Boolean).map((b) => `${b!.replace(/\/$/, "")}/icons/`);
   return prefixes.some((p) => url.startsWith(p));
 }
@@ -199,8 +198,8 @@ export async function uploadAvatarToR2(
 }
 
 export function isR2AvatarUrl(url: string): boolean {
-  const base = process.env.NEXT_PUBLIC_R2_URL;
-  const baseCn = process.env.NEXT_PUBLIC_R2_URL_CN;
+  const base = env.NEXT_PUBLIC_R2_URL;
+  const baseCn = env.NEXT_PUBLIC_R2_URL_CN;
   const prefixes = [base, baseCn].filter(Boolean).map((b) => `${b!.replace(/\/$/, "")}/avatars/`);
   return prefixes.some((p) => url.startsWith(p));
 }
@@ -262,8 +261,8 @@ export async function mirrorRemoteAvatarToR2(
 }
 
 export function r2KeyFromIconUrl(url: string): string | null {
-  const base = process.env.NEXT_PUBLIC_R2_URL;
-  const baseCn = process.env.NEXT_PUBLIC_R2_URL_CN;
+  const base = env.NEXT_PUBLIC_R2_URL;
+  const baseCn = env.NEXT_PUBLIC_R2_URL_CN;
   for (const b of [base, baseCn]) {
     if (!b) continue;
     const prefix = `${b.replace(/\/$/, "")}/`;

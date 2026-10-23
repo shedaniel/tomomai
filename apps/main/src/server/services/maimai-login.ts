@@ -1,3 +1,4 @@
+import { env } from "@/env";
 import { db } from "@/lib/db";
 import { userTokens } from "@/lib/db/schema-pg";
 import { eq, and } from "drizzle-orm";
@@ -226,7 +227,7 @@ export async function processMaimaiToken(
       };
     }
 
-    if (!process.env.DIVINGFISH_DEV_TOKEN) {
+    if (!env.DIVINGFISH_DEV_TOKEN) {
       return {
         isValid: false,
         error: "diving-fish is not configured on the server.",
@@ -330,8 +331,8 @@ export async function saveLxnsToken(userId: string, formattedToken: string): Pro
 const LXNS_TOKEN_URL = "https://maimai.lxns.net/api/v0/oauth/token";
 
 export async function refreshLxnsToken(refreshToken: string): Promise<TokenValidationResult> {
-  const clientId = process.env.LXNS_CLIENT_ID;
-  const clientSecret = process.env.LXNS_CLIENT_SECRET;
+  const clientId = env.LXNS_CLIENT_ID;
+  const clientSecret = env.LXNS_CLIENT_SECRET;
   if (!clientId || !clientSecret) {
     return { isValid: false, error: "lxns OAuth is not configured on the server." };
   }
@@ -380,8 +381,8 @@ export async function exchangeLxnsCode(
   code: string,
   redirectUri: string
 ): Promise<TokenValidationResult> {
-  const clientId = process.env.LXNS_CLIENT_ID;
-  const clientSecret = process.env.LXNS_CLIENT_SECRET;
+  const clientId = env.LXNS_CLIENT_ID;
+  const clientSecret = env.LXNS_CLIENT_SECRET;
   if (!clientId || !clientSecret) {
     return { isValid: false, error: "lxns OAuth is not configured on the server." };
   }

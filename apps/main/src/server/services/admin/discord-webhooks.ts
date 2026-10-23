@@ -1,3 +1,4 @@
+import { env } from "@/env";
 import { after } from "next/server";
 import { resolveBaseUrl } from "@/lib/base-url";
 import { logger, flushLogger } from "@/lib/logger";
@@ -254,8 +255,12 @@ export async function sendDiscordWebhook(
   deleted: DeletedChange[],
   modified: ModifiedChange[],
 ) {
-  const regionKey = `DISCORD_UPDATE_WEBHOOK_${region.toUpperCase()}`;
-  const webhookUrl = process.env[regionKey] ?? process.env.DISCORD_UPDATE_WEBHOOK;
+  const regionWebhooks: Record<Region, string | undefined> = {
+    intl: env.DISCORD_UPDATE_WEBHOOK_INTL,
+    jp: env.DISCORD_UPDATE_WEBHOOK_JP,
+    cn: env.DISCORD_UPDATE_WEBHOOK_CN,
+  };
+  const webhookUrl = regionWebhooks[region] ?? env.DISCORD_UPDATE_WEBHOOK;
   if (!webhookUrl) {
     logger.debug({ region }, "DISCORD_UPDATE_WEBHOOK not set, skipping webhook notification");
     return;
@@ -341,7 +346,7 @@ export async function sendDiscordNotice(
   description: string,
   color: number = 0x5865F2,
 ) {
-  const webhookUrl = process.env.DISCORD_UPDATE_WEBHOOK_NOTICE;
+  const webhookUrl = env.DISCORD_UPDATE_WEBHOOK_NOTICE;
   if (!webhookUrl) return;
 
   const baseUrl = resolveBaseUrl();

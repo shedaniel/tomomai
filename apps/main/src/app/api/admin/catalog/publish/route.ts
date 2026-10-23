@@ -1,3 +1,4 @@
+import { env } from "@/env";
 import { flushLogger } from "@/lib/logger";
 import { requestLogger } from "@/lib/request-logger";
 import { publishSongCatalog } from "@/server/services/admin/song-catalog";
@@ -14,7 +15,7 @@ export async function POST(request: NextRequest) {
     if (!token) {
       return NextResponse.json({ error: "Missing authorization token", requestId }, { status: 401 });
     }
-    const adminToken = process.env.ADMIN_UPDATE_TOKEN;
+    const adminToken = env.ADMIN_UPDATE_TOKEN;
     if (!adminToken) {
       log.error("ADMIN_UPDATE_TOKEN environment variable not set");
       return NextResponse.json({ error: "Server configuration error", requestId }, { status: 500 });

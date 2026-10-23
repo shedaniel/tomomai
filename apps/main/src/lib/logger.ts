@@ -1,3 +1,4 @@
+import { env } from "@/env";
 import { type Logger } from "pino";
 // NOTE: Do NOT statically import "stream" or any other Node builtin here.
 // This file is transitively imported by src/middleware.ts (Edge runtime),
@@ -35,7 +36,7 @@ type AxiomStream = {
 };
 
 const createAxiomStream = (token: string, dataset: string): AxiomStream => {
-  const endpoint = `https://${process.env.AXIOM_URL || "api.axiom.co"}/v1/datasets/${encodeURIComponent(dataset)}/ingest`;
+  const endpoint = `https://${env.AXIOM_URL}/v1/datasets/${encodeURIComponent(dataset)}/ingest`;
   let buffer: Record<string, unknown>[] = [];
   let pending: Promise<void> = Promise.resolve();
   let timer: NodeJS.Timeout | null = null;
@@ -137,15 +138,15 @@ type StreamEntry = { stream: { write: (chunk: string) => void } | NodeJS.Writabl
 const createServerLogger = (): Logger => {
   const pino = require("pino");
   const isEdge = process.env.NEXT_RUNTIME === "edge";
-  const baseLevel = process.env.LOG_LEVEL || (process.env.NODE_ENV === "development" ? "trace" : "info");
+  const baseLevel = env.LOG_LEVEL || (process.env.NODE_ENV === "development" ? "trace" : "info");
 
   if (isEdge) {
     return pino({ level: baseLevel }) as Logger;
   }
 
-  const logtailToken = process.env.DEV_LOGTAIL_SOURCE_TOKEN;
-  const axiomToken = process.env.AXIOM_TOKEN;
-  const axiomDataset = process.env.AXIOM_DATASET;
+  const logtailToken = env.DEV_LOGTAIL_SOURCE_TOKEN;
+  const axiomToken = env.AXIOM_TOKEN;
+  const axiomDataset = env.AXIOM_DATASET;
 
   // Streams that ship logs off-box (Logtail / Axiom). Used both by the main
   // logger and by the console-bridge logger.
@@ -169,8 +170,8 @@ const createServerLogger = (): Logger => {
   if (logtailToken) {
     const { Logtail } = require("@logtail/node");
     const logtail = new Logtail(logtailToken, {
-      endpoint: process.env.INGESTING_HOST
-        ? `https://${process.env.INGESTING_HOST}`
+      endpoint: env.INGESTING_HOST
+        ? `https://${env.INGESTING_HOST}`
         : undefined,
     });
     logtailInstance = logtail;

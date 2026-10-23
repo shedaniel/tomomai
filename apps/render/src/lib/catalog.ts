@@ -13,10 +13,11 @@
 
 import { getLogger } from "./request-logger";
 import { Agent, fetch } from "undici";
+import { env } from "../env";
 
 const CATALOG_URL =
-  process.env.CATALOG_URL ??
-  process.env.NEXT_PUBLIC_SITE_URL ??
+  env.CATALOG_URL ??
+  env.NEXT_PUBLIC_SITE_URL ??
   "https://tomomai.lol";
 
 const CATALOG_TTL_MS = 1000 * 60 * 5; // 5 min — balances freshness vs CDN reuse

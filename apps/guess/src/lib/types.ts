@@ -1,3 +1,5 @@
+import { env } from "@/env";
+
 // Mirror of `songCatalogueEntry` from apps/main/src/lib/api/schemas.ts.
 // We avoid taking a workspace dep on the main app — duplicating this tiny type
 // is much cheaper than coupling deployment graphs.
@@ -82,10 +84,6 @@ export type Reveal = {
  * to tweak without redeploying app code. The full deck size is HINT_COUNT + 1
  * (the +1 is the reveal card).
  */
-export const HINT_COUNT: number = (() => {
-  const raw = process.env.GUESS_HINT_COUNT;
-  const n = raw ? Number.parseInt(raw, 10) : NaN;
-  return Number.isFinite(n) && n >= 2 ? n : 6;
-})();
+export const HINT_COUNT: number = env.GUESS_HINT_COUNT;
 
 export const TOTAL_STEPS: number = HINT_COUNT + 1; // last step = reveal

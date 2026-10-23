@@ -1,3 +1,5 @@
+import { env } from "@/env";
+
 /**
  * JST date + URL-slug helpers. The puzzle pivots on Asia/Tokyo midnight, so
  * every date-related decision (today's key, past-date validation, sitemap,
@@ -17,7 +19,7 @@ const JST_FMT = new Intl.DateTimeFormat("en-CA", {
  * during development.
  */
 export function getDateKey(now: Date = new Date()): string {
-  const dbg = process.env.DEBUG_KEY;
+  const dbg = env.DEBUG_KEY;
   if (dbg) return `debug-${dbg}`;
   return JST_FMT.format(now);
 }

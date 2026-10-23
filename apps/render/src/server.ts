@@ -3,18 +3,15 @@ import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { nanoid } from 'nanoid';
 
+import { env } from './env';
 import { logger } from './lib/logger';
 import { verifyRenderToken, isExpired, type RenderMessage } from './token';
 import { renderOutcomeFor } from './routes/dispatch';
 import { outcomeToResponse } from './render-route';
 import { handleDiscordRender } from './routes/discord';
 
-const SECRET: string = (() => {
-  const s = process.env.RENDER_TOKEN_SECRET;
-  if (!s) throw new Error('RENDER_TOKEN_SECRET is required');
-  return s;
-})();
-const PORT = Number(process.env.PORT ?? 8080);
+const SECRET = env.RENDER_TOKEN_SECRET;
+const PORT = env.PORT;
 const isProd = process.env.NODE_ENV === 'production';
 
 const app = new Hono();
@@ -22,8 +19,7 @@ const app = new Hono();
 // The web download button does `fetch(/img).blob()` cross-origin (apps/main →
 // render), so the response needs CORS. /img is token-gated and uses no cookies,
 // so a permissive origin is fine; set CORS_ORIGIN to lock it to the site origin.
-const corsOrigin = process.env.CORS_ORIGIN ?? '*';
-app.use('/img', cors({ origin: corsOrigin }));
+app.use('/img', cors({ origin: env.CORS_ORIGIN }));
 
 app.get('/health', (c) => c.json({ ok: true }));
 

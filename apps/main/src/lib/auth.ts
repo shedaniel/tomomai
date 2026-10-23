@@ -1,3 +1,4 @@
+import { env } from "@/env";
 import { betterAuth } from "better-auth";
 import { waitUntil } from "@vercel/functions";
 import { resolveBaseUrl, stripSubdomains } from "@/lib/base-url";
@@ -262,14 +263,14 @@ async function validateAndClaimInvite(inviteCode: string, userId: string) {
 // AUTH_COOKIE_DOMAIN: cookie domain for cross-subdomain sessions (e.g.
 //                     ".tomomai.lol" so cn.tomomai.lol shares sessions with
 //                     the apex). Omit for single-hostname deployments.
-const trustedOrigins = (process.env.TRUSTED_ORIGINS ?? "")
+const trustedOrigins = (env.TRUSTED_ORIGINS ?? "")
   .split(",")
   .map((s) => s.trim())
   .filter(Boolean);
-const authCookieDomain = process.env.AUTH_COOKIE_DOMAIN?.trim() || undefined;
+const authCookieDomain = env.AUTH_COOKIE_DOMAIN?.trim() || undefined;
 
 const authSecret = (() => {
-  const v = process.env.BETTER_AUTH_SECRET;
+  const v = env.BETTER_AUTH_SECRET;
   if (v) return v;
   if (process.env.NODE_ENV !== "development") {
     throw new Error("BETTER_AUTH_SECRET is required in non-development environments");
@@ -278,7 +279,7 @@ const authSecret = (() => {
 })();
 
 export const auth = betterAuth({
-  baseURL: process.env.BETTER_AUTH_URL || resolveBaseUrl(),
+  baseURL: env.BETTER_AUTH_URL || resolveBaseUrl(),
   ...(trustedOrigins.length ? { trustedOrigins } : {}),
   advanced: {
     // Honour x-forwarded-host / x-forwarded-proto when computing the base
@@ -326,13 +327,13 @@ export const auth = betterAuth({
   secret: authSecret,
   socialProviders: {
     discord: {
-      clientId: process.env.DISCORD_CLIENT_ID as string,
-      clientSecret: process.env.DISCORD_CLIENT_SECRET as string,
+      clientId: env.DISCORD_CLIENT_ID as string,
+      clientSecret: env.DISCORD_CLIENT_SECRET as string,
       disableImplicitSignUp: true,
     },
     twitter: {
-      clientId: process.env.TWITTER_CLIENT_ID as string,
-      clientSecret: process.env.TWITTER_CLIENT_SECRET as string,
+      clientId: env.TWITTER_CLIENT_ID as string,
+      clientSecret: env.TWITTER_CLIENT_SECRET as string,
       disableImplicitSignUp: true,
     },
   },
@@ -362,7 +363,7 @@ export const auth = betterAuth({
     }),
     passkey({
       // Pinned to the registrable apex so credentials roam across subdomains.
-      rpID: stripSubdomains(process.env.BETTER_AUTH_URL || resolveBaseUrl()),
+      rpID: stripSubdomains(env.BETTER_AUTH_URL || resolveBaseUrl()),
       rpName: "tomomai",
     }),
     // Only signs OAuth access tokens. A session JWT on every /get-session is an unused bearer credential.
@@ -390,7 +391,7 @@ export const auth = betterAuth({
       // `${baseURL}/api/auth` (its own mount), which is awkward to use as the
       // API audience. We can add more (e.g. an `api.tomomai.lol` host or
       // per-MCP audiences) as the surface grows.
-      validAudiences: [process.env.BETTER_AUTH_URL || resolveBaseUrl()],
+      validAudiences: [env.BETTER_AUTH_URL || resolveBaseUrl()],
     }),
     ...(process.env.NODE_ENV === 'development' ? [openAPI(), devAnonymousAuth()] : []),
     nextCookies(),

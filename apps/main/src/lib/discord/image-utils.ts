@@ -1,3 +1,4 @@
+import { env } from '@/env';
 import { DISCORD_COLORS, editDiscordMessage } from './responses';
 import { formatProfileSummaryContent, regionDisplayName, type ProfileSummary } from './region';
 import type { Region } from '@/lib/types';
@@ -54,8 +55,8 @@ export async function generateAndSendProfileImage({
     });
   }
 
-  const baseUrl = process.env.VERCEL_PROJECT_PRODUCTION_URL
-    ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+  const baseUrl = env.VERCEL_PROJECT_PRODUCTION_URL
+    ? `https://${env.VERCEL_PROJECT_PRODUCTION_URL}`
     : 'http://localhost:3000';
   const profileUrl = `${baseUrl}/profile/${username}/`;
 

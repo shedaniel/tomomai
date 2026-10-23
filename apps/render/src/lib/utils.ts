@@ -5,6 +5,8 @@
  * and the maimaidx domain list.
  */
 
+import { env } from "../env";
+
 export const SAFE_MAIMAI_IMAGE_URLS = [
   'maimaidx.jp',
   'maimaidx-eng.com',
@@ -12,7 +14,7 @@ export const SAFE_MAIMAI_IMAGE_URLS = [
   'maimai.sega.jp',
 ];
 
-const R2_BASE = process.env.NEXT_PUBLIC_R2_URL ?? "";
+const R2_BASE = env.NEXT_PUBLIC_R2_URL ?? "";
 
 export function getTypeBadgeUrl(type: "dx" | "std" | string): string {
   const basename = type === "dx" ? "music_dx" : "music_standard";

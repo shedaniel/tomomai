@@ -1,3 +1,4 @@
+import { env } from '@/env';
 import { TRPCError } from '@trpc/server';
 import { middleware, publicProcedure } from '@/lib/trpc';
 
@@ -12,7 +13,7 @@ export const adminBearerAuth = middleware(async ({ ctx, next }) => {
     });
   }
 
-  const adminToken = process.env.ADMIN_UPDATE_TOKEN;
+  const adminToken = env.ADMIN_UPDATE_TOKEN;
   if (!adminToken) {
     throw new TRPCError({
       code: 'INTERNAL_SERVER_ERROR',

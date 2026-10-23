@@ -1,3 +1,4 @@
+import { env } from "@/env";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { Link } from "@/i18n/navigation"
@@ -73,8 +74,8 @@ export default async function ReferenceEndpointPage({
   if (!spec) notFound();
 
   const baseUrl =
-    process.env.NEXT_PUBLIC_APP_URL ??
-    process.env.BETTER_AUTH_URL ??
+    env.NEXT_PUBLIC_APP_URL ??
+    env.BETTER_AUTH_URL ??
     resolveBaseUrl();
 
   const scopes =

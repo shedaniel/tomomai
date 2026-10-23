@@ -1,21 +1,23 @@
+import { env } from "@/env";
+
 const DEFAULT_TOMOMAI = "https://www.tomomai.lol";
 
 /** tomomai origin hosting the OAuth provider and /api/v1. */
 export function tomomaiAuthBase(): string {
-  const raw = process.env.TOMOMAI_AUTH_URL ?? process.env.TOMOMAI_API_URL ?? DEFAULT_TOMOMAI;
+  const raw = env.TOMOMAI_AUTH_URL ?? env.TOMOMAI_API_URL ?? DEFAULT_TOMOMAI;
   return raw.replace(/\/$/, "");
 }
 
 export function oauthClient(): { clientId: string; clientSecret: string } | null {
-  const clientId = process.env.TOMOMAI_OAUTH_CLIENT_ID;
-  const clientSecret = process.env.TOMOMAI_OAUTH_CLIENT_SECRET;
+  const clientId = env.TOMOMAI_OAUTH_CLIENT_ID;
+  const clientSecret = env.TOMOMAI_OAUTH_CLIENT_SECRET;
   if (!clientId || !clientSecret) return null;
   return { clientId, clientSecret };
 }
 
 /** Sign-in needs both the OAuth client and a database to keep players in. */
 export function accountsEnabled(): boolean {
-  return Boolean(process.env.POSTGRES_URL) && oauthClient() !== null;
+  return Boolean(env.POSTGRES_URL) && oauthClient() !== null;
 }
 
 /** Built from the request origin; tomomai rejects any origin not registered on the app. */

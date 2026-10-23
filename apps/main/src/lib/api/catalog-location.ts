@@ -1,3 +1,4 @@
+import { env } from "@/env";
 import { getAvailableVersions } from "@/lib/metadata";
 import type { Region } from "@/lib/types";
 
@@ -12,7 +13,5 @@ export function songCatalogKey(region: Region, gameVersion: number): string {
 }
 
 export function catalogUrl(key: string): string {
-  const base = process.env.NEXT_PUBLIC_R2_URL;
-  if (!base) throw new Error("NEXT_PUBLIC_R2_URL is required for the song catalog redirect");
-  return `${base.replace(/\/$/, "")}/${key}`;
+  return `${env.NEXT_PUBLIC_R2_URL.replace(/\/$/, "")}/${key}`;
 }

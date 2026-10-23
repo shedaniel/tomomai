@@ -1,3 +1,4 @@
+import { env } from "@/env";
 import { type NextRequest } from "next/server";
 import { withApiKey, keyHasScope } from "@/lib/api/protect";
 import { parseQuery } from "@/lib/api/parse-query";
@@ -11,7 +12,7 @@ export const GET = withApiKey(["album:read"], async (req: NextRequest, key) => {
   const { region, limit = 20, offset = 0 } = parsed;
 
   const hasImages = keyHasScope(key, "album:images:read");
-  const r2BaseUrl = process.env.NEXT_PUBLIC_R2_URL;
+  const r2BaseUrl = env.NEXT_PUBLIC_R2_URL;
 
   const { albums, hasMore } = await fetchUserAlbums(key.userId, region, limit, offset);
 

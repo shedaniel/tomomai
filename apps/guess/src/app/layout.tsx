@@ -1,3 +1,4 @@
+import { env } from "@/env";
 import type { Metadata } from "next";
 import { NextIntlClientProvider } from "next-intl";
 import { getMessages } from "next-intl/server";
@@ -82,8 +83,8 @@ export default async function RootLayout({
   const player = await getPlayer();
   const viewer = player ? await loadViewer(player) : null;
   const turnstileSiteKey =
-    process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY && process.env.TURNSTILE_SECRET_KEY
-      ? process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY
+    env.NEXT_PUBLIC_TURNSTILE_SITE_KEY && env.TURNSTILE_SECRET_KEY
+      ? env.NEXT_PUBLIC_TURNSTILE_SITE_KEY
       : undefined;
 
   // Heardle gets a violet-leaning palette (--hue 290) to set it visually

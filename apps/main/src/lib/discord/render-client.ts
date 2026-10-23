@@ -1,3 +1,4 @@
+import { env } from '@/env';
 import { mintRenderToken, type RenderMessage } from '@tomomai/render-token';
 
 /**
@@ -16,8 +17,8 @@ export async function requestDiscordRender(args: {
   payloadJson: unknown;
   filename: string;
 }): Promise<void> {
-  const secret = process.env.RENDER_TOKEN_SECRET;
-  const base = process.env.RENDER_INTERNAL_URL ?? process.env.RENDER_PUBLIC_URL;
+  const secret = env.RENDER_TOKEN_SECRET;
+  const base = env.RENDER_INTERNAL_URL ?? env.RENDER_PUBLIC_URL;
   if (!secret) throw new Error('RENDER_TOKEN_SECRET is not set');
   if (!base) throw new Error('RENDER_INTERNAL_URL / RENDER_PUBLIC_URL is not set');
 

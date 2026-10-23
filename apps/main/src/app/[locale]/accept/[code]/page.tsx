@@ -1,5 +1,6 @@
 "use client";
 
+import { env } from "@/env";
 import { Button } from "@tomomai/ui";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@tomomai/ui";
 import { useSession } from "@/lib/auth-client";
@@ -12,7 +13,7 @@ import { useRouter } from "@/i18n/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
-const SIGNUP_TYPE = process.env.NEXT_PUBLIC_ACCOUNT_SIGNUP_TYPE || 'disabled';
+const SIGNUP_TYPE = env.NEXT_PUBLIC_ACCOUNT_SIGNUP_TYPE;
 
 interface InviteInfo {
   id: string;

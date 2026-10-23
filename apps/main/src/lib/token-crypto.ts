@@ -1,27 +1,12 @@
+import { env } from '@/env';
 import crypto from 'crypto';
 
 const ALGORITHM = 'aes-256-gcm';
 const IV_LENGTH = 16;
 const AUTH_TAG_LENGTH = 16;
 
-/**
- * Get the encryption key from environment variable
- * @returns Buffer containing the encryption key
- * @throws Error if TOKEN_SECRET is not set or invalid
- */
 function getEncryptionKey(): Buffer {
-  const secret = process.env.TOKEN_SECRET;
-
-  if (!secret) {
-    throw new Error('TOKEN_SECRET environment variable is not set');
-  }
-
-  // Convert hex string to buffer (expecting 64 hex chars = 32 bytes = 256 bits)
-  if (secret.length !== 64) {
-    throw new Error('TOKEN_SECRET must be 64 hexadecimal characters (32 bytes)');
-  }
-
-  return Buffer.from(secret, 'hex');
+  return Buffer.from(env.TOKEN_SECRET, 'hex');
 }
 
 /**

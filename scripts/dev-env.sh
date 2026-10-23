@@ -43,11 +43,67 @@ RENDER_TOKEN_SECRET=$render_secret
 RENDER_PUBLIC_URL=http://localhost:8080
 RENDER_INTERNAL_URL=http://localhost:8080
 
-# Optional: fill in to test real OAuth. The dev-only anonymous sign-in works without them.
+# Everything below is optional. Uncomment and fill in what you need, see SETUP.md.
+
+# OAuth sign-in. The dev-only anonymous sign-in works without them.
+# Discord redirect URI: http://localhost:3000/api/auth/callback/discord
 DISCORD_CLIENT_ID=
 DISCORD_CLIENT_SECRET=
 TWITTER_CLIENT_ID=
 TWITTER_CLIENT_SECRET=
+
+# Discord bot (slash commands). Run \`make discord-tunnel\` for a public
+# interactions endpoint and \`make discord-register\` for the commands.
+# NEXT_PUBLIC_DISCORD_APPLICATION_ID=
+# DISCORD_PUBLIC_KEY=
+# DISCORD_BOT_TOKEN=
+# DISCORD_UPDATE_WEBHOOK=
+# DISCORD_UPDATE_WEBHOOK_NOTICE=
+
+# Captcha. ALTCHA falls back to a dev key, Turnstile is off unless both keys are set.
+# ALTCHA_HMAC_KEY=
+# NEXT_PUBLIC_TURNSTILE_SITE_KEY=
+# TURNSTILE_SECRET_KEY=
+# TURNSTILE_EXPECTED_HOSTNAME=localhost
+
+# App configuration
+# NEXT_PUBLIC_ENABLED_REGIONS=intl,jp
+# TRUSTED_ORIGINS=
+# AUTH_COOKIE_DOMAIN=
+# DEMO_FETCH=true
+
+# Vercel Edge Config feature flags. Defaults apply when unset.
+# EDGE_CONFIG=
+# FLAGS_SECRET=
+
+# Userscript import flow (an OAuth app from /settings/developer).
+# USERSCRIPT_CLIENT_ID=
+# USERSCRIPT_CLIENT_SECRET=
+
+# AI event fetching
+# OPENROUTER_KEY=
+# AI_MODEL=google/gemini-3.1-flash-lite-preview
+
+# China fetcher providers
+# DIVINGFISH_DEV_TOKEN=
+# LXNS_CLIENT_ID=
+# LXNS_CLIENT_SECRET=
+# LXNS_REDIRECT_URI=
+# CN_PROXY_HOST=
+# CN_PROXY_PORT=2560
+# CN_PROXY_TOKEN_SECRET=
+# DEBUG_CN_FETCH=1
+
+# Logging
+# LOG_LEVEL=trace
+# DEV_LOGTAIL_SOURCE_TOKEN=
+# INGESTING_HOST=
+# AXIOM_TOKEN=
+# AXIOM_DATASET=
+# AXIOM_URL=api.axiom.co
+
+# Source site for \`make seed\`.
+# SEED_SOURCE_URL=https://www.tomomai.lol
 EOF
   echo "created .env.local"
 fi
@@ -74,7 +130,6 @@ else
     -e "s|^RENDER_TOKEN_SECRET=.*|RENDER_TOKEN_SECRET=$render_secret|" \
     -e "s|^# CATALOG_URL=.*|CATALOG_URL=http://localhost:3000|" \
     -e "s|^NEXT_PUBLIC_R2_URL=.*|NEXT_PUBLIC_R2_URL=http://localhost:${S3_PORT:-9000}/tomomai|" \
-    -e "s|^NEXT_PUBLIC_R2_URL_CN=.*|NEXT_PUBLIC_R2_URL_CN=http://localhost:${S3_PORT:-9000}/tomomai|" \
     apps/render/.env.example > apps/render/.env.local
   echo "created apps/render/.env.local"
   if [ "$root_existed" = true ]; then

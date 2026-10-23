@@ -1,3 +1,4 @@
+import { env } from "@/env";
 import { convertToWebp } from "@/lib/image-converter";
 import { fetchImageBuffer } from "@/lib/image-converter";
 import { flushLogger } from "@/lib/logger";
@@ -57,7 +58,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const adminToken = process.env.ADMIN_UPDATE_TOKEN;
+    const adminToken = env.ADMIN_UPDATE_TOKEN;
     if (!adminToken) {
       return NextResponse.json(
         { error: "Server configuration error" },
@@ -101,7 +102,7 @@ export async function POST(request: NextRequest) {
     const existingKeys = await listCoverKeys();
     log.info({ existingR2Covers: existingKeys.size }, "Existing covers in R2");
 
-    const r2BaseUrl = process.env.NEXT_PUBLIC_R2_URL;
+    const r2BaseUrl = env.NEXT_PUBLIC_R2_URL;
     // Build filename -> public URL map
     const filenameToPublicUrl = new Map<string, string>();
 

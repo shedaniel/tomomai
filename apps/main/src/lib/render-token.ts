@@ -10,19 +10,20 @@
  * DB access. See docs/render-token-v2.md for the wire format.
  */
 
+import { env } from "@/env";
 import {
   mintRenderToken,
   type RenderMessage,
 } from "@tomomai/render-token";
 
 function getSecret(): string {
-  const secret = process.env.RENDER_TOKEN_SECRET;
+  const secret = env.RENDER_TOKEN_SECRET;
   if (!secret) throw new Error("RENDER_TOKEN_SECRET is not set");
   return secret;
 }
 
 function getPublicBase(): string {
-  const base = process.env.RENDER_PUBLIC_URL;
+  const base = env.RENDER_PUBLIC_URL;
   if (!base) throw new Error("RENDER_PUBLIC_URL is not set");
   return base.replace(/\/$/, "");
 }

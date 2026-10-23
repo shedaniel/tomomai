@@ -3,6 +3,7 @@
  * `heardle.ts` so client bundles don't pull in `apple-music-previews.json`
  * (which lives in the heavier data module).
  */
+import { env } from "@/env";
 import type { Hint } from "./types";
 import type { PuzzleVersion } from "./puzzle-version";
 
@@ -15,7 +16,7 @@ export type Mode = "guess" | "heardle";
  * builder) and the client (ShareButton text, future heardle-only UI).
  */
 export function getMode(): Mode {
-  return process.env.NEXT_PUBLIC_GUESSER_MODE === "heardle" ? "heardle" : "guess";
+  return env.NEXT_PUBLIC_GUESSER_MODE;
 }
 
 export function isHeardle(): boolean {

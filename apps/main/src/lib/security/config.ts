@@ -1,3 +1,5 @@
+import { env } from "@/env";
+
 /**
  * Security configuration for the application
  * This file contains all security-related constants and settings
@@ -33,7 +35,7 @@ export const RATE_LIMIT_CONFIG = {
 // Extra origins from env (comma-separated) — same var Better Auth reads
 // (see src/lib/auth.ts). Lets us add cn.tomomai.lol etc. without code edits
 // when generalising the cn/ proxy to other deployments.
-const trustedFromEnv = (process.env.TRUSTED_ORIGINS ?? "")
+const trustedFromEnv = (env.TRUSTED_ORIGINS ?? "")
   .split(",")
   .map((s) => s.trim())
   .filter(Boolean);
@@ -44,7 +46,7 @@ export const CORS_CONFIG = {
     'https://maimai-charts.vercel.app',
     'https://localhost:3000',
     'http://localhost:3000',
-    process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
+    env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
     'https://lng-tgk-aime-gw.am-all.net', // Maimai official site for login
     ...trustedFromEnv,
   ],

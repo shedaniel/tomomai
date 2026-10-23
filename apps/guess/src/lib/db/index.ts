@@ -1,3 +1,4 @@
+import { env } from "@/env";
 import { drizzle, type PostgresJsDatabase } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 import * as schema from "./schema";
@@ -14,7 +15,7 @@ const state = store.__guessDb;
 /** Lazy client; `null` when `POSTGRES_URL` is unset (local dev, self-host). */
 export function getDb(): Db | null {
   if (state.cached !== undefined) return state.cached;
-  const url = process.env.POSTGRES_URL;
+  const url = env.POSTGRES_URL;
   if (!url) {
     state.cached = null;
     return null;

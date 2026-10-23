@@ -1,5 +1,6 @@
 "use client";
 
+import { env } from "@/env";
 import { trpc } from "@/lib/trpc-client";
 import { Region } from "@/lib/types";
 import { cn, createSafeMaimaiImageUrl, getTypeBadgeUrl } from "@/lib/utils";
@@ -266,7 +267,7 @@ export function AlbumCard({ region }: AlbumCardProps) {
                 {/* Album Image - 16:9 aspect ratio */}
                 <div className="relative w-full aspect-video overflow-hidden bg-muted">
                   <img
-                    src={`${process.env.NEXT_PUBLIC_R2_URL}/${album.imageKey}`}
+                    src={`${env.NEXT_PUBLIC_R2_URL}/${album.imageKey}`}
                     alt={album.songName}
                     className="w-full h-full object-cover"
                   />

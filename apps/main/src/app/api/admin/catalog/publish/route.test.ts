@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { NextRequest } from "next/server";
 
 const mocks = vi.hoisted(() => ({
@@ -6,7 +6,9 @@ const mocks = vi.hoisted(() => ({
   flush: vi.fn(),
   invalidate: vi.fn(),
   log: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
+  env: { ADMIN_UPDATE_TOKEN: undefined as string | undefined },
 }));
+vi.mock("@/env", () => ({ env: mocks.env }));
 vi.mock("@/server/services/admin/song-catalog", () => ({ publishSongCatalog: mocks.publish }));
 vi.mock("@/lib/logger", () => ({ flushLogger: mocks.flush }));
 vi.mock("@/lib/request-logger", () => ({ requestLogger: () => ({ log: mocks.log, requestId: "publish-test" }) }));
@@ -23,11 +25,10 @@ function request(token?: string) {
 
 beforeEach(() => {
   vi.clearAllMocks();
-  vi.stubEnv("ADMIN_UPDATE_TOKEN", "admin-secret");
+  mocks.env.ADMIN_UPDATE_TOKEN = "admin-secret";
   mocks.publish.mockResolvedValue({ songCount: 12, bytes: 345 });
   mocks.flush.mockResolvedValue(undefined);
 });
-afterEach(() => vi.unstubAllEnvs());
 
 describe("POST /api/admin/catalog/publish", () => {
   it.each([[undefined, 401], ["wrong-token", 403]] as const)("rejects unauthorized token %s without publishing", async (token, status) => {
@@ -39,7 +40,7 @@ describe("POST /api/admin/catalog/publish", () => {
   });
 
   it("fails closed if the admin token is not configured", async () => {
-    vi.stubEnv("ADMIN_UPDATE_TOKEN", "");
+    mocks.env.ADMIN_UPDATE_TOKEN = undefined;
     expect((await POST(request("admin-secret"))).status).toBe(500);
     expect(mocks.publish).not.toHaveBeenCalled();
     expect(mocks.invalidate).not.toHaveBeenCalled();

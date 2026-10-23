@@ -1,3 +1,4 @@
+import { env } from "@/env";
 import type { Chart } from "./types";
 import { uniqueSongs, type SongSummary } from "./fuzzy";
 import { hasAudioPreview, isHeardle } from "./heardle";
@@ -6,7 +7,7 @@ const DEFAULT_API = "https://www.tomomai.lol";
 const TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
 
 function apiBase(): string {
-  return process.env.TOMOMAI_API_URL?.replace(/\/$/, "") ?? DEFAULT_API;
+  return env.TOMOMAI_API_URL?.replace(/\/$/, "") ?? DEFAULT_API;
 }
 
 async function fetchCatalogue(): Promise<Chart[]> {

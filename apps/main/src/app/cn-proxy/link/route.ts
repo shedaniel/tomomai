@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ProxyAgent, fetch as undiciFetch } from "undici";
+import { env } from "@/env";
 import { verifyCnProxyToken } from "@/lib/cn-proxy-token";
 import { resolveBaseUrl } from "@/lib/base-url";
 import { logger } from "@/lib/logger";
@@ -8,9 +9,9 @@ export const dynamic = "force-dynamic";
 
 const ERROR_REDIRECT = `${resolveBaseUrl()}/cn-proxy/result?type=error`;
 
-const { CN_PROXY_HOST, CN_PROXY_PORT } = process.env;
+const { CN_PROXY_HOST, CN_PROXY_PORT } = env;
 const proxyAgent =
-  CN_PROXY_HOST && CN_PROXY_PORT
+  CN_PROXY_HOST
     ? new ProxyAgent(`http://${CN_PROXY_HOST}:${CN_PROXY_PORT}`)
     : undefined;
 

@@ -1,3 +1,5 @@
+import { env } from "@/env";
+
 /**
  * Build the rolling app version from build-time identity injected by
  * next.config.ts via `env`:
@@ -12,9 +14,9 @@
  * server request. The minor computation lives in next.config.ts.
  */
 export function getAppVersion() {
-  const minor = process.env.APP_VERSION_MINOR || "0.0";
-  const stamp = process.env.BUILD_STAMP || "dev";
-  const sha = process.env.GIT_SHA || "dev";
+  const minor = env.APP_VERSION_MINOR;
+  const stamp = env.BUILD_STAMP;
+  const sha = env.GIT_SHA;
 
   return {
     minor,

@@ -1,3 +1,4 @@
+import { env } from '@/env';
 import { protectedProcedure, publicProcedure, router } from '@/lib/trpc';
 import { z } from 'zod';
 import { TRPCError } from '@trpc/server';
@@ -27,16 +28,16 @@ export const miscRouter = router({
   getLxnsOAuthConfigured: publicProcedure
     .query(async () => {
       return {
-        configured: !!process.env.LXNS_CLIENT_ID && !!process.env.LXNS_CLIENT_SECRET,
+        configured: !!env.LXNS_CLIENT_ID && !!env.LXNS_CLIENT_SECRET,
       };
     }),
 
   getCnProxyConfigured: publicProcedure
     .query(async () => {
-      const host = process.env.NEXT_PUBLIC_CN_PROXY_HOST ?? process.env.CN_PROXY_HOST ?? "";
-      const port = process.env.NEXT_PUBLIC_CN_PROXY_PORT ?? process.env.CN_PROXY_PORT ?? "2560";
+      const host = env.NEXT_PUBLIC_CN_PROXY_HOST ?? env.CN_PROXY_HOST ?? "";
+      const port = env.NEXT_PUBLIC_CN_PROXY_PORT ?? env.CN_PROXY_PORT;
       return {
-        configured: !!host && !!process.env.CN_PROXY_TOKEN_SECRET,
+        configured: !!host && !!env.CN_PROXY_TOKEN_SECRET,
         host,
         port,
       };
@@ -115,7 +116,7 @@ export const miscRouter = router({
     .mutation(async ({ ctx, input }) => {
       throw DIVING_FISH_DISABLED_ERROR;
       // eslint-disable-next-line no-unreachable
-      if (!process.env.DIVINGFISH_DEV_TOKEN) {
+      if (!env.DIVINGFISH_DEV_TOKEN) {
         throw new TRPCError({
           code: 'PRECONDITION_FAILED',
           message: 'diving-fish is not configured on the server.',

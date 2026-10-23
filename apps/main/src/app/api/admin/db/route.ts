@@ -1,3 +1,4 @@
+import { env } from "@/env";
 import { db } from "@/lib/db";
 import { flushLogger } from "@/lib/logger";
 import { requestLogger } from "@/lib/request-logger";
@@ -30,7 +31,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Validate token against environment variable
-    const adminToken = process.env.ADMIN_UPDATE_TOKEN;
+    const adminToken = env.ADMIN_UPDATE_TOKEN;
     if (!adminToken) {
       log.error("ADMIN_UPDATE_TOKEN environment variable not set");
       return NextResponse.json(

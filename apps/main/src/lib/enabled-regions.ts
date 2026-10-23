@@ -1,3 +1,4 @@
+import { env } from "@/env";
 import type { Region } from "./types";
 
 /**
@@ -12,7 +13,7 @@ import type { Region } from "./types";
  * ```
  */
 export function getEnabledRegions(): Region[] {
-  const envValue = process.env.NEXT_PUBLIC_ENABLED_REGIONS;
+  const envValue = env.NEXT_PUBLIC_ENABLED_REGIONS;
 
   if (!envValue) {
     return ["intl", "jp"];
