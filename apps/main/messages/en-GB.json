@@ -708,6 +708,20 @@
     "deleteSnapshot": "Delete selected snapshot",
     "moreOptions": "More options"
   },
+  "maimaiStatus": {
+    "lockedBadge": "Temporarily locked",
+    "lockedTitle": "Fetching is paused for a bit",
+    "lockedDescription": "maimai DX NET got too many requests in a short time and is turning new ones away for now. Give it a moment and try again when the timer runs out.",
+    "retryIn": "You can try again in {time}",
+    "ready": "You can fetch again now",
+    "gotIt": "Got it",
+    "fetchNow": "Fetch now",
+    "busyBadge": "High traffic",
+    "busyTitle": "maimai DX NET is busy",
+    "busyDescription": "Lots of players are fetching right now, so yours may take longer than usual. Fetching a little later should be quicker.",
+    "fetchAnyway": "Fetch anyway",
+    "later": "Later"
+  },
   "profileMetadata": {
     "title": "{username} | tomomai ともマイ",
     "description": "View {username}'s maimai profile for {region}. Track and analyse maimai scores with friends.",
