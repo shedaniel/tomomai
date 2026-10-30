@@ -5,7 +5,7 @@ import { SongWithScore, Region } from '@/lib/types';
 import { fetchLatestSnapshotData } from '@/server/queries/snapshots';
 import type { RecommendationData } from '@/server/queries/recommendations';
 import { buildRecommendations } from '@/server/services/recommendations';
-import { getLogger } from '@/lib/request-logger';
+import { logger } from '@/lib/logger';
 import { waitUntil } from '@vercel/functions';
 import { and, eq } from 'drizzle-orm';
 import {
@@ -79,7 +79,7 @@ export async function executeRecommendCommand({
       embeds: [embed],
     });
   } catch (error) {
-    getLogger().error({ err: error }, 'Error generating recommendations');
+    logger.error({ err: error }, 'Error generating recommendations');
     await editDiscordMessage(applicationId, interactionToken, {
       content: t(locale, 'recommend.errorContent'),
     });
@@ -210,7 +210,7 @@ export async function handleRecommendCommand({
 
     return deferredResponse;
   } catch (error) {
-    getLogger().error({ err: error }, 'Error handling recommend command');
+    logger.error({ err: error }, 'Error handling recommend command');
     return createErrorResponse(t(locale, 'recommend.errorGeneric'), locale);
   }
 }

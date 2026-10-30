@@ -1,5 +1,5 @@
 import { VersionId } from "@/lib/metadata";
-import { getLogger } from "@/lib/request-logger";
+import { logger } from "@/lib/logger";
 
 // Helper function to convert level string to precise value (stored as 10x)
 export function levelToPrecise(level: string, version: VersionId): number {
@@ -9,7 +9,7 @@ export function levelToPrecise(level: string, version: VersionId): number {
     // Plus level: extract base number and add 6
     const baseLevel = parseInt(trimmedLevel.slice(0, -1), 10);
     if (isNaN(baseLevel)) {
-      getLogger().warn(`Invalid plus level format: ${level}`);
+      logger.warn(`Invalid plus level format: ${level}`);
       return 10; // Default to 1.0 (10)
     }
     return baseLevel * 10 + (version >= 9 ? 6 : 7);
@@ -17,7 +17,7 @@ export function levelToPrecise(level: string, version: VersionId): number {
     // Base level: just multiply by 10
     const baseLevel = parseInt(trimmedLevel, 10);
     if (isNaN(baseLevel)) {
-      getLogger().warn(`Invalid level format: ${level}`);
+      logger.warn(`Invalid level format: ${level}`);
       return 10; // Default to 1.0 (10)
     }
     return baseLevel * 10;

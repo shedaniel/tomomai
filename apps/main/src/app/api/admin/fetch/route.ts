@@ -1,16 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { load } from "cheerio";
 import { isServerless } from "@/lib/utils";
-import { flushLogger } from "@/lib/logger";
-import { requestLogger } from "@/lib/request-logger";
+import { logger } from "@/lib/logger";
+import { withRequestLogContext } from "@/lib/request-logger";
 import path from "path";
 import fs from "fs/promises";
 import { db } from "@/lib/db";
 import { stores } from "@/lib/db/schema-pg";
 import type { Logger } from "pino";
 
-export async function GET(request: NextRequest) {
-  const { log, requestId } = requestLogger(request, "admin/fetch");
+export const GET = withRequestLogContext("admin/fetch", async (request: NextRequest, { requestId }) => {
   try {
     // Check for admin token authentication
     const authHeader = request.headers.get("authorization");
@@ -26,7 +25,7 @@ export async function GET(request: NextRequest) {
     // Validate token against environment variable
     const adminToken = process.env.ADMIN_UPDATE_TOKEN;
     if (!adminToken) {
-      log.error("ADMIN_UPDATE_TOKEN environment variable not set");
+      logger.error("ADMIN_UPDATE_TOKEN environment variable not set");
       return NextResponse.json(
         { error: "Server configuration error" },
         { status: 500 }
@@ -34,24 +33,22 @@ export async function GET(request: NextRequest) {
     }
 
     if (token !== adminToken) {
-      log.warn("Invalid admin token attempt");
+      logger.warn("Invalid admin token attempt");
       return NextResponse.json(
         { error: "Invalid authorization token" },
         { status: 403 }
       );
     }
 
-    return await fetchLocations(log, requestId);
+    return await fetchLocations(requestId);
   } catch (error) {
-    log.error({ err: error }, "Error in admin fetch route");
+    logger.error({ err: error }, "Error in admin fetch route");
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Internal server error", requestId },
       { status: 500 }
     );
-  } finally {
-    await flushLogger();
   }
-}
+});
 
 // Only allow GET requests
 export async function POST() {
@@ -71,20 +68,20 @@ interface LocationData {
   [countryOrPrefecture: string]: LocationEntry[];
 }
 
-async function fetchLocations(log: Logger, requestId: string) {
+async function fetchLocations(requestId: string) {
   const regions = ["intl", "jp"] as const;
   const allLocationData: Record<string, LocationData> = {};
   let totalStores = 0;
 
   for (const region of regions) {
-    log.info({ region }, "Admin fetch locations requested");
+    logger.info({ region }, "Admin fetch locations requested");
 
     try {
       // Determine base URL based on region
       const gm = region === "intl" ? "98" : "96";
       const baseUrl = `https://location.am-all.net/alm/location?gm=${gm}`;
 
-      log.debug({ url: baseUrl }, "Fetching initial page");
+      logger.debug({ url: baseUrl }, "Fetching initial page");
 
       // Fetch the initial page to get the list of countries/prefectures
       const initialResponse = await fetch(baseUrl, {
@@ -109,7 +106,7 @@ async function fetchLocations(log: Logger, requestId: string) {
         const countrySelect = $(".country > select[name='ct']");
         const options = countrySelect.find("option");
 
-        log.debug({ count: options.length }, "Found country options");
+        logger.debug({ count: options.length }, "Found country options");
 
         // Collect valid options
         const validOptions: Array<{ value: string; text: string }> = [];
@@ -121,33 +118,33 @@ async function fetchLocations(log: Logger, requestId: string) {
 
           // Skip disabled options or Japan (no stores)
           if (isDisabled || !value) {
-            log.debug(`Skipping disabled/invalid option: ${text}`);
+            logger.debug(`Skipping disabled/invalid option: ${text}`);
             continue;
           }
 
           validOptions.push({ value, text });
         }
 
-        log.debug({ count: validOptions.length }, "Processing valid countries in batches");
+        logger.debug({ count: validOptions.length }, "Processing valid countries in batches");
 
         // Process in batches
         for (let i = 0; i < validOptions.length; i += BATCH_SIZE) {
           const batch = validOptions.slice(i, i + BATCH_SIZE);
-          log.debug(`Processing batch ${Math.floor(i / BATCH_SIZE) + 1}/${Math.ceil(validOptions.length / BATCH_SIZE)} (${batch.length} countries)`);
+          logger.debug(`Processing batch ${Math.floor(i / BATCH_SIZE) + 1}/${Math.ceil(validOptions.length / BATCH_SIZE)} (${batch.length} countries)`);
 
           const batchPromises = batch.map(async ({ value, text }) => {
-            log.debug(`Fetching stores for country: ${text} (ct=${value})`);
+            logger.debug(`Fetching stores for country: ${text} (ct=${value})`);
             try {
-              const stores = await fetchStoresForLocation(gm, value, undefined, log);
+              const stores = await fetchStoresForLocation(gm, value, undefined);
               if (stores.length > 0) {
-                log.debug(`Found ${stores.length} stores for ${text}`);
+                logger.debug(`Found ${stores.length} stores for ${text}`);
                 return { text, stores };
               } else {
-                log.debug(`No stores found for ${text}`);
+                logger.debug(`No stores found for ${text}`);
                 return null;
               }
             } catch (error) {
-              log.warn({ err: error }, `Error fetching stores for ${text}`);
+              logger.warn({ err: error }, `Error fetching stores for ${text}`);
               return null;
             }
           });
@@ -166,7 +163,7 @@ async function fetchLocations(log: Logger, requestId: string) {
         const prefSelect = $(".pref > select[name='at']");
         const options = prefSelect.find("option");
 
-        log.debug({ count: options.length }, "Found prefecture options");
+        logger.debug({ count: options.length }, "Found prefecture options");
 
         // Collect valid options
         const validOptions: Array<{ value: string; text: string }> = [];
@@ -178,33 +175,33 @@ async function fetchLocations(log: Logger, requestId: string) {
 
           // Skip disabled options
           if (isDisabled || !value) {
-            log.debug(`Skipping disabled/invalid option: ${text}`);
+            logger.debug(`Skipping disabled/invalid option: ${text}`);
             continue;
           }
 
           validOptions.push({ value, text });
         }
 
-        log.debug({ count: validOptions.length }, "Processing valid prefectures in batches");
+        logger.debug({ count: validOptions.length }, "Processing valid prefectures in batches");
 
         // Process in batches
         for (let i = 0; i < validOptions.length; i += BATCH_SIZE) {
           const batch = validOptions.slice(i, i + BATCH_SIZE);
-          log.debug(`Processing batch ${Math.floor(i / BATCH_SIZE) + 1}/${Math.ceil(validOptions.length / BATCH_SIZE)} (${batch.length} prefectures)`);
+          logger.debug(`Processing batch ${Math.floor(i / BATCH_SIZE) + 1}/${Math.ceil(validOptions.length / BATCH_SIZE)} (${batch.length} prefectures)`);
 
           const batchPromises = batch.map(async ({ value, text }) => {
-            log.debug(`Fetching stores for prefecture: ${text} (at=${value})`);
+            logger.debug(`Fetching stores for prefecture: ${text} (at=${value})`);
             try {
-              const stores = await fetchStoresForLocation(gm, "1000", value, log);
+              const stores = await fetchStoresForLocation(gm, "1000", value);
               if (stores.length > 0) {
-                log.debug(`Found ${stores.length} stores for ${text}`);
+                logger.debug(`Found ${stores.length} stores for ${text}`);
                 return { text, stores };
               } else {
-                log.debug(`No stores found for ${text}`);
+                logger.debug(`No stores found for ${text}`);
                 return null;
               }
             } catch (error) {
-              log.warn({ err: error }, `Error fetching stores for ${text}`);
+              logger.warn({ err: error }, `Error fetching stores for ${text}`);
               return null;
             }
           });
@@ -223,7 +220,7 @@ async function fetchLocations(log: Logger, requestId: string) {
       allLocationData[region] = locationData;
       totalStores += Object.values(locationData).reduce((acc, curr) => acc + curr.length, 0);
 
-      log.info({ region, count: Object.keys(locationData).length }, "Fetched locations for region");
+      logger.info({ region, count: Object.keys(locationData).length }, "Fetched locations for region");
 
       // Save to JSON file if not in serverless environment
       if (!isServerless()) {
@@ -235,22 +232,22 @@ async function fetchLocations(log: Logger, requestId: string) {
           const filePath = path.join(storesDir, filename);
 
           await fs.writeFile(filePath, JSON.stringify(locationData, null, 2), 'utf-8');
-          log.debug(`Saved location data to ${filePath}`);
+          logger.debug(`Saved location data to ${filePath}`);
         } catch (error) {
-          log.warn({ err: error }, "Error saving location data to file");
+          logger.warn({ err: error }, "Error saving location data to file");
           // Don't fail the request if file save fails
         }
       } else {
-        log.debug("Skipping file save in serverless environment");
+        logger.debug("Skipping file save in serverless environment");
       }
     } catch (error) {
-      log.error({ err: error, region }, "Error fetching locations for region");
+      logger.error({ err: error, region }, "Error fetching locations for region");
       // Continue to next region even if one fails
     }
   }
 
   // Update database
-  log.debug("Updating database with fetched stores");
+  logger.debug("Updating database with fetched stores");
   try {
     let upsertCount = 0;
 
@@ -284,9 +281,9 @@ async function fetchLocations(log: Logger, requestId: string) {
         }
       }
     }
-    log.info({ count: upsertCount }, "Upserted stores to database");
+    logger.info({ count: upsertCount }, "Upserted stores to database");
   } catch (error) {
-    log.error({ err: error }, "Error updating database");
+    logger.error({ err: error }, "Error updating database");
     return NextResponse.json(
       { error: "Failed to update database", details: error instanceof Error ? error.message : String(error), requestId },
       { status: 500 }
@@ -305,7 +302,6 @@ async function fetchStoresForLocation(
   gm: string,
   ct: string,
   at: string | undefined,
-  log: Logger
 ): Promise<LocationEntry[]> {
   // Build URL
   let url = `https://location.am-all.net/alm/location?gm=${gm}&ct=${ct}`;
@@ -358,7 +354,7 @@ async function fetchStoresForLocation(
         coords: [lat, lng],
       });
     } catch (error) {
-      log.warn({ err: error, index }, "Error parsing store element");
+      logger.warn({ err: error, index }, "Error parsing store element");
     }
   });
 

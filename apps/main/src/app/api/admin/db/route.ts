@@ -1,6 +1,6 @@
 import { db } from "@/lib/db";
-import { flushLogger } from "@/lib/logger";
-import { requestLogger } from "@/lib/request-logger";
+import { logger } from "@/lib/logger";
+import { withRequestLogContext } from "@/lib/request-logger";
 import { getEnabledRegions, isRegionEnabled } from "@/lib/enabled-regions";
 import { Region } from "@/lib/types";
 import { parseCatalogVersion } from "@/lib/catalog/parse-version";
@@ -15,8 +15,7 @@ import { locales } from "@tomomai/i18n/locale";
 import type { Logger } from "pino";
 
 
-export async function GET(request: NextRequest) {
-  const { log, requestId } = requestLogger(request, "admin/db");
+export const GET = withRequestLogContext("admin/db", async (request: NextRequest, { requestId }) => {
   try {
     // Check for admin token authentication
     const authHeader = request.headers.get("authorization");
@@ -32,7 +31,7 @@ export async function GET(request: NextRequest) {
     // Validate token against environment variable
     const adminToken = process.env.ADMIN_UPDATE_TOKEN;
     if (!adminToken) {
-      log.error("ADMIN_UPDATE_TOKEN environment variable not set");
+      logger.error("ADMIN_UPDATE_TOKEN environment variable not set");
       return NextResponse.json(
         { error: "Server configuration error" },
         { status: 500 }
@@ -40,7 +39,7 @@ export async function GET(request: NextRequest) {
     }
 
     if (token !== adminToken) {
-      log.warn("Invalid admin token attempt");
+      logger.warn("Invalid admin token attempt");
       return NextResponse.json(
         { error: "Invalid authorization token" },
         { status: 403 }
@@ -51,7 +50,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const type = (searchParams.get('type') || "normalize") as "normalize";
     if (type === "normalize") {
-      return await normalize(searchParams, log);
+      return await normalize(searchParams);
     } else {
       return NextResponse.json(
         { error: "Invalid 'type' parameter. Must be 'normalize'" },
@@ -59,15 +58,13 @@ export async function GET(request: NextRequest) {
       );
     }
   } catch (error) {
-    log.error({ err: error }, "Error in admin db route");
+    logger.error({ err: error }, "Error in admin db route");
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Internal server error", requestId },
       { status: 500 }
     );
-  } finally {
-    await flushLogger();
   }
-}
+});
 
 // Only allow GET requests
 export async function POST() {
@@ -77,7 +74,7 @@ export async function POST() {
   );
 }
 
-async function normalize(searchParams: URLSearchParams, log: Logger) {
+async function normalize(searchParams: URLSearchParams) {
   const region = searchParams.get('region') as Region | null;
 
   if (!region || !isRegionEnabled(region)) {
@@ -128,7 +125,7 @@ async function normalize(searchParams: URLSearchParams, log: Logger) {
     revalidatePath(`/${locale}/db/songs`, "page");
   }
   revalidatePath("/sitemap.xml", "page");
-  log.info({ totalMasterNamesNormalized }, "Parent song names normalized");
+  logger.info({ totalMasterNamesNormalized }, "Parent song names normalized");
   return NextResponse.json({
     success: true,
     message: "Song data normalization completed",

@@ -5,7 +5,7 @@ import { parentPublicIdOf } from "@/lib/catalog/song-instance-id";
 import type { VersionId } from "@/lib/metadata";
 import { addRatingsAndSort } from "@/lib/rating-calculator";
 import { recommendationPeers, type RecommendationPeers } from "@/lib/recommendation-potential";
-import { getLogger } from "@/lib/request-logger";
+import { logger } from "@/lib/logger";
 import type { Region, SongBase, SongWithScore } from "@/lib/types";
 import { getChartPercentiles, type ChartPercentileInput } from "@/server/queries/percentile";
 import {
@@ -117,7 +117,7 @@ export async function buildRecommendations(input: BuildRecommendationsInput): Pr
     try {
       peers = await fetchPeers([...playedIds, ...baseUnplayed.map(rec => rec.song.songId)], candidateParents, input.rating);
     } catch (err) {
-      getLogger().warn({ err, region: input.region, version: input.gameVersion }, "recommendation peers unavailable, ranking without them");
+      logger.warn({ err, region: input.region, version: input.gameVersion }, "recommendation peers unavailable, ranking without them");
     }
   }
 

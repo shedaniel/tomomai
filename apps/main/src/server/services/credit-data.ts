@@ -3,7 +3,7 @@ import { db } from '@/lib/db';
 import { parentSong, songs, user, userRecentSongs, userRecentSongsDetailed, userSnapshots } from '@/lib/db/schema-pg';
 import { and, asc, desc, eq, gte, lt, lte } from 'drizzle-orm';
 import { VersionId } from '@/lib/metadata';
-import { getLogger } from '@/lib/request-logger';
+import { logger } from '@/lib/logger';
 import { FullCombo, FullSync, Region, TitleType } from '@/lib/types';
 
 // Type for detailed song statistics
@@ -222,7 +222,7 @@ export async function prepareCreditData(
   beforeDate?: Date,
   startAt?: Date,
 ): Promise<CreditPrepareResult> {
-  const log = getLogger().child({ userId, region });
+  const log = logger.child({ userId, region });
   log.debug('Fetching recent songs for credit...');
   let startTime = Date.now();
 

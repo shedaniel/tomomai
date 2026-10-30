@@ -69,7 +69,7 @@ Identifiers & domain:
 |------------------|--------------------------------------------------------------------|--------------------------------------------|
 | `userId`         | Internal user id.                                                  | `user`, `uid`, `user_id`                   |
 | `snapshotId`     | Public snapshot id.                                                | `snapshot`, `snap_id`                      |
-| `sessionId`      | Fetch session id.                                                  | `session`                                  |
+| `sessionId`      | Public fetch session id (`fetch_sessions.publicId`).               | `session`                                  |
 | `songId` / `masterSongId` | Numeric song row id(s).                                   | —                                          |
 | `songKey`        | Single `name@type@difficulty` key.                                | `song` (never log the whole object)        |
 | `songKeys`       | Array of song keys (array of strings = 1 field).                  | `songs` (never log the array of objects)   |
@@ -144,32 +144,33 @@ Every request gets a `requestId` **automatically**. `middleware.ts` generates on
 
 So you never have to generate one yourself, and clients can always read
 `x-request-id` off the response to quote in a bug report. To tie it to your logs,
-build the per-request child logger with the `requestLogger` helper — it reuses the
-header id so middleware, route logs, and the response header all share one value:
+wrap the handler with `withRequestLogContext` — it reuses the header id so
+middleware, route logs, and the response header all share one value:
 
 ```ts
-import { requestLogger } from "@/lib/request-logger";
+import { logger } from "@/lib/logger";
+import { withRequestLogContext } from "@/lib/request-logger";
 import { NextRequest, NextResponse } from "next/server";
 
-export async function GET(request: NextRequest) {
-  // `log` is logger.child({ route, requestId }); pass extra request-scoped
-  // context as a third arg (e.g. { userId }). Add region/version later with
-  // `log = log.child({ region })` once you've parsed them.
-  const { log, requestId } = requestLogger(request, "your-route-name");
-
-  log.info("starting request");
+// Every line logged while this runs, from any logger, carries route and
+// requestId; buffered logs are shipped after the response.
+export const GET = withRequestLogContext("your-route-name", async (request: NextRequest, { requestId }) => {
+  logger.info("starting request");
 
   try {
-    // ... do work, using `log` everywhere instead of `logger` ...
+    // ... do work; helpers log with plain `logger` too ...
     // The x-request-id response header is set by middleware; include requestId
     // in the JSON body too so it survives logging/copy-paste of the payload.
     return NextResponse.json({ ok: true, requestId });
   } catch (error) {
-    log.error({ err: error }, "request failed");
+    logger.error({ err: error }, "request failed");
     return NextResponse.json({ error: "Internal Error", requestId }, { status: 500 });
   }
-}
+});
 ```
+
+Dynamic routes get Next's context with `requestId` added:
+`async (request, { params, requestId }) => ...`.
 
 > Note: a cached/static response keeps the `x-request-id` of the request that
 > populated the cache — it's most meaningful on dynamic (API) responses.
@@ -177,39 +178,58 @@ export async function GET(request: NextRequest) {
 Reference implementations: `src/app/api/admin/update_all/route.ts`,
 `src/app/api/admin/upload/route.ts`, `src/app/api/admin/update/route.ts`.
 
-### Why a child logger?
+### Log context: every line carries the request's fields
 
-`logger.child({ requestId, route })` returns a logger that prepends those fields to **every** log line, including ones emitted by helpers it's passed to. Pass `log` (not `logger`) into downstream functions so their logs inherit the same context — that's how a single Axiom query like `route == "export-image" AND requestId == "abc123"` reconstructs the entire request timeline.
-
-### Ambient logger for lib/service code (`getLogger()`)
-
-Lib and service code that isn't handed a `log` explicitly should use the
-**ambient request logger** instead of the root `logger`:
+`withRequestLogContext()` opens a **log context** for the request: an
+AsyncLocalStorage scope whose fields a pino `mixin` (in `logger.ts`) adds to
+**every** line from **every** logger — the root `logger`, module-level children
+created at import, and the `console` bridge. So lib and service code just uses
+`logger`; it never needs a `log` parameter or a special getter to get `route`
+and `requestId`:
 
 ```ts
-import { getLogger } from "@/lib/request-logger";
+import { logger } from "@/lib/logger";
 
-getLogger().warn({ err }, "failed to cache image");
+logger.warn({ err }, "failed to cache image"); // carries route + requestId inside a request
 ```
 
-`requestLogger()` binds the request-scoped child logger to the current async
-execution context (AsyncLocalStorage), so `getLogger()` returns that logger —
-with `route` and `requestId` — anywhere downstream of the route, **including
-`after()` / `waitUntil()` background tasks** (Next snapshots ALS context).
-Outside a request scope (build time, scripts) it falls back to the root logger,
-so it's always safe to call.
+The context follows the async execution chain, **including `after()` /
+`waitUntil()` background tasks** (Next snapshots ALS context). Outside any
+context (build time, scripts) lines simply carry no extra fields.
 
-The ambient logger is bound automatically for:
-- any route that calls `requestLogger(request, route)`,
+A context is opened automatically for:
+- any route wrapped with `withRequestLogContext(route, handler)`,
 - every tRPC procedure (middleware in `src/lib/trpc.ts`, `route: "trpc/<path>"`),
 - every v1 API handler (`withApiKey` in `src/lib/api/protect.ts`).
 
-Prefer explicit `log` threading when a helper is part of one request flow and
-already takes a context (e.g. the admin fetcher pipeline's `context.log`);
-use `getLogger()` for shared lib code called from many places.
+#### Adding fields for a scope (`withLogContext`)
+
+Wrap a unit of work to add fields to everything logged inside it, on top of the
+current context. Scopes nest, and the outer context is back once `fn` returns:
+
+```ts
+import { withLogContext } from "@/lib/request-logger";
+
+await withLogContext({ sessionId, userId, region }, () => fetchMaimaiData(...));
+```
+
+`startFetchServer` does exactly this, so every line of a maimai fetch can be
+found with `sessionId == "<public fetch id>"`. Use it for any long-lived unit
+of work (a fetch, a job, a background task); it is also how to open a context
+outside route handlers, as the tRPC middleware and `apps/render`'s Hono
+middleware do.
+
+#### Child loggers are for local fields
+
+`log.child({ version, difficulty })` is still the way to add fields to a few
+lines in one place (the admin fetcher pipeline threads `context.log` like
+this). The mixin skips keys a logger already binds, and fields passed at the
+call site win over the context, so nothing is logged twice.
 
 > `request-logger.ts` imports `node:async_hooks`, so it is **server-only** —
 > never import it from client components or shared client/server modules.
+> `logger.ts` itself stays edge-safe: it only reads the context store that
+> `request-logger.ts` publishes on `globalThis`.
 
 ## Levels
 
@@ -285,7 +305,7 @@ Both Axiom and Logtail can be active simultaneously.
 ## Runtime notes
 
 - `logger.ts` is imported by `src/middleware.ts`, which runs on the **edge runtime**. The edge logger is a bare pino instance with no shipping — middleware logs do **not** reach Axiom. Don't statically import Node builtins (`stream`, `fs`, …) at the top of `logger.ts`; use lazy `require()` inside non-edge code paths.
-- In serverless / short-lived invocations, call `await flushLogger()` before responding if you must guarantee delivery — the Axiom buffer otherwise drains on a 1-second timer or at 100 events.
+- In serverless / short-lived invocations the Axiom buffer must be flushed before the function is frozen — it otherwise drains on a 1-second timer or at 100 events. `withRequestLogContext` does this for route handlers with `after(flushLogger)`, so the response isn't delayed. Work that outlives the response (e.g. a fetch started with `after()`) calls `await flushLogger()` itself when it finishes.
 - The Axiom transport disables itself after 5 consecutive failures (logged to stderr) so a broken endpoint can't lock up the app.
 
 ## Querying

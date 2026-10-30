@@ -1,7 +1,7 @@
 import { load } from "cheerio";
 import type { Agent } from "undici";
 import { agentFetch, createPinnedAgent } from "../http-agent";
-import { getLogger } from "../request-logger";
+import { logger } from "../logger";
 import { Region } from "../types";
 
 const USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36";
@@ -57,7 +57,7 @@ async function redeem(region: Region, redirectUrl: string, redirectCookies: stri
     const setCookies = response.headers.getSetCookie();
     const location = response.headers.get("location")?.split("?")[0] ?? "-";
     const names = setCookies.map((header) => header.split("=")[0]).join(", ");
-    getLogger().info({ region, status: response.status, count: setCookies.length }, `Redeemed maimai login redirect -> ${location} (cookies: ${names || "none"})`);
+    logger.info({ region, status: response.status, count: setCookies.length }, `Redeemed maimai login redirect -> ${location} (cookies: ${names || "none"})`);
     if (setCookies.length > 0) {
       return { agent, cookies: setCookies.map((header) => header.split(";")[0]).join("; ") };
     }
@@ -132,7 +132,7 @@ async function recoverPrimary(session: MaimaiSession, failed: Agent): Promise<bo
   if (!session.redeeming) {
     if (session.redeems >= MAX_REDEEMS) return false;
     session.redeems++;
-    getLogger().warn({ region: session.region, count: session.redeems }, "maimai rejected the session, redeeming the login redirect again");
+    logger.warn({ region: session.region, count: session.redeems }, "maimai rejected the session, redeeming the login redirect again");
     session.redeeming = redeem(session.region, session.redirectUrl, session.redirectCookies)
       .then(({ agent, cookies }) => {
         if (session.released) {
@@ -190,7 +190,7 @@ async function sessionFetch(session: MaimaiSession, url: string, init: RequestIn
       result = await buffered(await agentFetch(url, { ...init, headers }, agent));
     } catch (error) {
       if (session.released || isLastAttempt) throw error;
-      getLogger().warn({ err: error, url }, `maimai request failed on the ${kind} connection, retrying`);
+      logger.warn({ err: error, url }, `maimai request failed on the ${kind} connection, retrying`);
       if (kind === "helper") retireHelper(session, agent);
       route = "primary";
       continue;
@@ -203,7 +203,7 @@ async function sessionFetch(session: MaimaiSession, url: string, init: RequestIn
     if (isLastAttempt) return response;
 
     const reason = describeMaimaiError(await response.clone().text());
-    getLogger().warn({ url, status: response.status, size }, `maimai rejected request on the ${kind} connection, retrying${formatMaimaiError(reason)}`);
+    logger.warn({ url, status: response.status, size }, `maimai rejected request on the ${kind} connection, retrying${formatMaimaiError(reason)}`);
     if (kind === "helper") {
       retireHelper(session, agent);
       route = "primary";
@@ -225,10 +225,10 @@ async function sessionlessImageFetch(url: string, init: RequestInit): Promise<Re
     try {
       const { response, size } = await buffered(await agentFetch(url, init, agent));
       if (attempt >= MAX_ATTEMPTS || !isRejected(response, url, size)) return response;
-      getLogger().warn({ url, status: response.status, size }, "maimai rejected image request, retrying on a new connection");
+      logger.warn({ url, status: response.status, size }, "maimai rejected image request, retrying on a new connection");
     } catch (error) {
       if (attempt >= MAX_ATTEMPTS) throw error;
-      getLogger().warn({ err: error, url }, "maimai image request failed, retrying on a new connection");
+      logger.warn({ err: error, url }, "maimai image request failed, retrying on a new connection");
     } finally {
       if (agent) void agent.close();
     }
@@ -295,7 +295,7 @@ export async function maimaiGet(url: string, cookies: string, referer: string): 
 
   const error = describeMaimaiError(body);
   const finalPath = response.url ? new URL(response.url).pathname : "";
-  getLogger().warn({ url, status: response.status, size: body.length }, `maimai did not serve the page: ${finalPath}${formatMaimaiError(error)}`);
+  logger.warn({ url, status: response.status, size: body.length }, `maimai did not serve the page: ${finalPath}${formatMaimaiError(error)}`);
   if (error.code === "100001") {
     throw new Error("Session expired or invalid. Please provide a new token.");
   }

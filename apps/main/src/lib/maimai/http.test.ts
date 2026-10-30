@@ -3,7 +3,7 @@ import type { AddressInfo, Socket } from "net";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { describeMaimaiError, maimaiGet, maimaiGetHtml, maimaiImageRequest, maimaiRequest, openMaimaiSession, releaseSession } from "./http";
 
-vi.mock("../request-logger", () => ({ getLogger: () => ({ warn: vi.fn(), debug: vi.fn(), info: vi.fn() }) }));
+vi.mock("../logger", () => ({ logger: { warn: vi.fn(), debug: vi.fn(), info: vi.fn() } }));
 
 // Models maimai DX NET: each connection comes from a network, a redemption
 // binds the session to the redeeming connection's network and replaces the

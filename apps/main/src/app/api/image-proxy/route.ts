@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Agent } from 'undici';
 import { getCachedImageBuffer, cacheImage } from '@/lib/image_cacher';
-import { flushLogger } from '@/lib/logger';
-import { requestLogger } from '@/lib/request-logger';
+import { logger } from '@/lib/logger';
+import { withRequestLogContext } from '@/lib/request-logger';
 import { isSafeMaimaiImageUrl } from '@/lib/utils';
 
 const imageSuccessHeaders = (contentType: string) => ({
@@ -12,8 +12,7 @@ const imageSuccessHeaders = (contentType: string) => ({
   'Vercel-CDN-Cache-Control': 'public, max-age=31536000',
 });
 
-export async function GET(request: NextRequest) {
-  const { log, requestId } = requestLogger(request, "image-proxy");
+export const GET = withRequestLogContext("image-proxy", async (request: NextRequest, { requestId }) => {
   const { searchParams } = new URL(request.url);
   const imageUrl = searchParams.get('url');
 
@@ -73,10 +72,7 @@ export async function GET(request: NextRequest) {
     });
 
   } catch (error) {
-    log.error({ err: error, url: imageUrl }, "Error proxying image");
-    // Flush only on the error path — successful image serving is hot and must
-    // not wait on a log flush.
-    await flushLogger();
+    logger.error({ err: error, url: imageUrl }, "Error proxying image");
     return new NextResponse(`Internal server error (${requestId})`, { status: 500 });
   }
-}
+});

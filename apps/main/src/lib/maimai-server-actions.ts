@@ -8,8 +8,8 @@ import { Region } from './types';
 import { appendFetchState } from './fetch-states-server';
 import { getAllStates } from './fetch-states';
 import { after } from 'next/server';
-import { flushLogger } from './logger';
-import { getLogger } from './request-logger';
+import { logger, flushLogger } from './logger';
+import { withLogContext } from './request-logger';
 import { resolveFlagsForUser } from './flags';
 
 export interface StartFetchResult {
@@ -63,7 +63,7 @@ export async function demoFetch(userId: string, region: Region): Promise<StartFe
         })
         .where(eq(fetchSessions.id, insertedSession.id));
     } catch (error) {
-      getLogger().error({ err: error }, "Error during demo fetch");
+      logger.error({ err: error }, "Error during demo fetch");
 
       // Mark as failed if error occurs
       await db
@@ -113,7 +113,7 @@ export async function startFetchServer(userId: string, region: Region, token?: s
     try {
       tokenToUse = decryptToken(savedToken[0].token);
     } catch (error) {
-      getLogger().error({ err: error }, 'Failed to decrypt token');
+      logger.error({ err: error }, 'Failed to decrypt token');
       throw new Error('Failed to decrypt stored token. Please re-add your authentication tokens.');
     }
 
@@ -281,7 +281,7 @@ export async function startFetchServer(userId: string, region: Region, token?: s
         })
         .where(eq(fetchSessions.id, fetchSessionInternalId));
     } catch (error) {
-      getLogger().error({ err: error }, "Error during maimai data fetch");
+      logger.error({ err: error }, "Error during maimai data fetch");
 
       // Mark fetch as failed
       await db
@@ -299,6 +299,8 @@ export async function startFetchServer(userId: string, region: Region, token?: s
     }
   };
 
+  const runFetch = () => withLogContext({ sessionId: fetchSessionPublicId, userId, region }, fetchWork);
+
   const result: StartFetchResult = {
     sessionId: fetchSessionPublicId,
     status: "pending" as const,
@@ -306,10 +308,10 @@ export async function startFetchServer(userId: string, region: Region, token?: s
 
   if (options?.skipAfter) {
     // Caller is responsible for keeping the promise alive (e.g. via waitUntil)
-    result.backgroundWork = fetchWork();
+    result.backgroundWork = runFetch();
   } else {
     // Use after() to keep the serverless function alive after the response is sent
-    after(fetchWork);
+    after(runFetch);
   }
 
   return result;

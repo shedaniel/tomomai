@@ -1,8 +1,8 @@
 import { decodeOpaqueUserId, verifyUserOtp } from "@/lib/otp";
 import { startFetchServer } from "@/lib/maimai-server-actions";
 import { NextRequest, NextResponse } from "next/server";
-import { flushLogger } from "@/lib/logger";
-import { requestLogger } from "@/lib/request-logger";
+import { logger } from "@/lib/logger";
+import { withRequestLogContext } from "@/lib/request-logger";
 import { securityMiddleware, validateContentType, csrfProtection } from "@/lib/security/middleware";
 import { Region } from "@/lib/types";
 
@@ -46,8 +46,7 @@ export async function OPTIONS() {
   return withCors(response);
 }
 
-export async function POST(request: NextRequest) {
-  const { log, requestId } = requestLogger(request, "login");
+export const POST = withRequestLogContext("login", async (request: NextRequest, { requestId }) => {
   // Apply security middleware
   const securityResponse = await securityMiddleware(request);
   if (securityResponse.status !== 200) {
@@ -87,9 +86,7 @@ export async function POST(request: NextRequest) {
 
     return jsonResponse({ success: true, sessionId: result.sessionId, status: result.status });
   } catch (error) {
-    log.error({ err: error }, "Login error");
-    // Flush only on the error path — login is user-facing and low-volume.
-    await flushLogger();
+    logger.error({ err: error }, "Login error");
 
     if (error instanceof Error) {
       if (error.message.includes("already in progress")) {
@@ -105,4 +102,4 @@ export async function POST(request: NextRequest) {
 
     return jsonResponse({ success: false, error: "Unexpected error.", requestId }, { status: 500 });
   }
-}
+});

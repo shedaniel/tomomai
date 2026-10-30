@@ -4,8 +4,8 @@ import { songs } from "@/lib/db/schema-pg";
 import { VersionId } from "@/lib/metadata";
 import { Region } from "@/lib/types";
 import { getEnabledRegions, isRegionEnabled } from "@/lib/enabled-regions";
-import { flushLogger } from "@/lib/logger";
-import { requestLogger } from "@/lib/request-logger";
+import { logger } from "@/lib/logger";
+import { withRequestLogContext } from "@/lib/request-logger";
 import { and, eq, gte, lte, sql } from "drizzle-orm";
 import { publishSongCatalog } from "@/server/services/admin/song-catalog";
 import { revalidateTag, revalidatePath } from "next/cache";
@@ -88,8 +88,7 @@ function buildVersionFilter(versionFilter: "eq" | "lte" | "gte", versionValue: n
   }
 }
 
-export async function GET(request: NextRequest) {
-  const { log, requestId } = requestLogger(request, "admin/import");
+export const GET = withRequestLogContext("admin/import", async (request: NextRequest, { requestId }) => {
   try {
     // Check for admin token authentication
     const authHeader = request.headers.get("authorization");
@@ -105,7 +104,7 @@ export async function GET(request: NextRequest) {
     // Validate token against environment variable
     const adminToken = process.env.ADMIN_UPDATE_TOKEN;
     if (!adminToken) {
-      log.error("ADMIN_UPDATE_TOKEN environment variable not set");
+      logger.error("ADMIN_UPDATE_TOKEN environment variable not set");
       return NextResponse.json(
         { error: "Server configuration error" },
         { status: 500 }
@@ -113,7 +112,7 @@ export async function GET(request: NextRequest) {
     }
 
     if (token !== adminToken) {
-      log.warn("Invalid admin token attempt");
+      logger.warn("Invalid admin token attempt");
       return NextResponse.json(
         { error: "Invalid authorization token" },
         { status: 403 }
@@ -147,7 +146,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    log.info({ from: fromParam, to: toParam }, `Admin import requested (mode=${mode || 'insert+upsert'})`);
+    logger.info({ from: fromParam, to: toParam }, `Admin import requested (mode=${mode || 'insert+upsert'})`);
 
     // Parse parameters
     let sourceConfig, targetConfig;
@@ -162,7 +161,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    log.debug(`Import config: ${sourceConfig.region} v${sourceConfig.gameVersion} → ${targetConfig.region} v${targetConfig.gameVersion}`);
+    logger.debug(`Import config: ${sourceConfig.region} v${sourceConfig.gameVersion} → ${targetConfig.region} v${targetConfig.gameVersion}`);
 
     const versionCondition = buildVersionFilter(sourceConfig.versionFilter, sourceConfig.versionValue);
 
@@ -179,7 +178,7 @@ export async function GET(request: NextRequest) {
           )
         );
 
-      log.info({ count: sourceSongs.length }, "Found source songs matching criteria");
+      logger.info({ count: sourceSongs.length }, "Found source songs matching criteria");
 
       if (sourceSongs.length === 0) {
         return NextResponse.json({
@@ -203,7 +202,7 @@ export async function GET(request: NextRequest) {
       let existingTargetSongs: (typeof songs.$inferSelect)[] = [];
 
       if (mode === "only-upsert") {
-        log.debug("Querying existing target songs for upsert mode");
+        logger.debug("Querying existing target songs for upsert mode");
         existingTargetSongs = await tx
           .select()
           .from(songs)
@@ -214,7 +213,7 @@ export async function GET(request: NextRequest) {
             )
           );
 
-        log.debug({ count: existingTargetSongs.length }, "Found existing songs in target");
+        logger.debug({ count: existingTargetSongs.length }, "Found existing songs in target");
       }
 
       const targetSongs: (typeof songs.$inferInsert)[] = [];
@@ -236,7 +235,7 @@ export async function GET(request: NextRequest) {
         if (mode === "only-upsert") {
           // Only include songs that already exist in target
           if (!existingTargetMap.has(songKey)) {
-            log.debug({ songKey }, "Skipping new song in upsert mode");
+            logger.debug({ songKey }, "Skipping new song in upsert mode");
             skippedCount++;
             continue;
           }
@@ -255,11 +254,11 @@ export async function GET(request: NextRequest) {
         targetSongs.push(targetSong);
       }
 
-      log.info({ count: targetSongs.length }, "Prepared songs for import");
+      logger.info({ count: targetSongs.length }, "Prepared songs for import");
 
       // Step 4: Perform batch upsert
       if (targetSongs.length > 0) {
-        log.debug({ count: targetSongs.length }, "Performing batch upsert");
+        logger.debug({ count: targetSongs.length }, "Performing batch upsert");
 
         try {
           // Split into batches of 1000 records to avoid SQL limits
@@ -268,7 +267,7 @@ export async function GET(request: NextRequest) {
 
           for (let i = 0; i < targetSongs.length; i += batchSize) {
             const batch = targetSongs.slice(i, i + batchSize);
-            log.debug(`Upserting batch ${Math.floor(i / batchSize) + 1}/${Math.ceil(targetSongs.length / batchSize)} (${batch.length} songs)`);
+            logger.debug(`Upserting batch ${Math.floor(i / batchSize) + 1}/${Math.ceil(targetSongs.length / batchSize)} (${batch.length} songs)`);
 
             await tx.insert(songs).values(batch).onConflictDoUpdate({
               target: [songs.parentId, songs.region, songs.gameVersion],
@@ -288,15 +287,15 @@ export async function GET(request: NextRequest) {
             totalProcessed += batch.length;
           }
 
-          log.debug({ count: totalProcessed }, "Upserted songs to target");
+          logger.debug({ count: totalProcessed }, "Upserted songs to target");
         } catch (error) {
-          log.error({ err: error }, "Error during batch upsert");
+          logger.error({ err: error }, "Error during batch upsert");
           throw new Error(`Database upsert failed: ${error instanceof Error ? error.message : "Unknown error"}`);
         }
       }
 
       const totalProcessed = mode === "only-upsert" ? updatedCount : importedCount;
-      log.info({ count: totalProcessed, skipped: skippedCount }, "Import completed");
+      logger.info({ count: totalProcessed, skipped: skippedCount }, "Import completed");
 
       return NextResponse.json({
         success: true,
@@ -330,15 +329,13 @@ export async function GET(request: NextRequest) {
     return result;
 
   } catch (error) {
-    log.error({ err: error }, "Error in admin import route");
+    logger.error({ err: error }, "Error in admin import route");
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Internal server error", requestId },
       { status: 500 }
     );
-  } finally {
-    await flushLogger();
   }
-}
+});
 
 // Only allow GET requests
 export async function POST() {

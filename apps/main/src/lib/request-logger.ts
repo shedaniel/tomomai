@@ -1,15 +1,16 @@
-import { logger } from "@/lib/logger";
+import { flushLogger, LOG_CONTEXT_STORE } from "@/lib/logger";
 import { nanoid } from "nanoid";
-import type { NextRequest } from "next/server";
-import type { Logger } from "pino";
+import { after, type NextRequest } from "next/server";
 import { AsyncLocalStorage } from "node:async_hooks";
 
-// Ambient per-request logger. requestLogger() binds the child logger to the
-// current async execution context, so lib/service code deep in the call chain
-// can pick it up via getLogger() without threading `log` through every
-// signature. Survives await chains and Next's after()/waitUntil (Next snapshots
-// ALS context for after callbacks).
-const loggerStorage = new AsyncLocalStorage<Logger>();
+export type LogContext = Record<string, unknown>;
+
+// Fields that logger.ts's mixin adds to every log line in the current async
+// execution context. Survives await chains and Next's after()/waitUntil (Next
+// snapshots ALS context for after callbacks). One instance per process, since
+// Next can evaluate this module more than once.
+const globalStore = globalThis as Record<symbol, AsyncLocalStorage<LogContext> | undefined>;
+const contextStorage = (globalStore[LOG_CONTEXT_STORE] ??= new AsyncLocalStorage<LogContext>());
 
 /**
  * Per-request correlation id. Prefers the id assigned by middleware (the
@@ -22,42 +23,44 @@ export function getRequestId(request: NextRequest): string {
   return request.headers.get("x-request-id") ?? nanoid(10);
 }
 
-/**
- * Build the per-request child logger for a route handler (see
- * docs/LOGGING.md). Returns the `requestId` alongside so it can be included in
- * the response body. Pass `log` (not the root `logger`) into any helpers so
- * their lines inherit the same `route`/`requestId` context.
- */
-export function requestLogger(
-  request: NextRequest,
-  route: string,
-  extra?: Record<string, unknown>,
-): { log: Logger; requestId: string } {
-  const requestId = getRequestId(request);
-  // `extra` first so a caller can't accidentally clobber route/requestId.
-  const log = logger.child({ ...extra, route, requestId });
-  // Bind as the ambient logger for the rest of this request's async chain.
-  loggerStorage.enterWith(log);
-  return { log, requestId };
+// Ship buffered logs once the response is out, without delaying it. Outside a
+// request (tests, scripts) there is no after(), so flush right away.
+function flushAfterResponse(): void {
+  try {
+    after(flushLogger);
+  } catch {
+    void flushLogger();
+  }
 }
 
 /**
- * Ambient logger for lib/service code that isn't handed a `log` explicitly.
- * Returns the request-scoped child logger (with `route`/`requestId`) when
- * called downstream of a route that used requestLogger(); falls back to the
- * root logger outside a request scope (build time, scripts, background jobs
- * not started from a request).
+ * Wrap a route handler (see docs/LOGGING.md): everything it logs, from any
+ * logger, carries `route` and `requestId`, and buffered logs are shipped after
+ * the response. The handler gets the `requestId` to include in its body.
+ * Unhandled errors still reach instrumentation's onRequestError.
  */
-export function getLogger(): Logger {
-  return loggerStorage.getStore() ?? logger;
+export function withRequestLogContext<Context extends object = object>(
+  route: string | ((request: NextRequest) => string),
+  handler: (request: NextRequest, context: Context & { requestId: string }) => Promise<Response> | Response,
+): (request: NextRequest, context: Context) => Promise<Response> {
+  return (request, context) => {
+    const requestId = getRequestId(request);
+    const name = typeof route === "string" ? route : route(request);
+    return withLogContext({ route: name, requestId }, async () => {
+      try {
+        return await handler(request, { ...context, requestId });
+      } finally {
+        flushAfterResponse();
+      }
+    });
+  };
 }
 
 /**
- * Run `fn` with `log` as the ambient logger. Use this where enterWith()'s
- * binding wouldn't survive — e.g. tRPC middleware, where the context factory is
- * awaited by the framework and its execution context doesn't propagate to
- * procedure calls.
+ * Run `fn` with `fields` added to the log context of everything it does,
+ * on top of the current context. Route handlers use withRequestLogContext;
+ * this is for everything else (tRPC middleware, a fetch, a background job).
  */
-export function runWithLogger<T>(log: Logger, fn: () => T): T {
-  return loggerStorage.run(log, fn);
+export function withLogContext<T>(fields: LogContext, fn: () => T): T {
+  return contextStorage.run({ ...contextStorage.getStore(), ...fields }, fn);
 }

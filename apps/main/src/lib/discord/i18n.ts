@@ -4,7 +4,7 @@ import ja from '../../../messages/discord/ja.json';
 import zhCN from '../../../messages/discord/zh-CN.json';
 import zhTW from '../../../messages/discord/zh-TW.json';
 import ko from '../../../messages/discord/ko.json';
-import { getLogger } from '@/lib/request-logger';
+import { logger } from '@/lib/logger';
 
 export type DiscordLocale = 'en-US' | 'en-GB' | 'ja' | 'zh-CN' | 'zh-TW' | 'ko';
 
@@ -66,7 +66,7 @@ export function t(
 
   if (!warnedKeys.has(key)) {
     warnedKeys.add(key);
-    getLogger().warn({ key, locale: resolved }, 'Missing Discord i18n key');
+    logger.warn({ key, locale: resolved }, 'Missing Discord i18n key');
   }
   return key;
 }

@@ -1,7 +1,7 @@
 import { db } from "@/lib/db";
 import { cacheImage } from "@/lib/image_cacher";
-import { flushLogger } from "@/lib/logger";
-import { requestLogger } from "@/lib/request-logger";
+import { logger } from "@/lib/logger";
+import { withRequestLogContext } from "@/lib/request-logger";
 import { parentSong } from "@/lib/db/schema-pg";
 import { NextRequest, NextResponse } from "next/server";
 import type { Logger } from "pino";
@@ -12,8 +12,8 @@ function isDataUrl(url: string): boolean {
 }
 
 // Helper function to process images in batches
-async function processBatch(urls: string[], batchNumber: number, totalBatches: number, log: Logger): Promise<{ url: string; error?: string }[]> {
-  log.debug(`Processing batch ${batchNumber}/${totalBatches} with ${urls.length} images...`);
+async function processBatch(urls: string[], batchNumber: number, totalBatches: number): Promise<{ url: string; error?: string }[]> {
+  logger.debug(`Processing batch ${batchNumber}/${totalBatches} with ${urls.length} images...`);
 
   const results = await Promise.allSettled(
     urls.map(async (url) => {
@@ -21,7 +21,7 @@ async function processBatch(urls: string[], batchNumber: number, totalBatches: n
         await cacheImage(url);
         return { url };
       } catch (error) {
-        log.warn({ err: error, url }, "Failed to cache image");
+        logger.warn({ err: error, url }, "Failed to cache image");
         return {
           url,
           error: error instanceof Error ? error.message : "Unknown error"
@@ -42,8 +42,7 @@ async function processBatch(urls: string[], batchNumber: number, totalBatches: n
   });
 }
 
-export async function GET(request: NextRequest) {
-  const { log, requestId } = requestLogger(request, "admin/cache_images");
+export const GET = withRequestLogContext("admin/cache_images", async (request: NextRequest, { requestId }) => {
   try {
     // Check for admin token authentication
     const authHeader = request.headers.get("authorization");
@@ -59,7 +58,7 @@ export async function GET(request: NextRequest) {
     // Validate token against environment variable
     const adminToken = process.env.ADMIN_UPDATE_TOKEN;
     if (!adminToken) {
-      log.error("ADMIN_UPDATE_TOKEN environment variable not set");
+      logger.error("ADMIN_UPDATE_TOKEN environment variable not set");
       return NextResponse.json(
         { error: "Server configuration error" },
         { status: 500 }
@@ -67,7 +66,7 @@ export async function GET(request: NextRequest) {
     }
 
     if (token !== adminToken) {
-      log.warn("Invalid admin token attempt");
+      logger.warn("Invalid admin token attempt");
       return NextResponse.json(
         { error: "Invalid authorization token" },
         { status: 403 }
@@ -86,7 +85,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    log.info(`Admin cache_images requested with batch size: ${batchSize}`);
+    logger.info(`Admin cache_images requested with batch size: ${batchSize}`);
 
     // Step 1: Get all distinct cover URLs from songs table
     const distinctCovers = await db
@@ -100,7 +99,7 @@ export async function GET(request: NextRequest) {
       .filter(url => !isDataUrl(url))
       .filter(url => url && url.trim() !== '');
 
-    log.info(`Found ${distinctCovers.length} distinct covers, ${httpUrls.length} HTTP URLs to cache`);
+    logger.info(`Found ${distinctCovers.length} distinct covers, ${httpUrls.length} HTTP URLs to cache`);
 
     if (httpUrls.length === 0) {
       return NextResponse.json({
@@ -131,13 +130,13 @@ export async function GET(request: NextRequest) {
 
     // Process batches sequentially (but each batch processes URLs in parallel)
     for (let i = 0; i < batches.length; i++) {
-      const batchResult = await processBatch(batches[i], i + 1, batches.length, log);
+      const batchResult = await processBatch(batches[i], i + 1, batches.length);
       allResults.push(...batchResult);
       totalCached += batchResult.filter(r => !r.error).length;
       totalErrors += batchResult.filter(r => r.error).length;
     }
 
-    log.info({ cachedCount: totalCached, errorCount: totalErrors }, `Image caching completed: ${totalCached} cached, ${totalErrors} errors`);
+    logger.info({ cachedCount: totalCached, errorCount: totalErrors }, `Image caching completed: ${totalCached} cached, ${totalErrors} errors`);
 
     const errorUrls = allResults.filter(r => r.error).map(r => ({ url: r.url, error: r.error }));
 
@@ -161,15 +160,13 @@ export async function GET(request: NextRequest) {
     });
 
   } catch (error) {
-    log.error({ err: error }, "Error in admin cache_images route");
+    logger.error({ err: error }, "Error in admin cache_images route");
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Internal server error", requestId },
       { status: 500 }
     );
-  } finally {
-    await flushLogger();
   }
-}
+});
 
 // Only allow GET requests
 export async function POST() {

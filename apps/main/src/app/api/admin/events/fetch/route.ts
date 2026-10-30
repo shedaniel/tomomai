@@ -3,8 +3,8 @@ import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import { load } from "cheerio";
 import { z } from "zod";
 import { NextRequest, NextResponse } from "next/server";
-import { flushLogger } from "@/lib/logger";
-import { requestLogger } from "@/lib/request-logger";
+import { logger } from "@/lib/logger";
+import { withRequestLogContext } from "@/lib/request-logger";
 import { redis } from "@/lib/redis";
 import { storePending } from "@/server/services/admin/pending-confirmation";
 import { sendDiscordNotice } from "@/server/services/admin/discord-webhooks";
@@ -134,7 +134,7 @@ export function extractAsMarkdown(html: string, baseUrl: string, visitedUrls: Se
     .slice(0, MAX_CONTENT_LENGTH);
 }
 
-async function fetchPageHtml(url: string, visitedUrls: Set<string>, log: any): Promise<{ html: string } | { error: string }> {
+async function fetchPageHtml(url: string, visitedUrls: Set<string>): Promise<{ html: string } | { error: string }> {
   try {
     const parsed = new URL(url);
     if (!parsed.hostname.endsWith(ALLOWED_HOST) || !parsed.pathname.startsWith("/maimai/")) {
@@ -145,7 +145,7 @@ async function fetchPageHtml(url: string, visitedUrls: Set<string>, log: any): P
   }
 
   try {
-    log.debug({ url }, "Fetching page");
+    logger.debug({ url }, "Fetching page");
 
     const response = await fetch(url, {
       headers: {
@@ -162,7 +162,7 @@ async function fetchPageHtml(url: string, visitedUrls: Set<string>, log: any): P
     const html = await response.text();
     visitedUrls.add(url);
 
-    log.debug({ url, size: html.length }, "Page fetched");
+    logger.debug({ url, size: html.length }, "Page fetched");
 
     return { html };
   } catch (err) {
@@ -190,7 +190,7 @@ Rules:
 
 const FALLBACK_MODEL = "google/gemini-3.1-flash-lite-preview";
 
-async function runScraper(modelId: string, content: string, url: string, log: any): Promise<Event[]> {
+async function runScraper(modelId: string, content: string, url: string): Promise<Event[]> {
   const openrouter = createOpenRouter({ apiKey: process.env.OPENROUTER_KEY! });
   const model = openrouter(modelId);
   const extractedEvents: Event[] = [];
@@ -205,7 +205,7 @@ async function runScraper(modelId: string, content: string, url: string, log: an
           events: z.array(EventSchema),
         }),
         execute: async ({ events }) => {
-          log.debug({ url, modelId, eventCount: events.length }, "Scraper agent extracted events");
+          logger.debug({ url, modelId, eventCount: events.length }, "Scraper agent extracted events");
           extractedEvents.push(...events);
           return { received: events.length };
         },
@@ -216,25 +216,25 @@ async function runScraper(modelId: string, content: string, url: string, log: an
   });
 
   if (extractedEvents.length === 0) {
-    log.warn({ url, modelId, response: result.text }, "Scraper agent found no events");
+    logger.warn({ url, modelId, response: result.text }, "Scraper agent found no events");
   }
 
   return extractedEvents;
 }
 
-async function scrapePageForEvents(content: string, url: string, log: any): Promise<Event[]> {
+async function scrapePageForEvents(content: string, url: string): Promise<Event[]> {
   const primaryModel = process.env.AI_MODEL || "anthropic/claude-sonnet-4-5-20250514";
 
-  log.debug({ url, size: content.length }, "Starting scraper agent");
+  logger.debug({ url, size: content.length }, "Starting scraper agent");
 
   try {
-    const events = await runScraper(primaryModel, content, url, log);
+    const events = await runScraper(primaryModel, content, url);
     if (events.length > 0 || primaryModel === FALLBACK_MODEL) return events;
 
-    log.info({ url }, "Retrying with fallback model");
-    return await runScraper(FALLBACK_MODEL, content, url, log);
+    logger.info({ url }, "Retrying with fallback model");
+    return await runScraper(FALLBACK_MODEL, content, url);
   } catch (err) {
-    log.error({
+    logger.error({
       url,
       error: err instanceof Error
         ? { message: err.message, name: err.name }
@@ -275,7 +275,7 @@ export function extractLinks(content: string, alreadyVisited: Set<string>): stri
 }
 
 /** Use AI to determine whether a page should be scraped for event data */
-async function shouldScrapePage(content: string, url: string, log: any): Promise<boolean> {
+async function shouldScrapePage(content: string, url: string): Promise<boolean> {
   const openrouter = createOpenRouter({ apiKey: process.env.OPENROUTER_KEY! });
   const model = openrouter(process.env.AI_MODEL || "anthropic/claude-sonnet-4-5-20250514");
 
@@ -312,9 +312,9 @@ Call submitDecision exactly once.`,
       },
     });
 
-    log.debug({ url, shouldScrape }, "Scrape decision");
+    logger.debug({ url, shouldScrape }, "Scrape decision");
   } catch (err) {
-    log.error(
+    logger.error(
       { url, error: err instanceof Error ? err.message : String(err) },
       "Scrape decision agent failed",
     );
@@ -327,15 +327,14 @@ export async function discoverLinks(
   content: string,
   url: string,
   alreadyVisited: Set<string>,
-  log: any,
 ): Promise<{ url: string; links: string[]; shouldScrape: boolean }> {
   // Links are extracted programmatically — no AI needed
   const links = extractLinks(content, alreadyVisited);
 
   // AI only decides whether this page itself should be scraped
-  const shouldScrape = await shouldScrapePage(content, url, log);
+  const shouldScrape = await shouldScrapePage(content, url);
 
-  log.debug(
+  logger.debug(
     { url, linksFound: links, shouldScrape },
     "Discovery result",
   );
@@ -343,8 +342,7 @@ export async function discoverLinks(
   return { url, links, shouldScrape };
 }
 
-export async function POST(request: NextRequest) {
-  const { log, requestId } = requestLogger(request, "admin/fetch_events");
+export const POST = withRequestLogContext("admin/fetch_events", async (request: NextRequest, { requestId }) => {
   try {
     // Auth - same pattern as other admin routes
     const authHeader = request.headers.get("authorization");
@@ -359,7 +357,7 @@ export async function POST(request: NextRequest) {
 
     const adminToken = process.env.ADMIN_UPDATE_TOKEN;
     if (!adminToken) {
-      log.error("ADMIN_UPDATE_TOKEN environment variable not set");
+      logger.error("ADMIN_UPDATE_TOKEN environment variable not set");
       return NextResponse.json(
         { error: "Server configuration error" },
         { status: 500 },
@@ -367,14 +365,14 @@ export async function POST(request: NextRequest) {
     }
 
     if (token !== adminToken) {
-      log.warn("Invalid admin token attempt");
+      logger.warn("Invalid admin token attempt");
       return NextResponse.json(
         { error: "Invalid authorization token" },
         { status: 403 },
       );
     }
 
-    log.info("Starting event scraping");
+    logger.info("Starting event scraping");
 
     const collectedEvents: Event[] = [];
     const visited = new Set<string>();
@@ -389,7 +387,7 @@ export async function POST(request: NextRequest) {
     const cached = await redis.get(SCRAPE_CACHE_KEY);
     if (cached) {
       pagesToScrape = JSON.parse(cached);
-      log.info({ pagesToScrape: pagesToScrape.length }, "Using cached pagesToScrape from Redis");
+      logger.info({ pagesToScrape: pagesToScrape.length }, "Using cached pagesToScrape from Redis");
     } else {
       // Phase 1: BFS Link Discovery
       const queue: string[] = [START_URL];
@@ -397,20 +395,20 @@ export async function POST(request: NextRequest) {
       let bfsLevel = 0;
       while (queue.length > 0 && bfsLevel < MAX_BFS_DEPTH) {
         bfsLevel++;
-        log.debug({ bfsLevel, queueSize: queue.length, urls: queue }, "BFS wave start");
+        logger.debug({ bfsLevel, queueSize: queue.length, urls: queue }, "BFS wave start");
 
         // Fetch all queued pages in parallel
         const fetchResults = await Promise.all(
           queue.map(async (url) => {
             visited.add(url);
-            const result = await fetchPageHtml(url, visited, log);
+            const result = await fetchPageHtml(url, visited);
             if ("html" in result) {
               pageHtmlCache.set(url, result.html);
               pagesVisited++;
               const content = extractAsMarkdown(result.html, url, visited);
               return { url, content };
             }
-            log.error({ url }, `Failed to fetch during discovery: ${result.error}`);
+            logger.error({ url }, `Failed to fetch during discovery: ${result.error}`);
             return null;
           }),
         );
@@ -424,7 +422,7 @@ export async function POST(request: NextRequest) {
         for (let i = 0; i < fetched.length; i += DISCOVERY_CONCURRENCY) {
           const batch = fetched.slice(i, i + DISCOVERY_CONCURRENCY);
           const discoveries = await Promise.all(
-            batch.map(({ url, content }) => discoverLinks(content, url, visited, log)),
+            batch.map(({ url, content }) => discoverLinks(content, url, visited)),
           );
           for (const disc of discoveries) {
             if (disc.shouldScrape && !pagesToScrape.includes(disc.url)) {
@@ -441,7 +439,7 @@ export async function POST(request: NextRequest) {
           }
         }
 
-        log.info(
+        logger.info(
           { bfsLevel, newLinks: nextQueue.length, pagesToScrape: pagesToScrape.length },
           "BFS wave complete",
         );
@@ -452,30 +450,30 @@ export async function POST(request: NextRequest) {
 
       // Cache discovered pages in Redis
       await redis.set(SCRAPE_CACHE_KEY, JSON.stringify(pagesToScrape), "EX", SCRAPE_CACHE_TTL);
-      log.info({ pagesToScrape: pagesToScrape.length }, "Cached pagesToScrape in Redis (12h TTL)");
+      logger.info({ pagesToScrape: pagesToScrape.length }, "Cached pagesToScrape in Redis (12h TTL)");
     }
 
     // Phase 2: Run scraper agents in parallel (batches of 5)
-    log.info({ pagesToScrape: pagesToScrape.length }, "Starting parallel scraping phase");
+    logger.info({ pagesToScrape: pagesToScrape.length }, "Starting parallel scraping phase");
 
     for (let i = 0; i < pagesToScrape.length; i += SCRAPE_CONCURRENCY) {
       const batch = pagesToScrape.slice(i, i + SCRAPE_CONCURRENCY);
-      log.info({ batch, batchIndex: Math.floor(i / SCRAPE_CONCURRENCY) + 1 }, "Starting scrape batch");
+      logger.info({ batch, batchIndex: Math.floor(i / SCRAPE_CONCURRENCY) + 1 }, "Starting scrape batch");
 
       const results = await Promise.all(
         batch.map(async (url) => {
           let html = pageHtmlCache.get(url);
           if (!html) {
-            const result = await fetchPageHtml(url, visited, log);
+            const result = await fetchPageHtml(url, visited);
             if ("error" in result) {
-              log.error({ url }, `Failed to fetch page for scraping: ${result.error}`);
+              logger.error({ url }, `Failed to fetch page for scraping: ${result.error}`);
               return [];
             }
             html = result.html;
             pagesVisited++;
           }
           const content = extractAsMarkdown(html, url, visited, { includeLinks: false });
-          return scrapePageForEvents(content, url, log);
+          return scrapePageForEvents(content, url);
         }),
       );
 
@@ -538,7 +536,7 @@ export async function POST(request: NextRequest) {
           });
           continue;
         }
-        log.warn({ event: event.name, period: p }, "Period does not match expected format");
+        logger.warn({ event: event.name, period: p }, "Period does not match expected format");
       }
       // Merge complementary partial periods (start-only + end-only) if end > start,
       // then remove remaining partials subsumed by a more complete period
@@ -583,7 +581,7 @@ export async function POST(request: NextRequest) {
         steps: event.steps.map((s) => {
           const type = normType(s.type);
           if (!KNOWN_STEP_TYPES.has(type)) {
-            log.warn({ event: event.name, stepType: type }, "Unknown step type");
+            logger.warn({ event: event.name, stepType: type }, "Unknown step type");
           }
           const multiply = multiplyAll || s.distance % 1.0 > 0.001;
           const distance = multiply ? Math.round(s.distance * 1000) : Math.round(s.distance);
@@ -593,7 +591,7 @@ export async function POST(request: NextRequest) {
     });
     parsedEvents.sort((a, b) => a.name.localeCompare(b.name));
 
-    log.info({
+    logger.info({
       events: parsedEvents.length,
       duplicatesRemoved: collectedEvents.length - deduplicatedEvents.length,
       pagesVisited,
@@ -616,7 +614,7 @@ export async function POST(request: NextRequest) {
     // Send Discord notification (confirm link at top)
     const discordDescription = `[Confirm](${confirmUrl}) | [Full description](${descriptionUrl})\n\n${changeDescription}`;
     sendDiscordNotice("jp", "Tour Events Update", discordDescription, deltaColor(delta)).catch((err) => {
-      log.error(err, "Failed to send Discord notification");
+      logger.error(err, "Failed to send Discord notification");
     });
 
     return NextResponse.json({
@@ -637,16 +635,13 @@ export async function POST(request: NextRequest) {
       },
     });
   } catch (error) {
-    log.error({ err: error }, "Error in admin fetch_events route");
+    logger.error({ err: error }, "Error in admin fetch_events route");
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Internal server error", requestId },
       { status: 500 },
     );
-  } finally {
-    // Serverless: ship buffered logs before the function is frozen/terminated.
-    await flushLogger();
   }
-}
+});
 
 export async function GET() {
   return NextResponse.json(

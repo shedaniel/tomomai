@@ -2,7 +2,7 @@ import { db } from '@/lib/db';
 import { generateUserOtp, getOtpExpiryTimestamp, createOpaqueUserId } from '@/lib/otp';
 import { resolveBaseUrl } from '@/lib/base-url';
 import { getFetchStatusServer, startFetchServer } from '@/lib/maimai-server-actions';
-import { getLogger } from '@/lib/request-logger';
+import { logger } from '@/lib/logger';
 import { protectedProcedure, router } from '@/lib/trpc';
 import { Region } from '@/lib/types';
 import { TRPCError } from '@trpc/server';
@@ -64,7 +64,7 @@ export const fetchRouter = router({
             });
           }
         }
-        getLogger().error({ err: error }, 'Failed to start fetch');
+        logger.error({ err: error }, 'Failed to start fetch');
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
           message: 'Failed to start fetch',
