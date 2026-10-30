@@ -10,7 +10,7 @@ import { isTokenError, isAlbumSettingsError } from '@/lib/token-errors';
 import { and, desc, eq } from 'drizzle-orm';
 import { z } from 'zod';
 import { getEnabledRegions } from '@/lib/enabled-regions';
-import { getMaimaiStatus } from '@/lib/maimai/budget';
+import { getMaimaiStatus } from '@/lib/maimai/status';
 import { MaimaiBusyError, MaimaiLockedError } from '@/lib/maimai/errors';
 
 const regionSchema = z.enum(getEnabledRegions());
@@ -80,13 +80,13 @@ export const fetchRouter = router({
       }
     }),
 
-  // Whether maimai has locked us out or the shared request budget is busy, so
-  // the fetch dialog can warn before the user starts a fetch.
+  // Whether maimai has locked us out or many other users are fetching, so the
+  // fetch dialog can warn before the user starts a fetch.
   getMaimaiStatus: protectedProcedure
     .input(z.object({
       region: regionSchema,
     }))
-    .query(({ input }) => getMaimaiStatus(input.region as Region)),
+    .query(({ ctx, input }) => getMaimaiStatus(input.region as Region, ctx.session.user.id)),
 
   getFetchStatus: protectedProcedure
     .input(z.object({

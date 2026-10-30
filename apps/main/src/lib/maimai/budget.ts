@@ -16,8 +16,6 @@ const REQUESTS_PER_SECOND: Record<string, number> = {
   "maimaidx.jp": Number(process.env.MAIMAI_JP_REQUESTS_PER_SECOND) || 5,
 };
 const LOCK_SECONDS = Number(process.env.MAIMAI_LOCK_SECONDS) || 300;
-// How long after the budget last ran out the host still counts as busy.
-const BUSY_SECONDS = 60;
 const MAX_WAIT_MS = 30_000;
 // ioredis keeps retrying a command for seconds while Redis is unreachable, and
 // this runs before every maimai request, so give up quickly and skip the
@@ -27,7 +25,6 @@ const BYPASS_AFTER_FAILURE_MS = 30_000;
 let bypassUntil = 0;
 
 const lockKey = (host: string) => `maimai:locked:${host}`;
-const busyKey = (host: string) => `maimai:busy:${host}`;
 
 const limiters = new Map<string, RateLimiterRedis>();
 
@@ -103,7 +100,6 @@ export async function takeMaimaiRequest(url: string): Promise<void> {
       return;
     }
 
-    void redis.set(busyKey(host), "1", "EX", BUSY_SECONDS).catch(() => undefined);
     const waitMs = outcome.msBeforeNext + Math.random() * 50;
     if (Date.now() + waitMs > deadline) throw new MaimaiBusyError();
     await sleep(waitMs);
@@ -124,22 +120,21 @@ export async function markMaimaiLocked(url: string): Promise<void> {
   }
 }
 
-export interface MaimaiStatus {
+export interface MaimaiLock {
   locked: boolean;
   retryAfterSeconds: number;
-  busy: boolean;
 }
 
-/** Lock and load state for a region's maimai host, for warning users before they fetch. */
-export async function getMaimaiStatus(region: Region): Promise<MaimaiStatus> {
+/** Whether maimai has locked us out of a region's host, and for how much longer. */
+export async function getMaimaiLock(region: Region): Promise<MaimaiLock> {
   const host = Object.keys(HOSTS).find((candidate) => HOSTS[candidate] === region);
   const redis = host ? getRedis() : null;
-  if (!host || !redis) return { locked: false, retryAfterSeconds: 0, busy: false };
+  if (!host || !redis) return { locked: false, retryAfterSeconds: 0 };
   try {
-    const [lockTtl, busy] = await withTimeout(Promise.all([redis.ttl(lockKey(host)), redis.exists(busyKey(host))]));
-    return { locked: lockTtl > 0, retryAfterSeconds: Math.max(0, lockTtl), busy: busy === 1 };
+    const lockTtl = await withTimeout(redis.ttl(lockKey(host)));
+    return { locked: lockTtl > 0, retryAfterSeconds: Math.max(0, lockTtl) };
   } catch (error) {
-    logger.warn({ err: error, region }, "Failed to read maimai status");
-    return { locked: false, retryAfterSeconds: 0, busy: false };
+    logger.warn({ err: error, region }, "Failed to read maimai lock");
+    return { locked: false, retryAfterSeconds: 0 };
   }
 }

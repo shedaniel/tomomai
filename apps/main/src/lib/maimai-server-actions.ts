@@ -11,7 +11,7 @@ import { after } from 'next/server';
 import { logger, flushLogger } from './logger';
 import { withLogContext } from './request-logger';
 import { resolveFlagsForUser } from './flags';
-import { getMaimaiStatus } from './maimai/budget';
+import { getMaimaiLock } from './maimai/budget';
 import { MaimaiLockedError } from './maimai/errors';
 
 export interface StartFetchResult {
@@ -171,9 +171,9 @@ export async function startFetchServer(userId: string, region: Region, token?: s
   // Store the preference to pass to fetch logic later
   const shouldFetchAlbums = userPreference[0].fetchUseAlbums;
 
-  const maimaiStatus = await getMaimaiStatus(region);
-  if (maimaiStatus.locked) {
-    throw new MaimaiLockedError(maimaiStatus.retryAfterSeconds);
+  const maimaiLock = await getMaimaiLock(region);
+  if (maimaiLock.locked) {
+    throw new MaimaiLockedError(maimaiLock.retryAfterSeconds);
   }
 
   // Check for existing pending fetch

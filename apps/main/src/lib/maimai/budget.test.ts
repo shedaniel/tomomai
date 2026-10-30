@@ -16,7 +16,6 @@ const store = vi.hoisted(() => {
       expiries.set(key, Date.now() + seconds * 1000);
       return "OK";
     }),
-    exists: vi.fn(async (key: string) => ((expiries.get(key) ?? 0) > Date.now() ? 1 : 0)),
   };
   return { redis, expiries };
 });
@@ -28,7 +27,7 @@ vi.mock("rate-limiter-flexible", async (importOriginal) => {
 });
 vi.mock("../logger", () => ({ logger: { warn: vi.fn(), info: vi.fn(), debug: vi.fn() } }));
 
-import { getMaimaiStatus, markMaimaiLocked, takeMaimaiRequest } from "./budget";
+import { getMaimaiLock, markMaimaiLocked, takeMaimaiRequest } from "./budget";
 import { MaimaiLockedError } from "./errors";
 
 const INTL = "https://maimaidx-eng.com/maimai-mobile/home/";
@@ -45,24 +44,22 @@ describe("maimai request budget", () => {
     expect(store.redis.ttl).not.toHaveBeenCalled();
   });
 
-  it("paces a burst to the configured rate and marks the host busy", async () => {
+  it("paces a burst to the configured rate", async () => {
     const started = Date.now();
 
     await Promise.all(Array.from({ length: 12 }, () => takeMaimaiRequest(INTL)));
 
     // 5 per second: the 6th-10th wait for the next second, the 11th-12th for the one after.
     expect(Date.now() - started).toBeGreaterThanOrEqual(1500);
-    expect(await getMaimaiStatus("intl")).toMatchObject({ locked: false, busy: true });
-    expect(await getMaimaiStatus("jp")).toMatchObject({ busy: false });
   });
 
   it("stops every request while maimai has us locked out", async () => {
     await markMaimaiLocked(INTL);
 
     await expect(takeMaimaiRequest(INTL)).rejects.toBeInstanceOf(MaimaiLockedError);
-    const status = await getMaimaiStatus("intl");
-    expect(status.locked).toBe(true);
-    expect(status.retryAfterSeconds).toBeGreaterThan(250);
+    const lock = await getMaimaiLock("intl");
+    expect(lock.locked).toBe(true);
+    expect(lock.retryAfterSeconds).toBeGreaterThan(250);
     await expect(takeMaimaiRequest("https://maimaidx.jp/maimai-mobile/home/")).resolves.toBeUndefined();
   });
 
