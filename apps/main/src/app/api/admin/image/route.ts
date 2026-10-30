@@ -1,7 +1,7 @@
 import { convertToWebp } from "@/lib/image-converter";
 import { fetchImageBuffer } from "@/lib/image-converter";
-import { flushLogger } from "@/lib/logger";
-import { requestLogger } from "@/lib/request-logger";
+import { logger } from "@/lib/logger";
+import { withRequestLogContext } from "@/lib/request-logger";
 import { listCoverKeys, uploadCoverToR2 } from "@/lib/r2";
 import { UpdateSong } from "@/lib/types/update";
 import { NextRequest, NextResponse } from "next/server";
@@ -44,8 +44,7 @@ async function processBatch<T, R>(
   return results;
 }
 
-export async function POST(request: NextRequest) {
-  const { log, requestId } = requestLogger(request, "admin/image");
+export const POST = withRequestLogContext("admin/image", async (request: NextRequest, { requestId }) => {
   try {
     const authHeader = request.headers.get("authorization");
     const token = authHeader?.replace("Bearer ", "");
@@ -82,7 +81,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    log.info({ songCount: songs.length }, "Image processing starting");
+    logger.info({ songCount: songs.length }, "Image processing starting");
 
     // Collect unique filenames from cover URLs, preferring jp domain
     const filenameToUrl = new Map<string, string>();
@@ -95,11 +94,11 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    log.info({ uniqueCovers: filenameToUrl.size }, "Unique maimai cover URLs found");
+    logger.info({ uniqueCovers: filenameToUrl.size }, "Unique maimai cover URLs found");
 
     // Get existing covers in R2
     const existingKeys = await listCoverKeys();
-    log.info({ existingR2Covers: existingKeys.size }, "Existing covers in R2");
+    logger.info({ existingR2Covers: existingKeys.size }, "Existing covers in R2");
 
     const r2BaseUrl = process.env.NEXT_PUBLIC_R2_URL;
     // Build filename -> public URL map
@@ -124,29 +123,29 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    log.info({ toDownload: toDownload.length, skipped }, "Cover download plan");
+    logger.info({ toDownload: toDownload.length, skipped }, "Cover download plan");
 
     // Download, convert, upload in batches of 10
     await processBatch(toDownload, 10, async ({ filename, basename, url }) => {
-      log.debug({ filename, url }, "Downloading cover");
+      logger.debug({ filename, url }, "Downloading cover");
       const buffer = await fetchImageBuffer(url, "");
       const webpBuffer = await convertToWebp(buffer);
-      log.debug({ filename, originalSize: buffer.length, webpSize: webpBuffer.length }, "Converted to WebP");
+      logger.debug({ filename, originalSize: buffer.length, webpSize: webpBuffer.length }, "Converted to WebP");
       await uploadCoverToR2(webpBuffer, basename);
       filenameToPublicUrl.set(filename, `${r2BaseUrl}/covers/${basename}.webp`);
       uploaded++;
-      log.debug({ filename, basename }, "Uploaded cover to R2");
+      logger.debug({ filename, basename }, "Uploaded cover to R2");
     });
 
     // Cache static assets (DX/Standard type badges) if missing
     for (const { url, basename } of STATIC_ASSETS) {
       const webpKey = `${basename}.webp`;
       if (!existingKeys.has(webpKey)) {
-        log.info({ basename, url }, "Caching static asset to R2");
+        logger.info({ basename, url }, "Caching static asset to R2");
         const buffer = await fetchImageBuffer(url, "");
         const webpBuffer = await convertToWebp(buffer);
         await uploadCoverToR2(webpBuffer, basename);
-        log.info({ basename }, "Static asset cached");
+        logger.info({ basename }, "Static asset cached");
       }
     }
 
@@ -167,7 +166,7 @@ export async function POST(request: NextRequest) {
     });
 
     const stats = { uploaded, skipped, unchanged };
-    log.info({ stats }, "Image processing complete");
+    logger.info({ stats }, "Image processing complete");
 
     return NextResponse.json({
       songs: updatedSongs,
@@ -175,15 +174,13 @@ export async function POST(request: NextRequest) {
       requestId,
     });
   } catch (error) {
-    log.error({ err: error }, "Error in admin image route");
+    logger.error({ err: error }, "Error in admin image route");
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Internal server error", requestId },
       { status: 500 }
     );
-  } finally {
-    await flushLogger();
   }
-}
+});
 
 export async function GET() {
   return NextResponse.json(

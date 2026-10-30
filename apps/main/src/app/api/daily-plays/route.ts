@@ -3,7 +3,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { resolvePlayHistoryOwner } from '@/server/queries/public-access';
 import { renderRedirectUrl } from '@/lib/render-token';
 import { buildDailyPlaysMessage } from '@/lib/render-data';
-import { requestLogger } from '@/lib/request-logger';
+import { logger } from '@/lib/logger';
+import { withRequestLogContext } from '@/lib/request-logger';
 import { getEnabledRegions } from '@/lib/enabled-regions';
 import { z } from 'zod';
 
@@ -20,8 +21,7 @@ const searchParams = z.object({
  * (public snapshot or signed-in user), then does the full data prep here and
  * mints a signed token carrying the day's plays + header. 302s to render.
  */
-export async function GET(request: NextRequest) {
-  const { log } = requestLogger(request, "daily-plays");
+export const GET = withRequestLogContext("daily-plays", async (request: NextRequest) => {
   const parsed = searchParams.safeParse(Object.fromEntries(request.nextUrl.searchParams));
   if (!parsed.success) {
     return NextResponse.json(
@@ -39,13 +39,13 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Snapshot not found or not public' }, { status: 404 });
     }
     userId = ownerId;
-    log.info({ userId, snapshotId }, 'Public mode');
+    logger.info({ userId, snapshotId }, 'Public mode');
   } else {
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
     userId = session.user.id;
-    log.info({ userId }, 'Authenticated mode');
+    logger.info({ userId }, 'Authenticated mode');
   }
 
   const result = await buildDailyPlaysMessage({
@@ -60,4 +60,4 @@ export async function GET(request: NextRequest) {
 
   const url = renderRedirectUrl(request.nextUrl.searchParams, result.message);
   return NextResponse.redirect(url, 302);
-}
+});

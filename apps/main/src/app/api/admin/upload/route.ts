@@ -1,7 +1,8 @@
 import { db } from "@/lib/db";
 import { scoreData, songs, parentSong, userRecentSongs, userAlbums } from "@/lib/db/schema-pg";
-import { flushLogger } from "@/lib/logger";
-import { requestLogger } from "@/lib/request-logger";
+import type { Logger } from "pino";
+import { logger } from "@/lib/logger";
+import { withRequestLogContext } from "@/lib/request-logger";
 import { getEnabledRegions, isRegionEnabled } from "@/lib/enabled-regions";
 import { VersionId } from "@/lib/metadata";
 import { Difficulty, Region, SongType } from "@/lib/types";
@@ -528,9 +529,8 @@ async function applyChanges(
   return { added: appliedAdded, modified: appliedModified, deleted: appliedDeleted, newParents, parentUpdates };
 }
 
-export async function POST(request: NextRequest) {
-  const { log: baseLog, requestId } = requestLogger(request, "admin/upload");
-  let log = baseLog;
+export const POST = withRequestLogContext("admin/upload", async (request: NextRequest, { requestId }) => {
+  let log: Logger = logger;
   try {
     // Check for admin token authentication
     const authHeader = request.headers.get("authorization");
@@ -852,11 +852,8 @@ export async function POST(request: NextRequest) {
       { error: error instanceof Error ? error.message : "Internal server error", requestId },
       { status: 500 }
     );
-  } finally {
-    // Serverless: ship buffered logs before the function is frozen/terminated.
-    await flushLogger();
   }
-}
+});
 
 // Only allow POST requests
 export async function GET() {

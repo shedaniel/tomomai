@@ -144,32 +144,33 @@ Every request gets a `requestId` **automatically**. `middleware.ts` generates on
 
 So you never have to generate one yourself, and clients can always read
 `x-request-id` off the response to quote in a bug report. To tie it to your logs,
-build the per-request child logger with the `requestLogger` helper — it reuses the
-header id so middleware, route logs, and the response header all share one value:
+wrap the handler with `withRequestLogContext` — it reuses the header id so
+middleware, route logs, and the response header all share one value:
 
 ```ts
-import { requestLogger } from "@/lib/request-logger";
+import { logger } from "@/lib/logger";
+import { withRequestLogContext } from "@/lib/request-logger";
 import { NextRequest, NextResponse } from "next/server";
 
-export async function GET(request: NextRequest) {
-  // Opens the request's log context (route + requestId on every line, from any
-  // logger) and returns `log`, a child with the same fields. Pass extra
-  // request-scoped context as a third arg (e.g. { userId }).
-  const { log, requestId } = requestLogger(request, "your-route-name");
-
-  log.info("starting request");
+// Every line logged while this runs, from any logger, carries route and
+// requestId; buffered logs are shipped after the response.
+export const GET = withRequestLogContext("your-route-name", async (request: NextRequest, { requestId }) => {
+  logger.info("starting request");
 
   try {
-    // ... do work; helpers can log with plain `logger` ...
+    // ... do work; helpers log with plain `logger` too ...
     // The x-request-id response header is set by middleware; include requestId
     // in the JSON body too so it survives logging/copy-paste of the payload.
     return NextResponse.json({ ok: true, requestId });
   } catch (error) {
-    log.error({ err: error }, "request failed");
+    logger.error({ err: error }, "request failed");
     return NextResponse.json({ error: "Internal Error", requestId }, { status: 500 });
   }
-}
+});
 ```
+
+Dynamic routes get Next's context with `requestId` added:
+`async (request, { params, requestId }) => ...`.
 
 > Note: a cached/static response keeps the `x-request-id` of the request that
 > populated the cache — it's most meaningful on dynamic (API) responses.
@@ -179,7 +180,7 @@ Reference implementations: `src/app/api/admin/update_all/route.ts`,
 
 ### Log context: every line carries the request's fields
 
-`requestLogger()` opens a **log context** for the rest of the request: an
+`withRequestLogContext()` opens a **log context** for the request: an
 AsyncLocalStorage scope whose fields a pino `mixin` (in `logger.ts`) adds to
 **every** line from **every** logger — the root `logger`, module-level children
 created at import, and the `console` bridge. So lib and service code just uses
@@ -197,7 +198,7 @@ The context follows the async execution chain, **including `after()` /
 context (build time, scripts) lines simply carry no extra fields.
 
 A context is opened automatically for:
-- any route that calls `requestLogger(request, route)`,
+- any route wrapped with `withRequestLogContext(route, handler)`,
 - every tRPC procedure (middleware in `src/lib/trpc.ts`, `route: "trpc/<path>"`),
 - every v1 API handler (`withApiKey` in `src/lib/api/protect.ts`).
 
@@ -215,7 +216,8 @@ await withLogContext({ sessionId, userId, region }, () => fetchMaimaiData(...));
 `startFetchServer` does exactly this, so every line of a maimai fetch can be
 found with `sessionId == "<public fetch id>"`. Use it for any long-lived unit
 of work (a fetch, a job, a background task); it is also how to open a context
-where `requestLogger()` can't reach, as the tRPC middleware does.
+outside route handlers, as the tRPC middleware and `apps/render`'s Hono
+middleware do.
 
 #### Child loggers are for local fields
 
@@ -303,7 +305,7 @@ Both Axiom and Logtail can be active simultaneously.
 ## Runtime notes
 
 - `logger.ts` is imported by `src/middleware.ts`, which runs on the **edge runtime**. The edge logger is a bare pino instance with no shipping — middleware logs do **not** reach Axiom. Don't statically import Node builtins (`stream`, `fs`, …) at the top of `logger.ts`; use lazy `require()` inside non-edge code paths.
-- In serverless / short-lived invocations, call `await flushLogger()` before responding if you must guarantee delivery — the Axiom buffer otherwise drains on a 1-second timer or at 100 events.
+- In serverless / short-lived invocations the Axiom buffer must be flushed before the function is frozen — it otherwise drains on a 1-second timer or at 100 events. `withRequestLogContext` does this for route handlers with `after(flushLogger)`, so the response isn't delayed. Work that outlives the response (e.g. a fetch started with `after()`) calls `await flushLogger()` itself when it finishes.
 - The Axiom transport disables itself after 5 consecutive failures (logged to stderr) so a broken endpoint can't lock up the app.
 
 ## Querying

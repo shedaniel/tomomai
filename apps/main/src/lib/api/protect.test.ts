@@ -14,7 +14,10 @@ vi.mock("@/lib/db", () => {
   chain.limit = async () => rows.shift() ?? [];
   return { db: chain };
 });
-vi.mock("@/lib/request-logger", () => ({ requestLogger: () => ({ log: { error: vi.fn() } }) }));
+vi.mock("@/lib/request-logger", () => ({
+  withRequestLogContext: (_route: unknown, handler: (request: unknown, context: object) => Promise<Response>) =>
+    (request: unknown, context: object) => handler(request, { ...context, requestId: "protect-test" }),
+}));
 vi.mock("@/lib/api/registry", () => ({ findRouteByRequest: () => ({ cost: 1 }) }));
 vi.mock("@/lib/security/redis-rate-limit", () => {
   const limiter = { check: async () => ({ limited: false, limit: 10, remaining: 9, retryAfter: 0 }), reward: async () => {} };

@@ -1,5 +1,5 @@
-import { flushLogger } from "@/lib/logger";
-import { requestLogger } from "@/lib/request-logger";
+import { logger } from "@/lib/logger";
+import { withRequestLogContext } from "@/lib/request-logger";
 import { Region } from "@/lib/types";
 import { getEnabledRegions, isRegionEnabled } from "@/lib/enabled-regions";
 import { getCurrentVersion } from "@/lib/metadata";
@@ -11,9 +11,7 @@ import { loginAndGetCookies } from "@/server/services/maimai-login";
 import { releaseSession } from "@/lib/maimai/http";
 import { NextRequest, NextResponse } from "next/server";
 
-export async function GET(request: NextRequest) {
-  const { log, requestId } = requestLogger(request, "admin/update");
-
+export const GET = withRequestLogContext("admin/update", async (request: NextRequest, { requestId }) => {
   const { searchParams } = new URL(request.url);
   const region = searchParams.get('region') as Region | null;
 
@@ -32,7 +30,7 @@ export async function GET(request: NextRequest) {
     // Validate token against environment variable
     const adminToken = process.env.ADMIN_UPDATE_TOKEN;
     if (!adminToken) {
-      log.error("ADMIN_UPDATE_TOKEN environment variable not set");
+      logger.error("ADMIN_UPDATE_TOKEN environment variable not set");
       return NextResponse.json(
         { error: "Server configuration error", requestId },
         { status: 500 }
@@ -40,7 +38,7 @@ export async function GET(request: NextRequest) {
     }
 
     if (token !== adminToken) {
-      log.warn("Invalid admin token attempt");
+      logger.warn("Invalid admin token attempt");
       return NextResponse.json(
         { error: "Invalid authorization token", requestId },
         { status: 403 }
@@ -67,30 +65,30 @@ export async function GET(request: NextRequest) {
         );
       }
 
-      log.info({ region }, "Admin update requested: scraping maimai data");
+      logger.info({ region }, "Admin update requested: scraping maimai data");
 
-      log.info("Validating maimai token...");
+      logger.info("Validating maimai token...");
       const [resolved, cookiesError] = await awaitWrapper(loginAndGetCookies(region, maimaiToken));
 
       if (cookiesError) {
-        log.error({ err: cookiesError, region }, "Token validation failed");
+        logger.error({ err: cookiesError, region }, "Token validation failed");
         return NextResponse.json(
           { error: cookiesError.message, requestId },
           { status: 400 }
         );
       }
 
-      log.info("Token validated. Fetching levels...");
+      logger.info("Token validated. Fetching levels...");
       cookies = resolved!;
     } else {
-      log.info({ region }, "Admin update requested: fetching CN data from Lxns");
+      logger.info({ region }, "Admin update requested: fetching CN data from Lxns");
     }
 
     const songs = await fetchLevels({
       region,
       version: getCurrentVersion(region),
       cookies,
-      log,
+      log: logger,
       notice: createNoticeSink(),
     }).finally(() => releaseSession(cookies));
 
@@ -100,7 +98,7 @@ export async function GET(request: NextRequest) {
       .map(record => sortKeys(record))
       .sort((a, b) => a.songName.localeCompare(b.songName) * 1000000 + a.difficulty.localeCompare(b.difficulty) * 1000 + a.type.localeCompare(b.type));
 
-    log.info({ count: newRecords.length }, "Update completed successfully");
+    logger.info({ count: newRecords.length }, "Update completed successfully");
 
     return NextResponse.json({
       success: true,
@@ -109,7 +107,7 @@ export async function GET(request: NextRequest) {
       records: newRecords,
     });
   } catch (error) {
-    log.error({ err: error }, "Critical error in admin update route");
+    logger.error({ err: error }, "Critical error in admin update route");
     sendDiscordNotice(
       region ?? "intl",
       "Fetch pipeline error",
@@ -120,10 +118,8 @@ export async function GET(request: NextRequest) {
       error: "Internal Error",
       requestId
     }, { status: 500 });
-  } finally {
-    await flushLogger();
   }
-}
+});
 
 // Only allow GET requests
 export async function POST() {

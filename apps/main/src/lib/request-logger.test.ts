@@ -1,9 +1,13 @@
 import { NextRequest } from "next/server";
 import pino from "pino";
 import { Writable } from "stream";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+
+const flushLogger = vi.hoisted(() => vi.fn(async () => {}));
+vi.mock("./logger", async (importOriginal) => ({ ...(await importOriginal<typeof import("./logger")>()), flushLogger }));
+
 import { logContextMixin } from "./logger";
-import { requestLogger, withLogContext } from "./request-logger";
+import { withLogContext, withRequestLogContext } from "./request-logger";
 
 function capture() {
   const lines: string[] = [];
@@ -27,14 +31,36 @@ describe("log context", () => {
   it("stamps every logger, including ones created earlier, with the request's fields", async () => {
     const { log, parsed } = capture();
     const moduleLog = log.child({ context: "lib" });
-
-    await withLogContext({}, async () => {
-      requestLogger(new NextRequest("https://example.test/", { headers: { "x-request-id": "req-1" } }), "test-route");
+    const GET = withRequestLogContext("test-route", async () => {
       await new Promise((resolve) => setTimeout(resolve, 1));
       moduleLog.info("deep in lib code");
+      return new Response("ok");
     });
 
-    expect(parsed()).toEqual([{ level: 30, context: "lib", route: "test-route", requestId: "req-1", msg: "deep in lib code" }]);
+    await GET(new NextRequest("https://example.test/", { headers: { "x-request-id": "req-1" } }), {});
+    log.info("after the request");
+
+    expect(parsed()).toEqual([
+      { level: 30, context: "lib", route: "test-route", requestId: "req-1", msg: "deep in lib code" },
+      { level: 30, msg: "after the request" },
+    ]);
+  });
+
+  it("passes route params through, adds the requestId, and flushes even when the handler throws", async () => {
+    flushLogger.mockClear();
+    const GET = withRequestLogContext("test-route", async (_request, context: { params: Promise<{ id: string }> } & { requestId: string }) => {
+      return Response.json({ id: (await context.params).id, requestId: context.requestId });
+    });
+    const failing = withRequestLogContext("test-route", async () => {
+      throw new Error("boom");
+    });
+    const request = new NextRequest("https://example.test/", { headers: { "x-request-id": "req-4" } });
+
+    const response = await GET(request, { params: Promise.resolve({ id: "x" }) });
+
+    expect(await response.json()).toEqual({ id: "x", requestId: "req-4" });
+    await expect(failing(request, {})).rejects.toThrow("boom");
+    expect(flushLogger).toHaveBeenCalledTimes(2);
   });
 
   it("layers scoped fields and restores the outer context afterwards", async () => {
