@@ -1,7 +1,7 @@
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from "http";
 import type { AddressInfo, Socket } from "net";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { describeMaimaiError, maimaiGet, maimaiGetHtml, maimaiImageRequest, maimaiRequest, openMaimaiSession, releaseSession } from "./http";
+import { describeMaimaiError, MaimaiLockedError, maimaiGet, maimaiGetHtml, maimaiImageRequest, maimaiRequest, openMaimaiSession, releaseSession } from "./http";
 
 vi.mock("../logger", () => ({ logger: { warn: vi.fn(), debug: vi.fn(), info: vi.fn() } }));
 
@@ -20,11 +20,21 @@ let redemptions: number;
 let failRedemptions: number;
 let errorCode: string;
 let imageRejection: "404" | "empty";
+// maimai's rate-limit lock (ERROR CODE 200001): redemptions land on the error
+// page with only _t/userId, and every page is redirected there.
+let locked: boolean;
+let redemptionAttempts: number;
+let pageRequests: number;
 
 function handle(req: IncomingMessage, res: ServerResponse) {
   const socket = req.socket as NetSocket;
   const url = req.url!;
   if (url.startsWith("/maimai-mobile/?ssid=")) {
+    redemptionAttempts++;
+    if (locked) {
+      res.writeHead(302, { Location: "/maimai-mobile/error/", "Set-Cookie": ["userId=0; path=/", "_t=t; path=/"] }).end();
+      return;
+    }
     if (failRedemptions > 0) {
       failRedemptions--;
       res.writeHead(404).end("not found");
@@ -36,7 +46,13 @@ function handle(req: IncomingMessage, res: ServerResponse) {
     return;
   }
   if (url === "/maimai-mobile/error/") {
-    res.writeHead(200).end(`<div class="container_red p_10"><div class="p_5 f_14 ">ERROR CODE：${errorCode}</div><div class="p_5 f_12 gray break">Reason ${errorCode}.<br>Try again.</div></div>`);
+    const code = locked ? "200001" : errorCode;
+    res.writeHead(200).end(`<div class="container_red p_10"><div class="p_5 f_14 ">ERROR CODE：${code}</div><div class="p_5 f_12 gray break">Reason ${code}.<br>Try again.</div></div>`);
+    return;
+  }
+  pageRequests++;
+  if (locked) {
+    res.writeHead(302, { Location: "/maimai-mobile/error/" }).end();
     return;
   }
   if (url.startsWith("/maimai-mobile/img/")) {
@@ -68,6 +84,9 @@ beforeEach(async () => {
   failRedemptions = 0;
   errorCode = "100001";
   imageRejection = "404";
+  locked = false;
+  redemptionAttempts = 0;
+  pageRequests = 0;
   server = createServer(handle);
   server.on("connection", (socket: NetSocket) => {
     socket.id = connectionCount;
@@ -241,6 +260,53 @@ describe("maimai sessions", () => {
     const response = await maimaiRequest(`${base}/maimai-mobile/home/`, "other=1", base);
 
     expect(new URL(response.url).pathname).toBe("/maimai-mobile/error/");
+  });
+});
+
+describe("maimai's rate-limit lock (ERROR CODE 200001)", () => {
+  it("stops a fetch at the first locked response instead of retrying", async () => {
+    const cookies = await open();
+    locked = true;
+
+    const results = await Promise.allSettled(Array.from({ length: 8 }, (_, i) => page(cookies, `page${i}/`)));
+
+    expect(results.every((r) => r.status === "rejected" && r.reason instanceof MaimaiLockedError)).toBe(true);
+    expect(pageRequests).toBeLessThanOrEqual(8);
+    expect(redemptionAttempts).toBe(1);
+    await expect(page(cookies, "later/")).rejects.toBeInstanceOf(MaimaiLockedError);
+    expect(pageRequests).toBeLessThanOrEqual(8);
+    releaseSession(cookies);
+  });
+
+  it("treats a redemption sent to the error page as a failed login, without retrying", async () => {
+    locked = true;
+
+    await expect(open()).rejects.toBeInstanceOf(MaimaiLockedError);
+    expect(redemptionAttempts).toBe(1);
+    await settle();
+    expect(openSockets.size).toBe(0);
+  });
+
+  it("reports other error codes from a refused redemption", async () => {
+    server.removeAllListeners("request");
+    server.on("request", (req, res) => {
+      if (req.url!.startsWith("/maimai-mobile/?ssid=")) {
+        redemptionAttempts++;
+        return res.writeHead(302, { Location: "/maimai-mobile/error/", "Set-Cookie": ["userId=0; path=/"] }).end();
+      }
+      return handle(req, res);
+    });
+    errorCode = "100001";
+
+    await expect(open()).rejects.toThrow("maimai refused the login redirect ERROR CODE 100001: Reason 100001. Try again.");
+    expect(redemptionAttempts).toBe(1);
+  });
+
+  it("doesn't retry a locked image request without a session", async () => {
+    locked = true;
+
+    await expect(maimaiImageRequest(`${base}/maimai-mobile/img/Icon/a.png`, "")).rejects.toBeInstanceOf(MaimaiLockedError);
+    expect(pageRequests).toBe(1);
   });
 });
 
