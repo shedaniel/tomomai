@@ -1,4 +1,5 @@
 import { logger } from "@/lib/logger";
+import { MaimaiBusyError, MaimaiLockedError } from "@/lib/maimai/errors";
 import { isAlbumSettingsError, isTokenError } from "@/lib/token-errors";
 
 /**
@@ -10,10 +11,13 @@ import { isAlbumSettingsError, isTokenError } from "@/lib/token-errors";
  * - Missing/invalid token  → 412 Precondition Failed
  * - Album-settings problem → 412 Precondition Failed
  * - Fetch already running  → 409 Conflict
- * - Upstream rate-limited  → 429 Too Many Requests
+ * - Upstream rate-limited  → 429 Too Many Requests (also maimai locking us out)
  * - Anything else          → 500 Internal Server Error
  */
 export function mapFetchStartError(error: unknown): Response {
+  if (error instanceof MaimaiLockedError || error instanceof MaimaiBusyError) {
+    return Response.json({ error: error.message }, { status: 429 });
+  }
   if (error instanceof Error) {
     if (isAlbumSettingsError(error.message)) {
       return Response.json({ error: error.message }, { status: 412 });
