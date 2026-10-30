@@ -1,7 +1,7 @@
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from "http";
 import type { AddressInfo, Socket } from "net";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { maimaiGet, maimaiGetHtml, maimaiImageRequest, maimaiRequest, openMaimaiSession, releaseSession } from "./http";
+import { describeMaimaiError, maimaiGet, maimaiGetHtml, maimaiImageRequest, maimaiRequest, openMaimaiSession, releaseSession } from "./http";
 
 vi.mock("../logger", () => ({ logger: { warn: vi.fn(), debug: vi.fn(), info: vi.fn() } }));
 
@@ -36,7 +36,7 @@ function handle(req: IncomingMessage, res: ServerResponse) {
     return;
   }
   if (url === "/maimai-mobile/error/") {
-    res.writeHead(200).end(`ERROR CODE：${errorCode}`);
+    res.writeHead(200).end(`<div class="container_red p_10"><div class="p_5 f_14 ">ERROR CODE：${errorCode}</div><div class="p_5 f_12 gray break">Reason ${errorCode}.<br>Try again.</div></div>`);
     return;
   }
   if (url.startsWith("/maimai-mobile/img/")) {
@@ -172,7 +172,7 @@ describe("maimai sessions", () => {
       res.writeHead(302, { Location: "/maimai-mobile/error/" }).end();
     });
 
-    await expect(page(cookies, "playerData/")).rejects.toThrow("ERROR CODE 200002");
+    await expect(page(cookies, "playerData/")).rejects.toThrow("ERROR CODE 200002: Reason 200002. Try again.");
     expect(redemptions).toBe(3);
     releaseSession(cookies);
   });
@@ -267,5 +267,23 @@ describe("maimai image requests", () => {
     await settle();
     // Only the shared agent's keep-alive connection (the first attempt) may stay open.
     expect(openSockets.size).toBeLessThanOrEqual(1);
+  });
+});
+
+describe("describeMaimaiError", () => {
+  it("reads the code and reason from SEGA's error page", () => {
+    const html = `
+      <img src="https://maimaidx-eng.com/maimai-mobile/img/title_error.png" class="title m_10"/>
+      <div class="container_red p_10">
+        <div class="p_5 f_14 ">ERROR CODE：200002</div>
+        <img src="https://maimaidx-eng.com/maimai-mobile/img/line_01.png" class="w_396" />
+        <div class="p_5 f_12 gray break">The connection time has been expired.<br>Please try again later.</div>
+      </div>`;
+
+    expect(describeMaimaiError(html)).toEqual({ code: "200002", message: "The connection time has been expired. Please try again later." });
+  });
+
+  it("returns nothing for a page that isn't an error page", () => {
+    expect(describeMaimaiError("<div class=\"see_through_block\">profile</div>")).toEqual({});
   });
 });
