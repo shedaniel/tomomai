@@ -708,6 +708,20 @@
     "deleteSnapshot": "刪除所選快照",
     "moreOptions": "更多選項"
   },
+  "maimaiStatus": {
+    "lockedBadge": "暫時受限",
+    "lockedTitle": "暫時未能匯入資料",
+    "lockedDescription": "短時間內的連線太多，maimai DX NET 暫時不接受新的請求。等倒數完結後再試一次吧。",
+    "retryIn": "{time} 後可以再匯入",
+    "ready": "現在可以再次匯入了",
+    "gotIt": "知道了",
+    "fetchNow": "立即匯入",
+    "busyBadge": "使用人數眾多",
+    "busyTitle": "maimai DX NET 目前較繁忙",
+    "busyDescription": "現在有很多玩家正在匯入資料，可能會比平常慢一點。遲些再匯入會較快。",
+    "fetchAnyway": "仍要匯入",
+    "later": "遲些再說"
+  },
   "profileMetadata": {
     "title": "{username} | tomomai ともマイ",
     "description": "查看 {username} 在 {region} 的 maimai 個人主頁。與朋友一同追蹤並分析 maimai 成績。",

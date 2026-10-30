@@ -6,6 +6,7 @@ import { FetchToastContainer } from "@/components/fetch-toast";
 import { TokenDialog } from "@/components/token-dialog";
 import { OnboardingDialog } from "@/components/onboarding-dialog";
 import { AlbumPrivacyDialog } from "@/components/album-privacy-dialog";
+import { useMaimaiFetchGate } from "@/components/maimai-status-dialog";
 import { useFetchSession } from "@/hooks/useFetchSession";
 import { useSnapshots } from "@/hooks/useSnapshots";
 import { signOut } from "@/lib/auth-client";
@@ -77,6 +78,8 @@ export function Dashboard({ user, initialUserData, initialSnapshots, initialSnap
     initialSnapshotData,
   });
 
+  const { confirmFetch, gateDialog } = useMaimaiFetchGate(selectedRegion);
+
   const {
     isFetching,
     currentSession,
@@ -142,6 +145,7 @@ export function Dashboard({ user, initialUserData, initialSnapshots, initialSnap
   };
 
   const handleFetchData = async () => {
+    if (!(await confirmFetch())) return;
     try {
 
       await startAutomaticFetch(selectedRegion);
@@ -165,6 +169,10 @@ export function Dashboard({ user, initialUserData, initialSnapshots, initialSnap
   };
 
   const handleTokenUpdate = async (token: string) => {
+    if (!(await confirmFetch())) {
+      // Keeps the TokenDialog open with what the user typed.
+      throw new Error("Fetch postponed");
+    }
     try {
       // Just start the fetch with the new token (this will save and use it)
       await startDataFetch(selectedRegion, token);
@@ -290,6 +298,8 @@ export function Dashboard({ user, initialUserData, initialSnapshots, initialSnap
       <InvitesDialog isOpen={dialogType === "invites"} onOpenChange={open => setDialogType(open ? "invites" : null)} />
       <AdminDialog open={dialogType === "admin"} onOpenChange={open => setDialogType(open ? "admin" : null)} />
       <ExperimentsDialog open={dialogType === "experiments"} onOpenChange={open => setDialogType(open ? "experiments" : null)} />
+
+      {gateDialog}
 
       <AlbumPrivacyDialog
         open={dialogType === "albumPrivacy"}

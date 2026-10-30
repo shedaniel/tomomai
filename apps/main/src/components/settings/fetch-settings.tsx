@@ -1,6 +1,7 @@
 "use client";
 
 import { FetchToastContainer } from "@/components/fetch-toast";
+import { useMaimaiFetchGate } from "@/components/maimai-status-dialog";
 import { TokenDialog } from "@/components/token-dialog";
 import { Button } from "@tomomai/ui";
 import {
@@ -66,6 +67,7 @@ function FetchFields() {
     : profileSettings?.fetchUseAlbums ?? null;
 
   const { startDataFetch, fetchToastState } = useFetchSession();
+  const { confirmFetch, gateDialog } = useMaimaiFetchGate(selectedRegion);
   const updateAlbumPreference = trpc.user.setAlbumPreference.useMutation();
   const deleteTokenMutation = trpc.user.deleteToken.useMutation();
 
@@ -83,6 +85,10 @@ function FetchFields() {
   });
 
   const handleTokenUpdate = async (token: string) => {
+    if (!(await confirmFetch())) {
+      // Keeps the TokenDialog open with what the user typed.
+      throw new Error("Fetch postponed");
+    }
     await startDataFetch(selectedRegion, token);
   };
 
@@ -180,6 +186,8 @@ function FetchFields() {
         onOpenChange={setTokenDialogOpen}
         onTokenUpdate={handleTokenUpdate}
       />
+
+      {gateDialog}
 
       <FetchToastContainer state={fetchToastState} />
     </>

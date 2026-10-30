@@ -653,6 +653,20 @@
     "deleteSnapshot": "删除所选快照",
     "moreOptions": "更多选项"
   },
+  "maimaiStatus": {
+    "lockedBadge": "暂时受限",
+    "lockedTitle": "暂时无法导入数据",
+    "lockedDescription": "短时间内的访问太多，maimai DX NET 暂时不接受新的请求。等倒计时结束后再试一次吧。",
+    "retryIn": "{time} 后可以再次导入",
+    "ready": "现在可以重新导入了",
+    "gotIt": "知道了",
+    "fetchNow": "立即导入",
+    "busyBadge": "访问人数较多",
+    "busyTitle": "maimai DX NET 当前比较繁忙",
+    "busyDescription": "现在有很多玩家在导入数据，可能会比平时慢一些。晚点再导入会更快。",
+    "fetchAnyway": "仍然导入",
+    "later": "稍后再说"
+  },
   "profileVisibility": {
     "public": "公开主页",
     "private": "私人主页",
