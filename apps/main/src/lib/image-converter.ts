@@ -1,5 +1,5 @@
 import sharp from "sharp";
-import { agentFetch } from "./http-agent";
+import { maimaiImageRequest } from "./maimai/http";
 
 export async function convertJpegToAvif(
   jpegBuffer: Buffer,
@@ -17,14 +17,8 @@ export async function convertToWebp(
   return sharp(buffer).webp({ quality }).toBuffer();
 }
 
-export async function fetchImageBuffer(url: string, cookies: any): Promise<Buffer> {
-  const response = await agentFetch(url, {
-    method: "GET",
-    headers: {
-      "Cookie": cookies,
-      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
-    },
-  });
+export async function fetchImageBuffer(url: string, cookies: string): Promise<Buffer> {
+  const response = await maimaiImageRequest(url, cookies);
   if (!response.ok) {
     throw new Error(`Failed to fetch image: ${response.status}`);
   }

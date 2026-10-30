@@ -8,6 +8,7 @@ import { sendDiscordNotice } from "@/server/services/admin/discord-webhooks";
 import { createNoticeSink } from "@/server/services/admin/fetcher-utils";
 import { fetchLevels } from "@/server/services/admin/level-fetcher";
 import { loginAndGetCookies } from "@/server/services/maimai-login";
+import { releaseSession } from "@/lib/maimai/http";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {
@@ -91,7 +92,7 @@ export async function GET(request: NextRequest) {
       cookies,
       log,
       notice: createNoticeSink(),
-    });
+    }).finally(() => releaseSession(cookies));
 
     // Convert to json
     const newRecords = songs

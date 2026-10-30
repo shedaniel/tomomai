@@ -1,7 +1,6 @@
-import { agentFetch } from "../../http-agent";
 import { logger } from "../../logger";
 import { Region } from "../../types";
-import { maimaiBaseUrl, maimaiGetHtml } from "../http";
+import { maimaiBaseUrl, maimaiGetHtml, maimaiImageRequest } from "../http";
 import type { PlayerData } from "../types";
 import { parsePlayerData } from "./parse";
 
@@ -31,12 +30,7 @@ export async function fetchIconBytes(
 ): Promise<{ buffer: Buffer; contentType: string }> {
   logger.info(`Fetching icon bytes: ${imageUrl}`);
 
-  const response = await agentFetch(imageUrl, {
-    headers: {
-      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
-      "Cookie": cookies || "",
-    },
-  });
+  const response = await maimaiImageRequest(imageUrl, cookies || "");
 
   if (!response.ok) {
     throw new Error(`Failed to fetch icon image: HTTP ${response.status}`);
