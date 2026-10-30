@@ -7,6 +7,7 @@ import { fetchImageBuffer } from "../image-converter";
 import { logger } from "../logger";
 import { getCurrentVersion } from "../metadata";
 import { isMaimaiMaintenance } from "./maintenance";
+import { releaseSession } from "./http";
 import { decryptToken } from "../token-crypto";
 import { revalidatePublicProfileForUser } from "../profile-cache";
 import { Region } from "../types";
@@ -125,7 +126,22 @@ const scrapeFetcher: DataFetcher = async ({ userId: _userId, region, sessionId, 
       validation.redirectUrl,
       validation.cookies || null,
     );
-  const playerDataHtml = await fetchPlayerData(region, cookies, validation.redirectUrl);
+  try {
+    return await scrapeWithCookies(region, sessionId, flags, cookies, validation.redirectUrl);
+  } catch (error) {
+    releaseSession(cookies);
+    throw error;
+  }
+};
+
+async function scrapeWithCookies(
+  region: Region,
+  sessionId: bigint,
+  flags: Flags,
+  cookies: string,
+  refererUrl: string,
+): Promise<FetchedMaimaiData> {
+  const playerDataHtml = await fetchPlayerData(region, cookies, refererUrl);
 
   logger.info("Starting player data extraction and songs data fetch...");
   const [playerData, allSongsData, recentSongsData, albumData] = await Promise.all([
@@ -183,7 +199,7 @@ const scrapeFetcher: DataFetcher = async ({ userId: _userId, region, sessionId, 
   }
 
   return { playerData, allSongsData, recentSongsData, albumData, eventsData, cookies };
-};
+}
 
 const lxnsFetcher: DataFetcher = async ({ userId, region, sessionId, validation }) => {
   if (region !== "cn") {
@@ -368,7 +384,9 @@ async function persistFetchedData(
     logger.info(`Skipping album fetch: user opted out (found ${fetched.albumData.length} albums)`);
   }
 
-  const bgWork = Promise.allSettled(backgroundTasks).then(() => { });
+  const bgWork = Promise.allSettled(backgroundTasks).then(() => {
+    if (fetched.cookies) releaseSession(fetched.cookies);
+  });
   if (backgroundWorkRef) {
     backgroundWorkRef.promise = bgWork;
   }
@@ -388,11 +406,14 @@ export async function fetchMaimaiData(
 ): Promise<void> {
   const { validation, rawToken } = await validateRegionAccess(userId, region);
 
+  let cookies: string | undefined;
   try {
     const fetcher = pickFetcher(region, rawToken);
     const fetched = await fetcher({ userId, region, sessionId, flags, validation });
+    cookies = fetched.cookies;
     await persistFetchedData(userId, region, sessionId, fetched, shouldFetchAlbums, backgroundWorkRef);
   } catch (error) {
+    if (cookies) releaseSession(cookies);
     logger.error(error, "Error during maimai data fetch");
     throw error;
   }
