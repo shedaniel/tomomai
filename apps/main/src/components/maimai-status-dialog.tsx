@@ -91,8 +91,8 @@ function StatusHeader({ badge, title, description, children }: { badge: string; 
       <span className="mt-1 inline-flex w-fit items-center rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
         {badge}
       </span>
-      <ResponsiveDialogTitle className="text-xl leading-snug">{title}</ResponsiveDialogTitle>
-      <ResponsiveDialogDescription className="text-center text-sm leading-relaxed">{description}</ResponsiveDialogDescription>
+      <ResponsiveDialogTitle className="text-xl leading-snug text-balance [word-break:auto-phrase]">{title}</ResponsiveDialogTitle>
+      <ResponsiveDialogDescription className="text-center text-sm leading-relaxed text-balance [word-break:auto-phrase]">{description}</ResponsiveDialogDescription>
     </ResponsiveDialogHeader>
   );
 }
