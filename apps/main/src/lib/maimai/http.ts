@@ -1,3 +1,4 @@
+import { load } from "cheerio";
 import type { Agent } from "undici";
 import { agentFetch, createPinnedAgent } from "../http-agent";
 import { getLogger } from "../request-logger";
@@ -54,7 +55,9 @@ async function redeem(region: Region, redirectUrl: string, redirectCookies: stri
     }
 
     const setCookies = response.headers.getSetCookie();
-    getLogger().info({ region, status: response.status, count: setCookies.length }, "Redeemed maimai login redirect");
+    const location = response.headers.get("location")?.split("?")[0] ?? "-";
+    const names = setCookies.map((header) => header.split("=")[0]).join(", ");
+    getLogger().info({ region, status: response.status, count: setCookies.length }, `Redeemed maimai login redirect -> ${location} (cookies: ${names || "none"})`);
     if (setCookies.length > 0) {
       return { agent, cookies: setCookies.map((header) => header.split(";")[0]).join("; ") };
     }
@@ -199,7 +202,8 @@ async function sessionFetch(session: MaimaiSession, url: string, init: RequestIn
     if (!isRejected(response, url, size)) return response;
     if (isLastAttempt) return response;
 
-    getLogger().warn({ url, status: response.status, size }, `maimai rejected request on the ${kind} connection, retrying`);
+    const reason = describeMaimaiError(await response.clone().text());
+    getLogger().warn({ url, status: response.status, size }, `maimai rejected request on the ${kind} connection, retrying${formatMaimaiError(reason)}`);
     if (kind === "helper") {
       retireHelper(session, agent);
       route = "primary";
@@ -229,6 +233,20 @@ async function sessionlessImageFetch(url: string, init: RequestInit): Promise<Re
       if (agent) void agent.close();
     }
   }
+}
+
+// SEGA's error page: "ERROR CODE：200002" plus a human-readable reason.
+export function describeMaimaiError(html: string): { code?: string; message?: string } {
+  const code = html.match(/ERROR CODE[：:]\s*(\d+)/)?.[1];
+  if (!code) return {};
+  const $ = load(html.replace(/<br\s*\/?>/gi, " "));
+  const message = $(".container_red .break").first().text().replace(/\s+/g, " ").trim();
+  return { code, message: message || undefined };
+}
+
+function formatMaimaiError({ code, message }: { code?: string; message?: string }): string {
+  if (!code) return "";
+  return ` ERROR CODE ${code}${message ? `: ${message}` : ""}`;
 }
 
 export function maimaiBaseUrl(region: Region): string {
@@ -275,13 +293,13 @@ export async function maimaiGet(url: string, cookies: string, referer: string): 
   const body = await response.clone().text();
   if (response.status === 200 && !redirectedAway(response, url) && body.length > 0) return response;
 
-  const errorCode = body.match(/ERROR CODE[：:]\s*(\d+)/)?.[1];
+  const error = describeMaimaiError(body);
   const finalPath = response.url ? new URL(response.url).pathname : "";
-  getLogger().warn({ url, status: response.status, size: body.length }, `maimai did not serve the page: ${finalPath}${errorCode ? ` ERROR CODE ${errorCode}` : ""}`);
-  if (errorCode === "100001") {
+  getLogger().warn({ url, status: response.status, size: body.length }, `maimai did not serve the page: ${finalPath}${formatMaimaiError(error)}`);
+  if (error.code === "100001") {
     throw new Error("Session expired or invalid. Please provide a new token.");
   }
-  throw new Error(`maimai did not serve ${url} (HTTP ${response.status}${finalPath ? `, ended at ${finalPath}` : ""}${errorCode ? `, ERROR CODE ${errorCode}` : ""})`);
+  throw new Error(`maimai did not serve ${url} (HTTP ${response.status}${finalPath ? `, ended at ${finalPath}` : ""}${formatMaimaiError(error)})`);
 }
 
 // Same as maimaiGet but returns the response text directly.
