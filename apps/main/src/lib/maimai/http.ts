@@ -6,13 +6,18 @@ import { Region } from "../types";
 const USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36";
 
 // maimai DX NET's backends don't all share session state (or images), and the
-// backend is picked per TCP connection. A session stays on the connection it
-// was redeemed on, and moves to a fresh one when a backend rejects a request.
+// backend is picked per TCP connection. A session keeps a few pinned
+// connections, starting with the one it was redeemed on, replaces any
+// connection whose backend rejects a request, and retries on a connection that
+// has already worked.
 export const MAX_SESSION_ATTEMPTS = 4;
+const SESSION_CONNECTIONS = 4;
 const SESSION_IDLE_MS = 5 * 60_000;
 
 interface PinnedSession {
-  agent: Agent;
+  agents: Agent[];
+  verified: WeakSet<Agent>;
+  next: number;
   timer: NodeJS.Timeout;
 }
 
@@ -21,21 +26,23 @@ const sessions = new Map<string, PinnedSession>();
 export function bindSessionAgent(cookies: string, agent: Agent): void {
   releaseSession(cookies);
   const session: PinnedSession = {
-    agent,
+    agents: [agent],
+    verified: new WeakSet([agent]),
+    next: 0,
     timer: setTimeout(() => releaseSession(cookies), SESSION_IDLE_MS),
   };
   session.timer.unref();
   sessions.set(cookies, session);
 }
 
-// Closes the session's connection once its in-flight requests finish. Later
-// requests with the same cookies fall back to the shared agent.
+// Closes the session's connections once their in-flight requests finish.
+// Later requests with the same cookies fall back to the shared agent.
 export function releaseSession(cookies: string): void {
   const session = sessions.get(cookies);
   if (!session) return;
   sessions.delete(cookies);
   clearTimeout(session.timer);
-  void session.agent.close();
+  for (const agent of session.agents) void agent.close();
 }
 
 function getSession(cookies: string): PinnedSession | undefined {
@@ -44,9 +51,19 @@ function getSession(cookies: string): PinnedSession | undefined {
   return session;
 }
 
+function nextSessionAgent(session: PinnedSession, isRetry: boolean): Agent {
+  if (isRetry) {
+    const verified = session.agents.find((agent) => session.verified.has(agent));
+    if (verified) return verified;
+  }
+  const slot = session.next++ % SESSION_CONNECTIONS;
+  return (session.agents[slot] ??= createPinnedAgent());
+}
+
 function rotateSessionAgent(session: PinnedSession, failed: Agent): void {
-  if (session.agent !== failed) return;
-  session.agent = createPinnedAgent();
+  const slot = session.agents.indexOf(failed);
+  if (slot === -1) return;
+  session.agents[slot] = createPinnedAgent();
   void failed.close();
 }
 
@@ -58,14 +75,14 @@ function isRejectedByBackend(response: Response): boolean {
 async function fetchWithBackendRetry(url: string, init: RequestInit, session: PinnedSession | undefined): Promise<Response> {
   for (let attempt = 1; ; attempt++) {
     const isLastAttempt = attempt >= MAX_SESSION_ATTEMPTS;
-    const agent = session ? session.agent : attempt > 1 ? createPinnedAgent() : undefined;
+    const agent = session ? nextSessionAgent(session, attempt > 1) : attempt > 1 ? createPinnedAgent() : undefined;
 
     let response: Response;
     try {
       response = await agentFetch(url, init, agent);
     } catch (error) {
       if (isLastAttempt) throw error;
-      logger.warn({ err: error, url }, "maimai request failed, retrying on a new connection");
+      logger.warn({ err: error, url }, "maimai request failed, retrying on another connection");
       if (session && agent) rotateSessionAgent(session, agent);
       continue;
     } finally {
@@ -73,11 +90,17 @@ async function fetchWithBackendRetry(url: string, init: RequestInit, session: Pi
       if (!session && agent) void agent.close();
     }
 
-    if (isLastAttempt || !isRejectedByBackend(response)) return response;
+    if (!isRejectedByBackend(response)) {
+      if (session && agent) session.verified.add(agent);
+      return response;
+    }
+    if (isLastAttempt) return response;
 
-    logger.warn({ url, status: response.status }, "maimai backend rejected request, retrying on a new connection");
+    logger.warn({ url, status: response.status }, "maimai backend rejected request, retrying on another connection");
     await response.arrayBuffer().catch(() => undefined);
-    if (session && agent) rotateSessionAgent(session, agent);
+    // A connection that has worked might have hit a genuine 404, so it only
+    // loses its standing; it is replaced if it gets rejected again.
+    if (session && agent && !session.verified.delete(agent)) rotateSessionAgent(session, agent);
   }
 }
 

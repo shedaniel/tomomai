@@ -23,7 +23,9 @@ beforeEach(async () => {
   server = createServer((req, res) => {
     const backend = (req.socket as Socket & { backend: string }).backend;
     if (req.url !== "/maimai-mobile/error/") pageRequests++;
-    if (req.url === "/maimai-mobile/error/") {
+    if (req.url === "/maimai-mobile/missing/") {
+      res.writeHead(404).end("not found");
+    } else if (req.url === "/maimai-mobile/error/") {
       res.writeHead(200).end("ERROR CODE：100001");
     } else if (backend === "bad") {
       if (req.url!.startsWith("/maimai-mobile/img/")) res.writeHead(404).end("not found");
@@ -32,7 +34,8 @@ beforeEach(async () => {
       res.writeHead(200).end(`ok ${req.url}`);
     }
   });
-  server.on("connection", (socket: Socket & { backend: string }) => {
+  server.on("connection", (socket: Socket & { backend: string; id: number }) => {
+    socket.id = connectionCount;
     socket.backend = backends[connectionCount++] ?? "good";
     openSockets.add(socket);
     socket.on("close", () => openSockets.delete(socket));
@@ -50,27 +53,52 @@ afterEach(async () => {
 const settle = () => new Promise((resolve) => setTimeout(resolve, 50));
 
 describe("maimai session pinning", () => {
-  it("keeps every request of a session on one connection", async () => {
+  it("spreads a session's requests over a few pinned connections", async () => {
     bindSessionAgent("session=1", createPinnedAgent());
 
     const pages = await Promise.all(
-      Array.from({ length: 8 }, (_, i) => maimaiGetHtml(`${base}/maimai-mobile/page${i}/`, "session=1", base)),
+      Array.from({ length: 12 }, (_, i) => maimaiGetHtml(`${base}/maimai-mobile/page${i}/`, "session=1", base)),
     );
 
-    expect(pages).toEqual(Array.from({ length: 8 }, (_, i) => `ok /maimai-mobile/page${i}/`));
-    expect(connectionCount).toBe(1);
+    expect(pages).toEqual(Array.from({ length: 12 }, (_, i) => `ok /maimai-mobile/page${i}/`));
+    expect(connectionCount).toBe(4);
   });
 
-  it("moves to a new connection when a backend rejects the session, then stays there", async () => {
+  it("replaces a connection whose backend rejects the session, then keeps the good ones", async () => {
     backends = ["bad", "bad", "good"];
     bindSessionAgent("session=1", createPinnedAgent());
 
     expect(await maimaiGetHtml(`${base}/maimai-mobile/playerData/`, "session=1", base)).toBe("ok /maimai-mobile/playerData/");
+    for (let i = 0; i < 8; i++) {
+      expect(await maimaiGetHtml(`${base}/maimai-mobile/record/`, "session=1", base)).toBe("ok /maimai-mobile/record/");
+    }
+    const settledConnections = connectionCount;
+    for (let i = 0; i < 8; i++) await maimaiGetHtml(`${base}/maimai-mobile/record/`, "session=1", base);
+
+    expect(connectionCount).toBe(settledConnections);
+    await settle();
+    expect(openSockets.size).toBe(4);
+  });
+
+  it("retries on a connection that has already worked", async () => {
+    backends = ["good", "bad"];
+    bindSessionAgent("session=1", createPinnedAgent());
+    await maimaiGetHtml(`${base}/maimai-mobile/home/`, "session=1", base);
+
     expect(await maimaiGetHtml(`${base}/maimai-mobile/record/`, "session=1", base)).toBe("ok /maimai-mobile/record/");
-    expect(connectionCount).toBe(3);
+    expect(connectionCount).toBe(2);
+  });
+
+  it("keeps a working connection after a single rejection", async () => {
+    bindSessionAgent("session=1", createPinnedAgent());
+    await maimaiGetHtml(`${base}/maimai-mobile/home/`, "session=1", base);
+
+    const response = await maimaiRequest(`${base}/maimai-mobile/missing/`, "session=1", base);
+    await response.arrayBuffer();
+    expect(await maimaiGetHtml(`${base}/maimai-mobile/home/`, "session=1", base)).toBe("ok /maimai-mobile/home/");
 
     await settle();
-    expect(openSockets.size).toBe(1);
+    expect([...openSockets].some((socket) => (socket as Socket & { id: number }).id === 0)).toBe(true);
   });
 
   it("gives up after the attempt limit and returns the rejection", async () => {
@@ -84,10 +112,10 @@ describe("maimai session pinning", () => {
     expect(connectionCount).toBe(4);
   });
 
-  it("closes the session's connection on release", async () => {
+  it("closes the session's connections on release", async () => {
     bindSessionAgent("session=1", createPinnedAgent());
-    await maimaiGetHtml(`${base}/maimai-mobile/home/`, "session=1", base);
-    expect(openSockets.size).toBe(1);
+    await Promise.all(Array.from({ length: 4 }, () => maimaiGetHtml(`${base}/maimai-mobile/home/`, "session=1", base)));
+    expect(openSockets.size).toBe(4);
 
     releaseSession("session=1");
     await settle();
@@ -118,14 +146,14 @@ describe("maimai image requests", () => {
     expect(openSockets.size).toBeLessThanOrEqual(1);
   });
 
-  it("uses the session's connection when there is one", async () => {
+  it("uses the session's connections when there is one", async () => {
     bindSessionAgent("session=1", createPinnedAgent());
-    await maimaiGetHtml(`${base}/maimai-mobile/home/`, "session=1", base);
+    await Promise.all(Array.from({ length: 4 }, () => maimaiGetHtml(`${base}/maimai-mobile/home/`, "session=1", base)));
 
     const response = await maimaiImageRequest(`${base}/maimai-mobile/img/Icon/a.png`, "session=1");
 
     expect(response.status).toBe(200);
     await response.arrayBuffer();
-    expect(connectionCount).toBe(1);
+    expect(connectionCount).toBe(4);
   });
 });
