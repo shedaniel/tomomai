@@ -3,6 +3,10 @@ import type { Agent } from "undici";
 import { agentFetch, createPinnedAgent } from "../http-agent";
 import { logger } from "../logger";
 import { Region } from "../types";
+import { markMaimaiLocked, takeMaimaiRequest } from "./budget";
+import { MaimaiBusyError, MaimaiLockedError } from "./errors";
+
+export { MaimaiBusyError, MaimaiLockedError } from "./errors";
 
 const USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36";
 
@@ -29,18 +33,52 @@ interface MaimaiSession {
   redeems: number;
   redeeming: Promise<void> | null;
   released: boolean;
+  locked: MaimaiLockedError | null;
   timer: NodeJS.Timeout;
+}
+
+// maimai's rate-limit lock; see MaimaiLockedError.
+const LOCKED_ERROR_CODE = "200001";
+
+// Every request to maimai takes a slot from the shared budget first.
+async function maimaiFetch(url: string, init: RequestInit, agent?: Agent): Promise<Response> {
+  await takeMaimaiRequest(url);
+  return agentFetch(url, init, agent);
+}
+
+function lockedOut(url: string): MaimaiLockedError {
+  void markMaimaiLocked(url);
+  return new MaimaiLockedError();
 }
 
 // Keyed by the cookies the session was opened with, which callers keep passing.
 const sessions = new Map<string, MaimaiSession>();
+
+// Reads the error page a redemption was sent to, once, and throws what it says.
+async function throwRedemptionError(agent: Agent, errorUrl: URL, setCookies: string[]): Promise<never> {
+  try {
+    const page = await maimaiFetch(errorUrl.href, {
+      method: "GET",
+      headers: {
+        "User-Agent": USER_AGENT,
+        "Cookie": setCookies.map((header) => header.split(";")[0]).join("; "),
+      },
+    }, agent);
+    const error = describeMaimaiError(await page.text());
+    logger.warn({ url: errorUrl.href, status: page.status }, `maimai refused the login redirect${formatMaimaiError(error)}`);
+    if (error.code === LOCKED_ERROR_CODE) throw lockedOut(errorUrl.href);
+    throw new Error(`maimai refused the login redirect${formatMaimaiError(error) || " (redirected to its error page)"}`);
+  } finally {
+    void agent.close();
+  }
+}
 
 async function redeem(region: Region, redirectUrl: string, redirectCookies: string | null): Promise<{ agent: Agent; cookies: string }> {
   for (let attempt = 1; ; attempt++) {
     const agent = createPinnedAgent();
     let response: Response;
     try {
-      response = await agentFetch(redirectUrl, {
+      response = await maimaiFetch(redirectUrl, {
         method: "GET",
         headers: {
           "User-Agent": USER_AGENT,
@@ -58,6 +96,9 @@ async function redeem(region: Region, redirectUrl: string, redirectCookies: stri
     const location = response.headers.get("location")?.split("?")[0] ?? "-";
     const names = setCookies.map((header) => header.split("=")[0]).join(", ");
     logger.info({ region, status: response.status, count: setCookies.length }, `Redeemed maimai login redirect -> ${location} (cookies: ${names || "none"})`);
+    if (location !== "-" && new URL(location, redirectUrl).pathname === "/maimai-mobile/error/") {
+      await throwRedemptionError(agent, new URL(location, redirectUrl), setCookies);
+    }
     if (setCookies.length > 0) {
       return { agent, cookies: setCookies.map((header) => header.split(";")[0]).join("; ") };
     }
@@ -87,6 +128,7 @@ export async function openMaimaiSession(region: Region, redirectUrl: string, red
     redeems: 1,
     redeeming: null,
     released: false,
+    locked: null,
     timer: setTimeout(() => releaseSession(cookies), SESSION_IDLE_MS),
   };
   session.timer.unref();
@@ -144,6 +186,10 @@ async function recoverPrimary(session: MaimaiSession, failed: Agent): Promise<bo
         session.cookies = cookies;
         void old.close();
       })
+      .catch((error: unknown) => {
+        if (error instanceof MaimaiLockedError) session.locked ??= error;
+        throw error;
+      })
       .finally(() => {
         session.redeeming = null;
       });
@@ -177,7 +223,9 @@ function isRejected(response: Response, url: string, size: number): boolean {
 async function sessionFetch(session: MaimaiSession, url: string, init: RequestInit): Promise<Response> {
   let route: "pool" | "primary" | "throwaway" = "pool";
   for (let attempt = 1; ; attempt++) {
+    if (session.locked) throw session.locked;
     if (session.redeeming) await session.redeeming;
+    if (session.locked) throw session.locked;
     if (session.released) throw new Error("maimai session was released");
 
     const agent = route === "pool" ? nextAgent(session) : route === "primary" ? session.primary : createPinnedAgent();
@@ -185,10 +233,19 @@ async function sessionFetch(session: MaimaiSession, url: string, init: RequestIn
     const headers = { ...(init.headers as Record<string, string>), "Cookie": session.cookies };
     const isLastAttempt = attempt >= MAX_ATTEMPTS;
 
+    try {
+      await takeMaimaiRequest(url);
+    } catch (error) {
+      if (kind === "throwaway") void agent.close();
+      if (error instanceof MaimaiLockedError) session.locked ??= error;
+      throw error;
+    }
+
     let result: { response: Response; size: number };
     try {
       result = await buffered(await agentFetch(url, { ...init, headers }, agent));
     } catch (error) {
+      if (session.locked) throw session.locked;
       if (session.released || isLastAttempt) throw error;
       logger.warn({ err: error, url }, `maimai request failed on the ${kind} connection, retrying`);
       if (kind === "helper") retireHelper(session, agent);
@@ -200,9 +257,15 @@ async function sessionFetch(session: MaimaiSession, url: string, init: RequestIn
 
     const { response, size } = result;
     if (!isRejected(response, url, size)) return response;
-    if (isLastAttempt) return response;
 
     const reason = describeMaimaiError(await response.clone().text());
+    if (reason.code === LOCKED_ERROR_CODE) {
+      logger.warn({ url, status: response.status, size }, `maimai locked the connection, not retrying${formatMaimaiError(reason)}`);
+      session.locked ??= lockedOut(url);
+      throw session.locked;
+    }
+    if (isLastAttempt) return response;
+
     logger.warn({ url, status: response.status, size }, `maimai rejected request on the ${kind} connection, retrying${formatMaimaiError(reason)}`);
     if (kind === "helper") {
       retireHelper(session, agent);
@@ -223,11 +286,13 @@ async function sessionlessImageFetch(url: string, init: RequestInit): Promise<Re
   for (let attempt = 1; ; attempt++) {
     const agent = attempt > 1 ? createPinnedAgent() : undefined;
     try {
-      const { response, size } = await buffered(await agentFetch(url, init, agent));
-      if (attempt >= MAX_ATTEMPTS || !isRejected(response, url, size)) return response;
+      const { response, size } = await buffered(await maimaiFetch(url, init, agent));
+      if (!isRejected(response, url, size)) return response;
+      if (describeMaimaiError(await response.clone().text()).code === LOCKED_ERROR_CODE) throw lockedOut(url);
+      if (attempt >= MAX_ATTEMPTS) return response;
       logger.warn({ url, status: response.status, size }, "maimai rejected image request, retrying on a new connection");
     } catch (error) {
-      if (attempt >= MAX_ATTEMPTS) throw error;
+      if (error instanceof MaimaiLockedError || error instanceof MaimaiBusyError || attempt >= MAX_ATTEMPTS) throw error;
       logger.warn({ err: error, url }, "maimai image request failed, retrying on a new connection");
     } finally {
       if (agent) void agent.close();
@@ -269,7 +334,7 @@ export async function maimaiRequest(url: string, cookies: string, referer: strin
   };
 
   const session = getSession(cookies);
-  if (!session) return agentFetch(url, init);
+  if (!session) return maimaiFetch(url, init);
   return sessionFetch(session, url, init);
 }
 
@@ -299,6 +364,7 @@ export async function maimaiGet(url: string, cookies: string, referer: string): 
   if (error.code === "100001") {
     throw new Error("Session expired or invalid. Please provide a new token.");
   }
+  if (error.code === LOCKED_ERROR_CODE) throw lockedOut(url);
   throw new Error(`maimai did not serve ${url} (HTTP ${response.status}${finalPath ? `, ended at ${finalPath}` : ""}${formatMaimaiError(error)})`);
 }
 

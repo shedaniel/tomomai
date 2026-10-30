@@ -552,6 +552,20 @@
     "deleteSnapshot": "선택한 스냅샷 삭제",
     "moreOptions": "추가 옵션"
   },
+  "maimaiStatus": {
+    "lockedBadge": "일시적으로 제한됨",
+    "lockedTitle": "잠시 데이터를 가져올 수 없습니다",
+    "lockedDescription": "짧은 시간에 접속이 몰려 maimai DX NET이 잠시 새 요청을 받지 않고 있습니다. 타이머가 끝나면 다시 시도해 주세요.",
+    "retryIn": "{time} 후에 다시 가져올 수 있습니다",
+    "ready": "이제 다시 가져올 수 있습니다",
+    "gotIt": "확인",
+    "fetchNow": "지금 가져오기",
+    "busyBadge": "접속자 많음",
+    "busyTitle": "maimai DX NET이 붐비고 있습니다",
+    "busyDescription": "지금 많은 플레이어가 데이터를 가져오고 있어 평소보다 느릴 수 있습니다. 조금 이따 가져오면 더 빨리 끝납니다.",
+    "fetchAnyway": "그래도 가져오기",
+    "later": "나중에"
+  },
   "profileVisibility": {
     "public": "공개 프로필",
     "private": "비공개 프로필",

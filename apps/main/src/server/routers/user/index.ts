@@ -45,6 +45,7 @@ export const userRouter = router({
   getLoginOtp: fetchRouter.getLoginOtp,
   startFetch: fetchRouter.startFetch,
   getFetchStatus: fetchRouter.getFetchStatus,
+  getMaimaiStatus: fetchRouter.getMaimaiStatus,
   getLatestFetchSessionId: fetchRouter.getLatestFetchSessionId,
   deleteToken: fetchRouter.deleteToken,
 

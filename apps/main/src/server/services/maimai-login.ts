@@ -2,6 +2,8 @@ import { db } from "@/lib/db";
 import { userTokens } from "@/lib/db/schema-pg";
 import { eq, and } from "drizzle-orm";
 import { agentFetch } from "@/lib/http-agent";
+import { takeMaimaiRequest } from "@/lib/maimai/budget";
+import { MaimaiBusyError, MaimaiLockedError } from "@/lib/maimai/errors";
 import { openMaimaiSession } from "@/lib/maimai/http";
 import { Region } from "@/lib/types";
 import { encryptToken } from "@/lib/token-crypto";
@@ -512,6 +514,7 @@ async function performJapanAccountLogin(
   try {
     // Step 1: Get the maimai mobile page to obtain _t token and cookies
     logger.debug("Step 1: fetching maimai mobile page to get _t token and cookies");
+    await takeMaimaiRequest(maimaiMobileUrl);
     const maimaiPageResponse = await agentFetch(maimaiMobileUrl, {
       method: "GET",
       headers: {
@@ -581,6 +584,7 @@ async function performJapanAccountLogin(
       token: tToken
     });
 
+    await takeMaimaiRequest(submitUrl);
     const response = await agentFetch(submitUrl, {
       method: "POST",
       headers: {
@@ -645,6 +649,8 @@ async function performJapanAccountLogin(
       };
     }
   } catch (error) {
+    // Being throttled says nothing about the user's credentials.
+    if (error instanceof MaimaiLockedError || error instanceof MaimaiBusyError) throw error;
     logger.error({ err: error }, "Error during Japan account login");
     if (userId) {
       await deleteToken(userId, "jp");

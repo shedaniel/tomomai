@@ -708,6 +708,20 @@
     "deleteSnapshot": "選択中のスナップショットを削除",
     "moreOptions": "その他のオプション"
   },
+  "maimaiStatus": {
+    "lockedBadge": "一時的に制限中",
+    "lockedTitle": "しばらくデータ取得ができません",
+    "lockedDescription": "アクセスが集中したため、maimai DX NET 側で新しいアクセスを一時的に受け付けていません。タイマーが終わってから、もう一度お試しください。",
+    "retryIn": "あと {time} で再取得できます",
+    "ready": "データ取得できるようになりました",
+    "gotIt": "OK",
+    "fetchNow": "今すぐ取得",
+    "busyBadge": "混雑中",
+    "busyTitle": "maimai DX NET が混み合っています",
+    "busyDescription": "ただいまデータ取得が集中しているため、いつもより時間がかかることがあります。時間をずらすと早く終わります。",
+    "fetchAnyway": "このまま取得",
+    "later": "あとで"
+  },
   "profileMetadata": {
     "title": "{username} | tomomai ともマイ",
     "description": "{region} の {username} さんの maimai プロフィールを表示します。フレンドと一緒に maimai のスコアを記録・分析しよう。",
