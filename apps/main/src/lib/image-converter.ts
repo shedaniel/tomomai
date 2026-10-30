@@ -19,9 +19,9 @@ export async function convertToWebp(
 
 export async function fetchImageBuffer(url: string, cookies: string): Promise<Buffer> {
   const response = await maimaiImageRequest(url, cookies);
-  if (!response.ok) {
-    throw new Error(`Failed to fetch image: ${response.status}`);
+  const buffer = Buffer.from(await response.arrayBuffer());
+  if (!response.ok || buffer.length === 0) {
+    throw new Error(`Failed to fetch image: ${response.status}, ${buffer.length} bytes`);
   }
-  const arrayBuffer = await response.arrayBuffer();
-  return Buffer.from(arrayBuffer);
+  return buffer;
 }

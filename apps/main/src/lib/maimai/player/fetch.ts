@@ -11,6 +11,12 @@ export async function fetchPlayerData(region: Region, cookies: string, refererUr
   const html = await maimaiGetHtml(playerDataUrl, cookies, refererUrl);
   logger.debug(`Player data HTML length: ${html.length} characters`);
 
+  if (!html.includes("see_through_block")) {
+    const title = html.match(/<title>([^<]*)<\/title>/i)?.[1]?.trim() ?? "";
+    const text = html.replace(/<script[\s\S]*?<\/script>|<style[\s\S]*?<\/style>|<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+    logger.warn({ url: playerDataUrl, size: html.length }, `Player page has no profile content: ${title} | ${text.slice(0, 200)}`);
+  }
+
   if (html.includes("ERROR CODE：100001") || html.includes("Please login again")) {
     throw new Error("Session expired or invalid. Please provide a new token.");
   }
@@ -32,11 +38,11 @@ export async function fetchIconBytes(
 
   const response = await maimaiImageRequest(imageUrl, cookies || "");
 
-  if (!response.ok) {
-    throw new Error(`Failed to fetch icon image: HTTP ${response.status}`);
+  const buffer = Buffer.from(await response.arrayBuffer());
+  if (!response.ok || buffer.length === 0) {
+    throw new Error(`Failed to fetch icon image: HTTP ${response.status}, ${buffer.length} bytes`);
   }
 
-  const buffer = Buffer.from(await response.arrayBuffer());
   const contentType = response.headers.get("content-type") || "image/png";
 
   logger.debug(`Fetched icon bytes (${buffer.length} bytes, ${contentType})`);
