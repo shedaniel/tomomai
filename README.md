@@ -10,8 +10,6 @@ A modern web application for tracking and analyzing your maimai DX scores with f
 | `apps/guess` | `@tomomai/guess` | The guesser / heardle minigames (port 3001) |
 | `apps/render` | `@tomomai/render` | Standalone image-render service (port 8080) |
 | `packages/*` | `@tomomai/*` | Shared UI, i18n, security, utils and render-token code |
-| `proxy/` | — | Go HTTP proxy for the CN WeChat OAuth flow |
-| `rating-analyser/` | — | Python rating analysis tooling |
 
 ## Local Development
 
@@ -109,7 +107,6 @@ Production runs as separate deployments:
 | `apps/main` | Vercel | Postgres, Redis, Cloudflare R2, Vercel Edge Config, Discord application |
 | `apps/guess` | Vercel (separate project per variant) | Optional Postgres (its own database) and Redis |
 | `apps/render` | Any long-lived Docker host (Fly, Railway, Cloud Run, Hetzner, ...) | A `RENDER_TOKEN_SECRET` shared with `apps/main` |
-| `proxy/` | CN-reachable VPS (optional) | Only for the CN WeChat OAuth flow |
 
 See [SETUP.md](SETUP.md#deployment) for the full guide: environment variables for each app, database migrations, Discord setup, Docker builds, and populating song and event data.
 

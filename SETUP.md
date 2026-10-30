@@ -38,7 +38,6 @@ To regenerate a file, delete it and run `make env`. If you regenerate only one o
 | `apps/main` | Vercel | Build settings are in `vercel.json` and `apps/main/vercel.json`, including the daily `/api/cron/percentile-bands` cron |
 | `apps/guess` | Vercel | One project per variant (`guesser.` and `heardle.`), configured by `apps/guess/vercel.json` |
 | `apps/render` | Docker on any long-lived host | See [Render Service Deployment](#render-service-deployment) |
-| `proxy/` | CN-reachable VPS | Optional. See [HTTP Proxy](#http-proxy-cn-oauth-interception) |
 
 ### Main Site (Vercel)
 
@@ -288,7 +287,7 @@ These power the four options in the CN token dialog. All variables are optional 
 
 ##### HTTP Proxy (CN OAuth interception)
 
-Used by the WeChat OAuth → HTTP-proxy flow. The proxy itself lives in `proxy/` and must be deployed to a host reachable from the user's phone (typically Aliyun HK / mainland CN).
+Used by the WeChat OAuth → HTTP-proxy flow.
 
 | Variable | Required | Description |
 |---|---|---|
@@ -296,10 +295,6 @@ Used by the WeChat OAuth → HTTP-proxy flow. The proxy itself lives in `proxy/`
 | `CN_PROXY_PORT` (or `NEXT_PUBLIC_CN_PROXY_PORT`) | No | Proxy port displayed in the dialog (defaults to `2560`) |
 | `CN_PROXY_TOKEN_SECRET` | For HTTP proxy | HMAC secret for signing the JWT embedded in the WeChat OAuth link; the proxy forwards it back so the webhook can identify the user. Generate with `openssl rand -base64 32` |
 | `DEBUG_CN_FETCH` | No | When set (any truthy value), the `/api/cn-proxy/callback` webhook skips the server-side cookie capture and just logs the `maimai-mobile/?t=…` link so you can open it manually in a browser to inspect CSS/HTML. No fetch session is started while this is on. |
-
-The proxy process itself reads its own env vars (`PROXY_PORT`, `WEBHOOK_URL`, `RESULT_URL`) — see `proxy/README.md`.
-
-To deploy the proxy to an Ubuntu host over SSH, run `proxy/deploy.sh install` from the repo. It prompts for the SSH target (`user@host` or `user@host:port`), the tomomai base URL (used to derive `RESULT_URL` and `WEBHOOK_URL`), and the proxy port, then cross-compiles the Go binary locally (Go must be installed), uploads it to `/opt/tomomai-proxy`, writes a systemd unit, and restarts the service. SSH password (if any) is entered once via ControlMaster multiplexing; sudo on the server should be passwordless. The cloud security group port still needs to be opened manually.
 
 ##### Android App
 
@@ -318,8 +313,6 @@ Not yet implemented; no env vars.
 ### CN Reverse Proxy (HK CN2)
 
 For deployments serving mainland China users, a Caddy reverse proxy lives in `cn/`. It runs on a CN-routed server (typically an HK box on a CN2 line) and gives users a stable ~40ms RTT path that bypasses Cloudflare's anycast routing. TLS is terminated locally; `_next/static/*` and `/_next/image` are edge-cached on the proxy box to save CN2 bandwidth. HTTP/3 is enabled.
-
-This is independent from the WeChat OAuth proxy in `proxy/` — `proxy/` intercepts a specific OAuth callback, while `cn/` is a full reverse proxy for the whole site.
 
 To deploy:
 
