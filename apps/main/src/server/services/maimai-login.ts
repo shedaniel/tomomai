@@ -1,8 +1,8 @@
 import { db } from "@/lib/db";
 import { userTokens } from "@/lib/db/schema-pg";
 import { eq, and } from "drizzle-orm";
-import { agentFetch, createPinnedAgent } from "@/lib/http-agent";
-import { bindSessionAgent, MAX_SESSION_ATTEMPTS } from "@/lib/maimai/http";
+import { agentFetch } from "@/lib/http-agent";
+import { openMaimaiSession } from "@/lib/maimai/http";
 import { Region } from "@/lib/types";
 import { encryptToken } from "@/lib/token-crypto";
 import { getLogger } from "@/lib/request-logger";
@@ -904,64 +904,7 @@ export async function validateInternationalMaimaiToken(
 
 export async function getCookiesFromRedirect(region: Region, redirectUrl: string, redirectCookies: string | null): Promise<string> {
   getLogger().debug({ region, url: redirectUrl }, "Fetching redirect URL to get login cookies");
-
-  // A backend that doesn't know the login answers 404; the same redirect URL
-  // can be redeemed again on another connection.
-  for (let attempt = 1; ; attempt++) {
-    const agent = createPinnedAgent();
-    let loginResponse: Response;
-    try {
-      loginResponse = await agentFetch(redirectUrl, {
-        method: "GET",
-        headers: {
-          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
-          ...(redirectCookies ? { "Cookie": redirectCookies } : {}),
-        },
-        redirect: "manual", // Don't follow redirects
-      }, agent);
-      await loginResponse.arrayBuffer();
-    } catch (error) {
-      void agent.close();
-      throw error;
-    }
-
-    getLogger().debug({ status: loginResponse.status }, "Login redirect response");
-
-    // Extract Set-Cookie headers
-    let setCookieHeaders: string[] = [];
-    if (loginResponse.headers.getSetCookie) {
-      setCookieHeaders = loginResponse.headers.getSetCookie();
-    } else {
-      // Fallback for environments that don't support getSetCookie()
-      const cookieHeader = loginResponse.headers.get('set-cookie');
-      if (cookieHeader) {
-        setCookieHeaders = [cookieHeader];
-      }
-    }
-
-    if (setCookieHeaders.length === 0) {
-      void agent.close();
-      if (attempt < MAX_SESSION_ATTEMPTS) {
-        getLogger().warn({ region, status: loginResponse.status }, "No cookies received from login redirect, retrying on a new connection");
-        continue;
-      }
-      getLogger().warn({ region, status: loginResponse.status, url: redirectUrl }, "No cookies received from login redirect");
-      throw new Error(`No cookies received from login redirect (status ${loginResponse.status})`);
-    }
-
-    getLogger().debug({ count: setCookieHeaders.length }, "Received cookies from login");
-
-    // Parse cookies into a single Cookie header value
-    const cookies = setCookieHeaders.map(header => {
-      // Extract just the name=value part (before first semicolon)
-      const cookiePart = header.split(';')[0];
-      return cookiePart;
-    }).join('; ');
-
-    bindSessionAgent(cookies, agent);
-    getLogger().debug("Parsed cookies for request");
-    return cookies;
-  }
+  return openMaimaiSession(region, redirectUrl, redirectCookies);
 }
 
 export async function loginAndGetCookies(region: Region, maimaiToken: string): Promise<string> {
