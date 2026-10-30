@@ -9,8 +9,8 @@ const { rows, query, warn } = vi.hoisted(() => ({
 vi.mock("../../db", () => ({
   db: { select: () => ({ from: () => ({ innerJoin: () => ({ where: query }) }) }) },
 }));
-vi.mock("../../request-logger", () => ({
-  getLogger: () => ({ info: vi.fn(), warn }),
+vi.mock("../../logger", () => ({
+  logger: { info: vi.fn(), warn },
 }));
 
 import { buildSongLookupMaps } from "./persist";

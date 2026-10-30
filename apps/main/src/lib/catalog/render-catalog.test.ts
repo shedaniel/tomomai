@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("../../../../render/src/lib/request-logger", () => ({ getLogger: () => ({ info: vi.fn() }) }));
+vi.mock("../../../../render/src/lib/logger", () => ({ logger: { info: vi.fn() } }));
 vi.mock("undici", () => ({ Agent: class {} }));
 
 const fetchMock = vi.fn<typeof fetch>();

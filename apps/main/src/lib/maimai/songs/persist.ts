@@ -1,7 +1,7 @@
 import { and, eq, getTableColumns, sql as sqlDrizzle } from "drizzle-orm";
 import { db } from "../../db";
 import { fetchSessions, scoreData, snapshotB50, snapshotScores, songs, parentSong } from "../../db/schema-pg";
-import { getLogger } from "../../request-logger";
+import { logger } from "../../logger";
 import { getCurrentVersion, VersionId } from "../../metadata";
 import { splitSongs } from "../../rating-calculator";
 import { Region, SongWithScore } from "../../types";
@@ -24,13 +24,13 @@ export async function buildSongLookupMaps(
   songLookup: Map<string, bigint>;
   fullSongMap: Map<bigint, SongInstance>;
 }> {
-  getLogger().info({ region, version: gameVersion }, "Batch querying songs");
+  logger.info({ region, version: gameVersion }, "Batch querying songs");
   const allSongs = await db
     .select({ ...getTableColumns(parentSong), ...getTableColumns(songs) })
     .from(songs)
     .innerJoin(parentSong, eq(songs.parentId, parentSong.id))
     .where(and(eq(songs.region, region), eq(songs.gameVersion, gameVersion)));
-  getLogger().info({ songCount: allSongs.length }, "Loaded songs for region/version");
+  logger.info({ songCount: allSongs.length }, "Loaded songs for region/version");
 
   const songLookup = new Map<string, bigint>();
   const fullSongMap = new Map<bigint, SongInstance>();
@@ -47,9 +47,9 @@ export async function buildSongLookupMaps(
     fullSongMap.set(song.id, song);
   }
   if (ambiguousKeys.size > 0) {
-    getLogger().warn({ songKeys: [...ambiguousKeys], region, version: gameVersion }, "Ambiguous song names excluded from score lookup");
+    logger.warn({ songKeys: [...ambiguousKeys], region, version: gameVersion }, "Ambiguous song names excluded from score lookup");
   }
-  getLogger().info({ songCount: songLookup.size }, "Created song lookup maps");
+  logger.info({ songCount: songLookup.size }, "Created song lookup maps");
 
   return { songLookup, fullSongMap };
 }
@@ -125,17 +125,17 @@ export async function insertUserScores(
 ): Promise<void> {
   const gameVersion = getCurrentVersion(region);
 
-  getLogger().info({ snapshotId, sessionId: String(sessionId) }, "Starting user scores insertion");
+  logger.info({ snapshotId }, `Starting user scores insertion for fetch session row ${sessionId}`);
 
   const allScores: ScoreData[] = [];
   for (const difficulty of Object.keys(allScoreData)) {
     allScores.push(...allScoreData[parseInt(difficulty)]);
   }
 
-  getLogger().info({ recordCount: allScores.length }, "Preparing scores for insertion");
+  logger.info({ recordCount: allScores.length }, "Preparing scores for insertion");
 
   if (allScores.length === 0) {
-    getLogger().warn("No scores to insert");
+    logger.warn("No scores to insert");
     return;
   }
 
@@ -148,7 +148,7 @@ export async function insertUserScores(
       const songId = songLookup.get(lookupKey);
 
       if (!songId) {
-        getLogger().warn({ songKey: lookupKey }, "Could not resolve song in database");
+        logger.warn({ songKey: lookupKey }, "Could not resolve song in database");
         notFoundScores.push(score);
         continue;
       }
@@ -161,11 +161,11 @@ export async function insertUserScores(
         fs: score.fs,
       });
     } catch (error) {
-      getLogger().error({ err: error, songKey: `${score.songName}|${score.difficulty}|${score.musicType}` }, "Error processing score");
+      logger.error({ err: error, songKey: `${score.songName}|${score.difficulty}|${score.musicType}` }, "Error processing score");
     }
   }
 
-  getLogger().info({ recordCount: resolvedScores.length, skipped: notFoundScores.length }, "Prepared score rows");
+  logger.info({ recordCount: resolvedScores.length, skipped: notFoundScores.length }, "Prepared score rows");
 
   if (resolvedScores.length > 0) {
     const scoreDataLookup = await upsertScoreData(resolvedScores);
@@ -175,7 +175,7 @@ export async function insertUserScores(
       const key = scoreDataKey(score.songId, score.achievement, score.dxScore, score.fc, score.fs);
       const scoreDataId = scoreDataLookup.get(key);
       if (!scoreDataId) {
-        getLogger().warn({ songId: String(score.songId) }, "Score data row not found after upsert");
+        logger.warn({ songId: String(score.songId) }, "Score data row not found after upsert");
         continue;
       }
       junctionRows.push({ snapshotId, scoreId: scoreDataId });
@@ -223,7 +223,7 @@ export async function insertUserScores(
       }
     }
 
-    getLogger().info({ recordCount: b50Rows.length }, "Calculated B50");
+    logger.info({ recordCount: b50Rows.length }, "Calculated B50");
 
     if (junctionRows.length > 0) {
       for (let i = 0; i < junctionRows.length; i += 1000) {
@@ -234,15 +234,15 @@ export async function insertUserScores(
       await db.insert(snapshotB50).values(b50Rows).onConflictDoNothing();
     }
 
-    getLogger().info({ recordCount: junctionRows.length }, "Inserted snapshot scores and B50 rows");
+    logger.info({ recordCount: junctionRows.length }, "Inserted snapshot scores and B50 rows");
   } else {
-    getLogger().warn("No valid scores to insert");
+    logger.warn("No valid scores to insert");
   }
 
   if (notFoundScores.length > 0) {
-    getLogger().warn({ skipped: notFoundScores.length }, "Some scores have no unambiguous catalog match");
+    logger.warn({ skipped: notFoundScores.length }, "Some scores have no unambiguous catalog match");
     for (const score of notFoundScores) {
-      getLogger().warn({ songKey: `${score.songName}|${score.difficulty}|${score.musicType}` }, "Unmatched score");
+      logger.warn({ songKey: `${score.songName}|${score.difficulty}|${score.musicType}` }, "Unmatched score");
     }
     await db
       .update(fetchSessions)

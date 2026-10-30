@@ -1,6 +1,6 @@
 import { db } from '@/lib/db';
 import { account, user } from '@/lib/db/schema-pg';
-import { getLogger } from '@/lib/request-logger';
+import { logger } from '@/lib/logger';
 import { waitUntil } from '@vercel/functions';
 import { and, eq } from 'drizzle-orm';
 import type { Region } from '@/lib/types';
@@ -123,7 +123,7 @@ export async function handleRecentsCommand({
     return deferredResponse;
 
   } catch (error) {
-    getLogger().error({ err: error }, 'Error handling recents command');
+    logger.error({ err: error }, 'Error handling recents command');
     return createErrorResponse(t(locale, 'recents.errorGeneric'), locale);
   }
 }

@@ -11,7 +11,7 @@
  * module supplies the catalog fields the renderer joins by songId.
  */
 
-import { getLogger } from "./request-logger";
+import { logger } from "./logger";
 import { Agent, fetch } from "undici";
 
 const CATALOG_URL =
@@ -48,9 +48,8 @@ const cache = new Map<string, { map: Map<string, CatalogEntry>; fetchedAt: numbe
 const inflight = new Map<string, Promise<Map<string, CatalogEntry>>>();
 
 async function fetchCatalog(region: string, gameVersion: number): Promise<Map<string, CatalogEntry>> {
-  const log = getLogger();
   const url = `${CATALOG_URL.replace(/\/+$/, "")}/api/v1/songs?region=${region}&gameVersion=${gameVersion}`;
-  log.info({ url }, "Fetching song catalogue");
+  logger.info({ url }, "Fetching song catalogue");
   const startTime = Date.now();
 
   const response = await fetch(url, {
@@ -66,7 +65,7 @@ async function fetchCatalog(region: string, gameVersion: number): Promise<Map<st
   for (const song of body.songs) {
     map.set(song.songId, song);
   }
-  log.info(
+  logger.info(
     { count: map.size, durationMs: Date.now() - startTime },
     "Catalogue loaded",
   );

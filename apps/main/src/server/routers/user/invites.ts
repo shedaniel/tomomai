@@ -1,6 +1,6 @@
 import { db } from '@/lib/db';
 import { invites, user } from '@/lib/db/schema-pg';
-import { getLogger } from '@/lib/request-logger';
+import { logger } from '@/lib/logger';
 import { getSignupRequirements } from '@/lib/signup';
 import { usePasskey, useTwitterOauth } from '@/lib/flags';
 import { protectedProcedure, publicProcedure, router } from '@/lib/trpc';
@@ -61,7 +61,7 @@ export const invitesRouter = router({
             )
           );
       } catch (error) {
-        getLogger().error({ err: error }, "Auto-cleanup failed");
+        logger.error({ err: error }, "Auto-cleanup failed");
       }
 
       const userInvites = await db
@@ -164,7 +164,7 @@ export const invitesRouter = router({
             )
           );
       } catch (error) {
-        getLogger().error({ err: error }, "Auto-cleanup failed");
+        logger.error({ err: error }, "Auto-cleanup failed");
       }
 
       const threeDaysAgo = new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000);
@@ -262,7 +262,7 @@ export const invitesRouter = router({
             )
           );
       } catch (error) {
-        getLogger().error({ err: error }, "Auto-cleanup failed");
+        logger.error({ err: error }, "Auto-cleanup failed");
       }
 
       return { success: true };
@@ -298,7 +298,7 @@ export const invitesRouter = router({
             )
           );
       } catch (error) {
-        getLogger().error({ err: error }, "Auto-cleanup failed");
+        logger.error({ err: error }, "Auto-cleanup failed");
       }
 
       const invite = await db

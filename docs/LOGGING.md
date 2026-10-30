@@ -69,7 +69,7 @@ Identifiers & domain:
 |------------------|--------------------------------------------------------------------|--------------------------------------------|
 | `userId`         | Internal user id.                                                  | `user`, `uid`, `user_id`                   |
 | `snapshotId`     | Public snapshot id.                                                | `snapshot`, `snap_id`                      |
-| `sessionId`      | Fetch session id.                                                  | `session`                                  |
+| `sessionId`      | Public fetch session id (`fetch_sessions.publicId`).               | `session`                                  |
 | `songId` / `masterSongId` | Numeric song row id(s).                                   | —                                          |
 | `songKey`        | Single `name@type@difficulty` key.                                | `song` (never log the whole object)        |
 | `songKeys`       | Array of song keys (array of strings = 1 field).                  | `songs` (never log the array of objects)   |
@@ -152,15 +152,15 @@ import { requestLogger } from "@/lib/request-logger";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {
-  // `log` is logger.child({ route, requestId }); pass extra request-scoped
-  // context as a third arg (e.g. { userId }). Add region/version later with
-  // `log = log.child({ region })` once you've parsed them.
+  // Opens the request's log context (route + requestId on every line, from any
+  // logger) and returns `log`, a child with the same fields. Pass extra
+  // request-scoped context as a third arg (e.g. { userId }).
   const { log, requestId } = requestLogger(request, "your-route-name");
 
   log.info("starting request");
 
   try {
-    // ... do work, using `log` everywhere instead of `logger` ...
+    // ... do work; helpers can log with plain `logger` ...
     // The x-request-id response header is set by middleware; include requestId
     // in the JSON body too so it survives logging/copy-paste of the payload.
     return NextResponse.json({ ok: true, requestId });
@@ -177,39 +177,57 @@ export async function GET(request: NextRequest) {
 Reference implementations: `src/app/api/admin/update_all/route.ts`,
 `src/app/api/admin/upload/route.ts`, `src/app/api/admin/update/route.ts`.
 
-### Why a child logger?
+### Log context: every line carries the request's fields
 
-`logger.child({ requestId, route })` returns a logger that prepends those fields to **every** log line, including ones emitted by helpers it's passed to. Pass `log` (not `logger`) into downstream functions so their logs inherit the same context — that's how a single Axiom query like `route == "export-image" AND requestId == "abc123"` reconstructs the entire request timeline.
-
-### Ambient logger for lib/service code (`getLogger()`)
-
-Lib and service code that isn't handed a `log` explicitly should use the
-**ambient request logger** instead of the root `logger`:
+`requestLogger()` opens a **log context** for the rest of the request: an
+AsyncLocalStorage scope whose fields a pino `mixin` (in `logger.ts`) adds to
+**every** line from **every** logger — the root `logger`, module-level children
+created at import, and the `console` bridge. So lib and service code just uses
+`logger`; it never needs a `log` parameter or a special getter to get `route`
+and `requestId`:
 
 ```ts
-import { getLogger } from "@/lib/request-logger";
+import { logger } from "@/lib/logger";
 
-getLogger().warn({ err }, "failed to cache image");
+logger.warn({ err }, "failed to cache image"); // carries route + requestId inside a request
 ```
 
-`requestLogger()` binds the request-scoped child logger to the current async
-execution context (AsyncLocalStorage), so `getLogger()` returns that logger —
-with `route` and `requestId` — anywhere downstream of the route, **including
-`after()` / `waitUntil()` background tasks** (Next snapshots ALS context).
-Outside a request scope (build time, scripts) it falls back to the root logger,
-so it's always safe to call.
+The context follows the async execution chain, **including `after()` /
+`waitUntil()` background tasks** (Next snapshots ALS context). Outside any
+context (build time, scripts) lines simply carry no extra fields.
 
-The ambient logger is bound automatically for:
+A context is opened automatically for:
 - any route that calls `requestLogger(request, route)`,
 - every tRPC procedure (middleware in `src/lib/trpc.ts`, `route: "trpc/<path>"`),
 - every v1 API handler (`withApiKey` in `src/lib/api/protect.ts`).
 
-Prefer explicit `log` threading when a helper is part of one request flow and
-already takes a context (e.g. the admin fetcher pipeline's `context.log`);
-use `getLogger()` for shared lib code called from many places.
+#### Adding fields for a scope (`withLogContext`)
+
+Wrap a unit of work to add fields to everything logged inside it, on top of the
+current context. Scopes nest, and the outer context is back once `fn` returns:
+
+```ts
+import { withLogContext } from "@/lib/request-logger";
+
+await withLogContext({ sessionId, userId, region }, () => fetchMaimaiData(...));
+```
+
+`startFetchServer` does exactly this, so every line of a maimai fetch can be
+found with `sessionId == "<public fetch id>"`. Use it for any long-lived unit
+of work (a fetch, a job, a background task); it is also how to open a context
+where `requestLogger()` can't reach, as the tRPC middleware does.
+
+#### Child loggers are for local fields
+
+`log.child({ version, difficulty })` is still the way to add fields to a few
+lines in one place (the admin fetcher pipeline threads `context.log` like
+this). The mixin skips keys a logger already binds, and fields passed at the
+call site win over the context, so nothing is logged twice.
 
 > `request-logger.ts` imports `node:async_hooks`, so it is **server-only** —
 > never import it from client components or shared client/server modules.
+> `logger.ts` itself stays edge-safe: it only reads the context store that
+> `request-logger.ts` publishes on `globalThis`.
 
 ## Levels
 
