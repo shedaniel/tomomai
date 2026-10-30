@@ -22,9 +22,11 @@ route params (`day`, `beforeDate`). `route` selects the handler:
 ## Run
 
 ```sh
-cp .env.example .env   # set RENDER_TOKEN_SECRET (must match apps/main), POSTGRES_URL, PUBLIC_DIR
+cp .env.example .env.local   # set RENDER_TOKEN_SECRET (must match apps/main), CATALOG_URL, NEXT_PUBLIC_R2_URL
 pnpm --filter @tomomai/render dev
 ```
+
+`make env` at the repo root generates `.env.local` for the local docker stack.
 
 This app **owns its own** `/res` assets under `public/res` — a curated ~35MB
 subset (only the image dirs + 5 `FontLibrary.use()` fonts skia actually reads),
@@ -43,7 +45,7 @@ docker build -f apps/render/Dockerfile -t tomomai-render .   # build from repo r
 ```
 
 Run on any cheap-egress host (Fly / Railway / Cloud Run / Hetzner). Long-lived
-process, so the in-memory decoded-image cache and DB pool stay warm across
+process, so the in-memory decoded-image cache and catalogue stay warm across
 requests (unlike Vercel lambdas).
 
 ## Notes / debt
