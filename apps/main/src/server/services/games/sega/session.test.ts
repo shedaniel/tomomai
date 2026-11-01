@@ -41,6 +41,8 @@ let imageRejection: "404" | "empty";
 let locked: boolean;
 let redemptionAttempts: number;
 let pageRequests: number;
+// SEGA may reset the session cookie when it turns a request away.
+let rejectionCookie: string | null;
 
 function handle(req: IncomingMessage, res: ServerResponse) {
   const socket = req.socket as NetSocket;
@@ -83,7 +85,7 @@ function handle(req: IncomingMessage, res: ServerResponse) {
   const cookieId = Number(req.headers.cookie?.match(/userId=(\d+)/)?.[1]);
   const valid = netSession !== null && cookieId === netSession.id && socket.network === netSession.network;
   const reply = () => {
-    if (!valid) res.writeHead(302, { Location: "/maimai-mobile/error/" }).end();
+    if (!valid) res.writeHead(302, { Location: "/maimai-mobile/error/", ...(rejectionCookie ? { "Set-Cookie": [rejectionCookie] } : {}) }).end();
     else if (url === "/maimai-mobile/missing/") res.writeHead(404).end("not found");
     else res.writeHead(200).end(`ok ${url}`);
   };
@@ -103,6 +105,7 @@ beforeEach(async () => {
   locked = false;
   redemptionAttempts = 0;
   pageRequests = 0;
+  rejectionCookie = null;
   server = createServer(handle);
   server.on("connection", (socket: NetSocket) => {
     socket.id = connectionCount;
@@ -148,6 +151,19 @@ describe("game site sessions", () => {
     expect(redemptions).toBe(1);
     await settle();
     expect(openSockets.size).toBe(1);
+    releaseGameSiteSession(session);
+  });
+
+  it("keeps the session's cookies when a rejected helper's response tries to reset them", async () => {
+    networks = ["home", "away", "away", "away"];
+    rejectionCookie = "userId=0; path=/";
+    const session = await open();
+
+    const pages = await Promise.all(Array.from({ length: 12 }, (_, i) => page(session, `page${i}/`)));
+
+    expect(pages).toEqual(Array.from({ length: 12 }, (_, i) => `ok /maimai-mobile/page${i}/`));
+    expect(redemptions).toBe(1);
+    expect(session.cookies).toBe("userId=1; _t=t");
     releaseGameSiteSession(session);
   });
 

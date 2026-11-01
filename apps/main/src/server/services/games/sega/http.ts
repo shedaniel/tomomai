@@ -25,6 +25,12 @@ export function mergeCookies(current: string, incoming: string): string {
   return [...cookies].map(([name, value]) => `${name}=${value}`).join("; ");
 }
 
+/** The cookies in `after` that are new or changed since `before`. */
+function changedCookies(before: string, after: string): string {
+  const previous = new Map(before.split(";").map(cookie => cookie.trim()).filter(Boolean).map(cookie => [cookie.split("=")[0], cookie]));
+  return after.split(";").map(cookie => cookie.trim()).filter(cookie => cookie && previous.get(cookie.split("=")[0]) !== cookie).join("; ");
+}
+
 export function cookieValue(cookies: string, name: string): string | undefined {
   const prefix = `${name}=`;
   return cookies.split(";").map(value => value.trim()).find(value => value.startsWith(prefix))?.slice(prefix.length);
@@ -316,9 +322,12 @@ async function sessionRequest(session: GameSiteSession, connections: SessionConn
     const via = agent === connections.primary ? "primary" : route === "throwaway" ? "throwaway" : "helper";
     const isLastAttempt = attempt >= MAX_ATTEMPTS;
 
+    // A rejected response (an error page, another network's backend) must not change the session's cookies.
+    const referenceCookies = session.cookies;
+    const jar = { cookies: referenceCookies };
     let result: SiteResult;
     try {
-      result = await fetchSite(game, region, url, session, referer, init, agent);
+      result = await fetchSite(game, region, url, jar, referer, init, agent);
     } catch (error) {
       if (error instanceof GameSiteLockedError) connections.locked ??= error;
       if (connections.locked) throw connections.locked;
@@ -331,7 +340,10 @@ async function sessionRequest(session: GameSiteSession, connections: SessionConn
       if (via === "throwaway") void agent.close();
     }
 
-    if (!isRejected(game, region, result, kind)) return result;
+    if (!isRejected(game, region, result, kind)) {
+      if (via !== "throwaway") session.cookies = mergeCookies(session.cookies, changedCookies(referenceCookies, jar.cookies));
+      return result;
+    }
 
     const reason = describeSegaError(result.body.toString());
     const size = result.body.length;
