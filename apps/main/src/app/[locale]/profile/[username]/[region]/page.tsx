@@ -72,7 +72,7 @@ export async function generateMetadata({ params }: RegionProfilePageProps): Prom
   }
 
   try {
-    const { snapshotData } = await fetchPublicGameProfile(game.id, username, region);
+    const { profile, snapshotData } = await fetchPublicGameProfile(game.id, username, region);
     return buildPageMetadata({
       brand: game.brand,
       locale,
@@ -80,6 +80,7 @@ export async function generateMetadata({ params }: RegionProfilePageProps): Prom
       ...await describeProfile({ game, username, region, snapshot: snapshotData?.snapshot }),
       ogType: "profile",
       image: "route",
+      ...(profile.profileShowInSearch ? {} : { noindex: true }),
     });
   } catch (error) {
     if (error instanceof TRPCError && error.code === "NOT_FOUND") {

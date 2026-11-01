@@ -9,6 +9,10 @@ import { getTranslations } from "next-intl/server";
 import { getLocale, setStaticLocale } from "@/i18n/locale-server";
 import { buildPageMetadata } from "@/lib/seo";
 import { safeDecodeURIComponent } from "@/lib/utils";
+import { cache } from "react";
+import type { CanonicalGameId } from "@/lib/games/ids";
+
+const findProfile = cache((game: CanonicalGameId, username: string) => resolvePublicUserByUsername(game, username));
 
 // This route looks up the user's main region from the DB and redirects to
 // /profile/[username]/[region]. It can never serve static HTML (the redirect
@@ -33,7 +37,11 @@ export async function generateMetadata({ params }: ProfilePageProps): Promise<Me
     getLocale(),
   ]);
 
-  const { brand } = getCurrentGame();
+  const game = getCurrentGame();
+  const { brand } = game;
+  const listed = isPlayerAvailable(game)
+    ? await findProfile(game.id, username).then(profile => profile.profileShowInSearch, () => true)
+    : true;
   // Crawlers that do not follow the redirect still get the profile's title and description. The image belongs
   // to the regional page, whose region this route only learns from the database.
   return buildPageMetadata({
@@ -44,6 +52,7 @@ export async function generateMetadata({ params }: ProfilePageProps): Promise<Me
     description: t("description", { username, game: brand.displayName, brandName: brand.productName }),
     ogType: "profile",
     image: "none",
+    ...(listed ? {} : { noindex: true }),
   });
 }
 
@@ -55,7 +64,7 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
     // Get the user's profile to find their main region
     const game = getCurrentGame();
     if (!isPlayerAvailable(game)) notFound();
-    const profileData = await resolvePublicUserByUsername(game.id, safeDecodeURIComponent(username));
+    const profileData = await findProfile(game.id, safeDecodeURIComponent(username));
     const region = getGameRegion(game, profileData.profileMainRegion);
 
     // Redirect to the specific region page using the user's main region

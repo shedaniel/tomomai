@@ -17,6 +17,10 @@ const privacyColumns = {
   profileShowEvents: user.profileShowEvents,
 };
 
+/**
+ * A published profile, or NOT_FOUND. An unlisted profile (`profileShowInSearch` off) is still served; it is
+ * only kept out of the sitemap, search engines and in-site search.
+ */
 export async function resolvePublicUserByUsername(game: CanonicalGameId, username: string) {
   const reserved = await GAME_SERVER_MODULES[game].reserved?.user(username);
   if (reserved) return reserved;
@@ -51,18 +55,12 @@ export async function resolvePublicUserByUsername(game: CanonicalGameId, usernam
     });
   }
 
-  if (!userData.profileShowInSearch) {
-    throw new TRPCError({
-      code: "NOT_FOUND",
-      message: "Profile not accessible",
-    });
-  }
 
   return userData;
 }
 
 /**
- * A snapshot a visitor may open `view` of: its owner publishes a listed profile, like
+ * A snapshot a visitor may open `view` of: its owner publishes their profile, like
  * resolvePublicUserByUsername requires, and shares that view, and the game offers `capability`
  * in the snapshot's region. A hidden view is NOT_FOUND, like a missing snapshot. Callers read
  * the snapshot's own region, never one they are sent.
@@ -87,7 +85,6 @@ export async function resolvePublicSnapshotAccess(
       eq(userSnapshots.game, game),
       eq(userSnapshots.publicId, snapshotPublicId),
       eq(user.publishProfile, true),
-      eq(user.profileShowInSearch, true),
     ))
     .limit(1);
 
