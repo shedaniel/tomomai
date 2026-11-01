@@ -1682,14 +1682,21 @@
       "recent": "最近",
       "songs": "歌曲",
       "pages": "页面",
-      "actions": "操作"
+      "actions": "操作",
+      "players": "玩家",
+      "events": "活动",
+      "posts": "更新日志",
+      "docs": "开发者文档"
     },
     "hints": {
       "navigate": "选择",
       "open": "打开",
       "close": "关闭",
       "openPage": "按 Enter 打开",
-      "runAction": "按 Enter 执行"
+      "runAction": "按 Enter 执行",
+      "players": "玩家",
+      "actions": "操作",
+      "openProfile": "按 Enter 打开主页"
     },
     "actions": {
       "signIn": "登录",
@@ -1698,7 +1705,17 @@
       "language": "切换语言为{language}",
       "updateToken": "更新令牌",
       "fetch": "导入新数据",
-      "switchRegion": "切换地区为{region}"
-    }
+      "switchRegion": "切换地区为{region}",
+      "copyProfileLink": "复制我的主页链接",
+      "copiedProfileLink": "已复制主页链接"
+    },
+    "pages": {
+      "myProfile": "我的主页"
+    },
+    "preview": {
+      "yourScores": "你的最佳成绩",
+      "rating": "Rating {rating}"
+    },
+    "playersHint": "输入用户名或游戏内名称来寻找玩家"
   }
 }

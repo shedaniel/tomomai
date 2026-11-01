@@ -1410,14 +1410,21 @@
       "recent": "최근",
       "songs": "곡",
       "pages": "페이지",
-      "actions": "작업"
+      "actions": "작업",
+      "players": "플레이어",
+      "events": "이벤트",
+      "posts": "업데이트 기록",
+      "docs": "개발자 문서"
     },
     "hints": {
       "navigate": "이동",
       "open": "열기",
       "close": "닫기",
       "openPage": "Enter를 눌러 열기",
-      "runAction": "Enter를 눌러 실행"
+      "runAction": "Enter를 눌러 실행",
+      "players": "플레이어",
+      "actions": "작업",
+      "openProfile": "Enter를 눌러 프로필 열기"
     },
     "actions": {
       "signIn": "로그인",
@@ -1426,7 +1433,17 @@
       "language": "언어를 {language}(으)로 변경",
       "updateToken": "토큰 업데이트",
       "fetch": "새 데이터 가져오기",
-      "switchRegion": "지역을 {region}(으)로 변경"
-    }
+      "switchRegion": "지역을 {region}(으)로 변경",
+      "copyProfileLink": "내 프로필 링크 복사",
+      "copiedProfileLink": "프로필 링크를 복사했습니다"
+    },
+    "pages": {
+      "myProfile": "내 프로필"
+    },
+    "preview": {
+      "yourScores": "내 최고 점수",
+      "rating": "Rating {rating}"
+    },
+    "playersHint": "사용자 이름이나 게임 내 이름을 입력해 플레이어 찾기"
   }
 }

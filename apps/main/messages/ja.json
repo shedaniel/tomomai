@@ -1682,14 +1682,21 @@
       "recent": "最近",
       "songs": "曲",
       "pages": "ページ",
-      "actions": "操作"
+      "actions": "操作",
+      "players": "プレイヤー",
+      "events": "イベント",
+      "posts": "更新履歴",
+      "docs": "開発者向けドキュメント"
     },
     "hints": {
       "navigate": "移動",
       "open": "開く",
       "close": "閉じる",
       "openPage": "Enterで開く",
-      "runAction": "Enterで実行"
+      "runAction": "Enterで実行",
+      "players": "プレイヤー",
+      "actions": "操作",
+      "openProfile": "Enterでプロフィールを開く"
     },
     "actions": {
       "signIn": "ログイン",
@@ -1698,7 +1705,17 @@
       "language": "言語を{language}に切り替え",
       "updateToken": "トークンを更新",
       "fetch": "新しいデータを取得",
-      "switchRegion": "地域を{region}に切り替え"
-    }
+      "switchRegion": "地域を{region}に切り替え",
+      "copyProfileLink": "プロフィールのリンクをコピー",
+      "copiedProfileLink": "プロフィールのリンクをコピーしました"
+    },
+    "pages": {
+      "myProfile": "マイプロフィール"
+    },
+    "preview": {
+      "yourScores": "あなたのベストスコア",
+      "rating": "Rating {rating}"
+    },
+    "playersHint": "ユーザー名またはプレイヤー名を入力してプレイヤーを探す"
   }
 }

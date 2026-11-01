@@ -1682,14 +1682,21 @@
       "recent": "Recent",
       "songs": "Songs",
       "pages": "Pages",
-      "actions": "Actions"
+      "actions": "Actions",
+      "players": "Players",
+      "events": "Events",
+      "posts": "Changelog",
+      "docs": "Developer docs"
     },
     "hints": {
       "navigate": "Navigate",
       "open": "Open",
       "close": "Close",
       "openPage": "Press Enter to open",
-      "runAction": "Press Enter to run"
+      "runAction": "Press Enter to run",
+      "players": "players",
+      "actions": "actions",
+      "openProfile": "Press Enter to open the profile"
     },
     "actions": {
       "signIn": "Sign in",
@@ -1698,7 +1705,17 @@
       "language": "Switch language to {language}",
       "updateToken": "Update your token",
       "fetch": "Fetch new data",
-      "switchRegion": "Switch region to {region}"
-    }
+      "switchRegion": "Switch region to {region}",
+      "copyProfileLink": "Copy my profile link",
+      "copiedProfileLink": "Profile link copied"
+    },
+    "pages": {
+      "myProfile": "My profile"
+    },
+    "preview": {
+      "yourScores": "Your best scores",
+      "rating": "Rating {rating}"
+    },
+    "playersHint": "Type a username or in-game name to find players"
   }
 }

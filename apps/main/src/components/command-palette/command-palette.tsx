@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
-import { ArrowRight, CornerDownLeft, History, Music, Search, X } from "lucide-react";
+import { ArrowRight, AtSign, BookOpen, Code, CornerDownLeft, FileText, History, Link2, Music, Search, User, X } from "lucide-react";
 import { createSearchIndex, parseSearchQuery, searchIndex, type SearchField } from "@tomomai/utils/search";
 import {
   AnimatedDialog, AnimatedDialogContent, Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList,
@@ -15,7 +15,13 @@ import { ChartTypeBadge } from "@/components/games/chart-type-badge";
 import { ThemeDialog } from "@/components/theme-dialog";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { codeOf } from "@/lib/games/codes";
-import { getGameDifficulty } from "@/lib/games/presentation";
+import { formatGameRating, formatGameScore, getGameDifficulty, getGrade } from "@/lib/games/presentation";
+import { supportsGameFeature } from "@/lib/games/frontend";
+import { GAME_UI } from "@/components/games/registry";
+import { useLocale } from "@tomomai/i18n/client";
+import { useSession } from "@/lib/auth-client";
+import { toast } from "sonner";
+import { resolveBaseUrl } from "@/lib/base-url";
 import { getVersion } from "@/lib/games/versions";
 import { trpc } from "@/lib/trpc-client";
 import { catalogSongFields } from "@/lib/search/song-search";
@@ -55,9 +61,25 @@ function recentItem(recent: RecentItem): PaletteItem {
     title: recent.title,
     subtitle: recent.subtitle,
     cover: recent.cover,
-    icon: recent.kind === "song" ? Music : History,
+    icon: recent.kind === "song" ? Music : recent.kind === "player" ? User : History,
     href: recent.href,
   };
+}
+
+/** `@name` searches players only and `>name` actions only. */
+function parseScope(query: string): { scope: "all" | "players" | "actions"; text: string } {
+  if (query.startsWith("@")) return { scope: "players", text: query.slice(1) };
+  if (query.startsWith(">")) return { scope: "actions", text: query.slice(1) };
+  return { scope: "all", text: query };
+}
+
+function useDebouncedValue<T>(value: T, delayMs: number): T {
+  const [debounced, setDebounced] = useState(value);
+  useEffect(() => {
+    const timer = setTimeout(() => setDebounced(value), delayMs);
+    return () => clearTimeout(timer);
+  }, [value, delayMs]);
+  return debounced;
 }
 
 function isMacPlatform(): boolean {
@@ -92,17 +114,76 @@ export function CommandPalette() {
     staleTime: 3600000,
     refetchOnWindowFocus: false,
   });
+  const { locale } = useLocale();
+  const { data: documents } = trpc.user.getSearchDocuments.useQuery({ game: game.id, locale }, {
+    enabled: open,
+    staleTime: 3600000,
+    refetchOnWindowFocus: false,
+  });
+  const { data: session } = useSession();
+  const { data: userData } = trpc.user.getUserData.useQuery(undefined, { enabled: open && !!session?.user, staleTime: 60000 });
+
+  const { scope, text: scopedQuery } = parseScope(query.trimStart());
+  const playerQuery = useDebouncedValue(scopedQuery.trim(), 150);
+  const searchesPlayers = open && scope !== "actions" && playerQuery.length >= 2 && supportsGameFeature(game, "scores");
+  const { data: players, isFetching: playersLoading } = trpc.user.searchPlayers.useQuery({ game: game.id, query: playerQuery }, {
+    enabled: searchesPlayers,
+    staleTime: 30000,
+    placeholderData: previous => previous,
+    retry: false,
+  });
+
+  const [gameItems, setGameItems] = useState<PaletteItem[]>([]);
+  const GameSearchSources = GAME_UI[game.id].SearchSources;
 
   const openTheme = useCallback(() => setThemeOpen(true), []);
-  const pages = usePageItems();
-  const actions = useActionItems({ openTheme });
+  const basePages = usePageItems();
+  const baseActions = useActionItems({ openTheme });
+  const username = userData?.username ?? null;
+  const pages = useMemo<PaletteItem[]>(() => username
+    ? [{ id: "page:my-profile", group: "pages", title: t("pages.myProfile"), subtitle: `@${username}`, icon: User, href: `/profile/${username}`, keywords: ["profile", "me", username], remember: true }, ...basePages]
+    : basePages, [basePages, username, t]);
+  const actions = useMemo<PaletteItem[]>(() => username && userData?.publishProfile
+    ? [...baseActions, {
+      id: "action:copy-profile",
+      group: "actions",
+      title: t("actions.copyProfileLink"),
+      icon: Link2,
+      keywords: ["share", "profile", "link", "url"],
+      perform: () => {
+        void navigator.clipboard.writeText(`${resolveBaseUrl()}/${locale}/profile/${username}`)
+          .then(() => toast.success(t("actions.copiedProfileLink")), () => undefined);
+      },
+    }]
+    : baseActions, [baseActions, username, userData?.publishProfile, locale, t]);
+
+  const documentItems = useMemo<PaletteItem[]>(() => documents ? [
+    ...documents.posts.map(post => ({ id: `post:${post.href}`, group: "posts" as const, title: post.title, subtitle: [post.date, post.summary].filter(Boolean).join(" · "), icon: FileText, href: post.href, remember: true, searchOnly: true })),
+    ...documents.guides.map(guide => ({ id: `doc:${guide.href}`, group: "docs" as const, title: guide.title, subtitle: guide.summary ?? undefined, icon: BookOpen, href: guide.href, remember: true, searchOnly: true })),
+    ...documents.endpoints.map(endpoint => ({ id: `doc:${endpoint.href}`, group: "docs" as const, title: endpoint.title, subtitle: endpoint.summary, icon: Code, href: endpoint.href, keywords: ["endpoint"], remember: true, searchOnly: true })),
+  ] : [], [documents]);
+
+  const playerItems = useMemo<PaletteItem[]>(() => (searchesPlayers ? players ?? [] : []).map(player => ({
+    id: `player:${player.username}`,
+    group: "players",
+    title: player.displayName ?? player.username,
+    subtitle: [`@${player.username}`, player.rating !== null ? formatGameRating(game.id, player.rating) : null].filter(Boolean).join(" · "),
+    cover: player.iconUrl ?? undefined,
+    icon: AtSign,
+    href: `/profile/${player.username}`,
+    keywords: [player.username],
+    player: { username: player.username, displayName: player.displayName, rating: player.rating, image: player.iconUrl ?? player.image },
+    remember: true,
+  })), [players, searchesPlayers, game.id]);
+
   const songFields = useMemo(() => catalogSongFields(game.id), [game.id]);
   const songIndex = useMemo(() => catalog ? createSearchIndex(catalog, songFields) : null, [catalog, songFields]);
+  const pageIndex = useMemo(() => createSearchIndex([...pages, ...gameItems, ...documentItems], ITEM_FIELDS), [pages, gameItems, documentItems]);
 
   const { sections, songMatchCount } = useMemo((): { sections: Section[]; songMatchCount: number } => {
-    const tokens = parseSearchQuery(query);
+    const tokens = parseSearchQuery(scopedQuery);
     const allActions = [...contextualActions, ...actions];
-    if (tokens.length === 0) {
+    if (tokens.length === 0 && scope === "all") {
       return {
         songMatchCount: 0,
         sections: [
@@ -113,19 +194,34 @@ export function CommandPalette() {
       };
     }
 
+    const actionHits = scope === "players" ? [] : searchIndex(createSearchIndex(allActions, ITEM_FIELDS), tokens);
+    if (scope === "actions") {
+      const items = tokens.length === 0 ? allActions : actionHits.map(hit => hit.item);
+      return { songMatchCount: 0, sections: items.length > 0 ? [{ group: "actions", items }] : [] };
+    }
+    if (scope === "players") {
+      return { songMatchCount: 0, sections: playerItems.length > 0 ? [{ group: "players", items: playerItems }] : [] };
+    }
+
     const songHits = songIndex ? searchIndex(songIndex, tokens) : [];
-    const pageHits = searchIndex(createSearchIndex(pages, ITEM_FIELDS), tokens);
-    const actionHits = searchIndex(createSearchIndex(allActions, ITEM_FIELDS), tokens);
-    // The group with the best match leads, so "settings" puts pages first and a song title puts songs first.
+    const otherHits = searchIndex(pageIndex, tokens);
+    // Players come ranked by the server; locally they score as a strong match so an exact username can lead.
+    const playerScore = playerItems.length > 0 ? Math.max(...searchIndex(createSearchIndex(playerItems, ITEM_FIELDS), tokens).map(hit => hit.score), 1) : 0;
+    const byGroup = (group: PaletteGroup) => otherHits.filter(hit => hit.item.group === group);
     const ranked = [
-      { group: "songs" as const, hits: songHits.slice(0, SONG_RESULTS), items: songHits.slice(0, SONG_RESULTS).map(hit => songItem(hit.item)) },
-      { group: "pages" as const, hits: pageHits, items: pageHits.map(hit => hit.item) },
-      { group: "actions" as const, hits: actionHits, items: actionHits.map(hit => hit.item) },
+      { group: "songs" as const, best: songHits[0]?.score ?? 0, items: songHits.slice(0, SONG_RESULTS).map(hit => songItem(hit.item)) },
+      { group: "players" as const, best: playerScore, items: playerItems },
+      ...(["pages", "events", "posts", "docs"] as const).map(group => {
+        const hits = byGroup(group);
+        return { group, best: hits[0]?.score ?? 0, items: hits.slice(0, group === "pages" ? 8 : 5).map(hit => hit.item) };
+      }),
+      { group: "actions" as const, best: actionHits[0]?.score ?? 0, items: actionHits.map(hit => hit.item) },
     ]
       .filter(section => section.items.length > 0)
-      .sort((a, b) => (b.hits[0]?.score ?? 0) - (a.hits[0]?.score ?? 0));
+      // The group with the best match leads, so "settings" puts pages first and a song title puts songs first.
+      .sort((a, b) => b.best - a.best);
     return { songMatchCount: songHits.length, sections: ranked.map(({ group, items }) => ({ group, items })) };
-  }, [query, songIndex, pages, actions, contextualActions, recents]);
+  }, [scopedQuery, scope, songIndex, pageIndex, playerItems, pages, actions, contextualActions, recents]);
 
   const allItems = useMemo(() => sections.flatMap(section => section.items), [sections]);
   const selectedItem = allItems.find(item => item.id === selected) ?? allItems[0];
@@ -135,7 +231,7 @@ export function CommandPalette() {
     if (item.remember && item.href) {
       setRecents(rememberRecent(game.id, {
         id: item.id,
-        kind: item.song ? "song" : "page",
+        kind: item.song ? "song" : item.player ? "player" : "page",
         title: item.title,
         subtitle: item.subtitle,
         cover: item.cover,
@@ -146,8 +242,8 @@ export function CommandPalette() {
     else if (item.href) router.push(item.href);
   }, [setOpen, game.id, router]);
 
-  const showAll = songMatchCount > SONG_RESULTS && query.trim()
-    ? { href: `/db/songs?q=${encodeURIComponent(query.trim())}`, count: songMatchCount }
+  const showAll = songMatchCount > SONG_RESULTS && scopedQuery.trim()
+    ? { href: `/db/songs?q=${encodeURIComponent(scopedQuery.trim())}`, count: songMatchCount }
     : null;
 
   const body = (
@@ -167,7 +263,7 @@ export function CommandPalette() {
       <div className="flex min-h-0 flex-1">
         <CommandList className={cn("min-h-0 flex-1 py-1", isMobile ? "max-h-none" : "max-h-[min(60vh,28rem)]")}>
           <CommandEmpty>
-            {catalogLoading && query ? t("loadingCatalog") : t("empty", { query })}
+            {(catalogLoading || (searchesPlayers && playersLoading)) && query ? t("loadingCatalog") : scope === "players" && playerQuery.length < 2 ? t("playersHint") : t("empty", { query: scopedQuery })}
           </CommandEmpty>
           {sections.map(section => (
             <CommandGroup key={section.group} heading={(
@@ -197,11 +293,13 @@ export function CommandPalette() {
         </CommandList>
         {!isMobile && selectedItem && <Preview item={selectedItem} />}
       </div>
+      {GameSearchSources && <GameSearchSources enabled={open} onItems={setGameItems} />}
       {!isMobile && (
         <div className="flex h-10 shrink-0 items-center gap-4 border-t border-border/60 px-4 text-xs text-muted-foreground">
           <span className="flex items-center gap-1.5"><Kbd>↑</Kbd><Kbd>↓</Kbd>{t("hints.navigate")}</span>
           <span className="flex items-center gap-1.5"><Kbd><CornerDownLeft className="size-3" /></Kbd>{t("hints.open")}</span>
           <span className="flex items-center gap-1.5"><Kbd>esc</Kbd>{t("hints.close")}</span>
+          <span className="ml-auto flex items-center gap-1.5"><Kbd>@</Kbd>{t("hints.players")}<Kbd>&gt;</Kbd>{t("hints.actions")}</span>
         </div>
       )}
     </Command>
@@ -262,11 +360,27 @@ function PaletteRow({ item, onSelect }: { item: PaletteItem; onSelect: () => voi
   );
 }
 
+function useSongScores(song: UniqueSong | undefined) {
+  const game = useGame();
+  const { data: session } = useSession();
+  const { data } = trpc.user.getSongScores.useQuery(
+    song ? { game: game.id, songName: song.songName, artist: song.artist, type: song.type, parentIds: song.parentIds } : { game: game.id, songName: "", type: "" },
+    { enabled: !!song && !!session?.user && supportsGameFeature(game, "scores"), staleTime: 60000, retry: false },
+  );
+  // The region the player has scored the most charts in.
+  return useMemo(() => {
+    const regions = Object.values(data?.userScores ?? {});
+    return regions.sort((a, b) => Object.keys(b).length - Object.keys(a).length)[0] ?? null;
+  }, [data]);
+}
+
 function Preview({ item }: { item: PaletteItem }) {
   const t = useTranslations("commandPalette");
   const game = useGame().id;
   const Icon = item.icon;
   const song = item.song;
+  const player = item.player;
+  const scores = useSongScores(song);
   return (
     <aside className="hidden w-72 shrink-0 flex-col gap-4 overflow-y-auto border-l border-border/60 p-4 md:flex" aria-live="polite">
       {song ? (
@@ -283,16 +397,40 @@ function Preview({ item }: { item: PaletteItem }) {
           <div className="grid gap-1.5">
             {song.difficulties.map(chart => {
               const difficulty = getGameDifficulty(game, codeOf(game, "difficulty", chart.difficulty));
+              const score = scores?.[chart.difficulty];
               return (
                 <div key={chart.difficulty} className="flex items-center gap-2 text-sm">
                   <span className={cn("w-20 shrink-0 truncate text-xs font-semibold", difficulty.classes.text)}>{difficulty.label}</span>
                   <span className="font-semibold tabular-nums">{chart.level}</span>
                   {chart.levelPrecise > 0 && <span className="text-xs tabular-nums text-muted-foreground">{(chart.levelPrecise / 10).toFixed(1)}</span>}
+                  {score && (
+                    <span className="ml-auto text-right text-xs tabular-nums">
+                      <span className="font-semibold">{getGrade(game, score.scoreValue)}</span>{" "}
+                      <span className="text-muted-foreground">{formatGameScore(game, score.scoreValue, { precision: "compact" })}</span>
+                    </span>
+                  )}
                 </div>
               );
             })}
           </div>
+          {scores && <p className="text-xs text-muted-foreground">{t("preview.yourScores")}</p>}
         </>
+      ) : player ? (
+        <div className="flex flex-1 flex-col items-center justify-center gap-3 text-center">
+          {player.image ? (
+            <CoverImage coverUrl={player.image} alt="" width={96} height={96} className="size-24 rounded-full object-cover shadow-sm" />
+          ) : (
+            <span className="grid size-24 place-items-center rounded-full bg-muted/70 text-muted-foreground"><User className="size-10" /></span>
+          )}
+          <div className="space-y-1">
+            <p className="text-base font-semibold">{player.displayName ?? player.username}</p>
+            <p className="text-sm text-muted-foreground">@{player.username}</p>
+          </div>
+          {player.rating !== null && (
+            <p className="rounded-full bg-muted/70 px-3 py-1 text-sm font-semibold tabular-nums">{t("preview.rating", { rating: formatGameRating(game, player.rating) })}</p>
+          )}
+          <p className="text-xs text-muted-foreground">{t("hints.openProfile")}</p>
+        </div>
       ) : (
         <div className="flex flex-1 flex-col items-center justify-center gap-3 text-center">
           {Icon && <span className="grid size-14 place-items-center rounded-2xl bg-muted/70 text-muted-foreground"><Icon className="size-7" /></span>}

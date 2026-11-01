@@ -1,7 +1,7 @@
 import type { LucideIcon } from "lucide-react";
 import type { UniqueSong } from "@/components/db/songs/types";
 
-export type PaletteGroup = "recent" | "songs" | "pages" | "actions";
+export type PaletteGroup = "recent" | "songs" | "players" | "events" | "pages" | "posts" | "docs" | "actions";
 
 /** One result of the command palette: a place to go or something to do. */
 export type PaletteItem = {
@@ -16,8 +16,10 @@ export type PaletteItem = {
   keywords?: readonly string[];
   href?: string;
   perform?: () => void;
-  /** A song shows its charts in the preview pane. */
+  /** A song shows its charts, and the viewer's scores on them, in the preview pane. */
   song?: UniqueSong;
+  /** A player shows their in-game name and rating in the preview pane. */
+  player?: { username: string; displayName: string | null; rating: number | null; image: string | null };
   /** Kept in the recent list after it is opened. */
   remember?: boolean;
   /** Left out of the suggestions shown before anything is typed, such as one item per language. */
@@ -25,4 +27,4 @@ export type PaletteItem = {
 };
 
 /** What the recent list stores of an item, so it can be shown before the catalog loads. */
-export type RecentItem = Pick<PaletteItem, "id" | "title" | "subtitle" | "cover" | "href"> & { kind: "song" | "page" };
+export type RecentItem = Pick<PaletteItem, "id" | "title" | "subtitle" | "cover" | "href"> & { kind: "song" | "page" | "player" };

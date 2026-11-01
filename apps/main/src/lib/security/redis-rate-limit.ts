@@ -51,6 +51,15 @@ export const profileReportLimiter = new RedisRateLimiter({
   logger,
 });
 
+/** Player search in the command palette, per IP: generous for typing, tight enough to stop enumeration. */
+export const playerSearchLimiter = new RedisRateLimiter({
+  name: "player-search",
+  windowSeconds: 60,
+  max: 60,
+  failClosed: false,
+  logger,
+});
+
 /** Captcha challenge creation */
 export const captchaChallengeLimiter = new RedisRateLimiter({
   name: "captcha-challenge",

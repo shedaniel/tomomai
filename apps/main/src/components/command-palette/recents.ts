@@ -7,7 +7,7 @@ const storageKey = (game: CanonicalGameId) => `tomomai:command-palette:recent:${
 function isRecentItem(value: unknown): value is RecentItem {
   if (!value || typeof value !== "object") return false;
   const item = value as Record<string, unknown>;
-  return typeof item.id === "string" && typeof item.title === "string" && typeof item.href === "string" && (item.kind === "song" || item.kind === "page");
+  return typeof item.id === "string" && typeof item.title === "string" && typeof item.href === "string" && (item.kind === "song" || item.kind === "page" || item.kind === "player");
 }
 
 export function readRecents(game: CanonicalGameId): RecentItem[] {

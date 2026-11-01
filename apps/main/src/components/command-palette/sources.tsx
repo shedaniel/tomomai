@@ -74,6 +74,8 @@ export function usePageItems(): PaletteItem[] {
           subtitle: t("header.tabs.dashboard"),
           icon: tab.icon,
           href: `/?tab=${tab.id}`,
+          // Plate progress lives on the stats tab.
+          keywords: tab.id === "stats" && supportsGameFeature(game, "plates") ? ["plates"] : undefined,
           remember: true,
         });
       }

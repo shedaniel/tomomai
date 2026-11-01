@@ -10,6 +10,7 @@ import { statsRouter } from './stats';
 import { albumsRouter } from './albums';
 import { songsRouter } from './songs';
 import { recommendationsRouter } from './recommendations';
+import { searchRouter } from './search';
 import { flagsRouter } from './flags';
 import { legalRouter } from './legal';
 
@@ -68,6 +69,10 @@ export const userRouter = router({
   getSongDetails: songsRouter.getSongDetails,
   getSongScores: songsRouter.getSongScores,
   getSimpleSongDetails: songsRouter.getSimpleSongDetails,
+
+  // Search
+  searchPlayers: searchRouter.searchPlayers,
+  getSearchDocuments: searchRouter.getSearchDocuments,
 
   // Recommendations
   getRecommendations: recommendationsRouter.getRecommendations,

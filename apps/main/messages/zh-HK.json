@@ -1682,14 +1682,21 @@
       "recent": "最近",
       "songs": "歌曲",
       "pages": "頁面",
-      "actions": "操作"
+      "actions": "操作",
+      "players": "玩家",
+      "events": "活動",
+      "posts": "更新紀錄",
+      "docs": "開發者文件"
     },
     "hints": {
       "navigate": "選擇",
       "open": "開啟",
       "close": "關閉",
       "openPage": "按 Enter 開啟",
-      "runAction": "按 Enter 執行"
+      "runAction": "按 Enter 執行",
+      "players": "玩家",
+      "actions": "操作",
+      "openProfile": "按 Enter 開啟個人頁面"
     },
     "actions": {
       "signIn": "登入",
@@ -1698,7 +1705,17 @@
       "language": "切換語言為{language}",
       "updateToken": "更新權杖",
       "fetch": "匯入新資料",
-      "switchRegion": "切換地區為{region}"
-    }
+      "switchRegion": "切換地區為{region}",
+      "copyProfileLink": "複製我的個人頁面連結",
+      "copiedProfileLink": "已複製個人頁面連結"
+    },
+    "pages": {
+      "myProfile": "我的個人頁面"
+    },
+    "preview": {
+      "yourScores": "你的最佳成績",
+      "rating": "Rating {rating}"
+    },
+    "playersHint": "輸入用戶名稱或遊戲內名稱來尋找玩家"
   }
 }
