@@ -1667,5 +1667,38 @@
         "description": "@shedaniel のスコアを見る"
       }
     }
+  },
+  "commandPalette": {
+    "title": "検索",
+    "description": "曲・ページ・操作を検索",
+    "button": "検索…",
+    "placeholder": "{game}の曲・ページ・操作を検索…",
+    "clear": "検索をクリア",
+    "empty": "「{query}」に一致する結果はありません",
+    "loadingCatalog": "曲を読み込み中…",
+    "clearRecent": "クリア",
+    "showAllSongs": "データベースで{count}曲すべてを表示",
+    "groups": {
+      "recent": "最近",
+      "songs": "曲",
+      "pages": "ページ",
+      "actions": "操作"
+    },
+    "hints": {
+      "navigate": "移動",
+      "open": "開く",
+      "close": "閉じる",
+      "openPage": "Enterで開く",
+      "runAction": "Enterで実行"
+    },
+    "actions": {
+      "signIn": "ログイン",
+      "signOut": "ログアウト",
+      "theme": "テーマを変更",
+      "language": "言語を{language}に切り替え",
+      "updateToken": "トークンを更新",
+      "fetch": "新しいデータを取得",
+      "switchRegion": "地域を{region}に切り替え"
+    }
   }
 }

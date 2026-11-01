@@ -94,6 +94,12 @@ export function DataContent({
 
   const [selectedTab, setSelectedTab] = useState<PlayerTabId>(getInitialTab);
 
+  // A link to another tab of the same page, such as one from the command palette, only changes the query.
+  const tabParam = searchParams.get("tab");
+  useEffect(() => {
+    if (isPlayerTabId(tabParam)) setSelectedTab(tabParam);
+  }, [tabParam]);
+
   // Update the URL via the native History API so Next.js doesn't re-fetch the
   // RSC payload and re-suspend the <Suspense> boundary that wraps DataContent
   // (which is what caused the tab+content to flash out on every tab switch).

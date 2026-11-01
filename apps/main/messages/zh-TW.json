@@ -1667,5 +1667,38 @@
         "description": "看看 @shedaniel 的成績"
       }
     }
+  },
+  "commandPalette": {
+    "title": "搜尋",
+    "description": "搜尋歌曲、頁面和操作",
+    "button": "搜尋…",
+    "placeholder": "搜尋 {game} 的歌曲、頁面和操作…",
+    "clear": "清除搜尋",
+    "empty": "找不到與「{query}」相符的結果",
+    "loadingCatalog": "正在載入歌曲……",
+    "clearRecent": "清除",
+    "showAllSongs": "在資料庫查看全部 {count} 首歌曲",
+    "groups": {
+      "recent": "最近",
+      "songs": "歌曲",
+      "pages": "頁面",
+      "actions": "操作"
+    },
+    "hints": {
+      "navigate": "選擇",
+      "open": "開啟",
+      "close": "關閉",
+      "openPage": "按 Enter 開啟",
+      "runAction": "按 Enter 執行"
+    },
+    "actions": {
+      "signIn": "登入",
+      "signOut": "登出",
+      "theme": "更換主題",
+      "language": "切換語言為{language}",
+      "updateToken": "更新權杖",
+      "fetch": "匯入新資料",
+      "switchRegion": "切換地區為{region}"
+    }
   }
 }

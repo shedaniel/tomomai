@@ -1667,5 +1667,38 @@
     "scrollToEnd": "Scroll to the end",
     "scrollHint": "Scroll to review all permissions",
     "groupCount": "{count, plural, one {# permission} other {# permissions}}"
+  },
+  "commandPalette": {
+    "title": "Search",
+    "description": "Search songs, pages and actions",
+    "button": "Search…",
+    "placeholder": "Search {game} songs, pages and actions…",
+    "clear": "Clear search",
+    "empty": "No results for “{query}”",
+    "loadingCatalog": "Loading songs…",
+    "clearRecent": "Clear",
+    "showAllSongs": "Show all {count} songs in the database",
+    "groups": {
+      "recent": "Recent",
+      "songs": "Songs",
+      "pages": "Pages",
+      "actions": "Actions"
+    },
+    "hints": {
+      "navigate": "Navigate",
+      "open": "Open",
+      "close": "Close",
+      "openPage": "Press Enter to open",
+      "runAction": "Press Enter to run"
+    },
+    "actions": {
+      "signIn": "Sign in",
+      "signOut": "Sign out",
+      "theme": "Change theme",
+      "language": "Switch language to {language}",
+      "updateToken": "Update your token",
+      "fetch": "Fetch new data",
+      "switchRegion": "Switch region to {region}"
+    }
   }
 }

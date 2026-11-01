@@ -1667,5 +1667,38 @@
         "description": "看看 @shedaniel 的成绩"
       }
     }
+  },
+  "commandPalette": {
+    "title": "搜索",
+    "description": "搜索歌曲、页面和操作",
+    "button": "搜索…",
+    "placeholder": "搜索 {game} 的歌曲、页面和操作…",
+    "clear": "清除搜索",
+    "empty": "没有与“{query}”匹配的结果",
+    "loadingCatalog": "正在加载歌曲…",
+    "clearRecent": "清除",
+    "showAllSongs": "在数据库中查看全部 {count} 首歌曲",
+    "groups": {
+      "recent": "最近",
+      "songs": "歌曲",
+      "pages": "页面",
+      "actions": "操作"
+    },
+    "hints": {
+      "navigate": "选择",
+      "open": "打开",
+      "close": "关闭",
+      "openPage": "按 Enter 打开",
+      "runAction": "按 Enter 执行"
+    },
+    "actions": {
+      "signIn": "登录",
+      "signOut": "退出登录",
+      "theme": "更换主题",
+      "language": "切换语言为{language}",
+      "updateToken": "更新令牌",
+      "fetch": "导入新数据",
+      "switchRegion": "切换地区为{region}"
+    }
   }
 }
