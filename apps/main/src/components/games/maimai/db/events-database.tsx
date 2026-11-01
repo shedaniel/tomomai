@@ -11,6 +11,7 @@ import { useGame } from "@/components/providers/game-provider";
 import { Loader2, ArrowLeft, Search, Calendar } from "lucide-react";
 import { Button } from "@tomomai/ui";
 import { Input } from "@tomomai/ui";
+import { searchItems } from "@tomomai/utils/search";
 import {
   Table,
   TableBody,
@@ -143,6 +144,8 @@ function formatDistance(distance: number): string {
 
 const STATUS_ORDER: Record<EventStatus, number> = { active: 0, upcoming: 1, ended: 2 };
 
+
+const EVENT_SEARCH_FIELDS = [{ get: (event: { name: string }) => event.name }];
 export function EventsDatabase() {
   const t = useTranslations("db.events");
   const { brand } = useGame();
@@ -164,9 +167,8 @@ export function EventsDatabase() {
   }, [events]);
 
   const filteredEvents = useMemo(() => {
-    const query = search.toLowerCase();
-    const filtered = query
-      ? eventsWithStatus.filter((e) => e.name.toLowerCase().includes(query))
+    const filtered = search.trim()
+      ? searchItems(eventsWithStatus, EVENT_SEARCH_FIELDS, search)
       : eventsWithStatus;
     return filtered.sort((a, b) => {
       const statusDiff = STATUS_ORDER[a.status] - STATUS_ORDER[b.status];

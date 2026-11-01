@@ -11,11 +11,17 @@
     "./regions": {
       "types": "./src/regions.d.ts",
       "import": "./src/regions.js"
+    },
+    "./search": {
+      "import": "./src/search.ts",
+      "types": "./src/search.ts"
     }
   },
   "main": "./src/index.ts",
   "types": "./src/index.ts",
-  "files": ["src"],
+  "files": [
+    "src"
+  ],
   "devDependencies": {
     "typescript": "^5.9.3"
   }

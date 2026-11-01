@@ -11,10 +11,12 @@ import { cn } from "@/lib/utils";
 import { LayoutGrid, LayoutList, Music, Search } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { usePathname, useRouter } from "@/i18n/navigation";
+import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@tomomai/ui/select-friendly";
 import { applyUniqueSongFilters, createUniqueSongFilterCategories, hashString } from "./songs/filter-utils";
+import { catalogSongFields, useSearch } from "@/lib/search/song-search";
 import { SongCard } from "./songs/song-card";
 import { SongRow } from "./songs/song-row";
 import { GroupMode, UniqueSong, UniqueSongFilter, UniqueSongFilterType } from "./songs/types";
@@ -38,6 +40,7 @@ export function SongsList(_: SongsListProps = {}) {
   const t = useTranslations();
   const router = useRouter();
   const pathname = usePathname();
+  const queryParam = useSearchParams().get("q");
 
   // Derive this before the catalog query so direct detail loads can skip it.
   // The component remains mounted during soft navigation, and disabling a
@@ -51,8 +54,15 @@ export function SongsList(_: SongsListProps = {}) {
   const tFilter = useMemo(() => (key: string) => t(`db.songs.filter.${key}`), [t]);
   const tGroups = useMemo(() => (key: string) => t(`db.songs.filter.groups.${key}`), [t]);
 
-  const [searchQuery, setSearchQuery] = useState("");
-  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState(queryParam ?? "");
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState(queryParam ?? "");
+
+  // The command palette's "show all results" opens this list with its query.
+  useEffect(() => {
+    if (queryParam === null) return;
+    setSearchQuery(queryParam);
+    setDebouncedSearchQuery(queryParam);
+  }, [queryParam]);
   const [searchBoxFocused, setSearchBoxFocused] = useState(false);
   const [mounted, setMounted] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -130,18 +140,18 @@ export function SongsList(_: SongsListProps = {}) {
     return allSongs && flattenedSongs ? applyUniqueSongFilters(allSongs, flattenedSongs, filters, groupMode) : null;
   }, [allSongs, flattenedSongs, filters, groupMode]);
 
+  const searchFields = useMemo(() => catalogSongFields(game.id), [game.id]);
+  const searchHits = useSearch(allFilteredSongs, searchFields, debouncedSearchQuery);
   const filteredSongs = useMemo(() => {
-    if (debouncedSearchQuery.trim()) {
-      const query = debouncedSearchQuery.toLowerCase().trim();
-      return allFilteredSongs?.filter(song =>
-        song.songName.toLowerCase().includes(query) ||
-        song.artist.toLowerCase().includes(query) ||
-        song.genre.toLowerCase().includes(query) ||
-        song.aliases?.some(alias => alias.toLowerCase().includes(query))
-      ) ?? null;
+    if (!searchHits) return allFilteredSongs;
+    const matches = searchHits.map(hit => hit.item);
+    // A chosen grouping or sort keeps its order, so only an unsorted list is ranked by relevance.
+    if (groupMode !== "none" || filters.some(filter => filter.type === "sort")) {
+      const matched = new Set(matches);
+      return allFilteredSongs?.filter(song => matched.has(song)) ?? null;
     }
-    return allFilteredSongs;
-  }, [allFilteredSongs, debouncedSearchQuery]);
+    return matches;
+  }, [allFilteredSongs, searchHits, groupMode, filters]);
 
   const [visibleCount, setVisibleCount] = useState(60);
   const visibleSongs = useMemo(() => {
