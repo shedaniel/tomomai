@@ -2,6 +2,11 @@ import { createServer, type IncomingMessage, type Server, type ServerResponse } 
 import type { AddressInfo, Socket } from "net";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+vi.mock("@/server/services/games/sega/budget", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/server/services/games/sega/budget")>()),
+  takeSiteRequest: async () => {},
+  markSiteLocked: async () => {},
+}));
 vi.mock("@/lib/logger", () => ({ logger: { warn: vi.fn(), debug: vi.fn(), info: vi.fn(), error: vi.fn() } }));
 
 // maimai DX NET INTL, served by the local model below.

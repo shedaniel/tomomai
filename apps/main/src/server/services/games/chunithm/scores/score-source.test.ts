@@ -7,6 +7,11 @@ const mocks = vi.hoisted(() => ({
   detailedRows: [] as { songId: string; playedAt: string }[],
 }));
 const proxy = await vi.hoisted(async () => (await import("@/test/pg-proxy")).createProxyDb());
+vi.mock("@/server/services/games/sega/budget", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/server/services/games/sega/budget")>()),
+  takeSiteRequest: async () => {},
+  markSiteLocked: async () => {},
+}));
 vi.mock("../login", () => ({ signInChunithm: mocks.login }));
 vi.mock("@/lib/http-agent", () => ({ agentFetch: vi.fn() }));
 vi.mock("@/lib/r2", () => ({ uploadIconToR2: mocks.upload }));

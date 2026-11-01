@@ -5,6 +5,11 @@ const mocks = vi.hoisted(() => ({
   login: vi.fn(), upload: vi.fn(), progress: vi.fn(), details: vi.fn(), albums: vi.fn(),
   log: { warn: vi.fn(), info: vi.fn(), error: vi.fn(), debug: vi.fn(), child() { return this; } },
 }));
+vi.mock("@/server/services/games/sega/budget", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/server/services/games/sega/budget")>()),
+  takeSiteRequest: async () => {},
+  markSiteLocked: async () => {},
+}));
 vi.mock("@/server/services/games/sega/login", () => ({ openSegaSession: mocks.login }));
 vi.mock("@/lib/r2", () => ({ uploadIconToR2: mocks.upload }));
 vi.mock("@/server/services/games/fetch-progress", () => ({ appendFetchState: mocks.progress }));

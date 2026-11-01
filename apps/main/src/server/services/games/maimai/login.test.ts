@@ -1,6 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({ agentFetch: vi.fn(), pinnedAgent: vi.fn(), fetch: vi.fn(), update: vi.fn(), remove: vi.fn(), save: vi.fn() }));
+vi.mock("@/server/services/games/sega/budget", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/server/services/games/sega/budget")>()),
+  takeSiteRequest: async () => {},
+  markSiteLocked: async () => {},
+}));
 vi.mock("@/lib/http-agent", () => ({ agentFetch: mocks.agentFetch, createPinnedAgent: mocks.pinnedAgent }));
 vi.mock("@/lib/logger", async (importOriginal) => ({ ...(await importOriginal<typeof import("@/lib/logger")>()), logger: ({
   info: vi.fn(), debug: vi.fn(), warn: vi.fn(), error: vi.fn(), child() { return this; },
