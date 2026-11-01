@@ -8,10 +8,11 @@ const mocks = vi.hoisted(() => {
 });
 vi.mock("@/server/services/catalog/publication", () => ({ publishSongCatalog: mocks.publish }));
 vi.mock("@/server/services/catalog/revalidation", () => ({ revalidateCatalog: mocks.revalidate }));
-vi.mock("@/lib/logger", () => ({ flushLogger: mocks.flush }));
+vi.mock("@/lib/logger", () => ({ flushLogger: mocks.flush, logger: mocks.log }));
 vi.mock("@/lib/request-logger", () => ({
-  requestLogger: () => ({ log: mocks.log, requestId: "publish-test" }),
-  runWithLogger: (_log: unknown, run: () => unknown) => run(),
+  withRequestLogContext: (_route: string, handler: (request: unknown, context: object) => unknown) =>
+    (request: unknown, context: object) => handler(request, { ...context, requestId: "publish-test" }),
+  withLogContext: (_fields: object, run: () => unknown) => run(),
 }));
 
 import { POST } from "./route";

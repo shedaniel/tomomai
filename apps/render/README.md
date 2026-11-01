@@ -24,10 +24,11 @@ breakdown) and `daily-plays`, drawn by `src/lib/chunithm/render-image.ts`.
 ## Run
 
 ```sh
-cp .env.example .env   # set RENDER_TOKEN_SECRET (must match apps/main), CATALOG_URL, PUBLIC_DIR
+cp .env.example .env.local   # set RENDER_TOKEN_SECRET (must match apps/main), CATALOG_URL, NEXT_PUBLIC_R2_URL, PUBLIC_DIR
 pnpm --filter @tomomai/render dev
 ```
 
+`make env` at the repo root generates `.env.local` for the local docker stack.
 `pnpm --filter @tomomai/render test` runs the `node:test` suites through tsx.
 
 This app **owns its own** `/res` assets under `public/res` — a curated ~35MB

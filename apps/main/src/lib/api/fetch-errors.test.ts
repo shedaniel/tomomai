@@ -2,7 +2,7 @@ import { getHTTPStatusCodeFromError } from "@trpc/server/http";
 import { beforeEach, expect, it, vi } from "vitest";
 
 const log = vi.hoisted(() => ({ error: vi.fn() }));
-vi.mock("@/lib/request-logger", () => ({ getLogger: () => log }));
+vi.mock("@/lib/logger", async (importOriginal) => ({ ...(await importOriginal<typeof import("@/lib/logger")>()), logger: log }));
 
 import { GameError } from "@/lib/games/errors";
 import type { FetchStartErrorCode } from "@/lib/games/fetch-error-codes";

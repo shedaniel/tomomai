@@ -26,8 +26,8 @@ vi.mock("./snapshot-persistence", async importOriginal => ({
   persistFetchResult: state.persist,
 }));
 vi.mock("@/lib/flags", () => ({ resolveFlagsForUser: state.resolveFlags }));
-vi.mock("@/lib/logger", () => ({ flushLogger: vi.fn() }));
-vi.mock("@/lib/request-logger", () => ({ getLogger: () => state.log }));
+vi.mock("@/lib/logger", () => ({ flushLogger: vi.fn(), logger: state.log }));
+vi.mock("@/lib/request-logger", () => ({ withLogContext: (_fields: object, fn: () => unknown) => fn() }));
 vi.mock("@/lib/token-crypto", () => ({ encryptToken: (token: string) => `encrypted:${token}`, decryptToken: (token: string) => token.slice(10) }));
 vi.mock("@/server/services/games/fetch-progress", () => ({ appendFetchState: vi.fn() }));
 vi.mock("next/server", () => ({ after: vi.fn() }));

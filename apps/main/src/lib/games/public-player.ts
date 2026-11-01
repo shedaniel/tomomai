@@ -47,11 +47,13 @@ export function toPublicStats(stats: StatsResult, privacy: Pick<ProfilePrivacySe
   if (privacy.profileShowScoreDetails) return stats;
   return {
     totalSongs: stats.totalSongs,
-    stats: Object.fromEntries(Object.entries(stats.stats).map(([version, difficulties]) => [
-      version,
-      Object.fromEntries(Object.entries(difficulties).map(([difficulty, bucket]) => [difficulty, { ...bucket, statuses: {} }])),
-    ])),
+    stats: mapRecord(stats.stats, difficulties => mapRecord(difficulties, bucket => ({ ...bucket, statuses: {} }))),
+    levels: mapRecord(stats.levels, difficulties => mapRecord(difficulties, levels => mapRecord(levels, bucket => ({ ...bucket, statuses: {} })))),
   };
+}
+
+function mapRecord<T, U>(record: Record<string, T>, map: (value: T) => U): Record<string, U> {
+  return Object.fromEntries(Object.entries(record).map(([key, value]) => [key, map(value)]));
 }
 
 export function toPublicGameSnapshot(game: CanonicalGameId, data: GameSnapshotData, privacy: SnapshotPrivacy): GameSnapshotData {

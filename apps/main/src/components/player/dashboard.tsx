@@ -9,6 +9,7 @@ import { FetchToastContainer } from "@/components/fetch-toast";
 import { TokenDialog } from "@/components/token-dialog";
 import { OnboardingDialog } from "@/components/onboarding-dialog";
 import { AlbumPrivacyDialog } from "@/components/games/maimai/album-privacy-dialog";
+import { useSiteFetchGate } from "@/components/site-status-dialog";
 import { useFetchSession } from "@/hooks/useFetchSession";
 import { useSnapshots } from "@/hooks/useSnapshots";
 import type { Flags } from "@/lib/flags";
@@ -84,6 +85,8 @@ export function Dashboard({ user, initialUserData, initialRegion, initialSnapsho
     initialSnapshotData,
   });
 
+  const { confirmFetch, gateDialog } = useSiteFetchGate(selectedRegion);
+
   const {
     isFetching,
     currentSession,
@@ -140,6 +143,7 @@ export function Dashboard({ user, initialUserData, initialRegion, initialSnapsho
   };
 
   const handleFetchData = async () => {
+    if (!(await confirmFetch())) return;
     try {
 
       await startAutomaticFetch(selectedRegion);
@@ -163,6 +167,10 @@ export function Dashboard({ user, initialUserData, initialRegion, initialSnapsho
   };
 
   const handleTokenUpdate = async (token: string) => {
+    if (!(await confirmFetch())) {
+      // Keeps the TokenDialog open with what the user typed.
+      throw new Error("Fetch postponed");
+    }
     try {
       // Just start the fetch with the new token (this will save and use it)
       await startDataFetch(selectedRegion, token);
@@ -286,6 +294,8 @@ export function Dashboard({ user, initialUserData, initialRegion, initialSnapsho
       <InvitesDialog isOpen={dialogType === "invites"} onOpenChange={open => setDialogType(open ? "invites" : null)} />
       <AdminDialog open={dialogType === "admin"} onOpenChange={open => setDialogType(open ? "admin" : null)} />
       <ExperimentsDialog open={dialogType === "experiments"} onOpenChange={open => setDialogType(open ? "experiments" : null)} />
+
+      {gateDialog}
 
       {supportsGameFeature(game, "albums", selectedRegion) && <AlbumPrivacyDialog
         open={dialogType === "albumPrivacy"}

@@ -13,7 +13,7 @@ vi.mock("./score-storage", async importOriginal => ({
   buildChartResolution: state.resolveCharts,
   writeSnapshotScores: state.writeScores,
 }));
-vi.mock("@/lib/request-logger", () => ({ getLogger: () => state.log }));
+vi.mock("@/lib/logger", async (importOriginal) => ({ ...(await importOriginal<typeof import("@/lib/logger")>()), logger: state.log }));
 
 import { chartKey } from "./score-storage";
 import { persistFetchResult } from "./snapshot-persistence";

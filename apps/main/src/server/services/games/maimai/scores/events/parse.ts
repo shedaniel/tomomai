@@ -1,9 +1,9 @@
 import "server-only";
 import { load } from "cheerio";
-import { getLogger } from "@/lib/request-logger";
 import { siteRoot } from "@/lib/games/sites";
 import type { Region } from "@/lib/games/ids";
 import type { EventAreaData, EventData } from "../types";
+import { logger } from "@/lib/logger";
 
 // Parse event period string and extract start/end timestamps
 function parseEventPeriod(periodStr: string | null): [number, number] | null {
@@ -13,7 +13,7 @@ function parseEventPeriod(periodStr: string | null): [number, number] | null {
   const match = periodStr.match(/Event period：(\d{4})\/(\d{2})\/(\d{2})\s+(\d{2}):(\d{2})～(\d{4})\/(\d{2})\/(\d{2})\s+(\d{2}):(\d{2})/);
 
   if (!match) {
-    getLogger().warn({ value: periodStr }, "Could not parse a maimai event period");
+    logger.warn({ value: periodStr }, "Could not parse a maimai event period");
     return null;
   }
 
@@ -29,7 +29,7 @@ function parseEventPeriod(periodStr: string | null): [number, number] | null {
 
     return [startDate.getTime(), endDate.getTime()];
   } catch (error) {
-    getLogger().warn({ err: error, value: periodStr }, "Could not parse maimai event period dates");
+    logger.warn({ err: error, value: periodStr }, "Could not parse maimai event period dates");
     return null;
   }
 }
@@ -90,7 +90,7 @@ export function parseAreaEvents(html: string, region: Region): EventData[] {
         imageUrl
       });
     } catch (error) {
-      getLogger().error({ err: error, index }, "Could not read a maimai area event");
+      logger.error({ err: error, index }, "Could not read a maimai area event");
     }
   });
 
@@ -157,7 +157,7 @@ export function parseEventAreaEvents(html: string, region: Region): EventAreaDat
         eventPeriod: parseEventPeriod(eventPeriod),
       });
     } catch (error) {
-      getLogger().error({ err: error, index }, "Could not read a maimai event area event");
+      logger.error({ err: error, index }, "Could not read a maimai event area event");
     }
   });
 

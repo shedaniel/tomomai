@@ -14,7 +14,7 @@ import {
   ResponsiveDialogTrigger,
 } from "@tomomai/ui";
 import { Badge } from "@tomomai/ui";
-import { Button } from "@tomomai/ui";
+import { Button, TooltipLabel } from "@tomomai/ui";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -122,18 +122,21 @@ function DeleteSnapshotButton({
   selectedSnapshot: string;
   onDeleteSnapshot: (snapshotId: string) => void;
 }) {
+  const t = useTranslations("dataBanner");
   return (
     <ResponsiveDialog>
-      <ResponsiveDialogTrigger asChild>
-        <Button
-          variant="outline"
-          size="sm"
-          className="h-10 w-10 p-0"
-          title="Delete selected snapshot"
-        >
-          <Trash2 className="h-4 w-4" />
-        </Button>
-      </ResponsiveDialogTrigger>
+      <TooltipLabel label={t("deleteSnapshot")}>
+        <ResponsiveDialogTrigger asChild>
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-10 w-10 p-0"
+            aria-label={t("deleteSnapshot")}
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        </ResponsiveDialogTrigger>
+      </TooltipLabel>
       <ResponsiveDialogContent showCloseButton={false}>
         <ResponsiveDialogHeader>
           <ResponsiveDialogTitle>Delete Snapshot</ResponsiveDialogTitle>
@@ -175,6 +178,7 @@ function CopySnapshotButton({
   currentGameVersion: number | undefined;
   onCopyToVersion: (targetVersion: number) => void;
 }) {
+  const t = useTranslations("dataBanner");
   // Only load versions when dropdown is opened
   const {
     data: availableVersionsData,
@@ -195,17 +199,19 @@ function CopySnapshotButton({
 
   return (
     <DropdownMenu modal={false} open={isDropdownOpen} onOpenChange={setIsDropdownOpen}>
-      <DropdownMenuTrigger asChild>
-        <Button
-          variant="outline"
-          size="sm"
-          className="h-10 w-10 p-0"
-          title="More options"
-          disabled={isCopying}
-        >
-          <MoreHorizontal className="h-4 w-4" />
-        </Button>
-      </DropdownMenuTrigger>
+      <TooltipLabel label={t("moreOptions")}>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-10 w-10 p-0"
+            aria-label={t("moreOptions")}
+            disabled={isCopying}
+          >
+            <MoreHorizontal className="h-4 w-4" />
+          </Button>
+        </DropdownMenuTrigger>
+      </TooltipLabel>
       <DropdownMenuContent align="end">
         <DropdownMenuSub>
           <DropdownMenuSubTrigger disabled={isLoadingVersions || availableVersions.length === 0} className="gap-3">

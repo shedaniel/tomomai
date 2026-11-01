@@ -41,6 +41,7 @@
     "selectAnOption": "옵션 선택",
     "ok": "확인",
     "email": "이메일",
+    "resetToDefault": "기본값으로 재설정",
     "retry": "다시 시도",
     "previous": "이전",
     "next": "다음"
@@ -110,7 +111,6 @@
       "inviteUsed": "이미 사용된 초대입니다.",
       "inviteExpired": "만료된 초대입니다.",
       "accountNotLinked": "이 계정은 사용자와 연결되어 있지 않으며 자동으로 연결할 수 없습니다.\n\n같은 이메일을 사용하는 계정이 이미 있을 수 있습니다.\n\n처음 가입한 방법으로 로그인한 뒤, 설정 → 계정에서 이 계정을 연결해 주세요.",
-      "emailMismatch": "이 계정의 이메일이 현재 계정과 일치하지 않습니다.",
       "alreadyLinked": "이 계정은 이미 다른 사용자와 연결되어 있습니다.",
       "emailMissing": "이 계정에서 이메일 주소를 받지 못했습니다. {brand}에 로그인하려면 이메일 주소가 필요합니다.",
       "restart": "로그인이 중단되었거나 너무 오래 걸렸습니다. 다시 시도해 주세요.",
@@ -521,6 +521,15 @@
       },
       "revokeSuccess": "접근 권한이 해제되었습니다",
       "revokeError": "접근 권한 해제에 실패했습니다"
+    },
+    "unsaved": {
+      "bar": "저장하지 않은 변경 사항이 있습니다",
+      "title": "저장하지 않고 나갈까요?",
+      "description": "이 페이지의 변경 사항이 아직 저장되지 않았습니다.",
+      "keepEditing": "계속 편집",
+      "discard": "버리기",
+      "saveAndLeave": "저장하고 나가기",
+      "saving": "저장 중..."
     }
   },
   "dataBanner": {
@@ -530,7 +539,23 @@
     "fetchNewData": "데이터 가져오기",
     "fetchingData": "데이터 가져오는 중...",
     "lastUpdate": "최근 업데이트",
-    "noDataInstructions": "이 지역의 데이터가 없습니다. '데이터 가져오기'를 눌러 {game} 성과를 가져오세요 (로그인/토큰 필요)."
+    "noDataInstructions": "이 지역의 데이터가 없습니다. '데이터 가져오기'를 눌러 {game} 성과를 가져오세요 (로그인/토큰 필요).",
+    "deleteSnapshot": "선택한 스냅샷 삭제",
+    "moreOptions": "추가 옵션"
+  },
+  "siteStatus": {
+    "lockedBadge": "일시적으로 제한됨",
+    "lockedTitle": "잠시 데이터를 가져올 수 없습니다",
+    "lockedDescription": "짧은 시간에 접속이 몰려 {net}이 잠시 새 요청을 받지 않고 있습니다. 타이머가 끝나면 다시 시도해 주세요.",
+    "retryIn": "{time} 후에 다시 가져올 수 있습니다",
+    "ready": "이제 다시 가져올 수 있습니다",
+    "gotIt": "확인",
+    "fetchNow": "지금 가져오기",
+    "busyBadge": "접속자 많음",
+    "busyTitle": "{net}이 붐비고 있습니다",
+    "busyDescription": "지금 많은 플레이어가 데이터를 가져오고 있어 평소보다 느릴 수 있습니다. 조금 이따 가져오면 더 빨리 끝납니다.",
+    "fetchAnyway": "그래도 가져오기",
+    "later": "나중에"
   },
   "profileVisibility": {
     "public": "공개 프로필",
@@ -609,6 +634,18 @@
       "exportJson": "Export Snapshot as JSON",
       "exporting": "Exporting..."
     },
+    "exportImageCard": {
+      "profileImage": "프로필 이미지",
+      "lastCredit": "크레딧",
+      "dailyPlays": "일별 플레이",
+      "dayLabel": "날짜",
+      "dayPlaceholder": "날짜 선택",
+      "dayLoading": "날짜 불러오는 중...",
+      "noPlays": "일별 플레이 기록이 없습니다",
+      "chooseCredit": "크레딧 선택",
+      "creditLoading": "크레딧 불러오는 중...",
+      "noCredits": "크레딧이 없습니다"
+    },
     "loadError": "점수를 불러오지 못했습니다. 다시 시도해 주세요."
   },
   "albums": {
@@ -638,12 +675,23 @@
   },
   "recommendations": {
     "peerAchieved": "동급 플레이어 약 {percent} 달성",
+    "stretchBadge": "도전",
     "newBadge": "신곡",
     "oldBadge": "구곡",
     "currentToTarget": "현재 → 목표",
     "noRecommendations": "추천 곡 없음",
     "allOptimal": "더 이상 레이팅을 올릴 곡이 없습니다! 대단해요.",
     "description": "현재 {new}/{old} 기록을 바탕으로 레이팅 상승에 도움이 될 곡을 추천합니다.",
+    "tryNewDescription": "아직 플레이하지 않은 보면 중 레이팅을 올릴 수 있는 곡을, 비슷한 실력의 플레이어 점수로 예상한 상승량 순으로 보여줍니다. 사람 아이콘은 그들의 일반적인 점수이며, '도전'은 그보다 높은 목표입니다.",
+    "tabs": {
+      "improve": "점수 올리기",
+      "tryNew": "새 보면 도전"
+    },
+    "target": "목표",
+    "peerTypical": "비슷한 실력의 플레이어는 보통 {score}",
+    "noUnplayed": "추천할 새 보면 없음",
+    "noUnplayedDescription": "아직 플레이하지 않은 보면 중 지금 레이팅을 올릴 수 있는 곡이 없습니다.",
+    "loadError": "추천을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.",
     "filterButton": "필터",
     "filters": {
       "all": "전체",
@@ -681,7 +729,8 @@
       "type": "타입",
       "total": "합계",
       "totalLoss": "감점"
-    }
+    },
+    "exportCredit": "이 크레딧 내보내기"
   },
   "events": {
     "title": "지방(Chiho)",
@@ -708,6 +757,16 @@
     "achievementGrades": "Achievement Grades",
     "fullCombo": "Full Combo",
     "fullSync": "Full Sync",
+    "allLevels": "전체",
+    "level": "Lv {level}",
+    "levelAndBelow": "≤ Lv {level}",
+    "expandLevels": "Lv {level} 이하를 레벨별로 보기",
+    "collapseLevels": "Lv {level} 이하 레벨별 보기 접기",
+    "tierTooltip": "{tier}: {total}개 중 {count}개 ({percent}%)",
+    "orBetter": "{tier} 이상",
+    "played": "플레이함",
+    "chartCount": "{count, plural, other {보면 #개}}",
+    "breakdownDescription": "이 레벨에서 각 등급 이상을 달성한 보면 수",
     "noDataAvailable": "데이터 없음",
     "noMatchingScores": "No scores match the selected filters",
     "selectVersionForPlates": "Please select a specific version to view plate progress",
@@ -1001,6 +1060,8 @@
       "fetchActivityHeatmap": "시간 및 요일별 가져오기 활동",
       "playActivityHeatmap": "시간 및 요일별 플레이 활동",
       "heatmapTimezoneNote": "시간은 JST(UTC+9) 기준, 최근 90일.",
+      "heatmapCell": "{slot} · {count}",
+      "heatmapPeak": "가장 활발: {slot} · {count}",
       "topSongsWindow": {
         "label": "기간",
         "all": "전체 기간",
@@ -1240,6 +1301,7 @@
     "title": "점수 비교",
     "view": "비교 보기",
     "you": "나 · {achievement}",
+    "notPlayed": "아직 플레이하지 않음",
     "curveTab": "점수 곡선",
     "ratingTab": "Rating별",
     "ratingHeading": "플레이어 Rating별 달성률",
@@ -1253,6 +1315,7 @@
     "lessThan": "{percent} 미만",
     "ratingDescription": "전체 플레이 기록을 바탕으로 플레이어 {count}명의 Rating과 달성률을 비교합니다. 점은 Rating 125점, 달성률 0.1% 단위로 묶은 표본이며 각 구간 안에 분산되어 표시됩니다. 위치는 근사치입니다. 내 Rating은 {rating}, 달성률은 {achievement}입니다.",
     "curveDescription": "비슷한 Rating의 플레이어 중 각 달성률 이하인 비율의 추정치입니다. 내 달성률 {achievement} 이하인 플레이어는 {percent}이며 동점도 포함합니다.",
+    "unplayedDescription": "이 보면의 플레이어 최고 점수입니다. 아직 플레이하지 않은 보면입니다.",
     "clusterDescription": "Rating {ratingMin}–{ratingMax}, 달성률 {achievementMin}–{achievementMax}: 표본 {count}개",
     "youDescription": "나: Rating {rating}, 달성률 {achievement}"
   },

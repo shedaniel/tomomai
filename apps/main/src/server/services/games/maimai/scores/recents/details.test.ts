@@ -2,7 +2,7 @@ import { beforeEach, expect, it, vi } from "vitest";
 
 const proxy = await vi.hoisted(async () => (await import("@/test/pg-proxy")).createProxyDb());
 vi.mock("@/lib/db", () => ({ db: proxy.db }));
-vi.mock("@/lib/request-logger", () => ({ getLogger: () => ({ info: vi.fn(), warn: vi.fn(), error: vi.fn() }) }));
+vi.mock("@/lib/logger", async (importOriginal) => ({ ...(await importOriginal<typeof import("@/lib/logger")>()), logger: ({ info: vi.fn(), warn: vi.fn(), error: vi.fn() }) }));
 
 import type { GameSiteClient } from "@/server/services/games/sega/http";
 import type { RecentSongData } from "../types";

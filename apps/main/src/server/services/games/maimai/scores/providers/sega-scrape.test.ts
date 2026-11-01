@@ -8,7 +8,7 @@ const mocks = vi.hoisted(() => ({
 vi.mock("@/server/services/games/sega/login", () => ({ openSegaSession: mocks.login }));
 vi.mock("@/lib/r2", () => ({ uploadIconToR2: mocks.upload }));
 vi.mock("@/server/services/games/fetch-progress", () => ({ appendFetchState: mocks.progress }));
-vi.mock("@/lib/request-logger", () => ({ getLogger: () => mocks.log }));
+vi.mock("@/lib/logger", async (importOriginal) => ({ ...(await importOriginal<typeof import("@/lib/logger")>()), logger: mocks.log }));
 vi.mock("../recents/details", () => ({ fetchAndInsertRecentSongsData: mocks.details }));
 vi.mock("../albums/persist", () => ({ persistAlbumData: mocks.albums }));
 vi.mock("@/lib/http-agent", () => ({ agentFetch: (input: URL, init: RequestInit) => fetch(input, init) }));
@@ -56,7 +56,7 @@ function context(overrides: Partial<ScoreFetchContext> = {}): ScoreFetchContext 
   };
 }
 
-function serveSite({ player = profile, recents = "", hidden = hiddenScores, onPlayerData }: { player?: string; recents?: string; hidden?: string | null; onPlayerData?: () => void } = {}): string[] {
+function serveSite({ player = profile, recents = "<html></html>", hidden = hiddenScores, onPlayerData }: { player?: string; recents?: string; hidden?: string | null; onPlayerData?: () => void } = {}): string[] {
   const requests: string[] = [];
   vi.stubGlobal("fetch", vi.fn(async (input: URL) => {
     const path = input.pathname.replace(MOBILE_ROOT, "") + input.search;
@@ -65,9 +65,9 @@ function serveSite({ player = profile, recents = "", hidden = hiddenScores, onPl
       onPlayerData?.();
       return new Response(player);
     }
-    if (path.startsWith("record/musicGenre/search/")) return new Response(input.searchParams.get("diff") === "3" ? masterScores : "");
+    if (path.startsWith("record/musicGenre/search/")) return new Response(input.searchParams.get("diff") === "3" ? masterScores : "<html></html>");
     if (path === "record/") return new Response(recents);
-    if (path === "playerData/photo/") return new Response("");
+    if (path === "playerData/photo/") return new Response("<html></html>");
     if (path === "home/ratingTargetMusic/") return hidden === null ? new Response("", { status: 500 }) : new Response(hidden);
     if (path === "img/Icon/a.png") return new Response("icon", { headers: { "Content-Type": "image/png" } });
     throw new Error(`Unexpected fixture route ${path}`);

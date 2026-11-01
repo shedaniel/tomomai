@@ -1,5 +1,5 @@
 import { userSnapshots } from '@/lib/db/schema-pg';
-import { getLogger } from '@/lib/request-logger';
+import { logger } from '@/lib/logger';
 import { waitUntil } from '@vercel/functions';
 import type { Region } from '@/lib/games/ids';
 import {
@@ -108,7 +108,7 @@ export async function applyStalenessGate({
       });
     }
   } catch (error) {
-    getLogger().error({ err: error }, 'Staleness check failed, proceeding with command');
+    logger.error({ err: error }, 'Staleness check failed, proceeding with command');
   }
 
   return null;
@@ -172,7 +172,7 @@ export function runRefetchThenCommand({
 
       await runCommand(command, dbUser, region, discordUserId, applicationId, interactionToken, locale, day);
     } catch (error) {
-      getLogger().error({ err: error }, 'Error in refetch-then-command');
+      logger.error({ err: error }, 'Error in refetch-then-command');
       await editDiscordMessage(applicationId, interactionToken, {
         embeds: [{
           title: t(locale, 'staleness.refetchError.title'),
@@ -257,7 +257,7 @@ export async function handleStalenessChoice({
       });
       await runCommand(command, dbUser, resolvedRegion, discordUserId, applicationId, interactionToken, locale, day);
     } catch (error) {
-      getLogger().error({ err: error }, 'Error in staleness continue path');
+      logger.error({ err: error }, 'Error in staleness continue path');
       await editDiscordMessage(applicationId, interactionToken, {
         embeds: [{
           title: t(locale, 'common.error.title'),

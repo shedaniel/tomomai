@@ -1,7 +1,16 @@
 import { describe, expect, it } from "vitest";
 import { codeOf } from "./codes";
 import type { GamePlayerScore, GameSnapshotData } from "./player-view";
-import { generateRecommendations, type RecommendationPeers } from "./recommendations";
+import {
+  generateRecommendations,
+  generateUnplayedRecommendations,
+  minUsefulLevelPrecise,
+  ratedDifficultyCodes,
+  unplayedRatingFloors,
+  type RecommendationChart,
+  type RecommendationPeerReach,
+  type RecommendationPeers,
+} from "./recommendations";
 import type { CanonicalGameId } from "./ids";
 
 const song: GamePlayerScore = {
@@ -13,7 +22,7 @@ const snapshot: GameSnapshotData["snapshot"] = {
   publicId: "snapshot", game: "chunithm", gameVersion: 9, displayName: "Player", rating: 30, fetchedAt: new Date(),
   title: "", titleType: 0, iconUrl: "", courseRankUrl: null, classRankUrl: null, stars: null, versionPlayCount: 0, totalPlayCount: 0,
 };
-function recommend(songs: GamePlayerScore[], overrides: Partial<GameSnapshotData["snapshot"]> = {}, peers: Record<string, RecommendationPeers> = {}) {
+function recommend(songs: GamePlayerScore[], overrides: Partial<GameSnapshotData["snapshot"]> = {}, peers: Record<string, RecommendationPeerReach> = {}) {
   return generateRecommendations({ snapshot: { ...snapshot, ...overrides }, songs }, peers);
 }
 function difficulty(game: CanonicalGameId, key: string) {
@@ -99,7 +108,7 @@ describe("high-value recommendations", () => {
 
 describe("peer evidence", () => {
   const chart = { ...song, songId: "a", typeCode: 1, scoreValue: 996440, levelPrecise: 136, addedVersion: 13 };
-  function sss(peers: RecommendationPeers | undefined, songs = [chart]) {
+  function sss(peers: RecommendationPeerReach | undefined, songs = [chart]) {
     return recommend(songs, maimai, peers ? { a: peers } : {}).find(rec => rec.song.songId === "a" && rec.target.label === "SSS")!;
   }
   const shares = (share: number) => ({ 1000000: share });
@@ -132,5 +141,81 @@ describe("peer evidence", () => {
     const [first, second] = recommend([chart, { ...chart, songId: "b" }], maimai, peers);
     expect(first).toMatchObject({ song: { songId: "b" }, target: { label: "SSS" }, hasPotential: true });
     expect(second).toMatchObject({ song: { songId: "a" }, target: { label: "SSS" }, hasPotential: false });
+  });
+});
+
+describe("unplayed recommendations", () => {
+  const MASTER = difficulty("maimai", "master");
+  const chart = (songId: string, levelPrecise: number, addedVersion: number, difficultyCode = MASTER): RecommendationChart => ({
+    songId, songName: songId, artist: "", cover: "", genre: "", level: "13", levelPrecise, addedVersion, difficultyCode, typeCode: 1,
+  });
+  const played = (songId: string, addedVersion: number, levelPrecise = 130, scoreValue = 1005000): GamePlayerScore => ({
+    ...song, ...chart(songId, levelPrecise, addedVersion), scoreValue,
+  });
+  const snapshotOf = (songs: GamePlayerScore[]): GameSnapshotData => ({ snapshot: { ...snapshot, ...maimai }, songs });
+  // 15 new and 35 old charts at 13.0 SSS+ put both floors at 292
+  const best = snapshotOf([
+    ...Array.from({ length: 15 }, (_, i) => played(`new${i}`, 13)),
+    ...Array.from({ length: 35 }, (_, i) => played(`old${i}`, 1)),
+  ]);
+
+  it("targets the lowest score target that enters a full bucket without peer data", () => {
+    expect(unplayedRatingFloors(best)).toEqual({ new: 292, old: 292 });
+    const [rec, ...rest] = generateUnplayedRecommendations(best, [chart("a", 135, 13), chart("low", 120, 13), chart("u", 150, 13, difficulty("maimai", "utage"))]);
+    expect(rest).toHaveLength(0);
+    expect(rec).toMatchObject({
+      target: { label: "SSS+", scoreValue: 1005000 }, neededTarget: { label: "SSS+" }, targetRating: 303, replacedRating: 292,
+      ratingGain: 11, category: "new", peerMedianScore: null, peerReach: null, stretch: false,
+    });
+  });
+
+  it("aims for the score peers usually reach and flags targets above it as a stretch", () => {
+    const peers: Record<string, RecommendationPeers> = {
+      // SSS gives 289, below the 292 floor, so only SSS+ (+9) helps, while peers usually score 100.05%
+      stretch: { peerCount: 100, reachShares: { 1000000: 0.6, 1005000: 0.35 }, medianScore: 1000500 },
+      usual: { peerCount: 100, reachShares: { 1000000: 0.9, 1005000: 0.2 }, medianScore: 1003000 },
+    };
+    const result = generateUnplayedRecommendations(best, [chart("stretch", 134, 1), chart("usual", 139, 1)], peers);
+    expect(result.map(rec => rec.song.songId)).toEqual(["usual", "stretch"]);
+    expect(result[0]).toMatchObject({ target: { label: "SSS" }, ratingGain: 8, peerMedianScore: 1003000, peerReach: 0.9, stretch: false, category: "old" });
+    expect(result[1]).toMatchObject({ target: { label: "SSS+" }, ratingGain: 9, peerMedianScore: 1000500, peerReach: 0.35, stretch: true });
+  });
+
+  it("ignores peers below the evidence threshold", () => {
+    const peers = { usual: { peerCount: 29, reachShares: { 1000000: 0.9 }, medianScore: 1003000 } };
+    expect(generateUnplayedRecommendations(best, [chart("usual", 139, 1)], peers)[0]).toMatchObject({ peerCount: null, peerReach: null });
+  });
+
+  it("falls back to the player's own scores on similar levels and ranks charts without evidence last", () => {
+    const own = snapshotOf(Array.from({ length: 5 }, (_, i) => played(`p${i}`, 13, 120, 970000)));
+    // far has the larger raw gain (236 vs 232) but nothing backs its 94% target
+    const result = generateUnplayedRecommendations(own, [chart("far", 150, 13), chart("near", 120, 13)]);
+    expect(result.map(rec => rec.song.songId)).toEqual(["near", "far"]);
+    expect(result[0]).toMatchObject({ target: { label: "S" }, targetRating: 232, peerMedianScore: null });
+    expect(result[1]).toMatchObject({ target: { label: "AAA" }, targetRating: 236 });
+  });
+
+  it("counts the full chart rating while the bucket is not full", () => {
+    const empty = snapshotOf([]);
+    expect(unplayedRatingFloors(empty)).toEqual({ new: 0, old: 0 });
+    const [rec] = generateUnplayedRecommendations(empty, [chart("a", 135, 13)]);
+    expect(rec).toMatchObject({ target: { label: "AAA" }, replacedRating: 0, ratingGain: rec.targetRating });
+  });
+
+  it("finds the lowest level that can still beat a floor", () => {
+    expect(minUsefulLevelPrecise("maimai", 13, 292)).toBe(131);
+    expect(minUsefulLevelPrecise("maimai", 13, 0)).toBe(1);
+    expect(ratedDifficultyCodes("maimai")).not.toContain(difficulty("maimai", "utage"));
+  });
+
+  it("measures CHUNITHM gains on the averaged player rating and leaves WORLD'S END out", () => {
+    const empty: GameSnapshotData = { snapshot, songs: [] };
+    const candidates = [
+      { ...chart("a", 140, 9), difficultyCode: difficulty("chunithm", "master"), typeCode: 0 },
+      { ...chart("we", 150, 9), difficultyCode: difficulty("chunithm", "worlds-end"), typeCode: 0 },
+    ];
+    expect(generateUnplayedRecommendations(empty, candidates)).toEqual([
+      expect.objectContaining({ song: expect.objectContaining({ songId: "a" }), target: expect.objectContaining({ label: "A" }), targetRating: 900, ratingGain: 18, category: "new" }),
+    ]);
   });
 });

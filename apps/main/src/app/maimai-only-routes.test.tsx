@@ -6,7 +6,7 @@ vi.mock("next/font/local", () => ({ default: () => ({ variable: "font" }) }));
 vi.mock("@/lib/db", () => ({ db: {} }));
 vi.mock("@/lib/auth-server", () => ({ getServerSession: vi.fn() }));
 
-type Handler = (request: NextRequest) => unknown;
+type Handler = (request: NextRequest, context: object) => unknown;
 
 // Every handler here serves a maimai-only feature: the last credit render, the China proxy, lxns sign-in, the
 // userscript and the percentile refresh cron, which every deployment registers.
@@ -34,7 +34,7 @@ describe("maimai-only routes on the CHUNITHM site", () => {
 
   it.each(Object.keys(ROUTES))("%s answers 404", async route => {
     const handler = await ROUTES[route]();
-    await expect(async () => handler(new NextRequest("https://tomochu.test/"))).rejects.toThrow("NEXT_NOT_FOUND");
+    await expect(async () => handler(new NextRequest("https://tomochu.test/"), {})).rejects.toThrow("NEXT_NOT_FOUND");
   });
 });
 
@@ -44,6 +44,6 @@ describe("maimai-only routes on the maimai site", () => {
 
   it("serves the China proxy pages", async () => {
     const handler = await ROUTES["/{locale}/cn-proxy pages"]();
-    expect(() => handler(new NextRequest("https://tomomai.test/"))).not.toThrow();
+    expect(() => handler(new NextRequest("https://tomomai.test/"), {})).not.toThrow();
   });
 });

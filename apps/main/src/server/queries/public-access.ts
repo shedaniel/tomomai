@@ -101,3 +101,37 @@ export async function resolvePublicSnapshotAccess(
   resolveGameContext(game, { region: snapshot.region, capability });
   return snapshot;
 }
+
+/** The region of one of the user's own snapshots of the game, whether or not their profile is published. */
+export async function resolveOwnSnapshotRegion(game: CanonicalGameId, snapshotPublicId: string, userId: string) {
+  const [snapshot] = await db
+    .select({ region: userSnapshots.region })
+    .from(userSnapshots)
+    .where(and(
+      eq(userSnapshots.game, game),
+      eq(userSnapshots.publicId, snapshotPublicId),
+      eq(userSnapshots.userId, userId),
+    ))
+    .limit(1);
+  return snapshot?.region ?? null;
+}
+
+/**
+ * Owner of a snapshot whose play history the viewer may render: the owner
+ * themselves, or anyone when the profile is public with score details shown.
+ */
+export async function resolvePlayHistoryOwner(snapshotPublicId: string, viewerId: string | undefined): Promise<string | null> {
+  const [row] = await db
+    .select({
+      userId: userSnapshots.userId,
+      publishProfile: user.publishProfile,
+      showScoreDetails: user.profileShowScoreDetails,
+    })
+    .from(userSnapshots)
+    .innerJoin(user, eq(userSnapshots.userId, user.id))
+    .where(eq(userSnapshots.publicId, snapshotPublicId))
+    .limit(1);
+  if (!row) return null;
+  if (row.userId === viewerId || (row.publishProfile && row.showScoreDetails)) return row.userId;
+  return null;
+}

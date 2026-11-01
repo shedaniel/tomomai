@@ -1,6 +1,6 @@
 import { db } from '@/lib/db';
 import { user } from '@/lib/db/schema-pg';
-import { getLogger } from '@/lib/request-logger';
+import { logger } from '@/lib/logger';
 import { eq } from 'drizzle-orm';
 import { waitUntil } from '@vercel/functions';
 import { DiscordResponse, editDiscordMessage, DISCORD_COLORS, createDeferredResponse } from '../responses';
@@ -86,7 +86,7 @@ export async function handleAlbumPreferenceSelection({
         locale,
       });
     } catch (error) {
-      getLogger().error({ err: error }, 'Error handling album preference');
+      logger.error({ err: error }, 'Error handling album preference');
       await editDiscordMessage(applicationId, interactionToken, {
         embeds: [{
           title: t(locale, 'common.error.title'),

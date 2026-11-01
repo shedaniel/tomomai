@@ -112,7 +112,7 @@ export async function prepareDailyPlays(
 
   const { start, end } = dayBounds(day);
 
-  const plays: DailyPlay[] = await db
+  const newestFirst: DailyPlay[] = await db
     .select(dailyPlayColumns)
     .from(userRecentSongs)
     .innerJoin(songs, eq(userRecentSongs.songId, songs.id))
@@ -126,6 +126,8 @@ export async function prepareDailyPlays(
     ))
     .orderBy(desc(userRecentSongs.playedAt))
     .limit(50);
+  // Fetched newest first so the cap keeps the latest plays, shown oldest first to read as the day's order
+  const plays = newestFirst.toReversed();
 
   // The header shows the player as of the end of that day.
   const snapshot = await latestSnapshot(game, userId, region, gameSnapshotColumns, { asOf: end });

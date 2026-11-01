@@ -2,7 +2,8 @@ import { NextRequest } from "next/server";
 import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { oauthClient } from "@/lib/db/schema-pg";
-import { requestLogger } from "@/lib/request-logger";
+import { logger } from "@/lib/logger";
+import { withRequestLogContext } from "@/lib/request-logger";
 import { fetchPublicImage } from "@/lib/security/public-image";
 import { oauthClientPublicLimiter, rateLimit } from "@/lib/security/redis-rate-limit";
 
@@ -10,12 +11,11 @@ export const runtime = "nodejs";
 
 const MISS_HEADERS = { "Cache-Control": "public, max-age=300, s-maxage=300" };
 
-export async function GET(request: NextRequest, context: { params: Promise<{ clientId: string }> }) {
+export const GET = withRequestLogContext("oauth/client-icon", async (request: NextRequest, context: { params: Promise<{ clientId: string }> } & { requestId: string }) => {
   const limited = await rateLimit(request, oauthClientPublicLimiter);
   if (limited) return limited;
 
   const { clientId } = await context.params;
-  const { log } = requestLogger(request, "oauth/client-icon");
 
   const [client] = await db
     .select({ icon: oauthClient.icon, disabled: oauthClient.disabled })
@@ -34,7 +34,7 @@ export async function GET(request: NextRequest, context: { params: Promise<{ cli
       },
     });
   } catch (err) {
-    log.warn({ err, url: client.icon }, "failed to fetch oauth client icon");
+    logger.warn({ err, url: client.icon }, "failed to fetch oauth client icon");
     return new Response(null, { status: 404, headers: MISS_HEADERS });
   }
-}
+});

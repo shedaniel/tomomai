@@ -3,7 +3,7 @@ import { and, eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { fetchSessions } from "@/lib/db/schema-pg";
 import { calculateProgress, parseStatusStates, serializeStatusStates, type FetchState } from "@/lib/fetch-states";
-import { getLogger } from "@/lib/request-logger";
+import { logger } from "@/lib/logger";
 
 const sessionLocks = new Map<string, Promise<void>>();
 
@@ -23,7 +23,7 @@ export async function appendFetchState(sessionId: bigint, state: FetchState): Pr
         .limit(1);
 
       if (!session) {
-        getLogger().warn({ sessionId: id, state }, "Fetch session not found or no longer pending");
+        logger.warn({ state }, `Fetch session row ${id} not found or no longer pending`);
         return;
       }
 
@@ -35,9 +35,9 @@ export async function appendFetchState(sessionId: bigint, state: FetchState): Pr
         .update(fetchSessions)
         .set({ statusStates: serializeStatusStates(newStates) })
         .where(pendingSession);
-      getLogger().debug({ sessionId: id, state, progress: calculateProgress(newStates, session.game) }, "Appended fetch state");
+      logger.debug({ state, progress: calculateProgress(newStates, session.game) }, `Appended fetch state to session row ${id}`);
     } catch (err) {
-      getLogger().error({ err, sessionId: id, state }, "Failed to append fetch state");
+      logger.error({ err, state }, `Failed to append fetch state to session row ${id}`);
     }
   }).finally(() => {
     if (sessionLocks.get(id) === current) sessionLocks.delete(id);

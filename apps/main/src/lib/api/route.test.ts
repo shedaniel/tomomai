@@ -25,7 +25,7 @@ vi.mock("@/lib/auth", () => ({ auth: { api: { verifyApiKey: mocks.verifyApiKey }
 vi.mock("@/lib/db", () => ({ db: {} }));
 vi.mock("@/lib/security/redis-rate-limit", () => ({ apiKeyLimiter: mocks.keyLimiter, apiUserLimiter: mocks.userLimiter }));
 vi.mock("@/lib/api/quota", () => ({ consumeMonthly: mocks.consumeMonthly, peekMonthly: vi.fn(), refundMonthly: mocks.refundMonthly }));
-vi.mock("@/lib/request-logger", () => ({ requestLogger: () => ({ log: mocks.log, requestId: "route-test" }), getLogger: () => mocks.log }));
+vi.mock("@/lib/logger", async (importOriginal) => ({ ...(await importOriginal<typeof import("@/lib/logger")>()), logger: mocks.log }));
 vi.mock("@/server/queries/albums", () => ({ fetchUserAlbums: mocks.fetchUserAlbums }));
 vi.mock("@/server/queries/stats", () => ({ fetchPlayerStats: mocks.fetchPlayerStats }));
 vi.mock("@/server/services/games/maimai/plates", () => ({ fetchLatestPlateSongs: mocks.fetchLatestPlateSongs }));

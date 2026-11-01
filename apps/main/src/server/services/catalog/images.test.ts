@@ -4,7 +4,8 @@ import type { CatalogChart } from "./ingestion/schema";
 
 const mocks = vi.hoisted(() => ({ list: vi.fn(), upload: vi.fn(), fetch: vi.fn(), convert: vi.fn() }));
 vi.mock("@/lib/r2", () => ({ listCoverKeys: mocks.list, uploadCoverToR2: mocks.upload }));
-vi.mock("@/lib/image-converter", () => ({ fetchImageBuffer: mocks.fetch, convertToWebp: mocks.convert }));
+vi.mock("@/lib/image-converter", () => ({ convertToWebp: mocks.convert }));
+vi.mock("@/server/services/games/sega/http", () => ({ openPublicAssets: () => ({ bytes: async (url: string) => ({ buffer: await mocks.fetch(url), contentType: "image/png" }) }) }));
 import { processCatalogImages } from "./images";
 const log = pino({ enabled: false });
 const chart = (cover: string): CatalogChart => ({

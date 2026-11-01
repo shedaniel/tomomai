@@ -1,3 +1,4 @@
+import { logger } from "@/lib/logger";
 import { adminRoute } from "../admin-route";
 import { AdminRequestError, requireAdminCatalogVersion, requireAdminRegion } from "@/server/services/catalog/admin-game";
 import { applyCatalogUpload } from "@/server/services/catalog/apply";
@@ -6,7 +7,7 @@ import { parseCatalogUpdateMode } from "@/server/services/catalog/ingestion/pers
 import type { CatalogChart } from "@/server/services/catalog/ingestion/schema";
 import type { CanonicalGameId } from "@/lib/games/ids";
 
-export const POST = adminRoute("admin/upload", async ({ request, game, log, requestId }) => {
+export const POST = adminRoute("admin/upload", async ({request, game, requestId }) => {
   const { searchParams } = request.nextUrl;
   const region = requireAdminRegion(game, searchParams);
   const versionParam = searchParams.get("version");
@@ -15,7 +16,7 @@ export const POST = adminRoute("admin/upload", async ({ request, game, log, requ
   const charts = parseUploadBody(game, await request.json().catch(() => null));
 
   const outcome = await applyCatalogUpload({
-    game, region, version, charts, mode: parseCatalogUpdateMode(searchParams.get("update")), log, requestId,
+    game, region, version, charts, mode: parseCatalogUpdateMode(searchParams.get("update")), log: logger, requestId,
   });
   return Response.json({ success: true, requestId, ...outcome });
 }, { game: "write" });

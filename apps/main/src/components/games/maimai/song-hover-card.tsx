@@ -28,6 +28,7 @@ import { useMediaQuery } from "@/hooks/use-media-query";
 import { Drawer, DrawerContent, DrawerTrigger, DrawerHeader, DrawerTitle, DrawerDescription } from "@tomomai/ui";
 import { PercentileDistribution } from "@/components/games/maimai/percentile-distribution";
 import type { PercentileDistributionData } from "@/lib/games/maimai/percentile/types";
+import type { ScoreHoverProps } from "@/components/games/registry";
 
 type HoverScore = Pick<GamePlayerScore, "songId" | "songName" | "artist" | "cover" | "difficultyCode" | "typeCode">;
 
@@ -35,6 +36,7 @@ interface SongHoverCardProps {
   children: React.ReactNode;
   score: HoverScore;
   percentile?: PercentileDistributionData | null;
+  percentileSource?: ScoreHoverProps["percentileSource"];
   side?: "top" | "bottom" | "left" | "right";
   className?: string;
 }
@@ -101,6 +103,7 @@ function SongCardContent({
   addedVersionInfo,
   t,
   percentile,
+  percentileLoading,
 }: {
   score: HoverScore,
   songDetails: any,
@@ -108,6 +111,7 @@ function SongCardContent({
   addedVersionInfo: VersionRow | null,
   t: any,
   percentile?: SongHoverCardProps['percentile'],
+  percentileLoading?: boolean,
 }) {
   return (
     <div className="p-4 space-y-3">
@@ -170,6 +174,12 @@ function SongCardContent({
       </div>
 
       {percentile && <PercentileDistribution data={percentile} />}
+      {!percentile && percentileLoading && (
+        <>
+          <Separator />
+          <div className="h-60 bg-muted animate-pulse rounded" />
+        </>
+      )}
 
       {/* Action */}
       <div className="pt-1 flex items-center gap-2 flex-col">
@@ -200,7 +210,7 @@ function SongCardContent({
   );
 }
 
-export function SongHoverCard({ children, score, percentile, side, className }: SongHoverCardProps) {
+export function SongHoverCard({ children, score, percentile, percentileSource, side, className }: SongHoverCardProps) {
   const t = useTranslations();
   const game = useGame().id;
   const [isOpen, setIsOpen] = useState(false);
@@ -219,6 +229,21 @@ export function SongHoverCard({ children, score, percentile, side, className }: 
 
   const addedVersionInfo = songDetails ? getVersion(game, songDetails.addedVersion) : null;
 
+  const loadPercentile = isOpen && !percentile && !!percentileSource && percentileSource.userRating > 0;
+  const { data: loadedPercentiles, isFetching: percentileLoading } = trpc.maimai.getChartPercentiles.useQuery(
+    {
+      songs: [{ publicSongId: score.songId, achievement: percentileSource?.scoreValue ?? 0 }],
+      userRating: percentileSource?.userRating ?? 0,
+    },
+    {
+      enabled: loadPercentile,
+      staleTime: 1000 * 60 * 5,
+    }
+  );
+  const loadedEntry = loadedPercentiles?.percentiles[score.songId];
+  const resolvedPercentile = percentile
+    ?? (loadedEntry && percentileSource ? { ...loadedEntry, userAchievement: percentileSource.scoreValue } : null);
+
   const content = (
     <SongCardContent
       score={score}
@@ -226,7 +251,8 @@ export function SongHoverCard({ children, score, percentile, side, className }: 
       isLoading={isLoading}
       addedVersionInfo={addedVersionInfo}
       t={t}
-      percentile={percentile}
+      percentile={resolvedPercentile}
+      percentileLoading={loadPercentile && percentileLoading}
     />
   );
 

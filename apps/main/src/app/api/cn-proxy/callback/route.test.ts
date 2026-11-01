@@ -9,7 +9,7 @@ const mocks = vi.hoisted(() => ({
 }));
 vi.mock("@/lib/db", () => ({ db: {} }));
 vi.mock("@/lib/http-agent", () => ({ agentFetch: mocks.agentFetch }));
-vi.mock("@/lib/request-logger", () => ({ requestLogger: () => ({ log: mocks.log, requestId: "cn-proxy-test" }), getLogger: () => mocks.log }));
+vi.mock("@/lib/logger", async (importOriginal) => ({ ...(await importOriginal<typeof import("@/lib/logger")>()), logger: mocks.log }));
 vi.mock("@/server/services/games/tokens", () => ({ deleteToken: mocks.deleteToken, saveToken: vi.fn() }));
 vi.mock("@/server/services/games/fetch-sessions", () => ({ startScoreFetch: mocks.start }));
 
@@ -20,7 +20,7 @@ function callback() {
   return POST(new NextRequest("https://tomomai.test/api/cn-proxy/callback", {
     method: "POST",
     body: JSON.stringify({ token: signCnProxyToken("owner"), maimaiToken: "single-use", r: "proxy" }),
-  }));
+  }), {});
 }
 
 function serveWahlap(playerHtml: string) {

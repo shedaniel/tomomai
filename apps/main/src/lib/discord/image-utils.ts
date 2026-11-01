@@ -5,7 +5,7 @@ import type { Region } from '@/lib/games/ids';
 import { prepareCreditData } from '@/server/services/games/maimai/render/credit-data';
 import { prepareDailyPlays } from '@/server/services/games/images/daily-plays';
 import { DISCORD_GAME } from './game';
-import { getLogger } from '@/lib/request-logger';
+import { logger } from '@/lib/logger';
 import { requestDiscordRender } from './render-client';
 import { buildExportImageMessage, buildLastCreditMessage, buildDailyPlaysMessage } from '@/server/services/games/maimai/render/messages';
 
@@ -88,7 +88,7 @@ export async function generateAndSendProfileImage({
     });
   } catch (imageError) {
     // Fallback to text-only message if rendering fails.
-    getLogger().error({ err: imageError }, 'Error generating profile image');
+    logger.error({ err: imageError }, 'Error generating profile image');
     await editDiscordMessage(applicationId, interactionToken, { content, embeds: [], components });
   }
 }
@@ -207,7 +207,7 @@ export async function generateAndSendCreditImage({
       filename: `maimai-recent-${region}.webp`,
     });
   } catch (error) {
-    getLogger().error({ err: error }, 'Error generating credit image');
+    logger.error({ err: error }, 'Error generating credit image');
     await editDiscordMessage(applicationId, interactionToken, {
       embeds: [{
         title: t(locale, 'recents.error.title'),
@@ -269,7 +269,7 @@ export async function generateAndSendDailyPlaysImage({
       filename: `maimai-daily-${resolvedDay}.webp`,
     });
   } catch (error) {
-    getLogger().error({ err: error }, 'Error generating daily plays image');
+    logger.error({ err: error }, 'Error generating daily plays image');
     await editDiscordMessage(applicationId, interactionToken, {
       content: t(locale, 'daily.failed', { userId: discordUserId }),
     });

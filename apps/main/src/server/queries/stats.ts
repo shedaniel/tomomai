@@ -16,11 +16,20 @@ export type StatsBucket = {
   total: number;
 };
 
+export type LevelStatsBucket = StatsBucket & {
+  /** Charts at this level in the game version, played or not. */
+  charts: number;
+};
+
 /** Buckets are keyed by the charts' added version, then by difficulty code. */
 export type StatsResult = {
   stats: Record<string, Record<string, StatsBucket>>;
   totalSongs: Record<string, Record<string, number>>;
+  /** Added version, then difficulty code, then level, for breaking a filtered view down by level. */
+  levels: Record<string, Record<string, Record<string, LevelStatsBucket>>>;
 };
+
+type StatsScore = { scoreValue: number } & Record<ScoreStatusKind, number>;
 
 function recordedStatusKinds(game: CanonicalGameId): ScoreStatusKind[] {
   return SCORE_STATUS_KINDS.filter(kind => {
@@ -35,6 +44,18 @@ function emptyBucket(statusKinds: readonly ScoreStatusKind[]): StatsBucket {
   return { grades: {}, statuses, total: 0 };
 }
 
+function addScore(game: CanonicalGameId, statusKinds: readonly ScoreStatusKind[], bucket: StatsBucket, score: StatsScore) {
+  const grade = getGrade(game, score.scoreValue);
+  bucket.grades[grade] = (bucket.grades[grade] ?? 0) + 1;
+  for (const kind of statusKinds) {
+    const code = score[kind];
+    if (keyOf(game, kind, code) === NO_STATUS) continue;
+    const counts = bucket.statuses[kind] ??= {};
+    counts[code] = (counts[code] ?? 0) + 1;
+  }
+  bucket.total++;
+}
+
 export async function computeStatsForSnapshot(
   game: CanonicalGameId,
   snapshotInternalId: number,
@@ -46,6 +67,7 @@ export async function computeStatsForSnapshot(
       scoreValue: scoreData.scoreValue,
       addedVersion: songs.addedVersion,
       difficulty: parentSong.difficulty,
+      level: songs.level,
       comboStatus: scoreData.comboStatus,
       syncStatus: scoreData.syncStatus,
       clearStatus: scoreData.clearStatus,
@@ -60,39 +82,37 @@ export async function computeStatsForSnapshot(
     .select({
       addedVersion: songs.addedVersion,
       difficulty: parentSong.difficulty,
+      level: songs.level,
       count: sql<number>`count(*)`.mapWith(Number),
     })
     .from(songs)
     .innerJoin(parentSong, eq(songs.parentId, parentSong.id))
     .where(and(eq(songs.game, game), eq(songs.region, region), eq(songs.gameVersion, gameVersion)))
-    .groupBy(songs.addedVersion, parentSong.difficulty);
-
-  const totalSongs: StatsResult["totalSongs"] = {};
-  for (const { addedVersion, difficulty, count } of catalogCharts) {
-    (totalSongs[addedVersion] ??= {})[difficulty] = count;
-  }
+    .groupBy(songs.addedVersion, parentSong.difficulty, songs.level);
 
   const statusKinds = recordedStatusKinds(game);
-  const stats: StatsResult["stats"] = {};
-  for (const score of scores) {
-    const bucket = (stats[score.addedVersion] ??= {})[score.difficulty] ??= emptyBucket(statusKinds);
+  const totalSongs: StatsResult["totalSongs"] = {};
+  const levels: StatsResult["levels"] = {};
+  const levelBucket = (addedVersion: number, difficulty: number, level: string) =>
+    ((levels[addedVersion] ??= {})[difficulty] ??= {})[level] ??= { ...emptyBucket(statusKinds), charts: 0 };
 
-    const grade = getGrade(game, score.scoreValue);
-    bucket.grades[grade] = (bucket.grades[grade] ?? 0) + 1;
-    for (const kind of statusKinds) {
-      const code = score[kind];
-      if (keyOf(game, kind, code) === NO_STATUS) continue;
-      const counts = bucket.statuses[kind] ??= {};
-      counts[code] = (counts[code] ?? 0) + 1;
-    }
-    bucket.total++;
+  for (const { addedVersion, difficulty, level, count } of catalogCharts) {
+    const totals = totalSongs[addedVersion] ??= {};
+    totals[difficulty] = (totals[difficulty] ?? 0) + count;
+    levelBucket(addedVersion, difficulty, level).charts += count;
   }
 
-  return { stats, totalSongs };
+  const stats: StatsResult["stats"] = {};
+  for (const score of scores) {
+    addScore(game, statusKinds, (stats[score.addedVersion] ??= {})[score.difficulty] ??= emptyBucket(statusKinds), score);
+    addScore(game, statusKinds, levelBucket(score.addedVersion, score.difficulty, score.level), score);
+  }
+
+  return { stats, totalSongs, levels };
 }
 
 export async function fetchPlayerStats(game: CanonicalGameId, userId: string, region: Region): Promise<StatsResult> {
   const snapshot = await latestSnapshot(game, userId, region, { id: userSnapshots.id, gameVersion: userSnapshots.gameVersion });
-  if (!snapshot) return { stats: {}, totalSongs: {} };
+  if (!snapshot) return { stats: {}, totalSongs: {}, levels: {} };
   return computeStatsForSnapshot(game, snapshot.id, snapshot.gameVersion, region);
 }

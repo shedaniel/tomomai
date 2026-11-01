@@ -3,8 +3,9 @@ import { formatGameLevel, formatGameScore } from '@/lib/games/presentation';
 import { getGame } from '@/lib/games/registry';
 import type { Region } from '@/lib/games/ids';
 import { fetchLatestSnapshotData } from '@/server/queries/snapshots';
-import { formatRecommendationTarget, generateRecommendations, type RecommendationData } from '@/lib/games/recommendations';
-import { getLogger } from '@/lib/request-logger';
+import { formatRecommendationTarget, type RecommendationData } from '@/lib/games/recommendations';
+import { buildRecommendations } from '@/server/services/recommendations';
+import { logger } from '@/lib/logger';
 import { waitUntil } from '@vercel/functions';
 import {
   createDeferredResponse,
@@ -57,7 +58,7 @@ export async function executeRecommendCommand({
       return;
     }
 
-    const recommendations = generateRecommendations(data);
+    const { improve: recommendations } = await buildRecommendations({ data, region, usePeers: true, includeUnplayed: false });
 
     const deduped = recommendations.filter((rec, index, self) =>
       index === self.findIndex(r => r.song.songId === rec.song.songId && r.song.difficultyCode === rec.song.difficultyCode)
@@ -71,7 +72,7 @@ export async function executeRecommendCommand({
       embeds: [embed],
     });
   } catch (error) {
-    getLogger().error({ err: error }, 'Error generating recommendations');
+    logger.error({ err: error }, 'Error generating recommendations');
     await editDiscordMessage(applicationId, interactionToken, {
       content: t(locale, 'recommend.errorContent'),
     });
@@ -183,7 +184,7 @@ export async function handleRecommendCommand({
 
     return deferredResponse;
   } catch (error) {
-    getLogger().error({ err: error }, 'Error handling recommend command');
+    logger.error({ err: error }, 'Error handling recommend command');
     return createErrorResponse(t(locale, 'recommend.errorGeneric'));
   }
 }

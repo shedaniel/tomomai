@@ -9,7 +9,7 @@ vi.mock("../../login", () => ({ lxnsAccessToken: mocks.access }));
 vi.mock("../player/lxns", async importOriginal => ({ ...await importOriginal<typeof import("../player/lxns")>(), fetchLxnsPlayerData: mocks.player }));
 vi.mock("../songs/lxns", () => ({ fetchLxnsScoresData: mocks.scores }));
 vi.mock("@/server/services/games/fetch-progress", () => ({ appendFetchState: mocks.progress }));
-vi.mock("@/lib/request-logger", () => ({ getLogger: () => mocks.log }));
+vi.mock("@/lib/logger", async (importOriginal) => ({ ...(await importOriginal<typeof import("@/lib/logger")>()), logger: mocks.log }));
 vi.mock("@/server/services/games/tokens", () => ({ deleteToken: mocks.remove }));
 
 import { createFetchRun } from "@/server/services/games/fetch-run";

@@ -8,7 +8,10 @@ const SHARED: Privacy = { profileShowAllScores: true, profileShowScoreDetails: t
 
 const proxy = await vi.hoisted(async () => (await import("@/test/pg-proxy")).createProxyDb());
 vi.mock("@/lib/auth", () => ({ auth: {} }));
-vi.mock("@/lib/logger", () => ({ logger: { child: () => ({ info: vi.fn(), warn: vi.fn(), error: vi.fn() }), error: vi.fn() } }));
+vi.mock("@/lib/logger", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/logger")>()),
+  logger: { child: () => ({ info: vi.fn(), warn: vi.fn(), error: vi.fn() }), error: vi.fn() },
+}));
 vi.mock("@/lib/db", () => ({ db: proxy.db }));
 
 import { router } from "@/lib/trpc";
@@ -16,12 +19,15 @@ import { statsRouter } from "./user/stats";
 import { recentsRouter } from "./user/recents";
 import { platesRouter } from "./maimai/plates";
 import { dailyPlaysRouter } from "./user/daily-plays";
+import { creditsRouter } from "./maimai/credits";
 
 const caller = router({
   stats: statsRouter.getPublicPlayerStats,
   recents: recentsRouter.getPublicRecentSongs,
   plates: platesRouter.getPublicPlateSongs,
   days: dailyPlaysRouter.getPublicAvailableDays,
+  credits: creditsRouter.getPublicCredits,
+  credit: creditsRouter.getPublicCredit,
 }).createCaller({ session: null, req: new NextRequest("http://localhost/api/trpc") });
 
 const stored = { snapshot: null as ProxyRow | null, scores: [] as ProxyRow[], catalog: [] as ProxyRow[] };
@@ -131,6 +137,21 @@ describe("getPublicPlateSongs", () => {
     publish({}, "intl");
     await expect(caller.plates(plate)).resolves.toEqual([]);
     expect(dataQueries()[0].params).toEqual(expect.arrayContaining([41, "intl", 13]));
+  });
+});
+
+describe("getPublicCredits and getPublicCredit", () => {
+  it("are hidden unless the owner shares score details", async () => {
+    publish({ profileShowScoreDetails: false });
+    await expect(caller.credits({ snapshotId: "snapshot" })).rejects.toMatchObject({ code: "NOT_FOUND" });
+    await expect(caller.credit({ snapshotId: "snapshot", at: 1 })).rejects.toMatchObject({ code: "NOT_FOUND" });
+    expect(proxy.queries.filter(query => query.table !== "user_snapshots")).toEqual([]);
+  });
+
+  it("read the snapshot owner's maimai credits in the snapshot's region", async () => {
+    publish({}, "intl");
+    await expect(caller.credits({ snapshotId: "snapshot" })).resolves.toEqual({ credits: [], nextCursor: null });
+    expect(dataQueries()[0].params).toEqual(expect.arrayContaining(["maimai", "owner", "intl"]));
   });
 });
 

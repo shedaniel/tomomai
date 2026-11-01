@@ -134,13 +134,42 @@ const createAxiomStream = (token: string, dataset: string): AxiomStream => {
 
 type StreamEntry = { stream: { write: (chunk: string) => void } | NodeJS.WritableStream; level: string };
 
+// Where request-logger.ts publishes its AsyncLocalStorage of log context. Read
+// through globalThis so this file stays importable from the edge runtime.
+export const LOG_CONTEXT_STORE = Symbol.for("tomomai.logger.context");
+
+type LogContextStore = { getStore(): Record<string, unknown> | undefined };
+
+const boundKeys = new WeakMap<Logger, Set<string>>();
+
+// Adds the current async context's fields (route, requestId, sessionId, ...) to
+// every line from every logger, skipping keys the logger already binds.
+export function logContextMixin(_mergeObject: object, _level: number, instance: Logger): object {
+  const store = (globalThis as Record<symbol, LogContextStore | undefined>)[LOG_CONTEXT_STORE];
+  const context = store?.getStore();
+  if (!context) return {};
+
+  let bound = boundKeys.get(instance);
+  if (!bound) {
+    bound = new Set(Object.keys(instance.bindings()));
+    boundKeys.set(instance, bound);
+  }
+  const fields: Record<string, unknown> = {};
+  for (const key in context) {
+    if (!bound.has(key)) fields[key] = context[key];
+  }
+  return fields;
+}
+
 const createServerLogger = (): Logger => {
   const pino = require("pino");
   const isEdge = process.env.NEXT_RUNTIME === "edge";
   const baseLevel = process.env.LOG_LEVEL || (process.env.NODE_ENV === "development" ? "trace" : "info");
 
+  const options = { level: baseLevel, mixin: logContextMixin };
+
   if (isEdge) {
-    return pino({ level: baseLevel }) as Logger;
+    return pino(options) as Logger;
   }
 
   const logtailToken = process.env.DEV_LOGTAIL_SOURCE_TOKEN;
@@ -204,16 +233,16 @@ const createServerLogger = (): Logger => {
   // `console.log(...)` reaches Axiom/Logtail without duplicating local output.
   if (shippingStreams.length > 0) {
     installConsoleBridge(
-      pino({ level: baseLevel }, pino.multistream(shippingStreams)) as Logger,
+      pino(options, pino.multistream(shippingStreams)) as Logger,
     );
   }
 
   const streams = [...localStreams, ...shippingStreams];
   if (streams.length > 0) {
-    return pino({ level: baseLevel }, pino.multistream(streams)) as Logger;
+    return pino(options, pino.multistream(streams)) as Logger;
   }
 
-  return pino({ level: baseLevel }) as Logger;
+  return pino(options) as Logger;
 };
 
 // Use a global marker so the bridge is installed at most once across all

@@ -1,6 +1,6 @@
 import { protectedProcedure, publicProcedure, router } from '@/lib/trpc';
 import { z } from 'zod';
-import { getLogger } from '@/lib/request-logger';
+import { logger } from '@/lib/logger';
 import { TRPCError } from '@trpc/server';
 import {
   fetchDivingFishRecordsByDevToken,
@@ -48,7 +48,7 @@ export const providersRouter = router({
       // handler so the URL we hand the user stays short.
       const token = signCnProxyToken(ctx.session.user.id);
       const url = `${resolveBaseUrl()}/cn-proxy/link?token=${encodeURIComponent(token)}`;
-      getLogger().info({ userId: ctx.session.user.id }, "Generated a CN proxy auth link");
+      logger.info({ userId: ctx.session.user.id }, "Generated a CN proxy auth link");
       return { url };
     }),
 
@@ -88,7 +88,7 @@ export const providersRouter = router({
         }
         const formatted = formatDivingFish({ kind: 'username', value: username as string });
         await saveToken(ctx.game, ctx.session.user.id, "cn", formatted);
-        getLogger().info({ userId: ctx.session.user.id }, "Verified a diving-fish account by import token");
+        logger.info({ userId: ctx.session.user.id }, "Verified a diving-fish account by import token");
         // The Import-Token is intentionally not persisted anywhere, used only to confirm ownership.
         return { ok: true, username };
       } catch (error) {
@@ -96,7 +96,7 @@ export const providersRouter = router({
         if (error instanceof DivingFishImportTokenError) {
           throw new TRPCError({ code: 'BAD_REQUEST', message: 'Invalid Import-Token.' });
         }
-        getLogger().error({ err: error, userId: ctx.session.user.id }, "diving-fish import token verification failed");
+        logger.error({ err: error, userId: ctx.session.user.id }, "diving-fish import token verification failed");
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
           message: 'Failed to verify Import-Token. Please try again later.',
@@ -128,7 +128,7 @@ export const providersRouter = router({
         }
         const formatted = formatDivingFish(input);
         await saveToken(ctx.game, ctx.session.user.id, "cn", formatted);
-        getLogger().info({ userId: ctx.session.user.id }, "Verified a diving-fish account by nickname challenge");
+        logger.info({ userId: ctx.session.user.id }, "Verified a diving-fish account by nickname challenge");
         return { ok: true };
       } catch (error) {
         if (error instanceof TRPCError) throw error;
@@ -147,7 +147,7 @@ export const providersRouter = router({
             message: 'diving-fish server configuration error. Please contact the administrator.',
           });
         }
-        getLogger().error({ err: error, userId: ctx.session.user.id }, "diving-fish nickname verification failed");
+        logger.error({ err: error, userId: ctx.session.user.id }, "diving-fish nickname verification failed");
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
           message: 'Failed to verify nickname. Please try again later.',

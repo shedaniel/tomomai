@@ -1,5 +1,5 @@
 import type { z } from "zod";
-import { getLogger } from "@/lib/request-logger";
+import { logger } from "@/lib/logger";
 
 /**
  * Validate `data` against the route's response `schema` and return a JSON
@@ -15,7 +15,7 @@ export function zodJson<T>(schema: z.ZodType<T>, data: T, init?: ResponseInit): 
   const parsed = schema.safeParse(data);
   if (!parsed.success) {
     const issues = parsed.error.issues.map(issue => `${issue.path.join(".")}: ${issue.message}`);
-    getLogger().error({ issues }, "Response does not match its schema");
+    logger.error({ issues }, "Response does not match its schema");
     return Response.json({ error: "Internal server error" }, { status: 500 });
   }
   return Response.json(data, init);

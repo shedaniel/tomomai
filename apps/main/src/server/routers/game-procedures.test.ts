@@ -3,7 +3,7 @@ import { NextRequest } from "next/server";
 
 const log = vi.hoisted(() => ({ info: vi.fn(), warn: vi.fn(), error: vi.fn() }));
 vi.mock("@/lib/auth", () => ({ auth: {} }));
-vi.mock("@/lib/logger", () => ({ logger: { child: () => log } }));
+vi.mock("@/lib/logger", async (importOriginal) => ({ ...(await importOriginal<typeof import("@/lib/logger")>()), logger: { child: () => log } }));
 
 import { GameError } from "@/lib/games/errors";
 import { publicProcedure, router } from "@/lib/trpc";

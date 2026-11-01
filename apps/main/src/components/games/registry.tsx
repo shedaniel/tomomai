@@ -13,6 +13,8 @@ export type ScoreHoverProps = {
   children: ReactNode;
   side?: "right";
   percentile?: PercentileDistributionData;
+  /** Loads the score comparison when the hover opens, for lists that don't preload it. A null score is an unplayed chart. */
+  percentileSource?: { userRating: number; scoreValue: number | null };
 };
 
 export type RecentDetailsProps<G extends CanonicalGameId = CanonicalGameId> = {

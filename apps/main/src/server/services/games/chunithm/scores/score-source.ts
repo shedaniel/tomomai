@@ -1,22 +1,24 @@
 import "server-only";
 import { and, eq, inArray, isNotNull } from "drizzle-orm";
-import type { Logger } from "pino";
+import { logger } from "@/lib/logger";
 import { db } from "@/lib/db";
 import { userRecentSongs } from "@/lib/db/schema-pg";
 import { FETCH_STATES, songDataState } from "@/lib/fetch-states";
 import type { FetchRun } from "@/server/services/games/fetch-run";
 import { mirrorPlayerIcon } from "@/server/services/games/icons";
 import { chartKey } from "@/server/services/games/score-storage";
-import { openGameSite, type GameSiteClient } from "@/server/services/games/sega/http";
+import { openGameSite, releaseGameSiteSession, type GameSiteClient } from "@/server/services/games/sega/http";
 import type { Enrichment, NormalizedScore, ScoreFetchContext, ScoreFetchOutcome } from "@/server/services/games/types";
-import { loginAndGetCookies } from "../login";
+import { signInChunithm } from "../login";
 import { assertChunithmPage, CHUNITHM_DIFFICULTIES, parseMusicGenreForm, parsePlayer, parsePlaylog, parseRecents, parseScores, type ChunithmRecentRow } from "./parsers";
 
 export async function fetchChunithmScores(ctx: ScoreFetchContext, run: FetchRun): Promise<ScoreFetchOutcome> {
   const { region, userId, token, gameVersion, signal } = ctx;
 
-  const cookies = await run.stage("login", () => loginAndGetCookies(region, token, userId, signal), FETCH_STATES.LOGIN);
-  const site = openGameSite("chunithm", region, { cookies }, { signal, assertPage: assertChunithmPage });
+  const session = await run.stage("login", () => signInChunithm(region, token, userId, signal), FETCH_STATES.LOGIN);
+  // Recent play details are read through the session after the snapshot is saved.
+  run.defer(() => releaseGameSiteSession(session));
+  const site = openGameSite("chunithm", region, session, { signal, assertPage: assertChunithmPage });
 
   const player = await run.stage("profile", async () => parsePlayer(await site.html("home/playerData"), site.pageUrl), FETCH_STATES.PLAYER_DATA);
 
@@ -36,15 +38,15 @@ export async function fetchChunithmScores(ctx: ScoreFetchContext, run: FetchRun)
 
   const plays = await run.stage("recents", async () => {
     const { rows, skipped, errors } = parseRecents(await site.html("record/playlog"), { region, gameVersion });
-    run.log.info({ recordCount: rows.length, skipped }, "Read CHUNITHM recent plays");
-    if (errors.length > 0) run.log.warn({ err: errors[0], errorCount: errors.length }, "Could not read some CHUNITHM recent plays");
+    logger.info({ recordCount: rows.length, skipped }, "Read CHUNITHM recent plays");
+    if (errors.length > 0) logger.warn({ err: errors[0], errorCount: errors.length }, "Could not read some CHUNITHM recent plays");
     return rows;
   }, FETCH_STATES.RECENT_SONGS);
 
   const iconUrl = await run.stage("icon", () => mirrorPlayerIcon(site, player.iconUrl, signal));
   return {
     result: { player: { ...player, iconUrl }, scores, recents: plays.map(play => play.recent) },
-    enrich: plays.length > 0 ? recentDetails(site, plays, run.log) : undefined,
+    enrich: plays.length > 0 ? recentDetails(site, plays) : undefined,
   };
 }
 
@@ -52,7 +54,7 @@ export async function fetchChunithmScores(ctx: ScoreFetchContext, run: FetchRun)
  * Stores each new play's detail page as its recent row's metadata. A detail is a selector POST that the
  * session redirects to the detail page, so plays are read one at a time, and a play that fails is skipped.
  */
-function recentDetails(site: GameSiteClient, plays: readonly ChunithmRecentRow[], log: Logger): Enrichment {
+function recentDetails(site: GameSiteClient, plays: readonly ChunithmRecentRow[]): Enrichment {
   return async persisted => {
     const detailed = await db
       .select({ songId: userRecentSongs.songId, playedAt: userRecentSongs.playedAt })
@@ -85,9 +87,9 @@ function recentDetails(site: GameSiteClient, plays: readonly ChunithmRecentRow[]
           ));
       } catch (err) {
         errorCount++;
-        log.warn({ err }, "Could not read a CHUNITHM recent play's details");
+        logger.warn({ err }, "Could not read a CHUNITHM recent play's details");
       }
     }
-    log.info({ recordCount: pending.length, skipped: plays.length - pending.length, errorCount }, "Read CHUNITHM recent play details");
+    logger.info({ recordCount: pending.length, skipped: plays.length - pending.length, errorCount }, "Read CHUNITHM recent play details");
   };
 }

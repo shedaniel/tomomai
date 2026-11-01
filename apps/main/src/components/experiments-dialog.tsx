@@ -1,12 +1,13 @@
 "use client";
 
-import { Button } from "@tomomai/ui";
+import { Button, TooltipLabel } from "@tomomai/ui";
 import { useGame } from "@/components/providers/game-provider";
 import { brandTitle } from "@/lib/games/frontend";
 import {
   ResponsiveDialog,
   ResponsiveDialogContent,
   ResponsiveDialogDescription,
+  ResponsiveDialogFooter,
   ResponsiveDialogHeader,
   ResponsiveDialogTitle,
 } from "@tomomai/ui";
@@ -141,15 +142,17 @@ export function ExperimentsDialog({ open, onOpenChange }: ExperimentsDialogProps
                             <Label className="text-sm font-medium cursor-pointer">{flagKey}</Label>
                             <div className="flex items-center gap-2">
                               {overridden && (
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="h-4 w-4 p-0"
-                                  onClick={() => handleReset(flagKey)}
-                                  title="Reset to default"
-                                >
-                                  <X className="h-3 w-3" />
-                                </Button>
+                                <TooltipLabel label={t('common.resetToDefault')}>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-4 w-4 p-0"
+                                    onClick={() => handleReset(flagKey)}
+                                    aria-label={t('common.resetToDefault')}
+                                  >
+                                    <X className="h-3 w-3" />
+                                  </Button>
+                                </TooltipLabel>
                               )}
                               <Switch
                                 checked={isEnabled}
@@ -165,11 +168,11 @@ export function ExperimentsDialog({ open, onOpenChange }: ExperimentsDialogProps
               })}
             </div>
 
-            <div className="flex justify-end pt-4">
+            <ResponsiveDialogFooter>
               <Button onClick={handleApply} disabled={!hasChanges || setOverrides.isPending}>
                 Apply
               </Button>
-            </div>
+            </ResponsiveDialogFooter>
           </>
         )}
       </ResponsiveDialogContent>

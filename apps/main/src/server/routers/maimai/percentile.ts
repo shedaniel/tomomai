@@ -6,8 +6,6 @@ import { and, eq, inArray } from "drizzle-orm";
 import { z } from "zod";
 import type { CanonicalGameId } from "@/lib/games/ids";
 import { getChartPercentiles } from "@/server/services/games/maimai/percentile/queries";
-import { recommendationPeers } from "@/lib/games/maimai/percentile/potential";
-import type { RecommendationPeers } from "@/lib/games/recommendations";
 import type { PercentileMap } from "@/lib/games/maimai/percentile/types";
 import { maimaiProcedure } from "./procedures";
 
@@ -21,27 +19,6 @@ async function parentIdsByPublicId(game: CanonicalGameId, publicSongIds: readonl
 }
 
 export const percentileRouter = router({
-  getRecommendationPeers: maimaiProcedure(publicProcedure, "percentiles")
-    .input(z.object({
-      publicSongIds: z.array(z.string()).max(2000),
-      userRating: z.number().int().min(0).max(20000),
-    }))
-    .query(async ({ ctx, input }) => {
-      if (!input.publicSongIds.length) return {} as Record<string, RecommendationPeers>;
-      const idMap = await parentIdsByPublicId(ctx.game, input.publicSongIds);
-      const inputs = input.publicSongIds.flatMap((publicSongId) => {
-        const parentId = idMap.get(parentPublicIdOf(publicSongId));
-        return parentId == null ? [] : [{ publicSongId, parentId, achievement: 0 }];
-      });
-      const percentiles = await getChartPercentiles(inputs, input.userRating, true);
-      const result: Record<string, RecommendationPeers> = {};
-      for (const [id, data] of percentiles) {
-        const peers = recommendationPeers(data);
-        if (peers != null) result[id] = peers;
-      }
-      return result;
-    }),
-
   getChartPercentiles: maimaiProcedure(publicProcedure, "percentiles")
     .input(z.object({
       songs: z.array(z.object({

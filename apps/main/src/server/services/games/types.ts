@@ -10,7 +10,9 @@ import type { CatalogStage } from "@/server/services/catalog/ingestion/runner";
 import type { GameEvent, GameSnapshotData } from "@/lib/games/player-view";
 import type { RecentPlayDetails } from "@/lib/games/recent-details";
 import type { FetchStartError } from "./fetch-errors";
+import type { RecommendationPeers } from "@/lib/games/recommendations";
 import type { FetchRun } from "./fetch-run";
+import type { GameSiteSession } from "./sega/http";
 
 export type ChartRef = GameRegionContext & {
   version: number;
@@ -61,7 +63,7 @@ export interface CatalogSource {
   levelPolicy: (version: number) => CatalogLevelPolicy;
   images: CatalogImagePolicy;
   /** Logs in with a player token for a region the definition's `catalogTokenRegions` lists, and returns the session cookies the source stages read the game site with. */
-  authenticate?: (region: Region, token: string) => Promise<string>;
+  authenticate?: (region: Region, token: string) => Promise<GameSiteSession>;
   /** Decodes an upload record in a retired format, which the upload contract then validates like any other. Returns undefined for a record in the current format. */
   parseLegacyRecord?: (input: unknown) => CatalogChart | undefined;
 }
@@ -156,4 +158,9 @@ export interface GameServerModule<G extends CanonicalGameId = CanonicalGameId> {
   /** Reads what only this game records about each of a page of recent plays, in the same order. */
   recentDetails: (plays: readonly StoredRecentPlay[]) => Promise<RecentPlayDetails<G>[]>;
   images: GameImageBuilders;
+  /**
+   * Nearby-Rating peer evidence per chart for recommendations, for a game that offers `percentiles`.
+   * `knownParentIds` skips the parent lookup for charts the caller already read.
+   */
+  recommendationPeers?: (publicSongIds: readonly string[], userRating: number, knownParentIds: ReadonlyMap<string, bigint>) => Promise<Record<string, RecommendationPeers>>;
 }
