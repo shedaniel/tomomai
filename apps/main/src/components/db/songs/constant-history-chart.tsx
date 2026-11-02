@@ -1,15 +1,15 @@
 "use client";
 
-import { useId, useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { useGame } from "@/components/providers/game-provider";
 import { codeOf } from "@/lib/games/codes";
 import { getGameDifficulty } from "@/lib/games/presentation";
 import { getVersion } from "@/lib/games/versions";
 import type { SongDetails } from "./types";
 
-const WIDTH = 560;
 const ROW = 52;
-const PLOT = { left: 92, right: WIDTH - 40 };
+const LABEL_WIDTH = 92;
+const VALUE_WIDTH = 40;
 
 type Versions = SongDetails["regions"][number]["versions"];
 
@@ -21,6 +21,16 @@ export function ConstantHistoryChart({ versions, label }: { versions: Versions; 
   const game = useGame().id;
   const titleId = useId();
   const [hover, setHover] = useState<{ series: number; point: number } | null>(null);
+  // Laid out at its real width, so its labels keep their size on a phone.
+  const frame = useRef<HTMLDivElement>(null);
+  const [width, setWidth] = useState(560);
+  useEffect(() => {
+    const element = frame.current;
+    if (!element) return;
+    const observer = new ResizeObserver(([entry]) => setWidth(Math.max(240, Math.round(entry.contentRect.width))));
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, []);
 
   const chart = useMemo(() => {
     const ordered = [...versions].sort((a, b) => a.gameVersion - b.gameVersion);
@@ -41,13 +51,15 @@ export function ConstantHistoryChart({ versions, label }: { versions: Versions; 
       })
       .sort((a, b) => b.max - a.max);
     if (series.length === 0) return null;
-    const x = (index: number) => PLOT.left + index / Math.max(ordered.length - 1, 1) * (PLOT.right - PLOT.left);
+    const left = LABEL_WIDTH;
+    const right = width - VALUE_WIDTH;
+    const x = (index: number) => left + index / Math.max(ordered.length - 1, 1) * (right - left);
     const y = (row: number, level: number) => {
       const { min, max } = series[row];
       return row * ROW + 10 + (1 - (level - min) / Math.max(max - min, 1)) * (ROW - 24);
     };
-    return { ordered, series, x, y, height: series.length * ROW + 18 };
-  }, [versions, game]);
+    return { ordered, series, x, y, left, right, height: series.length * ROW + 18 };
+  }, [versions, game, width]);
 
   if (!chart) return null;
   const versionName = (index: number) => getVersion(game, chart.ordered[index].gameVersion)?.name ?? `v${chart.ordered[index].gameVersion}`;
@@ -57,14 +69,14 @@ export function ConstantHistoryChart({ versions, label }: { versions: Versions; 
   return (
     <figure className="space-y-2" aria-labelledby={titleId}>
       <figcaption id={titleId} className="text-xs font-medium">{label}</figcaption>
-      <div className="relative">
-        <svg viewBox={`0 0 ${WIDTH} ${chart.height}`} className="h-auto w-full overflow-visible" aria-hidden onPointerLeave={() => setHover(null)}>
+      <div ref={frame} className="relative">
+        <svg viewBox={`0 0 ${width} ${chart.height}`} className="h-auto w-full overflow-visible" aria-hidden onPointerLeave={() => setHover(null)}>
           {chart.series.map(({ presentation, points }, row) => {
             const first = points[0];
             const last = points[points.length - 1];
             return (
               <g key={presentation.label}>
-                {row > 0 && <line x1={0} x2={WIDTH} y1={row * ROW} y2={row * ROW} className="stroke-border" strokeWidth={1} strokeDasharray="2 3" />}
+                {row > 0 && <line x1={0} x2={width} y1={row * ROW} y2={row * ROW} className="stroke-border" strokeWidth={1} strokeDasharray="2 3" />}
                 <circle cx={6} cy={row * ROW + ROW / 2 - 4} r={4} fill={presentation.hex} />
                 <text x={16} y={row * ROW + ROW / 2} className="fill-foreground text-[11px] font-semibold">{presentation.label}</text>
                 <path
@@ -85,13 +97,13 @@ export function ConstantHistoryChart({ versions, label }: { versions: Versions; 
               </g>
             );
           })}
-          <text x={PLOT.left} y={chart.height - 2} className="fill-muted-foreground text-[10px]">{versionName(0)}</text>
-          <text x={PLOT.right} y={chart.height - 2} textAnchor="end" className="fill-muted-foreground text-[10px]">{versionName(chart.ordered.length - 1)}</text>
+          <text x={chart.left} y={chart.height - 2} className="fill-muted-foreground text-[10px]">{versionName(0)}</text>
+          <text x={chart.right} y={chart.height - 2} textAnchor="end" className="fill-muted-foreground text-[10px]">{versionName(chart.ordered.length - 1)}</text>
         </svg>
         {hover && active && (
           <div
             className="pointer-events-none absolute z-10 -translate-x-1/2 -translate-y-full rounded-md border bg-popover px-2 py-1 text-xs shadow-md"
-            style={{ left: `${chart.x(active.index) / WIDTH * 100}%`, top: `${(chart.y(hover.series, active.levelPrecise) - 8) / chart.height * 100}%` }}
+            style={{ left: `${chart.x(active.index) / width * 100}%`, top: `${(chart.y(hover.series, active.levelPrecise) - 8) / chart.height * 100}%` }}
           >
             <div className="text-muted-foreground">{versionName(active.index)}</div>
             <div className="font-semibold tabular-nums">{chart.series[hover.series].presentation.label} {level(active.levelPrecise)}</div>
