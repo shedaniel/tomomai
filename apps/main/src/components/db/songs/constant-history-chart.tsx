@@ -7,9 +7,20 @@ import { getGameDifficulty } from "@/lib/games/presentation";
 import { getVersion } from "@/lib/games/versions";
 import type { SongDetails } from "./types";
 
-const ROW = 52;
+const ROW = 60;
 const LABEL_WIDTH = 92;
-const VALUE_WIDTH = 40;
+const EDGE = 28;
+const AXIS = 22;
+// Version labels are drawn at 10px; this is roughly a character's width there.
+const CHAR_WIDTH = 6;
+
+/** Version names without the words every one of them starts with, such as the game's name. */
+function shortNames(names: readonly string[]): string[] {
+  const words = names.map(name => name.split(" "));
+  let shared = 0;
+  while (words.every(parts => parts.length > shared + 1 && parts[shared] === words[0][shared])) shared++;
+  return words.map(parts => parts.slice(shared).join(" "));
+}
 
 type Versions = SongDetails["regions"][number]["versions"];
 
@@ -52,13 +63,25 @@ export function ConstantHistoryChart({ versions, label }: { versions: Versions; 
       .sort((a, b) => b.max - a.max);
     if (series.length === 0) return null;
     const left = LABEL_WIDTH;
-    const right = width - VALUE_WIDTH;
+    const right = width - EDGE;
     const x = (index: number) => left + index / Math.max(ordered.length - 1, 1) * (right - left);
     const y = (row: number, level: number) => {
       const { min, max } = series[row];
-      return row * ROW + 10 + (1 - (level - min) / Math.max(max - min, 1)) * (ROW - 24);
+      return row * ROW + 20 + (1 - (level - min) / Math.max(max - min, 1)) * (ROW - 30);
     };
-    return { ordered, series, x, y, left, right, height: series.length * ROW + 18 };
+    const names = shortNames(ordered.map(version => getVersion(game, version.gameVersion)?.name ?? `v${version.gameVersion}`));
+    // Every version gets a tick; names are skipped evenly when the columns are too narrow for all of them.
+    const column = ordered.length > 1 ? (right - left) / (ordered.length - 1) : Infinity;
+    const step = Math.max(1, Math.ceil((Math.max(...names.map(name => name.length)) * CHAR_WIDTH + 8) / column));
+    const shown = new Set(names.map((_, index) => index).filter(index => index % step === 0));
+    const lastIndex = ordered.length - 1;
+    if (!shown.has(lastIndex)) {
+      shown.delete(lastIndex - (lastIndex % step));
+      shown.add(lastIndex);
+      shown.add(0);
+    }
+    const rowsHeight = series.length * ROW;
+    return { ordered, series, x, y, left, right, names, shown, rowsHeight, height: rowsHeight + AXIS };
   }, [versions, game, width]);
 
   if (!chart) return null;
@@ -71,9 +94,10 @@ export function ConstantHistoryChart({ versions, label }: { versions: Versions; 
       <figcaption id={titleId} className="text-xs font-medium">{label}</figcaption>
       <div ref={frame} className="relative">
         <svg viewBox={`0 0 ${width} ${chart.height}`} className="h-auto w-full overflow-visible" aria-hidden onPointerLeave={() => setHover(null)}>
+          {chart.ordered.map((_, index) => (
+            <line key={index} x1={chart.x(index)} x2={chart.x(index)} y1={4} y2={chart.rowsHeight} className="stroke-border" strokeWidth={1} strokeDasharray="1 3" />
+          ))}
           {chart.series.map(({ presentation, points }, row) => {
-            const first = points[0];
-            const last = points[points.length - 1];
             return (
               <g key={presentation.label}>
                 {row > 0 && <line x1={0} x2={width} y1={row * ROW} y2={row * ROW} className="stroke-border" strokeWidth={1} strokeDasharray="2 3" />}
@@ -92,13 +116,34 @@ export function ConstantHistoryChart({ versions, label }: { versions: Versions; 
                     <circle cx={chart.x(point.index)} cy={chart.y(row, point.levelPrecise)} r={4} fill={presentation.hex} className="stroke-background" strokeWidth={2} />
                   </g>
                 ))}
-                <text x={chart.x(first.index)} y={chart.y(row, first.levelPrecise) + 16} textAnchor="middle" className="fill-muted-foreground text-[10px] tabular-nums">{level(first.levelPrecise)}</text>
-                <text x={chart.x(last.index) + 10} y={chart.y(row, last.levelPrecise) + 4} className="fill-foreground text-[11px] font-semibold tabular-nums">{level(last.levelPrecise)}</text>
+                {points.map((point, pointIndex) => {
+                  const latest = pointIndex === points.length - 1;
+                  if (pointIndex > 0 && point.levelPrecise === points[pointIndex - 1].levelPrecise && !latest) return null;
+                  return (
+                    <text
+                      key={point.index}
+                      x={chart.x(point.index)}
+                      y={chart.y(row, point.levelPrecise) - 9}
+                      textAnchor="middle"
+                      className={latest ? "fill-foreground text-[11px] font-semibold tabular-nums" : "fill-muted-foreground text-[10px] tabular-nums"}
+                    >
+                      {level(point.levelPrecise)}
+                    </text>
+                  );
+                })}
               </g>
             );
           })}
-          <text x={chart.left} y={chart.height - 2} className="fill-muted-foreground text-[10px]">{versionName(0)}</text>
-          <text x={chart.right} y={chart.height - 2} textAnchor="end" className="fill-muted-foreground text-[10px]">{versionName(chart.ordered.length - 1)}</text>
+          {chart.names.map((name, index) => {
+            if (!chart.shown.has(index)) return null;
+            const half = name.length * CHAR_WIDTH / 2;
+            const anchor = chart.x(index) + half > width ? "end" : "middle";
+            return (
+              <text key={index} x={anchor === "end" ? width : chart.x(index)} y={chart.height - 6} textAnchor={anchor} className="fill-muted-foreground text-[10px]">
+                {name}
+              </text>
+            );
+          })}
         </svg>
         {hover && active && (
           <div
