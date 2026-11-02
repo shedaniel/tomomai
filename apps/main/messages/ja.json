@@ -1306,7 +1306,9 @@
           "inBest": "{bucket}の{rank}位",
           "toEnter": "譜面Rating {rating}を超えると{bucket}に入ります",
           "room": "Rating対象のスコアなら{bucket}に加わります"
-        }
+        },
+        "openDetails": "楽曲の詳細",
+        "openInDatabase": "{brand} DBで開く"
       },
       "filter": {
         "type": "タイプ",

@@ -12,7 +12,6 @@ import { Activity, Calendar, ChevronRight, ListPlus, Loader2, Music } from "luci
 import { useTranslations } from "next-intl";
 
 import { CoverImage } from "@/components/cover-image";
-import { Link } from "@/i18n/navigation"
 import { useMemo, useState } from "react";
 import { DialogTrigger } from "@tomomai/ui";
 import { AnimatedDialog, AnimatedDialogContent } from "@tomomai/ui";
@@ -29,6 +28,7 @@ import { Drawer, DrawerContent, DrawerTrigger, DrawerHeader, DrawerTitle, Drawer
 import { PercentileDistribution } from "@/components/games/maimai/percentile-distribution";
 import type { PercentileDistributionData } from "@/lib/games/maimai/percentile/types";
 import type { ScoreHoverProps } from "@/components/games/registry";
+import { useSongDetail } from "@/components/db/songs/song-detail-provider";
 
 type HoverScore = Pick<GamePlayerScore, "songId" | "songName" | "artist" | "cover" | "difficultyCode" | "typeCode">;
 
@@ -104,6 +104,7 @@ function SongCardContent({
   t,
   percentile,
   percentileLoading,
+  onOpenDetails,
 }: {
   score: HoverScore,
   songDetails: any,
@@ -112,6 +113,7 @@ function SongCardContent({
   t: any,
   percentile?: SongHoverCardProps['percentile'],
   percentileLoading?: boolean,
+  onOpenDetails: () => void,
 }) {
   return (
     <div className="p-4 space-y-3">
@@ -184,26 +186,10 @@ function SongCardContent({
       {/* Action */}
       <div className="pt-1 flex items-center gap-2 flex-col">
         <SongDetailDialog score={score} />
-        <Button
-          className="w-full h-8 text-xs"
-          variant="default"
-          disabled={isLoading || !songDetails?.slug}
-          asChild={!isLoading && !!songDetails?.slug}
-        >
-          {isLoading ? (
-            <>
-              <Loader2 className="w-3.5 h-3.5 mr-2 animate-spin" />
-              {t('common.loading')}
-            </>
-          ) : songDetails?.slug ? (
-            <Link href={`/db/songs/${songDetails.slug}`} target="_blank" className="relative">
-              <Music className="w-3.5 h-3.5 mr-2" />
-              {t('db.songs.detail.viewDetails')}
-              <ChevronRight className="w-3.5 absolute top-0 bottom-0 right-2 my-auto" />
-            </Link>
-          ) : (
-            <span className="text-red-500">Error</span>
-          )}
+        <Button className="relative w-full h-8 text-xs" variant="default" onClick={onOpenDetails}>
+          <Music className="w-3.5 h-3.5 mr-2" />
+          {t('db.songs.detail.openDetails')}
+          <ChevronRight className="w-3.5 absolute top-0 bottom-0 right-2 my-auto" />
         </Button>
       </div>
     </div>
@@ -228,6 +214,11 @@ export function SongHoverCard({ children, score, percentile, percentileSource, s
   );
 
   const addedVersionInfo = songDetails ? getVersion(game, songDetails.addedVersion) : null;
+  const { openSongDetail } = useSongDetail();
+  const openDetails = () => {
+    setIsOpen(false);
+    openSongDetail({ publicId: score.songId });
+  };
 
   const loadPercentile = isOpen && !percentile && !!percentileSource && percentileSource.userRating > 0;
   const { data: loadedPercentiles, isFetching: percentileLoading } = trpc.maimai.getChartPercentiles.useQuery(
@@ -253,12 +244,13 @@ export function SongHoverCard({ children, score, percentile, percentileSource, s
       t={t}
       percentile={resolvedPercentile}
       percentileLoading={loadPercentile && percentileLoading}
+      onOpenDetails={openDetails}
     />
   );
 
   if (isDesktop) {
     return (
-      <HoverCard openDelay={100} closeDelay={50} onOpenChange={setIsOpen}>
+      <HoverCard open={isOpen} openDelay={100} closeDelay={50} onOpenChange={setIsOpen}>
         <HoverCardTrigger asChild>
           {children}
         </HoverCardTrigger>

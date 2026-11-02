@@ -5,7 +5,7 @@ import { playerRatingGain, ratingBucketFloor, type RatingStanding } from "./rati
 const { bucketSizes } = getGame("maimai").rating;
 
 function standing(overrides: Partial<RatingStanding> = {}): RatingStanding {
-  return { gameVersion: 0, new: [300, 290], old: Array.from({ length: bucketSizes.old }, () => 250), charts: {}, ...overrides };
+  return { gameVersion: 0, playerRating: 0, new: [300, 290], old: Array.from({ length: bucketSizes.old }, () => 250), charts: {}, ...overrides };
 }
 
 describe("playerRatingGain", () => {

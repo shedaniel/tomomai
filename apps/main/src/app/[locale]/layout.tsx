@@ -20,6 +20,7 @@ import { PreMaintenanceBanner } from '@/components/pre-maintenance-banner';
 import { GameProvider } from '@/components/providers/game-provider';
 import { AuthDialogProvider } from '@/components/auth/auth-dialog-provider';
 import { CommandPaletteProvider } from '@/components/command-palette/command-palette-provider';
+import { SongDetailProvider } from '@/components/db/songs/song-detail-provider';
 import { getCurrentGame } from '@/lib/games/current';
 import { brandTitle } from '@/lib/games/frontend';
 
@@ -115,12 +116,14 @@ export default async function LocaleLayout({ children, params }: Props) {
                 <TRPCProvider>
                   <AuthDialogProvider>
                     <CommandPaletteProvider>
-                      {TURNSTILE_SITE_KEY && <TurnstilePreclearance siteKey={TURNSTILE_SITE_KEY} />}
-                      <PreMaintenanceBanner />
-                      {children}
-                      <SiteFooter />
-                      {shouldInjectToolbar && <VercelToolbar />}
-                      <Toaster />
+                      <SongDetailProvider>
+                        {TURNSTILE_SITE_KEY && <TurnstilePreclearance siteKey={TURNSTILE_SITE_KEY} />}
+                        <PreMaintenanceBanner />
+                        {children}
+                        <SiteFooter />
+                        {shouldInjectToolbar && <VercelToolbar />}
+                        <Toaster />
+                      </SongDetailProvider>
                     </CommandPaletteProvider>
                   </AuthDialogProvider>
                 </TRPCProvider>

@@ -1010,7 +1010,9 @@
           "inBest": "{bucket} {rank}위",
           "toEnter": "채보 레이팅 {rating}을(를) 넘으면 {bucket}에 들어가요",
           "room": "레이팅 대상 점수라면 {bucket}에 더해져요"
-        }
+        },
+        "openDetails": "곡 상세 정보",
+        "openInDatabase": "{brand} DB에서 열기"
       },
       "filter": {
         "type": "타입",

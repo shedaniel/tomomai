@@ -10,6 +10,7 @@ import { getGame } from "@/lib/games/registry";
 import { codeOf } from "@/lib/games/codes";
 import { ChartLevel } from "@/components/games/chart-level";
 import { formatEstimated, formatGameScore, formatGameRating, getGameDifficulty, getGameRankingBuckets, getGameScoreBenchmarks } from "@/lib/games/presentation";
+import { GAME_UI } from "@/components/games/registry";
 import { playerRatingGain, ratingBucketFloor, ratingBucketOf, type RatingStanding } from "@/lib/games/rating-standing";
 
 
@@ -52,6 +53,7 @@ function SongChartDialogGrid({ chart, score, standing }: { chart: SongExtendedId
     const value = playerRatingGain(game.id, gains, placement, candidate);
     return value > 0 ? `+${formatGameRating(game.id, value)}` : "—";
   };
+  const { ChartInsights } = GAME_UI[game.id];
   const gainCell = (scoreValue: number, comboStatus = 0) => gains && <span className="py-2 px-3 text-xs border-b border-l font-medium tabular-nums text-primary">{gain(scoreValue, comboStatus)}</span>;
   return <div className="space-y-2">
     {gains && <RatingStandingNote chart={chart} standing={gains} />}
@@ -79,6 +81,7 @@ function SongChartDialogGrid({ chart, score, standing }: { chart: SongExtendedId
         </div>
       </Fragment>)}
     </div>
+    {ChartInsights && <ChartInsights chart={chart} score={score} playerRating={standing?.playerRating ?? null} />}
   </div>;
 }
 

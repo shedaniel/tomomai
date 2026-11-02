@@ -1333,7 +1333,9 @@
           "inBest": "#{rank} in your {bucket}",
           "toEnter": "Beat a chart rating of {rating} to enter your {bucket}",
           "room": "Any rated score adds to your {bucket}"
-        }
+        },
+        "openDetails": "Song details",
+        "openInDatabase": "Open in {brand} DB"
       },
       "filter": {
         "type": "Type",

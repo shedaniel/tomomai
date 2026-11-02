@@ -41,6 +41,8 @@ export interface SongDetailHistoricalChart {
 }
 
 export interface SongDetailChart extends SongDetailHistoricalChart {
+  /** The chart's parent public ID, which with its region and version names this chart instance. */
+  parentId: string;
   level: string;
   addedVersion: number;
   noteDesigner: string | null;

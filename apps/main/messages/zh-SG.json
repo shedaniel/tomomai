@@ -1249,7 +1249,9 @@
           "inBest": "{bucket} 第 {rank} 名",
           "toEnter": "谱面 Rating 超过 {rating} 即可进入{bucket}",
           "room": "任何计入 Rating 的成绩都会加入{bucket}"
-        }
+        },
+        "openDetails": "歌曲详情",
+        "openInDatabase": "在 {brand} DB 中打开"
       },
       "filter": {
         "type": "类型",

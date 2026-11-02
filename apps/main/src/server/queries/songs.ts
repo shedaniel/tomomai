@@ -96,7 +96,7 @@ export async function querySongScores({ game, songName, type, artist, parentIds,
 /** The viewer's rating selection in each region's latest snapshot, and where this song's charts sit in it. */
 export async function querySongRatingStanding({ game, songName, type, artist, parentIds, userId }: SongQuery & { userId: string }): Promise<Partial<Record<Region, RatingStanding>>> {
   const latest = await db
-    .selectDistinctOn([userSnapshots.region], { id: userSnapshots.id, region: userSnapshots.region, gameVersion: userSnapshots.gameVersion })
+    .selectDistinctOn([userSnapshots.region], { id: userSnapshots.id, region: userSnapshots.region, gameVersion: userSnapshots.gameVersion, rating: userSnapshots.rating })
     .from(userSnapshots)
     .where(and(eq(userSnapshots.game, game), eq(userSnapshots.userId, userId)))
     .orderBy(userSnapshots.region, desc(userSnapshots.fetchedAt));
@@ -128,7 +128,7 @@ export async function querySongRatingStanding({ game, songName, type, artist, pa
   const standings: Partial<Record<Region, RatingStanding>> = {};
   for (const snapshot of latest) {
     const ranked = rateStoredRankings(game, rows.filter(row => row.snapshotId === snapshot.id), snapshot.gameVersion);
-    const standing: RatingStanding = { gameVersion: snapshot.gameVersion, new: [], old: [], charts: {} };
+    const standing: RatingStanding = { gameVersion: snapshot.gameVersion, playerRating: snapshot.rating, new: [], old: [], charts: {} };
     for (const bucket of ["new", "old"] as const satisfies RatingBucketKey[]) {
       // Ratings use today's chart constants, so the stored rank order can be out of date.
       const sorted = (bucket === "new" ? ranked.newScores : ranked.oldScores).toSorted((a, b) => b.rating - a.rating);
@@ -217,6 +217,7 @@ export async function querySongDetails({ userId, ...song }: SongQuery & { userId
         gameVersion,
         charts: index === 0
           ? versionCharts.map((chart): SongDetailChart => ({
+              parentId: chart.parentId,
               difficulty: chart.difficulty,
               level: chart.level,
               levelPrecise: chart.levelPrecise,

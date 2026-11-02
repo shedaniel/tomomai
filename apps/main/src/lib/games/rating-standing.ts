@@ -6,6 +6,8 @@ export type RatingBucketKey = "new" | "old";
 /** A player's rating selection: the integer chart ratings counted in each bucket, best first. */
 export type RatingStanding = {
   gameVersion: number;
+  /** The player rating the snapshot was fetched with. */
+  playerRating: number;
   new: number[];
   old: number[];
   /** Where each of one song's charts sits in the selection, by difficulty key. */

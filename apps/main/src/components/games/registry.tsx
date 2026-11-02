@@ -9,6 +9,9 @@ import { MaimaiRecentPlayDetails } from "./maimai/recent-play-details";
 import { SongHoverCard } from "./maimai/song-hover-card";
 import { MaimaiSearchSources } from "./maimai/search-sources";
 import type { PaletteItem } from "@/components/command-palette/types";
+import type { SongExtendedIdentified, UserScore } from "@/components/db/songs/types";
+import { MaimaiChartPercentile } from "./maimai/chart-percentile";
+import { SongDetailOnClick } from "./song-detail-on-click";
 
 export type ScoreHoverProps = {
   score: Pick<GamePlayerScore, "songId" | "songName" | "artist" | "cover" | "difficultyCode" | "typeCode">;
@@ -24,6 +27,13 @@ export type SearchSourcesProps = {
   enabled: boolean;
   /** Reports the game's own searchable items, such as maimai's events. */
   onItems: (items: PaletteItem[]) => void;
+};
+
+export type ChartInsightsProps = {
+  chart: SongExtendedIdentified;
+  score?: UserScore;
+  /** The viewer's player rating in the chart's region, or null when signed out or without a snapshot there. */
+  playerRating: number | null;
 };
 
 export type RecentDetailsProps<G extends CanonicalGameId = CanonicalGameId> = {
@@ -42,15 +52,13 @@ export type GameUI<G extends CanonicalGameId> = {
   RecentDetails: ComponentType<RecentDetailsProps<G>>;
   /** Searchable items only this game has, offered to the command palette. */
   SearchSources?: ComponentType<SearchSourcesProps>;
+  /** More about one chart, shown under its rating table in the song details. */
+  ChartInsights?: ComponentType<ChartInsightsProps>;
 };
 
-function PlainScore({ children }: ScoreHoverProps) {
-  return <>{children}</>;
-}
-
 export const GAME_UI: { [G in CanonicalGameId]: GameUI<G> } = {
-  maimai: { ScoreHover: SongHoverCard, RecentDetails: MaimaiRecentPlayDetails, SearchSources: MaimaiSearchSources },
-  chunithm: { ScoreHover: PlainScore, RecentDetails: ChunithmRecentPlayDetails },
+  maimai: { ScoreHover: SongHoverCard, RecentDetails: MaimaiRecentPlayDetails, SearchSources: MaimaiSearchSources, ChartInsights: MaimaiChartPercentile },
+  chunithm: { ScoreHover: SongDetailOnClick, RecentDetails: ChunithmRecentPlayDetails },
 };
 
 /** Renders a fetched playlog with its game's panel. */

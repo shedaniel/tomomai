@@ -1306,7 +1306,9 @@
           "inBest": "{bucket} 第 {rank} 名",
           "toEnter": "譜面 Rating 超過 {rating} 即可進入{bucket}",
           "room": "任何計入 Rating 的成績都會加入{bucket}"
-        }
+        },
+        "openDetails": "歌曲詳情",
+        "openInDatabase": "在 {brand} DB 中開啟"
       },
       "filter": {
         "type": "類型",

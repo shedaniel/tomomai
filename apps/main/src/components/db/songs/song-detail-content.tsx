@@ -15,7 +15,7 @@ import { trpc } from "@/lib/trpc-client";
 import { useSession } from "@/lib/auth-client";
 import type { Region } from "@/lib/games/ids";
 import { cn, safeDecodeURIComponent } from "@/lib/utils";
-import { Activity, Calendar, ChevronRight, Globe, Link2, Loader2, Music, Pencil, PlayCircle, Share } from "lucide-react";
+import { Activity, Calendar, ChevronRight, Database, Globe, Link2, Loader2, Music, Pencil, PlayCircle, Share } from "lucide-react";
 
 import { CoverImage } from "@/components/cover-image";
 import { ChartLevel } from "@/components/games/chart-level";
@@ -48,6 +48,8 @@ interface SongDetailContentProps {
   type: ChartTypeKey;
   parentIds?: string[];
   initialData?: SongDetails | null;
+  /** Shown away from the database, so the song can be opened there. */
+  showDatabaseLink?: boolean;
 }
 
 export function getChartsByDifficulty(regions: SongDetails['regions']): Map<string, SongExtendedIdentified[]> {
@@ -250,7 +252,7 @@ export function SongChartRow({ difficulty, charts, index, data, hasNoteCounts, h
   );
 }
 
-export function SongDetailContent({ songName, artist, slug, type, parentIds, initialData }: SongDetailContentProps) {
+export function SongDetailContent({ songName, artist, slug, type, parentIds, initialData, showDatabaseLink }: SongDetailContentProps) {
   const t = useTranslations();
   const game = useGame();
   const hasInitialData = !!initialData;
@@ -435,7 +437,15 @@ export function SongDetailContent({ songName, artist, slug, type, parentIds, ini
         </div>
 
         {/* Buttons or Links */}
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
+          {showDatabaseLink && (
+            <Button asChild className="rounded-full">
+              <Link href={`/db/songs/${encodeURIComponent(slug)}`}>
+                <Database className="w-4 h-4" />
+                {t('db.songs.detail.openInDatabase', { brand: game.brand.productName })}
+              </Link>
+            </Button>
+          )}
           <Link href={`/db/songs/${slug}`} onClick={async (e) => {
             const baseUrl = resolveBaseUrl();
             navigator.clipboard.writeText(`${baseUrl}/db/songs/${slug}`);
