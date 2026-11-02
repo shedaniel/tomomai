@@ -1278,7 +1278,27 @@
           "room": "Any rated score adds to your {bucket}"
         },
         "openDetails": "Song details",
-        "openInDatabase": "Open in {brand} DB"
+        "openInDatabase": "Open in {brand} DB",
+        "peers": {
+          "top": "Top {percent}",
+          "bottom": "Bottom {percent}",
+          "median": "Median"
+        },
+        "history": {
+          "title": "Your history",
+          "sinceMonth": "+{delta} in 30 days",
+          "first": "First recorded {date}"
+        },
+        "next": "Next: {target} for +{gain}",
+        "recentPlays": "Your recent plays",
+        "photos": "Your photos",
+        "constants": "Chart constant by version",
+        "related": {
+          "title": "Related songs",
+          "artist": "More by {artist}",
+          "designer": "Also charted by {designer}",
+          "level": "Around {difficulty} {level}"
+        }
       },
       "filter": {
         "type": "Type",

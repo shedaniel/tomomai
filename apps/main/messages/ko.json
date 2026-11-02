@@ -1012,7 +1012,27 @@
           "room": "레이팅 대상 점수라면 {bucket}에 더해져요"
         },
         "openDetails": "곡 상세 정보",
-        "openInDatabase": "{brand} DB에서 열기"
+        "openInDatabase": "{brand} DB에서 열기",
+        "peers": {
+          "top": "상위 {percent}",
+          "bottom": "하위 {percent}",
+          "median": "중앙값 근처"
+        },
+        "history": {
+          "title": "내 기록 추이",
+          "sinceMonth": "30일간 +{delta}",
+          "first": "{date} 첫 기록"
+        },
+        "next": "다음 목표: {target}(으)로 +{gain}",
+        "recentPlays": "최근 플레이",
+        "photos": "내 사진",
+        "constants": "버전별 보면 상수",
+        "related": {
+          "title": "관련 곡",
+          "artist": "{artist}의 다른 곡",
+          "designer": "{designer}의 다른 채보",
+          "level": "{difficulty} {level} 전후"
+        }
       },
       "filter": {
         "type": "타입",

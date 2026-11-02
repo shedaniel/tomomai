@@ -3,7 +3,8 @@ import type { CanonicalGameId, Region } from "@/lib/games/ids";
 import { chartEstimates } from "@/lib/catalog/chart-metadata";
 import { SongDetailChart, SongDetailHistoricalChart, SongDetails, UniqueSong, UniqueSongDifficulty } from "@/components/db/songs/types";
 import { db } from "@/lib/db";
-import { parentSong, scoreData, snapshotRankings, snapshotScores, songs, userSnapshots } from "@/lib/db/schema-pg";
+import { parentSong, scoreData, snapshotRankings, snapshotScores, songs, userAlbums, userRecentSongs, userSnapshots } from "@/lib/db/schema-pg";
+import { hasCapability } from "@/lib/games/access";
 import { rateStoredRankings } from "@/lib/games/ranking";
 import type { RatingBucketKey, RatingStanding } from "@/lib/games/rating-standing";
 import { formatSongSlug, getSongSlugs } from "@/lib/song-slug";
@@ -91,6 +92,93 @@ export async function querySongScores({ game, songName, type, artist, parentIds,
     };
   }
   return userScores;
+}
+
+export type SongHistoryPoint = { fetchedAt: Date; scoreValue: number; comboStatus: number; syncStatus: number; clearStatus: number };
+
+const RECENT_PLAYS = 10;
+const ALBUM_PHOTOS = 12;
+
+/** Narrows rows to one song's charts the way the song detail queries do. */
+function songFilter({ game, songName, type, artist, parentIds }: SongQuery) {
+  return and(
+    eq(parentSong.game, game),
+    eq(parentSong.songName, songName),
+    eq(parentSong.type, codeOf(game, "chartType", type)),
+    artist !== undefined ? eq(parentSong.artist, artist) : undefined,
+    parentIds ? inArray(parentSong.publicId, parentIds) : undefined,
+  );
+}
+
+/**
+ * The viewer's own record of one song: each chart's best score whenever it changed between snapshots, the song's
+ * latest plays and the arcade photos taken of it.
+ */
+export async function querySongActivity({ userId, ...song }: SongQuery & { userId: string }) {
+  const { game } = song;
+  const difficulty = sql`${parentSong.difficulty}`.mapWith(value => keyOf(game, "difficulty", Number(value))).as("difficulty");
+  const [scores, recentPlays, albums] = await Promise.all([
+    db
+      .select({
+        region: songs.region,
+        difficulty,
+        fetchedAt: userSnapshots.fetchedAt,
+        scoreValue: scoreData.scoreValue,
+        comboStatus: scoreData.comboStatus,
+        syncStatus: scoreData.syncStatus,
+        clearStatus: scoreData.clearStatus,
+      })
+      .from(snapshotScores)
+      .innerJoin(userSnapshots, eq(snapshotScores.snapshotId, userSnapshots.id))
+      .innerJoin(scoreData, eq(snapshotScores.scoreId, scoreData.id))
+      .innerJoin(songs, eq(scoreData.songId, songs.id))
+      .innerJoin(parentSong, eq(songs.parentId, parentSong.id))
+      .where(and(songFilter(song), eq(userSnapshots.userId, userId), eq(userSnapshots.game, game)))
+      .orderBy(userSnapshots.fetchedAt),
+    hasCapability(game, "recents")
+      ? db
+        .select({
+          region: songs.region,
+          difficulty,
+          playedAt: userRecentSongs.playedAt,
+          scoreValue: userRecentSongs.scoreValue,
+          comboStatus: userRecentSongs.comboStatus,
+          syncStatus: userRecentSongs.syncStatus,
+          clearStatus: userRecentSongs.clearStatus,
+        })
+        .from(userRecentSongs)
+        .innerJoin(songs, eq(userRecentSongs.songId, songs.id))
+        .innerJoin(parentSong, eq(songs.parentId, parentSong.id))
+        .where(and(songFilter(song), eq(userRecentSongs.userId, userId), eq(userRecentSongs.game, game)))
+        .orderBy(desc(userRecentSongs.playedAt))
+        .limit(RECENT_PLAYS)
+      : Promise.resolve([]),
+    hasCapability(game, "albums")
+      ? db
+        .select({ id: userAlbums.id, region: songs.region, difficulty, takenAt: userAlbums.takenAt, venue: userAlbums.venue, imageKey: userAlbums.imageKey })
+        .from(userAlbums)
+        .innerJoin(songs, eq(userAlbums.songId, songs.id))
+        .innerJoin(parentSong, eq(songs.parentId, parentSong.id))
+        .where(and(songFilter(song), eq(userAlbums.userId, userId), eq(userAlbums.game, game)))
+        .orderBy(desc(userAlbums.takenAt))
+        .limit(ALBUM_PHOTOS)
+      : Promise.resolve([]),
+  ]);
+
+  const history: Partial<Record<Region, Record<string, SongHistoryPoint[]>>> = {};
+  for (const { region, difficulty: key, ...point } of scores) {
+    const charts = history[region] ??= {};
+    const points = charts[key] ??= [];
+    const last = points[points.length - 1];
+    if (last && last.scoreValue === point.scoreValue && last.comboStatus === point.comboStatus
+      && last.syncStatus === point.syncStatus && last.clearStatus === point.clearStatus) continue;
+    points.push(point);
+  }
+  return {
+    history,
+    recentPlays,
+    albums: albums.map(album => ({ ...album, id: album.id.toString() })),
+  };
 }
 
 /** The viewer's rating selection in each region's latest snapshot, and where this song's charts sit in it. */

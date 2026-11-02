@@ -11,6 +11,9 @@ import { codeOf } from "@/lib/games/codes";
 import { ChartLevel } from "@/components/games/chart-level";
 import { formatEstimated, formatGameScore, formatGameRating, getGameDifficulty, getGameRankingBuckets, getGameScoreBenchmarks } from "@/lib/games/presentation";
 import { GAME_UI } from "@/components/games/registry";
+import { useFormatter } from "next-intl";
+import { ScoreHistoryChart } from "./score-history-chart";
+import { useSongInsights } from "./song-insights";
 import { playerRatingGain, ratingBucketFloor, ratingBucketOf, type RatingStanding } from "@/lib/games/rating-standing";
 
 
@@ -54,6 +57,9 @@ function SongChartDialogGrid({ chart, score, standing }: { chart: SongExtendedId
     return value > 0 ? `+${formatGameRating(game.id, value)}` : "—";
   };
   const { ChartInsights } = GAME_UI[game.id];
+  const format = useFormatter();
+  const insights = useSongInsights();
+  const history = insights?.history[chart.region]?.[chart.difficulty] ?? [];
   const gainCell = (scoreValue: number, comboStatus = 0) => gains && <span className="py-2 px-3 text-xs border-b border-l font-medium tabular-nums text-primary">{gain(scoreValue, comboStatus)}</span>;
   return <div className="space-y-2">
     {gains && <RatingStandingNote chart={chart} standing={gains} />}
@@ -81,7 +87,13 @@ function SongChartDialogGrid({ chart, score, standing }: { chart: SongExtendedId
         </div>
       </Fragment>)}
     </div>
-    {ChartInsights && <ChartInsights chart={chart} score={score} playerRating={standing?.playerRating ?? null} />}
+    {history.length > 0 && <div className="space-y-1">
+      <div className="text-xs font-medium">{t("db.songs.detail.history.title")}</div>
+      {history.length > 1
+        ? <ScoreHistoryChart points={history} label={t("db.songs.detail.history.title")} />
+        : <p className="text-xs text-muted-foreground">{t("db.songs.detail.history.first", { date: format.dateTime(history[0].fetchedAt, { year: "numeric", month: "short", day: "numeric" }) })}</p>}
+    </div>}
+    {ChartInsights && <ChartInsights chart={chart} score={score} playerRating={standing?.playerRating ?? null} regionCharts={insights?.regionCharts[chart.region] ?? [{ chart, score }]} />}
   </div>;
 }
 

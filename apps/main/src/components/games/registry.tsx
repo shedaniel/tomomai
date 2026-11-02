@@ -10,7 +10,7 @@ import { SongHoverCard } from "./maimai/song-hover-card";
 import { MaimaiSearchSources } from "./maimai/search-sources";
 import type { PaletteItem } from "@/components/command-palette/types";
 import type { SongExtendedIdentified, UserScore } from "@/components/db/songs/types";
-import { MaimaiChartPercentile } from "./maimai/chart-percentile";
+import { MaimaiChartPercentile, MaimaiChartPercentileBadge } from "./maimai/chart-percentile";
 import { SongDetailOnClick } from "./song-detail-on-click";
 
 export type ScoreHoverProps = {
@@ -34,6 +34,8 @@ export type ChartInsightsProps = {
   score?: UserScore;
   /** The viewer's player rating in the chart's region, or null when signed out or without a snapshot there. */
   playerRating: number | null;
+  /** Every chart of the song in the same region, so a game can look them up in one request. */
+  regionCharts: readonly { chart: SongExtendedIdentified; score?: UserScore }[];
 };
 
 export type RecentDetailsProps<G extends CanonicalGameId = CanonicalGameId> = {
@@ -54,10 +56,12 @@ export type GameUI<G extends CanonicalGameId> = {
   SearchSources?: ComponentType<SearchSourcesProps>;
   /** More about one chart, shown under its rating table in the song details. */
   ChartInsights?: ComponentType<ChartInsightsProps>;
+  /** A short note beside the viewer's score on a chart in the song details. */
+  ChartBadge?: ComponentType<ChartInsightsProps>;
 };
 
 export const GAME_UI: { [G in CanonicalGameId]: GameUI<G> } = {
-  maimai: { ScoreHover: SongHoverCard, RecentDetails: MaimaiRecentPlayDetails, SearchSources: MaimaiSearchSources, ChartInsights: MaimaiChartPercentile },
+  maimai: { ScoreHover: SongHoverCard, RecentDetails: MaimaiRecentPlayDetails, SearchSources: MaimaiSearchSources, ChartInsights: MaimaiChartPercentile, ChartBadge: MaimaiChartPercentileBadge },
   chunithm: { ScoreHover: SongDetailOnClick, RecentDetails: ChunithmRecentPlayDetails },
 };
 

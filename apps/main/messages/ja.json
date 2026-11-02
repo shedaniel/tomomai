@@ -1308,7 +1308,27 @@
           "room": "Rating対象のスコアなら{bucket}に加わります"
         },
         "openDetails": "楽曲の詳細",
-        "openInDatabase": "{brand} DBで開く"
+        "openInDatabase": "{brand} DBで開く",
+        "peers": {
+          "top": "上位{percent}",
+          "bottom": "下位{percent}",
+          "median": "中央値付近"
+        },
+        "history": {
+          "title": "あなたの推移",
+          "sinceMonth": "30日で+{delta}",
+          "first": "{date}に初記録"
+        },
+        "next": "次の目標: {target}で+{gain}",
+        "recentPlays": "最近のプレイ",
+        "photos": "あなたの写真",
+        "constants": "バージョンごとの譜面定数",
+        "related": {
+          "title": "関連する曲",
+          "artist": "{artist}の他の曲",
+          "designer": "{designer}の他の譜面",
+          "level": "{difficulty} {level}前後"
+        }
       },
       "filter": {
         "type": "タイプ",

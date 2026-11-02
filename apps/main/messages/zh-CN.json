@@ -1308,7 +1308,27 @@
           "room": "任何计入 Rating 的成绩都会加入{bucket}"
         },
         "openDetails": "歌曲详情",
-        "openInDatabase": "在 {brand} DB 中打开"
+        "openInDatabase": "在 {brand} DB 中打开",
+        "peers": {
+          "top": "前 {percent}",
+          "bottom": "后 {percent}",
+          "median": "中位数附近"
+        },
+        "history": {
+          "title": "你的成绩变化",
+          "sinceMonth": "30 天内 +{delta}",
+          "first": "首次记录于 {date}"
+        },
+        "next": "下一目标:{target},+{gain}",
+        "recentPlays": "最近游玩",
+        "photos": "你的照片",
+        "constants": "各版本的谱面定数",
+        "related": {
+          "title": "相关歌曲",
+          "artist": "{artist} 的更多歌曲",
+          "designer": "{designer} 的其他谱面",
+          "level": "{difficulty} {level} 左右"
+        }
       },
       "filter": {
         "type": "类型",

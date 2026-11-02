@@ -7,7 +7,14 @@ import {
 } from "@tomomai/ui";
 import { useGame, usePresentation } from "@/components/providers/game-provider";
 import { codeOf } from "@/lib/games/codes";
-import { formatEstimated, formatGameScore, formatGameRating, getGameDifficulty, getGameScoreGrade, getGameStatusBadges } from "@/lib/games/presentation";
+import { formatEstimated, formatGameScore, formatGameScoreDelta, formatGameRating, getGameDifficulty, getGameScoreGrade, getGameStatusBadges } from "@/lib/games/presentation";
+import { formatRecommendationTarget } from "@/lib/games/recommendations";
+import { nextRatingTarget, ratingBucketOf } from "@/lib/games/rating-standing";
+import { GAME_UI } from "@/components/games/registry";
+import { SongInsightsContext, scoreMonthAgo, useSongInsights, type SongInsights } from "./song-insights";
+import { ConstantHistoryChart } from "./constant-history-chart";
+import { RelatedSongs } from "./related-songs";
+import { SongPhotos, SongRecentPlays } from "./song-activity";
 import { isGameCnExclusive, supportsGameFeature } from "@/lib/games/frontend";
 import { getGame } from "@/lib/games/registry";
 import { getVersion } from "@/lib/games/versions";
@@ -93,6 +100,8 @@ function ScoreGrid({
   const t = useTranslations();
   const game = useGame();
   const { scoreLabel } = usePresentation();
+  const insights = useSongInsights();
+  const { ChartBadge } = GAME_UI[game.id];
 
   return (
     <div className={cn(
@@ -109,6 +118,16 @@ function ScoreGrid({
         }, chart.gameVersion) : null;
 
         const label = t(`regions.${region}`);
+        const difficultyCode = codeOf(game.id, "difficulty", chart.difficulty);
+        const standing = insights?.standings[region as Region];
+        const placement = standing?.charts[chart.difficulty];
+        const next = standing && score ? nextRatingTarget(game.id, standing, {
+          bucket: placement?.bucket ?? ratingBucketOf(game.id, chart.addedVersion, standing.gameVersion),
+          index: placement?.index ?? null,
+          levelPrecise: chart.levelPrecise,
+          difficultyCode,
+        }, score) : null;
+        const monthAgo = score ? scoreMonthAgo(insights?.history[region as Region]?.[chart.difficulty]) : null;
 
         return (
           <div key={region} className="contents">
@@ -122,7 +141,17 @@ function ScoreGrid({
                     <span className="text-sm font-semibold tabular-nums truncate">
                       {formatGameScore(game.id, score.scoreValue)}
                     </span>
-                    <SongBadges score={score} />
+                    <div className="flex flex-wrap items-center gap-1">
+                      <SongBadges score={score} />
+                      {ChartBadge && insights && (
+                        <ChartBadge chart={chart} score={score} playerRating={standing?.playerRating ?? null} regionCharts={insights.regionCharts[region as Region] ?? []} />
+                      )}
+                    </div>
+                    {monthAgo && (
+                      <span className="text-[10px] tabular-nums text-emerald-600 dark:text-emerald-400">
+                        {t("db.songs.detail.history.sinceMonth", { delta: formatGameScoreDelta(game.id, monthAgo.scoreValue, score.scoreValue) })}
+                      </span>
+                    )}
                   </>
                 ) : (
                   <span className="text-sm text-muted-foreground">-</span>
@@ -148,6 +177,11 @@ function ScoreGrid({
                   <span className="text-sm text-muted-foreground">-</span>
                 )}
               </div>
+              {next && (
+                <span className="text-[10px] text-muted-foreground">
+                  {t("db.songs.detail.next", { target: formatRecommendationTarget(game.id, next.target), gain: formatGameRating(game.id, next.gain) })}
+                </span>
+              )}
             </div>
           </div>
         );
@@ -286,6 +320,10 @@ export function SongDetailContent({ songName, artist, slug, type, parentIds, ini
   );
   // A disabled query still returns its cached data, so a signed-out viewer must not see the last viewer's.
   const standings = viewerId !== null ? standingsData : undefined;
+  const { data: activity } = trpc.user.getSongActivity.useQuery(
+    { game: game.id, songName, artist: artist ?? initialData?.artist ?? fetchedData?.artist, type, parentIds: parentIds ?? initialData?.parentIds },
+    { enabled: viewerId !== null && supportsGameFeature(game, "scores"), staleTime: 60000, retry: false },
+  );
   const data = useMemo(() => {
     if (!initialData) return fetchedData;
     return {
@@ -304,6 +342,14 @@ export function SongDetailContent({ songName, artist, slug, type, parentIds, ini
   }, [chartsByDifficulty]);
   const hasNoteCounts = supportsGameFeature(game, "note-counts");
   const hasTouch = allCharts.some(chart => chart.touchCount !== null);
+
+  const insights = useMemo((): SongInsights => {
+    const regionCharts: SongInsights["regionCharts"] = {};
+    for (const chart of allCharts) {
+      (regionCharts[chart.region] ??= []).push({ chart, score: data?.userScores?.[chart.region]?.[chart.difficulty] });
+    }
+    return { standings: standings ?? {}, history: activity?.history ?? {}, regionCharts };
+  }, [allCharts, data?.userScores, standings, activity?.history]);
 
   // Pre-compute SEO summary inputs (visible prose paragraph below the header).
   const summary = useMemo(() => {
@@ -381,6 +427,7 @@ export function SongDetailContent({ songName, artist, slug, type, parentIds, ini
   const addedVersionInfo = getVersion(game.id, data.addedVersion);
 
   return (
+    <SongInsightsContext.Provider value={insights}>
     <div className="space-y-6">
       {/* Cover and basic info */}
       <div className="flex gap-4">
@@ -520,6 +567,9 @@ export function SongDetailContent({ songName, artist, slug, type, parentIds, ini
         </div>
       )}
 
+      {activity && <SongRecentPlays plays={activity.recentPlays} showRegion={data.regions.length > 1} />}
+      {activity && <SongPhotos photos={activity.albums} />}
+
       {/* Availability by region */}
       <div className="space-y-4">
         <h2 className="text-sm font-semibold flex items-center gap-2">
@@ -534,6 +584,8 @@ export function SongDetailContent({ songName, artist, slug, type, parentIds, ini
                 {t(`regions.${region}`)}
               </h3>
             </div>
+
+            <ConstantHistoryChart versions={versions} label={t('db.songs.detail.constants')} />
 
             <div className="space-y-3 pl-4 border-l-2 border-muted">
               {versions.map(({ gameVersion, charts }) => {
@@ -583,6 +635,9 @@ export function SongDetailContent({ songName, artist, slug, type, parentIds, ini
           </div>
         ))}
       </div>
+
+      <RelatedSongs songName={data.songName} artist={data.artist} type={data.type} charts={allCharts} inPlace={!!showDatabaseLink} />
     </div>
+    </SongInsightsContext.Provider>
   );
 }

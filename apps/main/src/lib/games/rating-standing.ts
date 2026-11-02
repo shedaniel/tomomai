@@ -1,5 +1,6 @@
 import { getGame } from "./registry";
 import type { CanonicalGameId } from "./ids";
+import type { RecommendationTarget } from "./types";
 
 export type RatingBucketKey = "new" | "old";
 
@@ -48,4 +49,27 @@ export function playerRatingGain(
   }
   const next = chart.bucket === "new" ? [...ratings, ...standing.old] : [...standing.new, ...ratings];
   return Math.max(0, rating.playerRating(next) - rating.playerRating([...standing.new, ...standing.old]));
+}
+
+/**
+ * The nearest recommendation target that raises both the chart and the player rating, as the recommendations
+ * engine picks it, or null when nothing within reach would.
+ */
+export function nextRatingTarget(
+  game: CanonicalGameId,
+  standing: RatingStanding,
+  chart: { bucket: RatingBucketKey; index: number | null; levelPrecise: number; difficultyCode: number },
+  current: { scoreValue: number; comboStatus: number },
+): { target: RecommendationTarget; gain: number } | null {
+  const { rating, recommendations } = getGame(game);
+  if (!rating.isRated(chart.difficultyCode)) return null;
+  const rate = (scoreValue: number, comboStatus: number) => Math.floor(rating.chartRating({ scoreValue, comboStatus, levelPrecise: chart.levelPrecise, difficultyCode: chart.difficultyCode }, standing.gameVersion));
+  const currentRating = rate(current.scoreValue, current.comboStatus);
+  for (const target of recommendations.targets(standing.gameVersion)) {
+    const targetRating = rate(target.scoreValue, target.comboStatus);
+    if (targetRating <= currentRating) continue;
+    const gain = playerRatingGain(game, standing, chart, targetRating);
+    if (gain > 0) return { target, gain };
+  }
+  return null;
 }
