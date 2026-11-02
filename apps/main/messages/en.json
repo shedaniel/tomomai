@@ -1327,7 +1327,13 @@
         "summary": "{songName} is a {chartLabel} chart by {artist} in the {genre} genre, added in {versionName}. Difficulty ranges from {minLevel} to {maxLevel} across {chartCount, plural, =1 {# chart} other {# charts}}{bpmFragment}.",
         "summaryBpmFragment": " (BPM {bpm})",
         "loadFailed": "Failed to load song details",
-        "score": "Score"
+        "score": "Score",
+        "ratingGain": "Your rating",
+        "standing": {
+          "inBest": "#{rank} in your {bucket}",
+          "toEnter": "Beat a chart rating of {rating} to enter your {bucket}",
+          "room": "Any rated score adds to your {bucket}"
+        }
       },
       "filter": {
         "type": "Type",
@@ -1686,7 +1692,11 @@
       "players": "Players",
       "events": "Events",
       "posts": "Changelog",
-      "docs": "Developer docs"
+      "docs": "Developer docs",
+      "calculator": "Rating calculator",
+      "charts": "Your charts",
+      "tips": "Try",
+      "minigames": "Minigames"
     },
     "hints": {
       "navigate": "Navigate",
@@ -1707,7 +1717,11 @@
       "fetch": "Fetch new data",
       "switchRegion": "Switch region to {region}",
       "copyProfileLink": "Copy my profile link",
-      "copiedProfileLink": "Profile link copied"
+      "copiedProfileLink": "Profile link copied",
+      "copySongLink": "Copy the link to {song}",
+      "copiedSongLink": "Copied the song link",
+      "searchVideo": "Search videos of {song}",
+      "copyThisProfileLink": "Copy @{username}'s profile link"
     },
     "pages": {
       "myProfile": "My profile"
@@ -1716,6 +1730,22 @@
       "yourScores": "Your best scores",
       "rating": "Rating {rating}"
     },
-    "playersHint": "Type a username or in-game name to find players"
+    "playersHint": "Type a username or in-game name to find players",
+    "charts": {
+      "signIn": "Sign in to filter by your scores",
+      "unplayed": "Unplayed",
+      "reroll": "Pick another",
+      "count": "{count, plural, one {# chart} other {# charts}}",
+      "noScores": "Fetch your scores to filter by them"
+    },
+    "calculator": {
+      "result": "Rating {rating}",
+      "copied": "Copied {rating}"
+    },
+    "tips": {
+      "filters": "Your 13+ charts without a full combo",
+      "random": "A random 13+ chart",
+      "calculator": "The rating of a 13.7 at this score"
+    }
   }
 }

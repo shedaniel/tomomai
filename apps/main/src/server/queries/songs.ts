@@ -3,7 +3,9 @@ import type { CanonicalGameId, Region } from "@/lib/games/ids";
 import { chartEstimates } from "@/lib/catalog/chart-metadata";
 import { SongDetailChart, SongDetailHistoricalChart, SongDetails, UniqueSong, UniqueSongDifficulty } from "@/components/db/songs/types";
 import { db } from "@/lib/db";
-import { parentSong, scoreData, snapshotScores, songs, userSnapshots } from "@/lib/db/schema-pg";
+import { parentSong, scoreData, snapshotRankings, snapshotScores, songs, userSnapshots } from "@/lib/db/schema-pg";
+import { rateStoredRankings } from "@/lib/games/ranking";
+import type { RatingBucketKey, RatingStanding } from "@/lib/games/rating-standing";
 import { formatSongSlug, getSongSlugs } from "@/lib/song-slug";
 import { instancePreference } from "@/lib/games/regions";
 import { maxBy } from "@/lib/utils";
@@ -89,6 +91,55 @@ export async function querySongScores({ game, songName, type, artist, parentIds,
     };
   }
   return userScores;
+}
+
+/** The viewer's rating selection in each region's latest snapshot, and where this song's charts sit in it. */
+export async function querySongRatingStanding({ game, songName, type, artist, parentIds, userId }: SongQuery & { userId: string }): Promise<Partial<Record<Region, RatingStanding>>> {
+  const latest = await db
+    .selectDistinctOn([userSnapshots.region], { id: userSnapshots.id, region: userSnapshots.region, gameVersion: userSnapshots.gameVersion })
+    .from(userSnapshots)
+    .where(and(eq(userSnapshots.game, game), eq(userSnapshots.userId, userId)))
+    .orderBy(userSnapshots.region, desc(userSnapshots.fetchedAt));
+  if (latest.length === 0) return {};
+
+  const rows = await db
+    .select({
+      snapshotId: snapshotRankings.snapshotId,
+      bucket: snapshotRankings.bucket,
+      parentId: parentSong.publicId,
+      songName: parentSong.songName,
+      artist: parentSong.artist,
+      typeCode: parentSong.type,
+      difficultyCode: parentSong.difficulty,
+      levelPrecise: songs.levelPrecise,
+      scoreValue: scoreData.scoreValue,
+      comboStatus: scoreData.comboStatus,
+    })
+    .from(snapshotRankings)
+    .innerJoin(scoreData, eq(snapshotRankings.scoreId, scoreData.id))
+    .innerJoin(songs, eq(scoreData.songId, songs.id))
+    .innerJoin(parentSong, eq(songs.parentId, parentSong.id))
+    .where(inArray(snapshotRankings.snapshotId, latest.map(snapshot => snapshot.id)))
+    .orderBy(snapshotRankings.snapshotId, snapshotRankings.bucket, snapshotRankings.rank);
+
+  const typeCode = codeOf(game, "chartType", type);
+  const isThisSong = (row: (typeof rows)[number]) => row.songName === songName && row.typeCode === typeCode
+    && (artist === undefined || row.artist === artist) && (!parentIds || parentIds.includes(row.parentId));
+  const standings: Partial<Record<Region, RatingStanding>> = {};
+  for (const snapshot of latest) {
+    const ranked = rateStoredRankings(game, rows.filter(row => row.snapshotId === snapshot.id), snapshot.gameVersion);
+    const standing: RatingStanding = { gameVersion: snapshot.gameVersion, new: [], old: [], charts: {} };
+    for (const bucket of ["new", "old"] as const satisfies RatingBucketKey[]) {
+      // Ratings use today's chart constants, so the stored rank order can be out of date.
+      const sorted = (bucket === "new" ? ranked.newScores : ranked.oldScores).toSorted((a, b) => b.rating - a.rating);
+      standing[bucket] = sorted.map(row => row.rating);
+      sorted.forEach((row, index) => {
+        if (isThisSong(row)) standing.charts[keyOf(game, "difficulty", row.difficultyCode)] = { bucket, index };
+      });
+    }
+    standings[snapshot.region] = standing;
+  }
+  return standings;
 }
 
 export async function querySongDetails({ userId, ...song }: SongQuery & { userId?: string }): Promise<SongDetails> {

@@ -12,6 +12,12 @@ export const maimaiPresentation = {
     ? `${(value / 10_000).toFixed(4)}%`
     : `${(hundredths(value) / 100).toFixed(2)}%`,
   formatScoreDelta: (from, to) => `${((hundredths(to) - hundredths(from)) / 100).toFixed(2)}%`,
+  parseScore: text => {
+    const match = /^(\d{1,3}(?:\.\d{1,4})?)%?$/.exec(text.trim());
+    if (!match) return null;
+    const value = Math.round(Number(match[1]) * 10_000);
+    return value <= 1_010_000 ? value : null;
+  },
   scoreLabel: "achievement",
   ratingRules: { scale: 1, aggregation: "sum", axisStep: 100, distributionStep: 1, filterBucketWidth: 10 },
   difficulties: {

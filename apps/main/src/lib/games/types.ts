@@ -174,6 +174,8 @@ type PresentationOf<G extends CanonicalGameId> = {
   formatScore(value: number, precision: "full" | "compact"): string;
   /** The difference between two scores as shown at compact precision. */
   formatScoreDelta(from: number, to: number): string;
+  /** A score as a player types it, such as "100.5%" or "1,007,500", or null when it is not one. */
+  parseScore(text: string): number | null;
   /** The score's name, a key in each message namespace that labels scores. */
   scoreLabel: "achievement" | "score";
   ratingRules: RatingRules;

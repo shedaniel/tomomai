@@ -1300,7 +1300,13 @@
         "summary": "{songName} は {versionName} で追加された、{artist} による {genre} ジャンルの {chartLabel} 譜面です。難易度は {chartCount, plural, =1 {# 譜面} other {# 譜面}} にわたり、{minLevel} から {maxLevel} までの範囲です{bpmFragment}。",
         "summaryBpmFragment": "（BPM {bpm}）",
         "loadFailed": "楽曲詳細の読み込みに失敗しました",
-        "score": "スコア"
+        "score": "スコア",
+        "ratingGain": "あなたのRating",
+        "standing": {
+          "inBest": "{bucket}の{rank}位",
+          "toEnter": "譜面Rating {rating}を超えると{bucket}に入ります",
+          "room": "Rating対象のスコアなら{bucket}に加わります"
+        }
       },
       "filter": {
         "type": "タイプ",
@@ -1686,7 +1692,11 @@
       "players": "プレイヤー",
       "events": "イベント",
       "posts": "更新履歴",
-      "docs": "開発者向けドキュメント"
+      "docs": "開発者向けドキュメント",
+      "calculator": "Rating計算",
+      "charts": "あなたの譜面",
+      "tips": "試してみる",
+      "minigames": "ミニゲーム"
     },
     "hints": {
       "navigate": "移動",
@@ -1707,7 +1717,11 @@
       "fetch": "新しいデータを取得",
       "switchRegion": "地域を{region}に切り替え",
       "copyProfileLink": "プロフィールのリンクをコピー",
-      "copiedProfileLink": "プロフィールのリンクをコピーしました"
+      "copiedProfileLink": "プロフィールのリンクをコピーしました",
+      "copySongLink": "{song}のリンクをコピー",
+      "copiedSongLink": "曲のリンクをコピーしました",
+      "searchVideo": "{song}の動画を検索",
+      "copyThisProfileLink": "@{username}のプロフィールのリンクをコピー"
     },
     "pages": {
       "myProfile": "マイプロフィール"
@@ -1716,6 +1730,22 @@
       "yourScores": "あなたのベストスコア",
       "rating": "Rating {rating}"
     },
-    "playersHint": "ユーザー名またはプレイヤー名を入力してプレイヤーを探す"
+    "playersHint": "ユーザー名またはプレイヤー名を入力してプレイヤーを探す",
+    "charts": {
+      "signIn": "ログインするとスコアで絞り込めます",
+      "unplayed": "未プレイ",
+      "reroll": "もう一度選ぶ",
+      "count": "{count}譜面",
+      "noScores": "スコアを取得すると絞り込めます"
+    },
+    "calculator": {
+      "result": "Rating {rating}",
+      "copied": "{rating}をコピーしました"
+    },
+    "tips": {
+      "filters": "フルコンボしていない13+の譜面",
+      "random": "13+の譜面をランダムに選ぶ",
+      "calculator": "13.7をこのスコアで出したときのRating"
+    }
   }
 }

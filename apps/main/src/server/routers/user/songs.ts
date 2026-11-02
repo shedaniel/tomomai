@@ -12,7 +12,7 @@ import { protectedProcedure, publicProcedure, router } from '@/lib/trpc';
 import { TRPCError } from '@trpc/server';
 import { eq, sql } from 'drizzle-orm';
 import { z } from 'zod';
-import { queryAllUniqueSongs, querySongDetails, querySongScores } from '@/server/queries/songs';
+import { queryAllUniqueSongs, querySongDetails, querySongRatingStanding, querySongScores } from '@/server/queries/songs';
 
 // Declares the game again so the chart type can be checked against it.
 const songInputSchema = z.object({
@@ -44,6 +44,11 @@ export const songsRouter = router({
         userScores: await querySongScores({ ...input, game: ctx.game, userId: ctx.session.user.id }),
       };
     }),
+
+  /** Where the viewer's rating selection stands against this song's charts, for the rating each score would add. */
+  getSongRatingStanding: gameOnlyProcedure(protectedProcedure, "rating")
+    .input(songInputSchema)
+    .query(({ input, ctx }) => querySongRatingStanding({ ...input, game: ctx.game, userId: ctx.session.user.id })),
 
   getSimpleSongDetails: gameOnlyProcedure(publicProcedure, "catalog")
     .input(z.object({

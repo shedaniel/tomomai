@@ -1243,7 +1243,13 @@
         "share": "分享",
         "youtube": "YouTube 搜索",
         "viewCharts": "查看谱面",
-        "score": "分数"
+        "score": "分数",
+        "ratingGain": "你的 Rating",
+        "standing": {
+          "inBest": "{bucket} 第 {rank} 名",
+          "toEnter": "谱面 Rating 超过 {rating} 即可进入{bucket}",
+          "room": "任何计入 Rating 的成绩都会加入{bucket}"
+        }
       },
       "filter": {
         "type": "类型",
@@ -1686,7 +1692,11 @@
       "players": "玩家",
       "events": "活动",
       "posts": "更新日志",
-      "docs": "开发者文档"
+      "docs": "开发者文档",
+      "calculator": "Rating 计算",
+      "charts": "你的谱面",
+      "tips": "试试看",
+      "minigames": "小游戏"
     },
     "hints": {
       "navigate": "选择",
@@ -1707,7 +1717,11 @@
       "fetch": "导入新数据",
       "switchRegion": "切换地区为{region}",
       "copyProfileLink": "复制我的主页链接",
-      "copiedProfileLink": "已复制主页链接"
+      "copiedProfileLink": "已复制主页链接",
+      "copySongLink": "复制 {song} 的链接",
+      "copiedSongLink": "已复制歌曲链接",
+      "searchVideo": "搜索 {song} 的视频",
+      "copyThisProfileLink": "复制 @{username} 的个人资料链接"
     },
     "pages": {
       "myProfile": "我的主页"
@@ -1716,6 +1730,22 @@
       "yourScores": "你的最佳成绩",
       "rating": "Rating {rating}"
     },
-    "playersHint": "输入用户名或游戏内名称来寻找玩家"
+    "playersHint": "输入用户名或游戏内名称来寻找玩家",
+    "charts": {
+      "signIn": "登录后可按你的成绩筛选",
+      "unplayed": "未游玩",
+      "reroll": "换一首",
+      "count": "{count} 个谱面",
+      "noScores": "获取成绩后即可筛选"
+    },
+    "calculator": {
+      "result": "Rating {rating}",
+      "copied": "已复制 {rating}"
+    },
+    "tips": {
+      "filters": "你未 FC 的 13+ 谱面",
+      "random": "随机一首 13+ 谱面",
+      "calculator": "13.7 在这个成绩下的 Rating"
+    }
   }
 }

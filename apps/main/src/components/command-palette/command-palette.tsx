@@ -16,7 +16,7 @@ import { ThemeDialog } from "@/components/theme-dialog";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { codeOf } from "@/lib/games/codes";
 import { formatGameRating, formatGameScore, getGameDifficulty, getGrade } from "@/lib/games/presentation";
-import { supportsGameFeature } from "@/lib/games/frontend";
+import { getGameRegion, supportsGameFeature } from "@/lib/games/frontend";
 import { GAME_UI } from "@/components/games/registry";
 import { useLocale } from "@tomomai/i18n/client";
 import { useSession } from "@/lib/auth-client";
@@ -29,6 +29,7 @@ import { cn } from "@/lib/utils";
 import type { UniqueSong } from "@/components/db/songs/types";
 import { useCommandPalette } from "./command-palette-provider";
 import { clearRecents, readRecents, rememberRecent } from "./recents";
+import { useCalculatorItem, useChartResults, useTipItems } from "./chart-sources";
 import { useActionItems, usePageItems } from "./sources";
 import type { PaletteGroup, PaletteItem, RecentItem } from "./types";
 
@@ -133,6 +134,12 @@ export function CommandPalette() {
     retry: false,
   });
 
+  const region = getGameRegion(game, userData?.region);
+  const filterText = scope === "all" ? scopedQuery : "";
+  const charts = useChartResults({ open, text: filterText, catalog, region });
+  const calculator = useCalculatorItem(filterText, region);
+  const tips = useTipItems(setQuery);
+
   const [gameItems, setGameItems] = useState<PaletteItem[]>([]);
   const GameSearchSources = GAME_UI[game.id].SearchSources;
 
@@ -190,6 +197,7 @@ export function CommandPalette() {
           { group: "recent", items: recents.map(recentItem) },
           { group: "actions", items: allActions.filter(item => !item.searchOnly).slice(0, 5) },
           { group: "pages", items: pages.slice(0, 8) },
+          { group: "tips", items: tips },
         ].filter(section => section.items.length > 0) as Section[],
       };
     }
@@ -211,7 +219,7 @@ export function CommandPalette() {
     const ranked = [
       { group: "songs" as const, best: songHits[0]?.score ?? 0, items: songHits.slice(0, SONG_RESULTS).map(hit => songItem(hit.item)) },
       { group: "players" as const, best: playerScore, items: playerItems },
-      ...(["pages", "events", "posts", "docs"] as const).map(group => {
+      ...(["pages", "events", "minigames", "posts", "docs"] as const).map(group => {
         const hits = byGroup(group);
         return { group, best: hits[0]?.score ?? 0, items: hits.slice(0, group === "pages" ? 8 : 5).map(hit => hit.item) };
       }),
@@ -220,14 +228,19 @@ export function CommandPalette() {
       .filter(section => section.items.length > 0)
       // The group with the best match leads, so "settings" puts pages first and a song title puts songs first.
       .sort((a, b) => b.best - a.best);
-    return { songMatchCount: songHits.length, sections: ranked.map(({ group, items }) => ({ group, items })) };
-  }, [scopedQuery, scope, songIndex, pageIndex, playerItems, pages, actions, contextualActions, recents]);
+    // A query made only of filters, or a calculation, is answered before anything it happens to match by name.
+    const answers: Section[] = [
+      ...(calculator ? [{ group: "calculator" as const, items: [calculator] }] : []),
+      ...(charts.items.length > 0 ? [{ group: "charts" as const, items: charts.items }] : []),
+    ];
+    return { songMatchCount: songHits.length, sections: [...answers, ...ranked.map(({ group, items }) => ({ group, items }))] };
+  }, [scopedQuery, scope, songIndex, pageIndex, playerItems, pages, actions, contextualActions, recents, tips, calculator, charts.items]);
 
   const allItems = useMemo(() => sections.flatMap(section => section.items), [sections]);
   const selectedItem = allItems.find(item => item.id === selected) ?? allItems[0];
 
   const run = useCallback((item: PaletteItem) => {
-    setOpen(false);
+    if (!item.keepOpen) setOpen(false);
     if (item.remember && item.href) {
       setRecents(rememberRecent(game.id, {
         id: item.id,
@@ -263,12 +276,15 @@ export function CommandPalette() {
       <div className="flex min-h-0 flex-1">
         <CommandList className={cn("min-h-0 flex-1 py-1", isMobile ? "max-h-none" : "max-h-[min(60vh,28rem)]")}>
           <CommandEmpty>
-            {(catalogLoading || (searchesPlayers && playersLoading)) && query ? t("loadingCatalog") : scope === "players" && playerQuery.length < 2 ? t("playersHint") : t("empty", { query: scopedQuery })}
+            {(catalogLoading || charts.loading || (searchesPlayers && playersLoading)) && query ? t("loadingCatalog") : scope === "players" && playerQuery.length < 2 ? t("playersHint") : t("empty", { query: scopedQuery })}
           </CommandEmpty>
           {sections.map(section => (
             <CommandGroup key={section.group} heading={(
               <span className="flex items-center justify-between">
                 {t(`groups.${section.group}`)}
+                {section.group === "charts" && charts.count !== null && (
+                  <span className="text-[11px] font-normal tabular-nums">{t("charts.count", { count: charts.count })}</span>
+                )}
                 {section.group === "recent" && (
                   <button
                     type="button"
@@ -346,7 +362,7 @@ function PaletteRow({ item, onSelect }: { item: PaletteItem; onSelect: () => voi
       {item.song && (
         <span className="hidden shrink-0 items-center gap-1 sm:flex">
           <ChartTypeBadge typeCode={codeOf(game, "chartType", item.song.type)} size="xs" />
-          {item.song.difficulties.slice(-2).map(chart => {
+          {(item.chart ? item.song.difficulties.filter(chart => chart.difficulty === item.chart) : item.song.difficulties.slice(-2)).map(chart => {
             const difficulty = getGameDifficulty(game, codeOf(game, "difficulty", chart.difficulty));
             return (
               <span key={chart.difficulty} className={cn("rounded px-1.5 py-0.5 text-[11px] font-semibold tabular-nums", difficulty.classes.chip)}>
@@ -399,7 +415,7 @@ function Preview({ item }: { item: PaletteItem }) {
               const difficulty = getGameDifficulty(game, codeOf(game, "difficulty", chart.difficulty));
               const score = scores?.[chart.difficulty];
               return (
-                <div key={chart.difficulty} className="flex items-center gap-2 text-sm">
+                <div key={chart.difficulty} className={cn("flex items-center gap-2 text-sm", item.chart === chart.difficulty && "-mx-1.5 rounded-md bg-accent px-1.5 py-0.5")}>
                   <span className={cn("w-20 shrink-0 truncate text-xs font-semibold", difficulty.classes.text)}>{difficulty.label}</span>
                   <span className="font-semibold tabular-nums">{chart.level}</span>
                   {chart.levelPrecise > 0 && <span className="text-xs tabular-nums text-muted-foreground">{(chart.levelPrecise / 10).toFixed(1)}</span>}

@@ -1300,7 +1300,13 @@
         "summary": "{songName} 是由 {artist} 製作的 {chartLabel} 譜面，屬於 {genre} 類型，於 {versionName} 收錄。難度範圍為 {minLevel} 至 {maxLevel}，共 {chartCount, plural, =1 {# 張譜面} other {# 張譜面}}{bpmFragment}。",
         "summaryBpmFragment": "（BPM {bpm}）",
         "loadFailed": "載入歌曲詳情失敗",
-        "score": "分數"
+        "score": "分數",
+        "ratingGain": "你的 Rating",
+        "standing": {
+          "inBest": "{bucket} 第 {rank} 名",
+          "toEnter": "譜面 Rating 超過 {rating} 即可進入{bucket}",
+          "room": "任何計入 Rating 的成績都會加入{bucket}"
+        }
       },
       "filter": {
         "type": "類型",
@@ -1686,7 +1692,11 @@
       "players": "玩家",
       "events": "活動",
       "posts": "更新紀錄",
-      "docs": "開發者文件"
+      "docs": "開發者文件",
+      "calculator": "Rating 計算",
+      "charts": "你的譜面",
+      "tips": "試試看",
+      "minigames": "小遊戲"
     },
     "hints": {
       "navigate": "選擇",
@@ -1707,7 +1717,11 @@
       "fetch": "匯入新資料",
       "switchRegion": "切換地區為{region}",
       "copyProfileLink": "複製我的個人頁面連結",
-      "copiedProfileLink": "已複製個人頁面連結"
+      "copiedProfileLink": "已複製個人頁面連結",
+      "copySongLink": "複製 {song} 的連結",
+      "copiedSongLink": "已複製歌曲連結",
+      "searchVideo": "搜尋 {song} 的影片",
+      "copyThisProfileLink": "複製 @{username} 的個人檔案連結"
     },
     "pages": {
       "myProfile": "我的個人頁面"
@@ -1716,6 +1730,22 @@
       "yourScores": "你的最佳成績",
       "rating": "Rating {rating}"
     },
-    "playersHint": "輸入使用者名稱或遊戲內名稱來尋找玩家"
+    "playersHint": "輸入使用者名稱或遊戲內名稱來尋找玩家",
+    "charts": {
+      "signIn": "登入後可依你的成績篩選",
+      "unplayed": "未遊玩",
+      "reroll": "換一首",
+      "count": "{count} 個譜面",
+      "noScores": "取得成績後即可篩選"
+    },
+    "calculator": {
+      "result": "Rating {rating}",
+      "copied": "已複製 {rating}"
+    },
+    "tips": {
+      "filters": "你未 FC 的 13+ 譜面",
+      "random": "隨機一首 13+ 譜面",
+      "calculator": "13.7 在這個成績下的 Rating"
+    }
   }
 }

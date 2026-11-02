@@ -1004,7 +1004,13 @@
         "youtube": "YouTube 검색",
         "viewCharts": "채보 보기",
         "loadFailed": "곡 상세 정보를 불러오지 못했습니다",
-        "score": "점수"
+        "score": "점수",
+        "ratingGain": "내 레이팅",
+        "standing": {
+          "inBest": "{bucket} {rank}위",
+          "toEnter": "채보 레이팅 {rating}을(를) 넘으면 {bucket}에 들어가요",
+          "room": "레이팅 대상 점수라면 {bucket}에 더해져요"
+        }
       },
       "filter": {
         "type": "타입",
@@ -1414,7 +1420,11 @@
       "players": "플레이어",
       "events": "이벤트",
       "posts": "업데이트 기록",
-      "docs": "개발자 문서"
+      "docs": "개발자 문서",
+      "calculator": "레이팅 계산기",
+      "charts": "내 채보",
+      "tips": "이렇게 검색해 보세요",
+      "minigames": "미니게임"
     },
     "hints": {
       "navigate": "이동",
@@ -1435,7 +1445,11 @@
       "fetch": "새 데이터 가져오기",
       "switchRegion": "지역을 {region}(으)로 변경",
       "copyProfileLink": "내 프로필 링크 복사",
-      "copiedProfileLink": "프로필 링크를 복사했습니다"
+      "copiedProfileLink": "프로필 링크를 복사했습니다",
+      "copySongLink": "{song} 링크 복사",
+      "copiedSongLink": "곡 링크를 복사했어요",
+      "searchVideo": "{song} 영상 검색",
+      "copyThisProfileLink": "@{username}의 프로필 링크 복사"
     },
     "pages": {
       "myProfile": "내 프로필"
@@ -1444,6 +1458,22 @@
       "yourScores": "내 최고 점수",
       "rating": "Rating {rating}"
     },
-    "playersHint": "사용자 이름이나 게임 내 이름을 입력해 플레이어 찾기"
+    "playersHint": "사용자 이름이나 게임 내 이름을 입력해 플레이어 찾기",
+    "charts": {
+      "signIn": "로그인하면 내 점수로 거를 수 있어요",
+      "unplayed": "미플레이",
+      "reroll": "다시 고르기",
+      "count": "{count}개 채보",
+      "noScores": "점수를 가져오면 거를 수 있어요"
+    },
+    "calculator": {
+      "result": "레이팅 {rating}",
+      "copied": "{rating} 복사됨"
+    },
+    "tips": {
+      "filters": "풀콤보하지 못한 13+ 채보",
+      "random": "무작위 13+ 채보",
+      "calculator": "13.7을 이 점수로 클리어했을 때의 레이팅"
+    }
   }
 }

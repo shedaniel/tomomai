@@ -9,6 +9,7 @@ import type { GameSnapshotData } from "@/lib/games/player-view";
 import { supportsGameFeature } from "@/lib/games/frontend";
 import { getCurrentGame } from "@/lib/games/current";
 import { Suspense } from "react";
+import { ProfilePaletteActions } from "./profile-palette-actions";
 
 interface ProfilePageProps {
   profileData: ProfileData;
@@ -38,6 +39,7 @@ export function ProfilePage({
         customThemesEnabled={flags.customThemes}
       />
 
+      {!isOwner && <ProfilePaletteActions username={username} region={region} />}
       <div className="space-y-6">
         <PublicDataBanner
           region={region}

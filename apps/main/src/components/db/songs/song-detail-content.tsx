@@ -14,20 +14,23 @@ import { getVersion } from "@/lib/games/versions";
 import { trpc } from "@/lib/trpc-client";
 import { useSession } from "@/lib/auth-client";
 import type { Region } from "@/lib/games/ids";
-import { cn } from "@/lib/utils";
-import { Activity, Calendar, ChevronRight, Globe, Loader2, Music, Pencil, Share } from "lucide-react";
+import { cn, safeDecodeURIComponent } from "@/lib/utils";
+import { Activity, Calendar, ChevronRight, Globe, Link2, Loader2, Music, Pencil, PlayCircle, Share } from "lucide-react";
 
 import { CoverImage } from "@/components/cover-image";
 import { ChartLevel } from "@/components/games/chart-level";
 import { ChartTypeBadge } from "@/components/games/chart-type-badge";
 import { useEffect, useMemo, useRef } from "react";
+import type { RatingStanding } from "@/lib/games/rating-standing";
 import { ChartTypeKey, SongDetailChart, SongDetailHistoricalChart, SongDetails, SongExtendedIdentified, UserScore } from "./types";
 
 import { Button } from "@tomomai/ui";
 import { Separator } from "@tomomai/ui";
 import { resolveBaseUrl } from "@/lib/base-url";
 import { useTranslations } from "next-intl";
-import { Link } from "@/i18n/navigation"
+import { Link, usePathname } from "@/i18n/navigation";
+import { useCommandPaletteActions } from "@/components/command-palette/command-palette-provider";
+import type { PaletteItem } from "@/components/command-palette/types";
 import { toast } from "sonner";
 import { SongChartDialogContent } from "./song-detail-dialog";
 
@@ -151,13 +154,14 @@ function ScoreGrid({
   );
 }
 
-export function SongChartRow({ difficulty, charts, index, data, hasNoteCounts, hasTouch }: {
+export function SongChartRow({ difficulty, charts, index, data, hasNoteCounts, hasTouch, standings }: {
   difficulty: string;
   charts: SongExtendedIdentified[];
   index: number;
   data: SongDetails;
   hasNoteCounts: boolean;
   hasTouch: boolean;
+  standings?: Partial<Record<Region, RatingStanding>>;
 }) {
   const t = useTranslations();
   const game = useGame();
@@ -240,7 +244,7 @@ export function SongChartRow({ difficulty, charts, index, data, hasNoteCounts, h
         </div>
       </ResponsiveDialogTrigger>
       <ResponsiveDialogContent className="grid w-full gap-4">
-        <SongChartDialogContent charts={charts} scores={chartScores} />
+        <SongChartDialogContent charts={charts} scores={chartScores} standings={standings} />
       </ResponsiveDialogContent>
     </ResponsiveDialog>
   );
@@ -272,6 +276,10 @@ export function SongDetailContent({ songName, artist, slug, type, parentIds, ini
   const { data: scoreData } = trpc.user.getSongScores.useQuery(
     { game: game.id, songName, artist: artist ?? initialData?.artist, type, parentIds: parentIds ?? initialData?.parentIds },
     { enabled: hasInitialData && viewerId !== null && supportsGameFeature(game, "scores") }
+  );
+  const { data: standings } = trpc.user.getSongRatingStanding.useQuery(
+    { game: game.id, songName, artist: artist ?? initialData?.artist ?? fetchedData?.artist, type, parentIds: parentIds ?? initialData?.parentIds },
+    { enabled: viewerId !== null && supportsGameFeature(game, "rating"), staleTime: 60000, retry: false },
   );
   const data = useMemo(() => {
     if (!initialData) return fetchedData;
@@ -319,6 +327,33 @@ export function SongDetailContent({ songName, artist, slug, type, parentIds, ini
       return `https://www.youtube.com/results?search_query=${searchQuery}`;
     }
   }, [data, game]);
+
+  // The drawer keeps the last song mounted while it closes, so its actions follow the URL rather than the mount.
+  const tPalette = useTranslations("commandPalette");
+  const pathname = usePathname();
+  const onSongPage = safeDecodeURIComponent(pathname ?? "") === `/db/songs/${slug}`;
+  const paletteActions = useMemo<PaletteItem[]>(() => !data || !onSongPage ? [] : [
+    {
+      id: "song:copy-link",
+      group: "actions",
+      title: tPalette("actions.copySongLink", { song: data.songName }),
+      icon: Link2,
+      keywords: ["share", "link", "url", data.songName],
+      perform: () => {
+        void navigator.clipboard.writeText(`${resolveBaseUrl()}/db/songs/${slug}`)
+          .then(() => toast.success(tPalette("actions.copiedSongLink")), () => undefined);
+      },
+    },
+    ...(videoSearchURL ? [{
+      id: "song:video",
+      group: "actions" as const,
+      title: tPalette("actions.searchVideo", { song: data.songName }),
+      icon: PlayCircle,
+      keywords: ["video", "youtube", "bilibili", "chart", data.songName],
+      perform: () => void window.open(videoSearchURL, "_blank", "noopener,noreferrer"),
+    }] : []),
+  ], [data, onSongPage, slug, videoSearchURL, tPalette]);
+  useCommandPaletteActions("song-detail", paletteActions);
 
   if (!data) {
     if (isLoading) {
@@ -465,6 +500,7 @@ export function SongDetailContent({ songName, artist, slug, type, parentIds, ini
                 data={data}
                 hasNoteCounts={hasNoteCounts}
                 hasTouch={hasTouch}
+                standings={standings}
               />
             ))}
           </div>

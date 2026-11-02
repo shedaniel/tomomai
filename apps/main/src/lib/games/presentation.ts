@@ -32,6 +32,10 @@ export function formatGameScore(game: CanonicalGameId, value: number | null | un
   return presentationOf(game).formatScore(value, precision);
 }
 
+export function parseGameScore(game: CanonicalGameId, text: string): number | null {
+  return presentationOf(game).parseScore(text);
+}
+
 export function formatGameScoreDelta(game: CanonicalGameId, from: number, to: number): string {
   return presentationOf(game).formatScoreDelta(from, to);
 }
