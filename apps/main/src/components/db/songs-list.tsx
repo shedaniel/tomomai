@@ -12,7 +12,7 @@ import { LayoutGrid, LayoutList, Music, Search } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { usePathname, useRouter } from "@/i18n/navigation";
 import { useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@tomomai/ui/select-friendly";
 import { applyUniqueSongFilters, createUniqueSongFilterCategories, hashString } from "./songs/filter-utils";
@@ -35,12 +35,21 @@ interface SongsListProps {
  * serialize the whole catalog into the shared layout's RSC segment and
  * leak onto the detail route's ISR payload.
  */
+// The list lives in an ISR layout, where reading search params outside a Suspense boundary fails the render.
+/** Applies the command palette's "show all results" query (`?q=`) to the list. */
+function QueryParamSync({ onQuery }: { onQuery: (query: string) => void }) {
+  const query = useSearchParams().get("q");
+  useEffect(() => {
+    if (query !== null) onQuery(query);
+  }, [query, onQuery]);
+  return null;
+}
+
 export function SongsList(_: SongsListProps = {}) {
   const game = useGame();
   const t = useTranslations();
   const router = useRouter();
   const pathname = usePathname();
-  const queryParam = useSearchParams().get("q");
 
   // Derive this before the catalog query so direct detail loads can skip it.
   // The component remains mounted during soft navigation, and disabling a
@@ -54,15 +63,12 @@ export function SongsList(_: SongsListProps = {}) {
   const tFilter = useMemo(() => (key: string) => t(`db.songs.filter.${key}`), [t]);
   const tGroups = useMemo(() => (key: string) => t(`db.songs.filter.groups.${key}`), [t]);
 
-  const [searchQuery, setSearchQuery] = useState(queryParam ?? "");
-  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState(queryParam ?? "");
-
-  // The command palette's "show all results" opens this list with its query.
-  useEffect(() => {
-    if (queryParam === null) return;
-    setSearchQuery(queryParam);
-    setDebouncedSearchQuery(queryParam);
-  }, [queryParam]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
+  const applyQueryParam = useCallback((query: string) => {
+    setSearchQuery(query);
+    setDebouncedSearchQuery(query);
+  }, []);
   const [searchBoxFocused, setSearchBoxFocused] = useState(false);
   const [mounted, setMounted] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -213,6 +219,9 @@ export function SongsList(_: SongsListProps = {}) {
 
   return (
     <main className="space-y-6 pb-16 pt-3" role="main" data-nosnippet>
+      <Suspense fallback={null}>
+        <QueryParamSync onQuery={applyQueryParam} />
+      </Suspense>
       <header className="space-y-1">
         <h1 className="text-2xl font-semibold tracking-tight">{t("db.songs.heading")}</h1>
         <p className="text-sm text-muted-foreground max-w-3xl leading-relaxed">
