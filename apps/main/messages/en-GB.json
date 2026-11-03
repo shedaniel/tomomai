@@ -1285,8 +1285,7 @@
         },
         "history": {
           "title": "Your history",
-          "sinceMonth": "+{delta} in 30 days",
-          "first": "First recorded {date}"
+          "sinceMonth": "+{delta} in 30 days"
         },
         "next": "Next: {target} for +{gain}",
         "recentPlays": "Your recent plays",

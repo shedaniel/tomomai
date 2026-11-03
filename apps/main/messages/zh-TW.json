@@ -1315,8 +1315,7 @@
         },
         "history": {
           "title": "你的成績變化",
-          "sinceMonth": "30 天內 +{delta}",
-          "first": "首次記錄於 {date}"
+          "sinceMonth": "30 天內 +{delta}"
         },
         "next": "下一目標:{target},+{gain}",
         "recentPlays": "最近遊玩",

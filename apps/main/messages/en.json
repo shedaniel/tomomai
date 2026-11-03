@@ -1343,12 +1343,13 @@
         "sections": {
           "rating": "Rating",
           "history": "History",
-          "compare": "Compare"
+          "compare": "Compare",
+          "compareEmpty": "No players to compare with on this chart yet."
         },
         "history": {
           "title": "Your history",
           "sinceMonth": "+{delta} in 30 days",
-          "first": "First recorded {date}"
+          "unchanged": "Unchanged since {date}. New bests will show up here."
         },
         "next": "Next: {target} for +{gain}",
         "recentPlays": "Your recent plays",

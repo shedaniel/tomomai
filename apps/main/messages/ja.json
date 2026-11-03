@@ -1315,8 +1315,7 @@
         },
         "history": {
           "title": "あなたの推移",
-          "sinceMonth": "30日で+{delta}",
-          "first": "{date}に初記録"
+          "sinceMonth": "30日で+{delta}"
         },
         "next": "次の目標: {target}で+{gain}",
         "recentPlays": "最近のプレイ",

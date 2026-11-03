@@ -1258,8 +1258,7 @@
         },
         "history": {
           "title": "你的成绩变化",
-          "sinceMonth": "30 天内 +{delta}",
-          "first": "首次记录于 {date}"
+          "sinceMonth": "30 天内 +{delta}"
         },
         "next": "下一目标:{target},+{gain}",
         "recentPlays": "最近游玩",

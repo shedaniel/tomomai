@@ -1019,8 +1019,7 @@
         },
         "history": {
           "title": "내 기록 추이",
-          "sinceMonth": "30일간 +{delta}",
-          "first": "{date} 첫 기록"
+          "sinceMonth": "30일간 +{delta}"
         },
         "next": "다음 목표: {target}(으)로 +{gain}",
         "recentPlays": "최근 플레이",
