@@ -30,7 +30,7 @@ export const apiLimiter = new RedisRateLimiter({
 export const songDetailLimiter = new RedisRateLimiter({
   name: "song-detail",
   windowSeconds: 60,
-  max: 10,
+  max: 20,
   blockSeconds: 10 * 60,
   failClosed: false,
   logger,
