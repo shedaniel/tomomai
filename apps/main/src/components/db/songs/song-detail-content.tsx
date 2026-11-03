@@ -301,6 +301,7 @@ export function SongDetailContent({ songName, artist, slug, type, parentIds, ini
     if (previous === undefined || previous === null || previous === viewerId) return;
     void utils.user.getSongScores.reset();
     void utils.user.getSongRatingStanding.reset();
+    void utils.user.getSongActivity.reset();
   }, [utils, viewerId]);
   const {
     data: fetchedData,
@@ -320,10 +321,11 @@ export function SongDetailContent({ songName, artist, slug, type, parentIds, ini
   );
   // A disabled query still returns its cached data, so a signed-out viewer must not see the last viewer's.
   const standings = viewerId !== null ? standingsData : undefined;
-  const { data: activity } = trpc.user.getSongActivity.useQuery(
+  const { data: activityData } = trpc.user.getSongActivity.useQuery(
     { game: game.id, songName, artist: artist ?? initialData?.artist ?? fetchedData?.artist, type, parentIds: parentIds ?? initialData?.parentIds },
     { enabled: viewerId !== null && supportsGameFeature(game, "scores"), staleTime: 60000, retry: false },
   );
+  const activity = viewerId !== null ? activityData : undefined;
   const data = useMemo(() => {
     if (!initialData) return fetchedData;
     return {
