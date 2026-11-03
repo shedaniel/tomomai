@@ -59,14 +59,14 @@ afterEach(() => vi.unstubAllEnvs());
 
 describe("public snapshot access", () => {
   // A fake cannot evaluate the owner's profile flags, so the access query itself is the contract.
-  it("reads only a snapshot of the game whose owner publishes a listed profile", async () => {
+  it("reads only a snapshot of the game whose owner publishes their profile, listed or not", async () => {
     publish();
     await caller.days({ game: "maimai", snapshotId: "snapshot" });
     const [access] = proxy.queries;
     expect(access.sql).toContain('"user_snapshots"."game" = $1');
     expect(access.sql).toContain('"user"."publishProfile" = $3');
-    expect(access.sql).toContain('"user"."profileShowInSearch" = $4');
-    expect(access.params).toEqual(["maimai", "snapshot", true, true, 1]);
+    expect(access.sql).not.toContain("profileShowInSearch");
+    expect(access.params).toEqual(["maimai", "snapshot", true, 1]);
   });
 
   it("answers NOT_FOUND for a missing or unpublished snapshot without reading any data", async () => {
