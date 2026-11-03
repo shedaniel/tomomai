@@ -4,6 +4,7 @@ import { useState } from "react";
 import {
   Button,
   DiscordIcon,
+  Input,
   ResponsiveDialog,
   ResponsiveDialogContent,
   ResponsiveDialogDescription,
@@ -346,6 +347,7 @@ function SignUpPanel({
 
 function DevAnonymousSignIn({ callbackURL, onError }: { callbackURL: string; onError: (message: string | null) => void }) {
   const [pending, setPending] = useState(false);
+  const [username, setUsername] = useState("");
 
   const handleClick = async () => {
     onError(null);
@@ -359,6 +361,19 @@ function DevAnonymousSignIn({ callbackURL, onError }: { callbackURL: string; onE
     window.location.assign(callbackURL);
   };
 
+  const handleSignInAs = async (e: React.FormEvent) => {
+    e.preventDefault();
+    onError(null);
+    setPending(true);
+    const result = await authClient.$fetch("/dev/sign-in-as", { method: "POST", body: { username } });
+    if (result.error) {
+      setPending(false);
+      onError(result.error.message ?? "Sign-in failed");
+      return;
+    }
+    window.location.assign(callbackURL);
+  };
+
   return (
     <div className="flex flex-col gap-2 border-t border-dashed border-border pt-4">
       <Button variant="outline" className="w-full border-dashed" disabled={pending} onClick={handleClick}>
@@ -366,6 +381,18 @@ function DevAnonymousSignIn({ callbackURL, onError }: { callbackURL: string; onE
         Continue as anonymous user
       </Button>
       <p className="text-center text-2xs text-muted-foreground">Dev only. Creates a new throwaway account.</p>
+      <form className="flex gap-2" onSubmit={handleSignInAs}>
+        <Input
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+          placeholder="@username"
+          aria-label="Username to sign in as"
+          autoComplete="off"
+        />
+        <Button type="submit" variant="outline" className="border-dashed" disabled={pending || !username.trim()}>
+          Sign in as
+        </Button>
+      </form>
     </div>
   );
 }
