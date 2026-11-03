@@ -3,8 +3,7 @@ import { after } from "next/server";
 import { getGame } from "@/lib/games/registry";
 import { resolveBaseUrl } from "@/lib/base-url";
 import { regionDisplayName } from "@/lib/discord/i18n";
-import { flushLogger } from "@/lib/logger";
-import { getLogger } from "@/lib/request-logger";
+import { flushLogger, logger } from "@/lib/logger";
 import type { GameRegionContext } from "@/lib/games/types";
 import type { CanonicalGameId, Region } from "@/lib/games/ids";
 
@@ -29,7 +28,7 @@ function deliverInBackground(work: () => Promise<void>) {
     try {
       await work();
     } catch (error) {
-      getLogger().error({ err: error }, "Discord delivery threw");
+      logger.error({ err: error }, "Discord delivery threw");
     } finally {
       await flushLogger().catch(() => { });
     }
@@ -64,7 +63,7 @@ export function postDiscordEmbed(webhookUrl: string, { game, region }: GameRegio
       body: JSON.stringify(payload),
     });
 
-    const log = getLogger();
+    const log = logger;
     if (!response.ok) {
       const body = await response.text();
       log.error({ game, region, status: response.status, statusText: response.statusText, body }, "Discord webhook failed");

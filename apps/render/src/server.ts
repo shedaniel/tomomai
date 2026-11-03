@@ -1,9 +1,9 @@
 import { serve } from '@hono/node-server';
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
-import { nanoid } from 'nanoid';
 
 import { logger } from './lib/logger';
+import { getRequestId, withLogContext } from './lib/request-logger';
 import { verifyRenderToken, isExpired, type RenderMessage } from './token';
 import { renderOutcomeFor } from './routes/dispatch';
 import { outcomeToResponse } from './render-route';
@@ -17,7 +17,15 @@ const SECRET: string = (() => {
 const PORT = Number(process.env.PORT ?? 8080);
 const isProd = process.env.NODE_ENV === 'production';
 
-const app = new Hono();
+const app = new Hono<{ Variables: { requestId: string } }>();
+
+// Every line logged while handling a request, from any logger, carries its
+// route and requestId (see docs/LOGGING.md).
+app.use(async (c, next) => {
+  const requestId = getRequestId(c.req.raw);
+  c.set('requestId', requestId);
+  await withLogContext({ route: c.req.path, requestId }, next);
+});
 
 // The web download button does `fetch(/img).blob()` cross-origin (apps/main →
 // render), so the response needs CORS. /img is token-gated and uses no cookies,
@@ -36,7 +44,7 @@ function verifyAndDecode(token: string, requestId: string): { ok: true; message:
   if (!verified.ok) {
     // bad-signature / malformed / unsupported-version → all 401.
     // (expiry is checked separately below → 410.)
-    logger.warn({ requestId, reason: verified.reason }, 'Token rejected');
+    logger.warn({ reason: verified.reason }, 'Token rejected');
     return {
       ok: false,
       response: Response.json(
@@ -47,7 +55,7 @@ function verifyAndDecode(token: string, requestId: string): { ok: true; message:
   }
 
   if (isExpired(verified.message.header.exp)) {
-    logger.warn({ requestId }, 'Token expired');
+    logger.warn('Token expired');
     return {
       ok: false,
       response: Response.json(
@@ -63,7 +71,7 @@ function verifyAndDecode(token: string, requestId: string): { ok: true; message:
 // Web delivery: render and return the webp (apps/main 302s here with the token
 // carrying the full render payload — no DB access needed).
 app.get('/img', async (c) => {
-  const requestId = c.req.header('x-request-id') ?? nanoid(10);
+  const requestId = c.get('requestId');
   const token = c.req.query('t');
   if (!token) {
     return c.json({ error: 'Missing token', requestId }, 400);
@@ -84,7 +92,7 @@ app.get('/img', async (c) => {
 // Discord (keeps the image bytes off Vercel). apps/main composes the message
 // body and passes the signed token.
 app.post('/discord/render', async (c) => {
-  const requestId = c.req.header('x-request-id') ?? nanoid(10);
+  const requestId = c.get('requestId');
 
   let body: {
     t?: string;
@@ -117,7 +125,7 @@ app.post('/discord/render', async (c) => {
     );
     return c.json(result.body, result.status as never);
   } catch (error) {
-    logger.error({ requestId, err: error }, 'Discord render/upload failed');
+    logger.error({ err: error }, 'Discord render/upload failed');
     return c.json({ error: 'Discord render failed', requestId }, 500);
   }
 });

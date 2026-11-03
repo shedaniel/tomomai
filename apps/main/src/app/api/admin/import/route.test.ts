@@ -7,10 +7,11 @@ const mocks = vi.hoisted(() => ({
   log: { child: () => mocks.log, info: vi.fn(), debug: vi.fn(), warn: vi.fn(), error: vi.fn() },
 }));
 vi.mock("@/lib/db", () => ({ db: proxy.db }));
-vi.mock("@/lib/logger", () => ({ flushLogger: vi.fn() }));
+vi.mock("@/lib/logger", () => ({ flushLogger: vi.fn(), logger: mocks.log }));
 vi.mock("@/lib/request-logger", () => ({
-  requestLogger: () => ({ log: mocks.log, requestId: "import" }),
-  runWithLogger: (_log: unknown, run: () => unknown) => run(),
+  withRequestLogContext: (_route: string, handler: (request: unknown, context: object) => unknown) =>
+    (request: unknown, context: object) => handler(request, { ...context, requestId: "import" }),
+  withLogContext: (_fields: object, run: () => unknown) => run(),
 }));
 vi.mock("@/server/services/catalog/publication", () => ({ publishSongCatalog: mocks.publish }));
 vi.mock("@/server/services/catalog/revalidation", () => ({ revalidateCatalog: mocks.revalidate }));

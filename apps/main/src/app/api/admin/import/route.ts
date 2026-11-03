@@ -1,3 +1,4 @@
+import { logger } from "@/lib/logger";
 import { adminRoute } from "../admin-route";
 import { AdminRequestError, requireAdminCatalogVersion } from "@/server/services/catalog/admin-game";
 import { getSupportedRegions } from "@/lib/games/regions";
@@ -80,7 +81,7 @@ function buildVersionFilter(versionFilter: "eq" | "lte" | "gte", versionValue: n
   }
 }
 
-export const GET = adminRoute("admin/import", async ({ request, game, log, requestId }) => {
+export const GET = adminRoute("admin/import", async ({request, game, requestId }) => {
   const { searchParams } = request.nextUrl;
   const fromParam = searchParams.get('from');
   const toParam = searchParams.get('to');
@@ -96,12 +97,12 @@ export const GET = adminRoute("admin/import", async ({ request, game, log, reque
     throw new AdminRequestError("Invalid 'mode' parameter. Must be 'only-upsert' or omitted");
   }
 
-  log.info({ from: fromParam, to: toParam }, `Admin import requested (mode=${mode || 'insert+upsert'})`);
+  logger.info({ from: fromParam, to: toParam }, `Admin import requested (mode=${mode || 'insert+upsert'})`);
 
   const sourceConfig = parseFromParameter(game, fromParam);
   const targetConfig = parseToParameter(game, toParam);
 
-  log.debug(`Import config: ${sourceConfig.region} v${sourceConfig.gameVersion} → ${targetConfig.region} v${targetConfig.gameVersion}`);
+  logger.debug(`Import config: ${sourceConfig.region} v${sourceConfig.gameVersion} → ${targetConfig.region} v${targetConfig.gameVersion}`);
 
   const versionCondition = buildVersionFilter(sourceConfig.versionFilter, sourceConfig.versionValue);
 
@@ -119,7 +120,7 @@ export const GET = adminRoute("admin/import", async ({ request, game, log, reque
         )
       );
 
-    log.info({ count: sourceSongs.length }, "Found source songs matching criteria");
+    logger.info({ count: sourceSongs.length }, "Found source songs matching criteria");
 
     if (sourceSongs.length === 0) {
       return Response.json({
@@ -142,7 +143,7 @@ export const GET = adminRoute("admin/import", async ({ request, game, log, reque
     let existingTargetSongs: (typeof songs.$inferSelect)[] = [];
 
     if (mode === "only-upsert") {
-      log.debug("Querying existing target songs for upsert mode");
+      logger.debug("Querying existing target songs for upsert mode");
       existingTargetSongs = await tx
         .select()
         .from(songs)
@@ -154,7 +155,7 @@ export const GET = adminRoute("admin/import", async ({ request, game, log, reque
           )
         );
 
-      log.debug({ count: existingTargetSongs.length }, "Found existing songs in target");
+      logger.debug({ count: existingTargetSongs.length }, "Found existing songs in target");
     }
 
     const targetSongs: (typeof songs.$inferInsert)[] = [];
@@ -175,7 +176,7 @@ export const GET = adminRoute("admin/import", async ({ request, game, log, reque
 
       if (mode === "only-upsert") {
         if (!existingTargetMap.has(songKey)) {
-          log.debug({ songKey }, "Skipping new song in upsert mode");
+          logger.debug({ songKey }, "Skipping new song in upsert mode");
           skippedCount++;
           continue;
         }
@@ -194,10 +195,10 @@ export const GET = adminRoute("admin/import", async ({ request, game, log, reque
       targetSongs.push(targetSong);
     }
 
-    log.info({ count: targetSongs.length }, "Prepared songs for import");
+    logger.info({ count: targetSongs.length }, "Prepared songs for import");
 
     if (targetSongs.length > 0) {
-      log.debug({ count: targetSongs.length }, "Performing batch upsert");
+      logger.debug({ count: targetSongs.length }, "Performing batch upsert");
 
       try {
         // Split into batches of 1000 records to avoid SQL limits
@@ -206,7 +207,7 @@ export const GET = adminRoute("admin/import", async ({ request, game, log, reque
 
         for (let i = 0; i < targetSongs.length; i += batchSize) {
           const batch = targetSongs.slice(i, i + batchSize);
-          log.debug(`Upserting batch ${Math.floor(i / batchSize) + 1}/${Math.ceil(targetSongs.length / batchSize)} (${batch.length} songs)`);
+          logger.debug(`Upserting batch ${Math.floor(i / batchSize) + 1}/${Math.ceil(targetSongs.length / batchSize)} (${batch.length} songs)`);
 
           await tx.insert(songs).values(batch).onConflictDoUpdate({
             target: [songs.parentId, songs.region, songs.gameVersion],
@@ -216,15 +217,15 @@ export const GET = adminRoute("admin/import", async ({ request, game, log, reque
           totalProcessed += batch.length;
         }
 
-        log.debug({ count: totalProcessed }, "Upserted songs to target");
+        logger.debug({ count: totalProcessed }, "Upserted songs to target");
       } catch (error) {
-        log.error({ err: error }, "Error during batch upsert");
+        logger.error({ err: error }, "Error during batch upsert");
         throw new Error(`Database upsert failed: ${error instanceof Error ? error.message : "Unknown error"}`);
       }
     }
 
     const totalProcessed = mode === "only-upsert" ? updatedCount : importedCount;
-    log.info({ count: totalProcessed, skipped: skippedCount }, "Import completed");
+    logger.info({ count: totalProcessed, skipped: skippedCount }, "Import completed");
 
     return Response.json({
       success: true,
@@ -246,6 +247,6 @@ export const GET = adminRoute("admin/import", async ({ request, game, log, reque
     });
   });
   await publishSongCatalog(game);
-  await revalidateCatalog(game, { log });
+  await revalidateCatalog(game, { log: logger });
   return result;
 }, { game: "write" });

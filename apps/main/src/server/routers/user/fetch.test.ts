@@ -3,7 +3,7 @@ import { NextRequest } from "next/server";
 
 const mocks = vi.hoisted(() => ({ start: vi.fn(), log: { info: vi.fn(), warn: vi.fn(), error: vi.fn() } }));
 vi.mock("@/lib/auth", () => ({ auth: {} }));
-vi.mock("@/lib/logger", () => ({ logger: { child: () => mocks.log } }));
+vi.mock("@/lib/logger", async (importOriginal) => ({ ...(await importOriginal<typeof import("@/lib/logger")>()), logger: { child: () => mocks.log } }));
 vi.mock("@/lib/db", () => ({ db: {} }));
 vi.mock("@/server/services/games/fetch-sessions", () => ({ startScoreFetch: mocks.start, getScoreFetchStatus: vi.fn() }));
 

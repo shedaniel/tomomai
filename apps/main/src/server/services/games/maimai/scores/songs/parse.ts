@@ -1,14 +1,14 @@
 import "server-only";
 import { load } from "cheerio";
 import { normalizeName } from "@/lib/name-utils";
-import { getLogger } from "@/lib/request-logger";
 import type { Difficulty, FullCombo, FullSync, SongType } from "@/lib/games/maimai/types";
 import { musicTypeFromIcon } from "../parse-utils";
 import type { ScoreData } from "../types";
+import { logger } from "@/lib/logger";
 
 /** Reads the played charts from one difficulty's score list page. */
 export function parseScoreData(html: string, difficulty: Difficulty): ScoreData[] {
-  const log = getLogger();
+  const log = logger;
   const $ = load(html);
   const blocks = $(`.music_${difficulty}_score_back`);
   const scores: ScoreData[] = [];

@@ -6,8 +6,8 @@ import { RANKING_BUCKETS } from "@/lib/games/codes";
 import { getGame } from "@/lib/games/registry";
 import { rankScores, type StoredRankings } from "@/lib/games/ranking";
 import type { CanonicalGameId, Region } from "@/lib/games/ids";
-import { getLogger } from "@/lib/request-logger";
 import type { ChartRef, ChartResolutionMap, NormalizedScore } from "./types";
+import { logger } from "@/lib/logger";
 
 type ScoreConnection = Pick<typeof db, "select" | "insert">;
 export type DbSong = typeof songs.$inferSelect & Pick<typeof parentSong.$inferSelect, "songName" | "difficulty" | "type">;
@@ -49,7 +49,7 @@ export async function buildChartResolution(
     songsById.set(song.id, song);
   }
   if (ambiguous.size > 0) {
-    getLogger().warn({ songKeys: [...ambiguous], game, region, version: gameVersion }, "Ambiguous song names excluded from score lookup");
+    logger.warn({ songKeys: [...ambiguous], game, region, version: gameVersion }, "Ambiguous song names excluded from score lookup");
   }
 
   return { chartResolution, songsById };

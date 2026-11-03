@@ -1,28 +1,29 @@
 import "server-only";
 import { formatLxns, type LxnsToken } from "@/lib/games/token-format";
 import type { Region } from "@/lib/games/ids";
-import { getLogger } from "@/lib/request-logger";
+import type { GameSiteSession } from "../sega/http";
 import { openSegaSession } from "../sega/login";
 import { acceptSegaToken, refuseToken } from "../token-policy";
 import { saveToken } from "../tokens";
+import { logger } from "@/lib/logger";
 
 /** A maimai DX NET session for the catalog, which signs in without a player. */
-export async function loginAndGetCookies(region: Region, token: string): Promise<string> {
+export async function signInMaimaiCatalog(region: Region, token: string): Promise<GameSiteSession> {
   const accepted = await acceptSegaToken("maimai", null, region, token);
-  return (await openSegaSession("maimai", region, null, accepted)).cookies;
+  return openSegaSession("maimai", region, null, accepted);
 }
 
 /** The token's lxns access token, refreshed and saved when it is about to expire. */
 export async function lxnsAccessToken(userId: string, region: Region, token: LxnsToken, signal?: AbortSignal): Promise<string> {
   if (Date.now() < token.expiresAtMs - 30_000) {
-    getLogger().debug({ userId, ttlSec: Math.round((token.expiresAtMs - Date.now()) / 1000) }, "lxns oauth: reusing cached access token");
+    logger.debug({ userId, ttlSec: Math.round((token.expiresAtMs - Date.now()) / 1000) }, "lxns oauth: reusing cached access token");
     return token.accessToken;
   }
-  getLogger().debug({ userId }, "lxns oauth: access token expired or near expiry, refreshing");
+  logger.debug({ userId }, "lxns oauth: access token expired or near expiry, refreshing");
   const refreshed = await requestLxnsToken("refresh", { grant_type: "refresh_token", refresh_token: token.refreshToken }, token.refreshToken, signal);
   if (!refreshed.ok) return refuseToken("maimai", userId, region, refreshed.error);
   await saveToken("maimai", userId, region, formatLxns(refreshed.token));
-  getLogger().info({ userId }, "lxns oauth: refreshed token saved");
+  logger.info({ userId }, "lxns oauth: refreshed token saved");
   return refreshed.token.accessToken;
 }
 
@@ -44,7 +45,7 @@ async function requestLxnsToken(grant: "refresh" | "code exchange", params: Reco
     });
     if (!resp.ok) {
       const errorText = await resp.text().catch(() => "");
-      getLogger().warn({ status: resp.status }, `lxns ${grant} failed: ${errorText}`);
+      logger.warn({ status: resp.status }, `lxns ${grant} failed: ${errorText}`);
       return { ok: false, error: `lxns ${grant} failed (${resp.status}). Please re-authorize.` };
     }
     const json = await resp.json() as Record<string, unknown>;
@@ -54,11 +55,11 @@ async function requestLxnsToken(grant: "refresh" | "code exchange", params: Reco
     const expiresIn = typeof data.expires_in === "number" ? data.expires_in : 900;
     const scope = typeof data.scope === "string" ? data.scope : "";
     if (!accessToken || !refreshToken) return { ok: false, error: `lxns ${grant} response missing tokens.` };
-    getLogger().debug({ ttlSec: expiresIn, scope }, `lxns oauth: ${grant} succeeded`);
+    logger.debug({ ttlSec: expiresIn, scope }, `lxns oauth: ${grant} succeeded`);
     return { ok: true, token: { accessToken, refreshToken, expiresAtMs: Date.now() + expiresIn * 1000, scope } };
   } catch (error) {
     if (signal?.aborted) throw signal.reason;
-    getLogger().error({ err: error }, `lxns ${grant} threw`);
+    logger.error({ err: error }, `lxns ${grant} threw`);
     return { ok: false, error: `Network error during lxns ${grant}.` };
   }
 }

@@ -5,9 +5,9 @@ import { db } from "@/lib/db";
 import { userEvents, userRecentSongs, userSnapshots } from "@/lib/db/schema-pg";
 import type { NotFoundScore } from "@/lib/api/schemas";
 import type { CanonicalGameId, Region } from "@/lib/games/ids";
-import { getLogger } from "@/lib/request-logger";
 import { buildChartResolution, chartKey, writeSnapshotScores, type SnapshotScore } from "./score-storage";
 import type { ChartRef, GameFetchResult, NormalizedScore, PersistedSnapshotContext } from "./types";
+import { logger } from "@/lib/logger";
 
 type PersistFetchResultInput = {
   game: CanonicalGameId;
@@ -87,7 +87,7 @@ export async function persistFetchResult(input: PersistFetchResultInput): Promis
   });
 
   if (unmatched.length > 0) {
-    getLogger().warn(
+    logger.warn(
       { count: unmatched.length, songKeys: unmatched.map(score => chartKey(score.chart)), game, region, version: gameVersion },
       "Some scores have no unambiguous catalog match",
     );

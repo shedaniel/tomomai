@@ -6,3 +6,4 @@ export type RouterOutputs = inferRouterOutputs<AppRouter>;
 
 export type RecentPlay = RouterOutputs["user"]["getRecentSongs"]["recentPlays"][number];
 export type UserAlbum = RouterOutputs["user"]["getUserAlbums"]["albums"][number];
+export type CreditSummary = RouterOutputs["maimai"]["getCredits"]["credits"][number];

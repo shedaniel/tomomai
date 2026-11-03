@@ -3,10 +3,10 @@ import { load } from "cheerio";
 import { and, eq, gt, inArray, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { userRecentSongs, maimaiRecentSongDetails } from "@/lib/db/schema-pg";
-import { getLogger } from "@/lib/request-logger";
 import type { Region } from "@/lib/games/ids";
 import type { GameSiteClient } from "@/server/services/games/sega/http";
 import type { RecentSongData } from "../types";
+import { logger } from "@/lib/logger";
 
 // Fetches per-play playlog detail pages and writes the enriched per-note
 // breakdown into maimaiRecentSongDetails. Scrape-only.
@@ -17,7 +17,7 @@ export async function fetchAndInsertRecentSongsData(
   recentSongsData: RecentSongData[],
 ): Promise<void> {
   if (recentSongsData.length === 0) return;
-  const log = getLogger();
+  const log = logger;
 
   const existingValid = await db
     .select({ playedAt: userRecentSongs.playedAt })

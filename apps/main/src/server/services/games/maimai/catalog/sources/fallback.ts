@@ -1,5 +1,5 @@
 import "server-only";
-import { getLogger } from "@/lib/request-logger";
+import { logger } from "@/lib/logger";
 import { normalizeName } from "@/lib/name-utils";
 import type { Region } from "@/lib/games/ids";
 import type { SongType } from "@/lib/games/maimai/types";
@@ -65,15 +65,15 @@ export const FallbackFetcher = asCatalogFetcher(async (context) => {
 async function loadFallbackJsonData(region: Region, version: number): Promise<FallbackSong[] | null> {
   try {
     const filePath = join(process.cwd(), "data", "extra", `${region}-${version}.json`);
-    getLogger().debug(`Checking for fallback JSON file: ${filePath}`);
+    logger.debug(`Checking for fallback JSON file: ${filePath}`);
 
     const fileContent = await fs.readFile(filePath, "utf-8");
     const jsonData = JSON.parse(fileContent);
 
-    getLogger().info(`Loaded ${jsonData.length} fallback songs from ${region}-${version}.json`);
+    logger.info(`Loaded ${jsonData.length} fallback songs from ${region}-${version}.json`);
     return jsonData;
   } catch (error) {
-    getLogger().info(`No fallback JSON file found for ${region}-${version} or error reading it: ${error instanceof Error ? error.message : "Unknown error"}`);
+    logger.info(`No fallback JSON file found for ${region}-${version} or error reading it: ${error instanceof Error ? error.message : "Unknown error"}`);
     return null;
   }
 }

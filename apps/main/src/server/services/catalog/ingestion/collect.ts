@@ -1,3 +1,4 @@
+import type { GameSiteSession } from "@/server/services/games/sega/http";
 import { resolveGameContext } from "@/lib/games/access";
 import { getGame } from "@/lib/games/registry";
 import type { CanonicalGameId, Region } from "@/lib/games/ids";
@@ -12,9 +13,12 @@ export function catalogRequiresToken(game: CanonicalGameId, region: Region): boo
   return getGame(game).catalogTokenRegions.includes(region);
 }
 
-/** Logs in to the game's catalog source when the region needs it, and returns the session cookies. */
-export async function authenticateCatalogSource(game: CanonicalGameId, region: Region, token: string | null): Promise<string> {
-  if (!catalogRequiresToken(game, region)) return "";
+/**
+ * Logs in to the game's catalog source when the region needs it, and returns its session. Release it with
+ * releaseGameSiteSession once the catalog is collected.
+ */
+export async function authenticateCatalogSource(game: CanonicalGameId, region: Region, token: string | null): Promise<GameSiteSession> {
+  if (!catalogRequiresToken(game, region)) return { cookies: "" };
   if (!token) throw new Error("Missing 'token' query parameter");
   const { authenticate } = GAME_SERVER_MODULES[game].catalog;
   if (!authenticate) throw new Error("Catalog authentication is not configured");

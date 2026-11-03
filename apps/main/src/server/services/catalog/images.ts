@@ -2,7 +2,8 @@ import type { Logger } from "pino";
 import { formatChartLabel } from "@/lib/games/presentation";
 import { getGame } from "@/lib/games/registry";
 import type { CanonicalGameId } from "@/lib/games/ids";
-import { convertToWebp, fetchImageBuffer } from "@/lib/image-converter";
+import { convertToWebp } from "@/lib/image-converter";
+import { openPublicAssets } from "@/server/services/games/sega/http";
 import { GAME_SERVER_MODULES } from "@/server/services/games/registry";
 import { AdminRequestError } from "./admin-game";
 import type { CatalogChart } from "./ingestion/schema";
@@ -89,10 +90,12 @@ export async function processCatalogImages(game: CanonicalGameId, charts: Catalo
   }
 
   log.info({ toDownload: toDownload.length, skipped }, "Cover download plan");
+  // Covers hosted on a game site draw from its request budget.
+  const assets = openPublicAssets();
 
   await processBatch(toDownload, 10, async ({ filename, basename, url }) => {
     log.debug({ filename, url }, "Downloading cover");
-    const buffer = await fetchImageBuffer(url);
+    const { buffer } = await assets.bytes(url);
     const webpBuffer = await convertToWebp(buffer);
     log.debug({ filename, originalSize: buffer.length, webpSize: webpBuffer.length }, "Converted to WebP");
     await uploadCoverToR2(webpBuffer, basename);
@@ -105,7 +108,7 @@ export async function processCatalogImages(game: CanonicalGameId, charts: Catalo
     const webpKey = `${basename}.webp`;
     if (!existingKeys.has(webpKey)) {
       log.info({ basename, url }, "Caching static asset to R2");
-      const buffer = await fetchImageBuffer(url);
+      const { buffer } = await assets.bytes(url);
       const webpBuffer = await convertToWebp(buffer);
       await uploadCoverToR2(webpBuffer, basename);
       log.info({ basename }, "Static asset cached");

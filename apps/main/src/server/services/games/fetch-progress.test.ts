@@ -3,7 +3,7 @@ import { beforeEach, expect, it, vi } from "vitest";
 const proxy = await vi.hoisted(async () => (await import("@/test/pg-proxy")).createProxyDb());
 const log = vi.hoisted(() => ({ debug: vi.fn(), error: vi.fn(), warn: vi.fn() }));
 vi.mock("@/lib/db", () => ({ db: proxy.db }));
-vi.mock("@/lib/request-logger", () => ({ getLogger: () => log }));
+vi.mock("@/lib/logger", async (importOriginal) => ({ ...(await importOriginal<typeof import("@/lib/logger")>()), logger: log }));
 
 import { FETCH_STATES } from "@/lib/fetch-states";
 import { appendFetchState } from "./fetch-progress";
@@ -30,5 +30,5 @@ it("warns once with the session and state when the session is gone or no longer 
   proxy.answer(() => []);
   await appendFetchState(BigInt(17), FETCH_STATES.PLAYER_DATA);
   expect(proxy.queries).toHaveLength(1);
-  expect(log.warn).toHaveBeenCalledExactlyOnceWith({ sessionId: "17", state: "player_data" }, "Fetch session not found or no longer pending");
+  expect(log.warn).toHaveBeenCalledExactlyOnceWith({ state: "player_data" }, "Fetch session row 17 not found or no longer pending");
 });

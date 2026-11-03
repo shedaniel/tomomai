@@ -1,11 +1,11 @@
 import { Canvas } from 'skia-canvas';
-import type { Logger } from 'pino';
 
 import { ImageCache } from './lib/render-image';
 import { fontsLoaded, loadCachedImage } from './lib/render-image-server';
 import { getRatingImageUrl } from './lib/rating-calculator';
 import { getLogoUrl, getTypeBadgeUrl } from './lib/utils';
 import { logger } from './lib/logger';
+import { withLogContext } from './lib/request-logger';
 import { enterProfile, formatProfileTree, span } from './lib/profiler';
 import type { Region } from './lib/types';
 
@@ -59,7 +59,6 @@ function jsonResponse(body: unknown, status: number, requestId: string): Respons
 
 async function buildImageCache(
   urls: string[],
-  log: Logger,
 ): Promise<{ cache: ImageCache; failed: { url: string; error: unknown }[] }> {
   const cache: ImageCache = {};
   const failed: { url: string; error: unknown }[] = [];
@@ -71,7 +70,7 @@ async function buildImageCache(
         cache[url] = async () => image;
       } catch (error) {
         failed.push({ url, error });
-        log.warn({ url, err: error }, `Failed to cache image: ${url}`);
+        logger.warn({ url, err: error }, `Failed to cache image: ${url}`);
       }
     }),
   );
@@ -103,18 +102,22 @@ export type RenderOutcome =
  * or Discord followup upload.
  */
 export async function renderToWebp(job: RenderJob): Promise<RenderOutcome> {
+  // Log under the render's name (export-image, ...) rather than the HTTP path.
+  return withLogContext({ route: job.routeName }, () => render(job));
+}
+
+async function render(job: RenderJob): Promise<RenderOutcome> {
   const { routeName, requestId } = job;
-  const log = logger.child({ route: routeName, requestId });
-  log.info(`Starting ${routeName} render`);
+  logger.info(`Starting ${routeName} render`);
 
   const run = async (): Promise<RenderOutcome> => {
     try {
       await span("fontsLoaded", () => fontsLoaded.then(() => undefined));
 
       let startTime = Date.now();
-      const { cache, failed } = await span("buildImageCache", () => buildImageCache(job.resources, log));
+      const { cache, failed } = await span("buildImageCache", () => buildImageCache(job.resources));
       if (failed.length > 0) {
-        log.error({ count: failed.length }, `${failed.length} image(s) failed to load`);
+        logger.error({ count: failed.length }, `${failed.length} image(s) failed to load`);
         return {
           ok: false,
           status: 502,
@@ -128,19 +131,19 @@ export async function renderToWebp(job: RenderJob): Promise<RenderOutcome> {
           },
         };
       }
-      log.info({ count: Object.keys(cache).length, durationMs: Date.now() - startTime }, `Cached ${Object.keys(cache).length} images`);
+      logger.info({ count: Object.keys(cache).length, durationMs: Date.now() - startTime }, `Cached ${Object.keys(cache).length} images`);
 
       startTime = Date.now();
       const canvas = await span("render", () => job.render(cache));
-      log.info({ durationMs: Date.now() - startTime, profile: job.profile }, `Image rendered`);
+      logger.info({ durationMs: Date.now() - startTime, profile: job.profile }, `Image rendered`);
 
       startTime = Date.now();
       const encoded = await span("encodeWebp", () => canvas.toBuffer('webp', { density: job.scale, quality: 0.85 }));
-      log.info({ size: encoded.length, durationMs: Date.now() - startTime }, `Encoded webp (${encoded.length} bytes)`);
+      logger.info({ size: encoded.length, durationMs: Date.now() - startTime }, `Encoded webp (${encoded.length} bytes)`);
 
       return { ok: true, buffer: Buffer.from(encoded), filename: job.filename };
     } catch (error) {
-      log.error({ err: error }, 'Failed to generate image');
+      logger.error({ err: error }, 'Failed to generate image');
       return {
         ok: false,
         status: 500,

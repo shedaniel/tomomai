@@ -1,145 +1,18 @@
 "use client";
 
-import { Button } from "@tomomai/ui";
-import { useGame, usePresentation } from "@/components/providers/game-provider";
+import { useGame } from "@/components/providers/game-provider";
 import { supportsGameFeature } from "@/lib/games/frontend";
 import type { Region } from "@/lib/games/ids";
 import type { GameSnapshot } from "@/lib/games/player-view";
-import { Download, RefreshCw } from "lucide-react";
+import { Download } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { Tabs, TabsList, TabsContents, TabsTrigger, TabsContent } from "@/components/animate-ui/components/radix/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@tomomai/ui/select-friendly";
 import { trpc } from "@/lib/trpc-client";
-
-interface ImagePanelProps {
-  imageUrl: string;
-  imageKey: number;
-  isLoading: boolean;
-  fileName: string;
-  onRefresh: () => void;
-  onRefreshFast?: () => void;
-  onRefreshProfile?: () => void;
-  onLoad: () => void;
-}
-
-function ImagePanel({
-  imageUrl,
-  imageKey,
-  isLoading,
-  fileName,
-  onRefresh,
-  onRefreshFast,
-  onRefreshProfile,
-  onLoad,
-}: ImagePanelProps) {
-  const [downloading, setDownloading] = useState(false);
-  const [naturalRatio, setNaturalRatio] = useState<number | null>(null);
-  const [hydrated, setHydrated] = useState(false);
-  useEffect(() => setHydrated(true), []);
-  const isDev = process.env.NODE_ENV === 'development';
-  const { imageSize } = usePresentation();
-
-  const ratio = naturalRatio ?? imageSize.width / imageSize.height;
-
-  const handleImageLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
-    const img = e.currentTarget;
-    if (img.naturalWidth > 0 && img.naturalHeight > 0) {
-      setNaturalRatio(img.naturalWidth / img.naturalHeight);
-    }
-    onLoad();
-  };
-
-  const handleDownload = async () => {
-    try {
-      setDownloading(true);
-
-      const response = await fetch(imageUrl);
-      if (!response.ok) {
-        throw new Error('Failed to fetch image');
-      }
-
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = fileName;
-      document.body.appendChild(link);
-      link.click();
-
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
-    } catch (error) {
-      console.error('Failed to download image:', error);
-      alert('Failed to download image. Please try again.');
-    } finally {
-      setDownloading(false);
-    }
-  };
-
-  return (
-    <div className="flex flex-col items-center space-y-4 w-full min-w-0 mx-auto">
-      <div className="flex flex-wrap items-center justify-center gap-2">
-        <Button onClick={handleDownload} disabled={hydrated && (downloading || isLoading)} size="sm" className="flex items-center gap-2">
-          {downloading ? (
-            <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-r-transparent" />
-          ) : (
-            <Download className="h-4 w-4" />
-          )}
-          Download
-        </Button>
-        <Button onClick={onRefresh} variant="outline" size="sm" className="flex items-center gap-2">
-          <RefreshCw className="h-4 w-4" />
-          Refresh
-        </Button>
-        {isDev && onRefreshFast && (
-          <Button onClick={onRefreshFast} variant="outline" size="sm" className="flex items-center gap-2">
-            <RefreshCw className="h-4 w-4" />
-            Refresh (Fast)
-          </Button>
-        )}
-        {isDev && onRefreshProfile && (
-          <Button onClick={onRefreshProfile} variant="outline" size="sm" className="flex items-center gap-2">
-            <RefreshCw className="h-4 w-4" />
-            Profile
-          </Button>
-        )}
-      </div>
-      <div
-        className="border rounded-xl overflow-hidden shadow-sm relative"
-        style={{
-          aspectRatio: ratio,
-          width: `min(100%, calc(80vh * ${ratio}))`,
-        }}
-      >
-        {isLoading && (
-          <div className="absolute inset-0 bg-muted animate-pulse">
-            <div
-              className="absolute inset-0 bg-gradient-to-r from-transparent via-muted-foreground/30 to-transparent animate-shimmer"
-              style={{
-                backgroundSize: '200% 100%',
-                animation: 'shimmer 5s infinite',
-              }}
-            />
-          </div>
-        )}
-        <img
-          key={imageKey}
-          src={imageUrl}
-          alt={fileName}
-          onLoad={handleImageLoad}
-          className={isLoading ? 'opacity-0' : 'opacity-100 transition-opacity duration-600'}
-          style={{
-            width: '100%',
-            height: '100%',
-            display: 'block',
-          }}
-        />
-      </div>
-    </div>
-  );
-}
+import { CreditExportPanel } from "@/components/games/maimai/credit-export-panel";
+import { ImagePanel } from "./export-image-panel";
 
 interface ExportImageCardProps {
   snapshot: Pick<GameSnapshot, "publicId" | "fetchedAt" | "displayName">;
@@ -149,6 +22,38 @@ interface ExportImageCardProps {
   username?: string;
   /** Public snapshot publicId. When set, daily-plays days fetch uses the public tRPC procedure. */
   publicSnapshotId?: string;
+}
+
+type ExportKind = "profile" | "credit" | "daily";
+
+const EXPORT_PARAM = "export";
+const CREDIT_PARAM = "credit";
+const DAY_PARAM = "day";
+
+// Mirrors DataContent: replaceState keeps Next from re-fetching the RSC payload
+function writeExportParams(kind: ExportKind, value?: { credit?: number | null; day?: string }) {
+  if (typeof window === "undefined") return;
+  const params = new URLSearchParams(window.location.search);
+  params.delete(CREDIT_PARAM);
+  params.delete(DAY_PARAM);
+  if (kind === "profile") params.delete(EXPORT_PARAM);
+  else params.set(EXPORT_PARAM, kind);
+  if (kind === "credit" && value?.credit) params.set(CREDIT_PARAM, String(value.credit));
+  if (kind === "daily" && value?.day) params.set(DAY_PARAM, value.day);
+  const qs = params.toString();
+  window.history.replaceState(null, "", qs ? `${window.location.pathname}?${qs}` : window.location.pathname);
+}
+
+function readExportParams(searchParams: ReturnType<typeof useSearchParams>) {
+  const kindParam = searchParams.get(EXPORT_PARAM);
+  const kind: ExportKind = kindParam === "credit" || kindParam === "daily" ? kindParam : "profile";
+  const creditParam = Number(searchParams.get(CREDIT_PARAM));
+  const dayParam = searchParams.get(DAY_PARAM);
+  return {
+    kind,
+    credit: kind === "credit" && Number.isInteger(creditParam) && creditParam > 0 ? creditParam : null,
+    day: kind === "daily" && dayParam && /^\d{4}-\d{2}-\d{2}$/.test(dayParam) ? dayParam : undefined,
+  };
 }
 
 const TAB_COLUMNS = { 2: "grid-cols-2", 3: "grid-cols-3" } as const;
@@ -168,10 +73,6 @@ function buildExportImageUrl(snapshotId: string, region: Region, username?: stri
 /** A visitor's play images name the published snapshot, the owner's name the region. */
 function playsOwnerParams(region: Region, publicSnapshotId: string | undefined): Record<string, string> {
   return publicSnapshotId ? { snapshotId: publicSnapshotId } : { region };
-}
-
-function buildLastCreditUrl(owner: Record<string, string>, beforeDate: Date, extra?: Record<string, string>) {
-  return `/api/last-credit?${new URLSearchParams({ ...owner, beforeDate: beforeDate.toISOString(), ...extra }).toString()}`;
 }
 
 function buildDailyPlaysUrl(owner: Record<string, string>, day: string | undefined, extra?: Record<string, string>) {
@@ -196,9 +97,14 @@ export function ExportImageCard({ snapshot, region, showPlays = true, username, 
   const game = useGame();
   const showLastCredit = showPlays && supportsGameFeature(game, "last-credit", region);
   const showDaily = showPlays && supportsGameFeature(game, "daily-plays", region);
+  const searchParams = useSearchParams();
+  const [initialParams] = useState(() => readExportParams(searchParams));
 
   const snapshotId = snapshot.publicId;
+  const isPublic = !!publicSnapshotId;
   const playsOwner = useMemo(() => playsOwnerParams(region, publicSnapshotId), [region, publicSnapshotId]);
+
+  const [exportKind, setExportKind] = useState<ExportKind>(initialParams.kind);
 
   // Export image state
   const [exportImageUrl, setExportImageUrl] = useState<string>(
@@ -207,20 +113,15 @@ export function ExportImageCard({ snapshot, region, showPlays = true, username, 
   const [exportImageKey, setExportImageKey] = useState(0);
   const [exportIsLoading, setExportIsLoading] = useState(true);
 
-  // Last credit image state
-  const [lastCreditImageUrl, setLastCreditImageUrl] = useState<string>(
-    buildLastCreditUrl(playsOwner, snapshot.fetchedAt)
-  );
-  const [lastCreditImageKey, setLastCreditImageKey] = useState(0);
-  const [lastCreditIsLoading, setLastCreditIsLoading] = useState(true);
+  // Credits are keyed by their first track's unix time so links stay stable.
+  const [selectedCreditAt, setSelectedCreditAt] = useState<number | null>(initialParams.credit);
 
   // Daily plays state
-  const [selectedDay, setSelectedDay] = useState<string | undefined>(undefined);
+  const [selectedDay, setSelectedDay] = useState<string | undefined>(initialParams.day);
   const [dailyImageKey, setDailyImageKey] = useState(0);
   const [dailyIsLoading, setDailyIsLoading] = useState(true);
   const [dailyUrlExtra, setDailyUrlExtra] = useState<Record<string, string>>({});
 
-  const isPublic = !!publicSnapshotId;
   const ownDaysQuery = trpc.user.getDailyPlaysAvailableDays.useQuery(
     { game: game.id, region },
     { enabled: showDaily && !isPublic },
@@ -232,9 +133,16 @@ export function ExportImageCard({ snapshot, region, showPlays = true, username, 
   const availableDays = (isPublic ? publicDaysQuery.data : ownDaysQuery.data) ?? [];
   const daysLoading = (isPublic ? publicDaysQuery.isFetching : ownDaysQuery.isFetching) && availableDays.length === 0;
 
+  // Skips the first run so a day or credit from the URL survives mount
+  const scopeKey = `${region}:${snapshotId}`;
+  const lastScopeKey = useRef(scopeKey);
   useEffect(() => {
+    if (lastScopeKey.current === scopeKey) return;
+    lastScopeKey.current = scopeKey;
     setSelectedDay(undefined);
-  }, [region, snapshotId]);
+    setSelectedCreditAt(null);
+    if (exportKind !== "profile") writeExportParams(exportKind);
+  }, [scopeKey, exportKind]);
 
   useEffect(() => {
     if (!selectedDay && availableDays.length > 0) {
@@ -246,6 +154,12 @@ export function ExportImageCard({ snapshot, region, showPlays = true, username, 
     () => buildDailyPlaysUrl(playsOwner, selectedDay, dailyUrlExtra),
     [playsOwner, selectedDay, dailyUrlExtra],
   );
+
+  const handleExportKindChange = (value: string) => {
+    const kind = value as ExportKind;
+    setExportKind(kind);
+    writeExportParams(kind, { credit: selectedCreditAt, day: selectedDay });
+  };
 
   const handleExportRefresh = () => {
     setExportIsLoading(true);
@@ -265,16 +179,9 @@ export function ExportImageCard({ snapshot, region, showPlays = true, username, 
     setExportImageUrl(buildExportImageUrl(snapshotId, region, username, { profile: '1', t: Date.now().toString() }));
   };
 
-  const handleLastCreditRefresh = () => {
-    setLastCreditIsLoading(true);
-    setLastCreditImageKey(prev => prev + 1);
-    setLastCreditImageUrl(buildLastCreditUrl(playsOwner, snapshot.fetchedAt, { t: Date.now().toString() }));
-  };
-
-  const handleLastCreditRefreshFast = () => {
-    setLastCreditIsLoading(true);
-    setLastCreditImageKey(prev => prev + 1);
-    setLastCreditImageUrl(buildLastCreditUrl(playsOwner, snapshot.fetchedAt, { scale: '1', t: Date.now().toString() }));
+  const handleCreditSelect = (at: number) => {
+    setSelectedCreditAt(at);
+    writeExportParams("credit", { credit: at });
   };
 
   const handleDailyDayChange = (day: string) => {
@@ -282,6 +189,7 @@ export function ExportImageCard({ snapshot, region, showPlays = true, username, 
     setDailyIsLoading(true);
     setDailyImageKey(prev => prev + 1);
     setDailyUrlExtra({});
+    writeExportParams("daily", { day });
   };
 
   const handleDailyRefresh = () => {
@@ -311,15 +219,15 @@ export function ExportImageCard({ snapshot, region, showPlays = true, username, 
 
   const locale = typeof window !== 'undefined' ? navigator.language : 'en-US';
 
-  const lastCreditPanel = (
-    <ImagePanel
-      imageUrl={lastCreditImageUrl}
-      imageKey={lastCreditImageKey}
-      isLoading={lastCreditIsLoading}
-      fileName={`${game.id}-last-credit-${snapshot.displayName || 'export'}.png`}
-      onRefresh={handleLastCreditRefresh}
-      onRefreshFast={handleLastCreditRefreshFast}
-      onLoad={() => setLastCreditIsLoading(false)}
+  const creditPanel = (
+    <CreditExportPanel
+      region={region}
+      playsOwner={playsOwner}
+      publicSnapshotId={publicSnapshotId}
+      snapshotFetchedAt={snapshot.fetchedAt}
+      displayName={snapshot.displayName}
+      selectedAt={selectedCreditAt}
+      onSelect={handleCreditSelect}
     />
   );
 
@@ -372,11 +280,12 @@ export function ExportImageCard({ snapshot, region, showPlays = true, username, 
     </div>
   );
 
-  const tabs = [
+  const tabs: { value: ExportKind; label: string; panel: React.ReactNode }[] = [
     { value: "profile", label: t('dataContent.exportImageCard.profileImage'), panel: profilePanel },
-    ...(showLastCredit ? [{ value: "lastCredit", label: t('dataContent.exportImageCard.lastCredit'), panel: lastCreditPanel }] : []),
-    ...(showDaily ? [{ value: "daily", label: t('dataContent.exportImageCard.dailyPlays'), panel: dailyPanel }] : []),
+    ...(showLastCredit ? [{ value: "credit" as const, label: t('dataContent.exportImageCard.lastCredit'), panel: creditPanel }] : []),
+    ...(showDaily ? [{ value: "daily" as const, label: t('dataContent.exportImageCard.dailyPlays'), panel: dailyPanel }] : []),
   ];
+  const activeKind = tabs.some(tab => tab.value === exportKind) ? exportKind : "profile";
 
   return (
     <div className="w-full mx-auto space-y-6">
@@ -386,7 +295,7 @@ export function ExportImageCard({ snapshot, region, showPlays = true, username, 
       </h2>
 
       {tabs.length > 1 ? (
-        <Tabs defaultValue="profile" className="w-full">
+        <Tabs value={activeKind} onValueChange={handleExportKindChange} className="w-full">
           <TabsList className={`grid w-full ${TAB_COLUMNS[tabs.length as keyof typeof TAB_COLUMNS]}`}>
             {tabs.map(tab => (
               <TabsTrigger key={tab.value} value={tab.value}>

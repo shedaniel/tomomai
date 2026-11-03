@@ -3,11 +3,10 @@ import type { Flags } from "@/lib/flags";
 
 const mocks = vi.hoisted(() => ({
   progress: vi.fn(),
-  child: vi.fn(),
   log: { info: vi.fn(), warn: vi.fn() },
 }));
 vi.mock("@/server/services/games/fetch-progress", () => ({ appendFetchState: mocks.progress }));
-vi.mock("@/lib/request-logger", () => ({ getLogger: () => ({ child: mocks.child }) }));
+vi.mock("@/lib/logger", () => ({ logger: mocks.log }));
 
 import { createFetchRun, fetchFailure, FetchStageError } from "./fetch-run";
 import type { ScoreFetchContext } from "./types";
@@ -21,7 +20,6 @@ function context(signal = new AbortController().signal): ScoreFetchContext {
 
 beforeEach(() => {
   vi.clearAllMocks();
-  mocks.child.mockReturnValue(mocks.log);
 });
 
 describe("fetch run", () => {

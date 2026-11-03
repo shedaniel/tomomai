@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({ remove: vi.fn(), warn: vi.fn() }));
 vi.mock("./tokens", () => ({ deleteToken: mocks.remove }));
-vi.mock("@/lib/request-logger", () => ({ getLogger: () => ({ warn: mocks.warn }) }));
+vi.mock("@/lib/logger", async (importOriginal) => ({ ...(await importOriginal<typeof import("@/lib/logger")>()), logger: ({ warn: mocks.warn }) }));
 
 import { acceptSegaToken, acceptToken } from "./token-policy";
 

@@ -15,7 +15,7 @@ vi.mock("./ingestion/collect", async importOriginal => ({
   ...await importOriginal<typeof import("./ingestion/collect")>(),
   collectCatalog: (game: string, ctx: CatalogCollectContext) => mocks.collect(game, ctx),
 }));
-vi.mock("@/server/services/games/maimai/login", () => ({ loginAndGetCookies: vi.fn() }));
+vi.mock("@/server/services/games/maimai/login", () => ({ signInMaimaiCatalog: vi.fn() }));
 vi.mock("./images", async importOriginal => ({
   ...await importOriginal<typeof import("./images")>(),
   processCatalogImages: mocks.images,

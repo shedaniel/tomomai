@@ -14,8 +14,8 @@
 import { fetchCatalogSlice, type CatalogSong } from "@tomomai/games/catalog-client";
 import type { CodedGame } from "@tomomai/games/codes";
 import { parseSongId } from "@tomomai/games/song-ids";
+import { logger } from "./logger";
 import { Agent, fetch } from "undici";
-import { getLogger } from "./request-logger";
 
 const CATALOG_URL =
   process.env.CATALOG_URL ??
@@ -36,14 +36,13 @@ const cache = new Map<string, { map: Catalog<CodedGame>; fetchedAt: number }>();
 const inflight = new Map<string, Promise<Catalog<CodedGame>>>();
 
 async function fetchCatalog<G extends CodedGame>(game: G, region: string, gameVersion: number): Promise<Catalog<G>> {
-  const log = getLogger();
   const startTime = Date.now();
   const songs = await fetchCatalogSlice(CATALOG_URL, game, region, gameVersion, url => {
-    log.info({ url }, "Fetching song catalogue");
+    logger.info({ url }, "Fetching song catalogue");
     return fetch(url, { dispatcher: sharedAgent, signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) });
   });
   const map: Catalog<G> = new Map(songs.map(song => [song.songId, song]));
-  log.info(
+  logger.info(
     { count: map.size, durationMs: Date.now() - startTime },
     "Catalogue loaded",
   );

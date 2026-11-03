@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const proxy = await vi.hoisted(async () => (await import("@/test/pg-proxy")).createProxyDb());
 const warn = vi.hoisted(() => vi.fn());
 vi.mock("@/lib/db", () => ({ db: proxy.db }));
-vi.mock("@/lib/request-logger", () => ({ getLogger: () => ({ warn }) }));
+vi.mock("@/lib/logger", async (importOriginal) => ({ ...(await importOriginal<typeof import("@/lib/logger")>()), logger: ({ warn }) }));
 import { db } from "@/lib/db";
 import { RANKING_BUCKET_CODE } from "@/lib/games/codes";
 import { buildChartResolution, writeSnapshotScores, type DbSong } from "./score-storage";

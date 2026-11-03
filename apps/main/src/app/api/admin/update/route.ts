@@ -1,14 +1,15 @@
+import { logger } from "@/lib/logger";
 import { adminRoute } from "../admin-route";
 import { getCurrentVersion } from "@/lib/games/versions";
 import { sortKeys } from "@/lib/utils";
 import { requireAdminRegion } from "@/server/services/catalog/admin-game";
 import { collectCatalogRegion } from "@/server/services/catalog/apply";
 
-export const GET = adminRoute("admin/update", async ({ request, game, log, requestId }) => {
+export const GET = adminRoute("admin/update", async ({request, game, requestId }) => {
   const { searchParams } = request.nextUrl;
   const region = requireAdminRegion(game, searchParams);
   const charts = await collectCatalogRegion({
-    game, region, version: getCurrentVersion(game, region), sourceToken: searchParams.get("token"), log, requestId,
+    game, region, version: getCurrentVersion(game, region), sourceToken: searchParams.get("token"), log: logger, requestId,
   });
   return Response.json({
     success: true,

@@ -1,8 +1,8 @@
 import "server-only";
-import { getLogger } from "@/lib/request-logger";
 import { LxnsAuthRevokedError } from "../player/lxns";
 import type { ScoreData } from "../types";
 import { parseLxnsScoresData, unwrapLxnsScoresResponse } from "./lxns-parse";
+import { logger } from "@/lib/logger";
 
 const LXNS_SCORES_URL = "https://maimai.lxns.net/api/v0/user/maimai/player/scores";
 
@@ -28,6 +28,6 @@ export async function fetchLxnsScoresData(
   const json = (await resp.json()) as Record<string, unknown>;
   const scores = unwrapLxnsScoresResponse(json);
   const parsed = parseLxnsScoresData(scores);
-  getLogger().info({ providerId: "lxns", recordCount: scores.length, skipped: scores.length - parsed.length }, "Read lxns scores");
+  logger.info({ providerId: "lxns", recordCount: scores.length, skipped: scores.length - parsed.length }, "Read lxns scores");
   return parsed;
 }

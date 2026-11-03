@@ -12,10 +12,11 @@ vi.mock("@/server/services/catalog/publication", () => ({ publishSongCatalog: mo
 vi.mock("@/server/services/catalog/revalidation", () => ({ revalidateCatalog: mocks.revalidate }));
 vi.mock("@/server/services/catalog/notifications", () => ({ sendDiscordWebhook: vi.fn().mockResolvedValue(undefined) }));
 vi.mock("@/server/services/discord/webhook", () => ({ sendDiscordNotice: mocks.notice }));
-vi.mock("@/lib/logger", () => ({ flushLogger: vi.fn() }));
+vi.mock("@/lib/logger", () => ({ flushLogger: vi.fn(), logger: mocks.log }));
 vi.mock("@/lib/request-logger", () => ({
-  requestLogger: () => ({ log: mocks.log, requestId: "upload-test" }),
-  runWithLogger: (_log: unknown, run: () => unknown) => run(),
+  withRequestLogContext: (_route: string, handler: (request: unknown, context: object) => unknown) =>
+    (request: unknown, context: object) => handler(request, { ...context, requestId: "upload-test" }),
+  withLogContext: (_fields: object, run: () => unknown) => run(),
 }));
 
 import { POST } from "./route";

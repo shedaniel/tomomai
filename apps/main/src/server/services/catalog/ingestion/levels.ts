@@ -1,8 +1,8 @@
-import { getLogger } from "@/lib/request-logger";
 import { formatChartLabel } from "@/lib/games/presentation";
 import { requireCatalogValue } from "./normalize-charts";
 import { value } from "./types";
 import type { CatalogStage } from "./runner";
+import { logger } from "@/lib/logger";
 
 /** How a game turns a display level into a constant when its sources give none. */
 export type CatalogLevelPolicy = {
@@ -17,7 +17,7 @@ export function parseDisplayLevel(level: string, plusOffset: number): number {
   const plus = trimmed.endsWith("+");
   const base = parseInt(plus ? trimmed.slice(0, -1) : trimmed, 10);
   if (Number.isNaN(base)) {
-    getLogger().warn({ from: level }, "Invalid chart level; defaulting to 1.0");
+    logger.warn({ from: level }, "Invalid chart level; defaulting to 1.0");
     return 10;
   }
   return base * 10 + (plus ? plusOffset : 0);

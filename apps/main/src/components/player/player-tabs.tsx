@@ -46,6 +46,8 @@ type PlayerTabProps = PlayerTabContext & {
   profile: PlayerProfile;
   /** The snapshot a visitor's queries go through. The owner reads their own data without one. */
   publicSnapshotId?: string;
+  /** Opens the export tab on a credit. Set only while the credit image is available to the viewer. */
+  onOpenCredit?: (at: number) => void;
 };
 
 type PlayerTab = {
@@ -76,12 +78,20 @@ function SongsTab({ data, flags }: PlayerTabProps) {
   return <SongsCard selectedSnapshotData={data} flags={flags} />;
 }
 
-function RecentTab({ data, region, publicSnapshotId }: PlayerTabProps) {
-  return <RecentSongsCard region={region} beforeDate={data.snapshot.fetchedAt} snapshotId={publicSnapshotId} />;
+function RecentTab({ data, region, publicSnapshotId, onOpenCredit }: PlayerTabProps) {
+  return <RecentSongsCard region={region} beforeDate={data.snapshot.fetchedAt} snapshotId={publicSnapshotId} onOpenCredit={onOpenCredit} />;
 }
 
-function RecommendationsTab({ data, region, flags }: PlayerTabProps) {
-  return <RecommendationCard selectedSnapshotData={data} flags={flags} region={region} />;
+function RecommendationsTab({ data, region, flags, visitedBySelf, profile }: PlayerTabProps) {
+  const { profileUsername } = profile;
+  return (
+    <RecommendationCard
+      selectedSnapshotData={data}
+      flags={flags}
+      region={region}
+      source={visitedBySelf || !profileUsername ? { kind: "own" } : { kind: "public", username: profileUsername }}
+    />
+  );
 }
 
 function HistoryTab({ region }: PlayerTabProps) {

@@ -7,9 +7,9 @@ vi.mock("@/lib/db", () => ({ db: proxy.db }));
 
 import { computeStatsForSnapshot } from "./stats";
 
-const score = (scoreValue: number, addedVersion: number, difficulty: number, comboStatus: number, syncStatus: number, clearStatus: number) =>
-  ({ scoreValue, addedVersion, difficulty, comboStatus, syncStatus, clearStatus });
-const charts = (addedVersion: number, difficulty: number, count: number) => ({ addedVersion, difficulty, count });
+const score = (scoreValue: number, addedVersion: number, difficulty: number, level: string, comboStatus: number, syncStatus: number, clearStatus: number) =>
+  ({ scoreValue, addedVersion, difficulty, level, comboStatus, syncStatus, clearStatus });
+const charts = (addedVersion: number, difficulty: number, level: string, count: number) => ({ addedVersion, difficulty, level, count });
 
 // Snapshot 41's scores answer only a read of that snapshot, and the chart counts only a read of the game's jp catalog of the version.
 function store(game: CanonicalGameId, gameVersion: number, scores: ProxyRow[], catalog: ProxyRow[]) {
@@ -24,8 +24,8 @@ beforeEach(() => proxy.reset());
 it("counts CHUNITHM clear lamps beside its combo and chain statuses", async () => {
   store(
     "chunithm", 9,
-    [score(1009500, 9, 3, 3, 1, 2), score(1007500, 9, 3, 0, 0, 1), score(950000, 8, 4, 0, 0, 0)],
-    [charts(9, 3, 20)],
+    [score(1009500, 9, 3, "14", 3, 1, 2), score(1007500, 9, 3, "14+", 0, 0, 1), score(950000, 8, 4, "13", 0, 0, 0)],
+    [charts(9, 3, "14", 12), charts(9, 3, "14+", 8)],
   );
 
   await expect(computeStatsForSnapshot("chunithm", 41, 9, "jp")).resolves.toStrictEqual({
@@ -34,5 +34,12 @@ it("counts CHUNITHM clear lamps beside its combo and chain statuses", async () =
       8: { 4: { grades: { AAA: 1 }, statuses: { comboStatus: {}, syncStatus: {}, clearStatus: {} }, total: 1 } },
     },
     totalSongs: { 9: { 3: 20 } },
+    levels: {
+      9: { 3: {
+        14: { grades: { "SSS+": 1 }, statuses: { comboStatus: { 3: 1 }, syncStatus: { 1: 1 }, clearStatus: { 2: 1 } }, total: 1, charts: 12 },
+        "14+": { grades: { SSS: 1 }, statuses: { comboStatus: {}, syncStatus: {}, clearStatus: { 1: 1 } }, total: 1, charts: 8 },
+      } },
+      8: { 4: { 13: { grades: { AAA: 1 }, statuses: { comboStatus: {}, syncStatus: {}, clearStatus: {} }, total: 1, charts: 0 } } },
+    },
   });
 });

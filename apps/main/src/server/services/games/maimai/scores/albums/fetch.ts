@@ -1,16 +1,16 @@
 import "server-only";
 import { load } from "cheerio";
 import { normalizeName } from "@/lib/name-utils";
-import { getLogger } from "@/lib/request-logger";
 import type { Difficulty, SongType } from "@/lib/games/maimai/types";
 import { siteRoot } from "@/lib/games/sites";
 import type { Region } from "@/lib/games/ids";
 import type { GameSiteClient } from "@/server/services/games/sega/http";
 import { musicTypeFromIcon } from "../parse-utils";
 import type { AlbumData } from "../types";
+import { logger } from "@/lib/logger";
 
 export async function fetchAlbumData(site: GameSiteClient, region: Region): Promise<AlbumData[]> {
-  const log = getLogger();
+  const log = logger;
   const albumHtml = await site.html("playerData/photo/");
   const root = siteRoot("maimai", region);
 

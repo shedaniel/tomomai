@@ -9,6 +9,7 @@ import {
   ResponsiveDialog,
   ResponsiveDialogContent,
   ResponsiveDialogDescription,
+  ResponsiveDialogFooter,
   ResponsiveDialogHeader,
   ResponsiveDialogTitle,
 } from "@tomomai/ui";
@@ -169,7 +170,7 @@ export function CreateApiKeyDialog({ open, onOpenChange, onCreated }: CreateApiK
               <div className="space-y-2">
                 <Label>{t("createDialog.scopesLabel")}</Label>
                 <div className="border rounded-md">
-                  <div className="max-h-128 overflow-y-auto p-1">
+                  <div className="p-1">
                     {SCOPE_TREE.map((node) => (
                       <ScopeTreeNode
                         key={node.key}
@@ -236,20 +237,20 @@ export function CreateApiKeyDialog({ open, onOpenChange, onCreated }: CreateApiK
                 </div>
               )}
 
-              <div className="flex justify-end gap-2">
-                <Button variant="outline" onClick={handleClose}>{tc("cancel")}</Button>
-                <Button onClick={handleCreate} disabled={!canCreate}>
-                  {createMutation.isPending ? (
-                    <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      {t("createDialog.creating")}
-                    </>
-                  ) : (
-                    t("createDialog.createButton")
-                  )}
-                </Button>
-              </div>
             </div>
+            <ResponsiveDialogFooter>
+              <Button variant="outline" onClick={handleClose}>{tc("cancel")}</Button>
+              <Button onClick={handleCreate} disabled={!canCreate}>
+                {createMutation.isPending ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    {t("createDialog.creating")}
+                  </>
+                ) : (
+                  t("createDialog.createButton")
+                )}
+              </Button>
+            </ResponsiveDialogFooter>
           </>
         )}
       </ResponsiveDialogContent>

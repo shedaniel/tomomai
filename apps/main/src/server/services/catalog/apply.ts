@@ -4,6 +4,7 @@ import type { CanonicalGameId, Region } from "@/lib/games/ids";
 import { getCurrentVersion } from "@/lib/games/versions";
 import { awaitWrapper } from "@/lib/utils";
 import { sendDiscordNotice } from "@/server/services/discord/webhook";
+import { releaseGameSiteSession } from "@/server/services/games/sega/http";
 import { AdminRequestError } from "./admin-game";
 import { formatCatalogError } from "./errors";
 import { assertCoverHostingEnabled, assertCoversHosted, processCatalogImages } from "./images";
@@ -30,19 +31,21 @@ export async function collectCatalogRegion({ game, region, version, sourceToken,
   sourceToken: string | null;
 }): Promise<CatalogChart[]> {
   const regionLog = log.child({ region, version });
-  const [cookies, authError] = await awaitWrapper(authenticateCatalogSource(game, region, sourceToken));
-  if (authError) {
+  const [session, authError] = await awaitWrapper(authenticateCatalogSource(game, region, sourceToken));
+  if (authError || !session) {
     regionLog.error({ err: authError }, "Catalog source authentication failed");
-    throw new AdminRequestError(authError.message, { cause: authError });
+    throw new AdminRequestError(authError?.message ?? "Catalog source authentication failed", { cause: authError });
   }
   regionLog.info("Catalog collection starting");
   try {
-    const charts = await collectCatalog(game, { region, version, session: { cookies: cookies ?? "" }, log: regionLog });
+    const charts = await collectCatalog(game, { region, version, session, log: regionLog });
     regionLog.info({ count: charts.length }, "Catalog collected");
     return charts;
   } catch (error) {
     noticeFailure(game, region, "Fetch pipeline error", requestId, error);
     throw error;
+  } finally {
+    releaseGameSiteSession(session);
   }
 }
 

@@ -1,4 +1,4 @@
-import { getLogger } from '@/lib/request-logger';
+import { logger } from '@/lib/logger';
 import { waitUntil } from '@vercel/functions';
 import type { Region } from '@/lib/games/ids';
 import {
@@ -105,7 +105,7 @@ export async function handleDailyCommand({
 
     return deferredResponse;
   } catch (error) {
-    getLogger().error({ err: error }, 'Error handling daily command');
+    logger.error({ err: error }, 'Error handling daily command');
     return createErrorResponse(t(locale, 'daily.errorGeneric'));
   }
 }
@@ -152,7 +152,7 @@ export async function handleDailyAutocomplete({
 
     return { type: 8, data: { choices } };
   } catch (error) {
-    getLogger().error({ err: error }, 'Error in daily autocomplete');
+    logger.error({ err: error }, 'Error in daily autocomplete');
     return { type: 8, data: { choices: [] } };
   }
 }

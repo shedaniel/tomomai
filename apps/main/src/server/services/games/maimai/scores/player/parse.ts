@@ -3,6 +3,7 @@ import type { Region } from "@/lib/games/ids";
 import type { TitleType } from "@/lib/games/maimai/types";
 import type { ParsedPlayerData } from "../types";
 import { siteRoot } from "@/lib/games/sites";
+import { logger } from "@/lib/logger";
 
 export function parsePlayerData(html: string, region: Region): ParsedPlayerData {
   const $ = load(html);
@@ -10,6 +11,9 @@ export function parsePlayerData(html: string, region: Region): ParsedPlayerData 
   const block = $('.see_through_block');
 
   if (block.length === 0) {
+    const title = $("title").first().text().trim();
+    const text = $("body").text().replace(/\s+/g, " ").trim();
+    logger.warn({ size: html.length }, `Player page has no profile content: ${title} | ${text.slice(0, 200)}`);
     throw new Error("Player page did not contain expected profile content. The maimai server is likely rate-limiting your account; please wait a few minutes and try again.");
   }
 

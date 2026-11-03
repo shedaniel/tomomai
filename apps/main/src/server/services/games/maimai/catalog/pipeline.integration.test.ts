@@ -5,7 +5,7 @@ import { formatChartLabel } from "@/lib/games/presentation";
 import pino from "pino";
 import { getCurrentVersion } from "@/lib/games/versions";
 import { chartTypeToCode, difficultyToCode } from "@/lib/games/maimai/codes";
-import { loginAndGetCookies } from "../login";
+import { signInMaimaiCatalog } from "../login";
 import { MaimaiBaseFetcher } from "./sources/base-songs";
 import { DxDataFetcher } from "./sources/dxrating";
 import { maimaiCatalogStages } from "./pipeline";
@@ -55,14 +55,14 @@ describe.skipIf(shouldSkip)("Integration: LevelFetcher", () => {
 
     // Login and get cookies
     testLog.info("Logging in to get cookies...");
-    const cookies = await loginAndGetCookies(region, TOKEN);
+    const session = await signInMaimaiCatalog(region, TOKEN);
     testLog.info("Login successful, cookies obtained");
 
     // Create base context
     context = {
       region,
       version,
-      session: { cookies },
+      session,
       log: testLog,
       notice: { addDetail() {}, details: [] },
     };

@@ -4,12 +4,12 @@ import { db } from "@/lib/db";
 import { userAlbums } from "@/lib/db/schema-pg";
 import { convertJpegToAvif } from "@/lib/image-converter";
 import { deleteFromR2, uploadToR2 } from "@/lib/r2";
-import { getLogger } from "@/lib/request-logger";
 import { formatChartLabel } from "@/lib/games/presentation";
 import { chartKey } from "@/server/services/games/score-storage";
 import type { ChartResolutionMap } from "@/server/services/games/types";
 import { chartTypeToCode, difficultyToCode } from "@/lib/games/maimai/codes";
 import type { AlbumData } from "../types";
+import { logger } from "@/lib/logger";
 
 export const MAX_STORAGE_BYTES = 8 * 1024 * 1024; // 8 MB
 
@@ -28,7 +28,7 @@ async function enforceStorageLimit(userId: string): Promise<void> {
   let totalSize = userAlbumsList.reduce((sum, a) => sum + a.imageSize, 0);
   if (totalSize <= MAX_STORAGE_BYTES) return;
 
-  const log = getLogger();
+  const log = logger;
   let deleted = 0;
   for (const album of userAlbumsList) {
     if (totalSize <= MAX_STORAGE_BYTES) {
@@ -62,7 +62,7 @@ export async function persistAlbumData(
 ): Promise<void> {
   if (albumData.length === 0) return;
 
-  const log = getLogger();
+  const log = logger;
   const existingAlbums = await db.query.userAlbums.findMany({
     where: and(eq(userAlbums.userId, userId), eq(userAlbums.game, "maimai")),
     columns: { takenAt: true },

@@ -1,5 +1,5 @@
 import { CreditData, RecentSongData, SnapshotMetadata } from './types';
-import { getLogger } from './request-logger';
+import { logger } from './logger';
 import type { CanvasRenderingContext2D as SkiaContext } from 'skia-canvas';
 import { Canvas, Image, loadImage } from 'skia-canvas';
 import { CANVAS_HEIGHT, CANVAS_WIDTH } from './image-spec';
@@ -140,7 +140,7 @@ async function loadImageWithCache(cache: ImageCache, url: string): Promise<Image
     return await cache[url]();
   }
 
-  getLogger().debug({ url }, "Loading image from URL");
+  logger.debug({ url }, "Loading image from URL");
 
   const img = await loadCachedImage(url);
   cache[url] = () => Promise.resolve(img);

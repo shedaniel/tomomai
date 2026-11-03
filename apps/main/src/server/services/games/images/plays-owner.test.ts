@@ -1,9 +1,9 @@
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { TRPCError } from "@trpc/server";
 
-const mocks = vi.hoisted(() => ({ session: vi.fn(), access: vi.fn() }));
+const mocks = vi.hoisted(() => ({ session: vi.fn(), access: vi.fn(), own: vi.fn() }));
 vi.mock("@/lib/auth-server", () => ({ getServerSession: mocks.session }));
-vi.mock("@/server/queries/public-access", () => ({ resolvePublicSnapshotAccess: mocks.access }));
+vi.mock("@/server/queries/public-access", () => ({ resolvePublicSnapshotAccess: mocks.access, resolveOwnSnapshotRegion: mocks.own }));
 
 import { resolvePlaysOwner } from "./plays-owner";
 
@@ -12,13 +12,20 @@ beforeEach(() => {
   vi.stubEnv("NEXT_PUBLIC_ENABLED_REGIONS", undefined);
   mocks.session.mockReset().mockResolvedValue({ user: { id: "viewer" } });
   mocks.access.mockReset().mockResolvedValue({ userId: "owner", region: "jp" });
+  mocks.own.mockReset().mockResolvedValue(null);
 });
 afterEach(() => vi.unstubAllEnvs());
 
 it("shows a visitor the snapshot owner's plays in the snapshot's region, when the owner shares them", async () => {
   await expect(resolvePlaysOwner("maimai", { snapshotId: "snapshot" }, "daily-plays")).resolves.toEqual({ userId: "owner", region: "jp" });
   expect(mocks.access).toHaveBeenCalledWith("maimai", "snapshot", { capability: "daily-plays", view: "recentPlays" });
-  expect(mocks.session).not.toHaveBeenCalled();
+});
+
+it("shows the owner their own snapshot's plays without a published profile", async () => {
+  mocks.own.mockResolvedValueOnce("jp");
+  await expect(resolvePlaysOwner("maimai", { snapshotId: "snapshot" }, "daily-plays")).resolves.toEqual({ userId: "viewer", region: "jp" });
+  expect(mocks.own).toHaveBeenCalledWith("maimai", "snapshot", "viewer");
+  expect(mocks.access).not.toHaveBeenCalled();
 });
 
 it("checks a visitor's snapshot in the game the image is for", async () => {

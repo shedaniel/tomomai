@@ -1,7 +1,7 @@
 import { parseStatusStates } from '@/lib/fetch-states';
 import { getGame } from '@/lib/games/registry';
 import { getScoreFetchStatus, startScoreFetch } from '@/server/services/games/fetch-sessions';
-import { getLogger } from '@/lib/request-logger';
+import { logger } from '@/lib/logger';
 import { waitUntil } from '@vercel/functions';
 import { generateAndSendProfileImage } from '../image-utils';
 import { getProfileSummary, resolveRegion } from '../region';
@@ -124,7 +124,7 @@ export async function handleFetchCommand({
 
     return deferredResponse;
   } catch (error) {
-    getLogger().error({ err: error }, 'Error starting fetch');
+    logger.error({ err: error }, 'Error starting fetch');
     return createErrorResponse(t(locale, 'fetch.startError'));
   }
 }
@@ -186,9 +186,9 @@ export async function runFetchSession({
     return true;
   } catch (error) {
     if (error instanceof FetchStartError) {
-      getLogger().warn({ err: error }, 'Fetch refused');
+      logger.warn({ err: error }, 'Fetch refused');
     } else {
-      getLogger().error({ err: error }, 'Error in fetch process');
+      logger.error({ err: error }, 'Error in fetch process');
     }
 
     if (error instanceof FetchStartError && error.code === 'NO_USE_ALBUMS_SETTINGS') {
@@ -252,7 +252,7 @@ async function pollForUpdates(
       attempts++;
       await new Promise(resolve => setTimeout(resolve, 500)); // Poll every 0.5 seconds
     } catch (error) {
-      getLogger().error({ err: error }, 'Error polling fetch status');
+      logger.error({ err: error }, 'Error polling fetch status');
       attempts++;
       await new Promise(resolve => setTimeout(resolve, 500));
     }

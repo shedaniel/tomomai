@@ -1,4 +1,5 @@
 import "server-only";
+import { logger } from "@/lib/logger";
 import { FETCH_STATES } from "@/lib/fetch-states";
 import type { DivingFishToken } from "@/lib/games/token-format";
 import type { FetchRun } from "@/server/services/games/fetch-run";
@@ -25,7 +26,7 @@ export async function fetchFromDivingFish(ctx: ScoreFetchContext, token: DivingF
   const player = await run.stage("profile", async () => parseDivingFishPlayerData(records), FETCH_STATES.PLAYER_DATA);
   const scores = parseDivingFishScoresData(records.records);
   const recordCount = records.records?.length ?? 0;
-  run.log.info({ providerId: "divingfish", recordCount, skipped: recordCount - scores.length }, "Read diving-fish scores");
+  logger.info({ providerId: "divingfish", recordCount, skipped: recordCount - scores.length }, "Read diving-fish scores");
   return {
     result: {
       player: normalizePlayer(player),

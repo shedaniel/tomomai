@@ -8,7 +8,7 @@ vi.mock("./providers/sega-scrape", () => ({ fetchWithSegaLogin: mocks.sega, fetc
 vi.mock("./providers/lxns", () => ({ fetchFromLxns: mocks.lxns }));
 vi.mock("./providers/divingfish", () => ({ fetchFromDivingFish: mocks.divingfish }));
 vi.mock("@/server/services/games/tokens", () => ({ deleteToken: mocks.remove }));
-vi.mock("@/lib/request-logger", () => ({ getLogger: () => ({ warn: vi.fn() }) }));
+vi.mock("@/lib/logger", async (importOriginal) => ({ ...(await importOriginal<typeof import("@/lib/logger")>()), logger: ({ warn: vi.fn() }) }));
 
 import type { Region } from "@/lib/games/ids";
 import type { FetchRun } from "@/server/services/games/fetch-run";

@@ -9,6 +9,7 @@ import { dailyPlaysRouter } from './daily-plays';
 import { statsRouter } from './stats';
 import { albumsRouter } from './albums';
 import { songsRouter } from './songs';
+import { recommendationsRouter } from './recommendations';
 import { flagsRouter } from './flags';
 import { legalRouter } from './legal';
 
@@ -34,6 +35,7 @@ export const userRouter = router({
   getLoginOtp: fetchRouter.getLoginOtp,
   startFetch: fetchRouter.startFetch,
   getFetchStatus: fetchRouter.getFetchStatus,
+  getSiteStatus: fetchRouter.getSiteStatus,
   getLatestFetchSessionId: fetchRouter.getLatestFetchSessionId,
   deleteToken: fetchRouter.deleteToken,
 
@@ -52,6 +54,7 @@ export const userRouter = router({
   getDailyPlaysAvailableDays: dailyPlaysRouter.getAvailableDays,
   getPublicDailyPlaysAvailableDays: dailyPlaysRouter.getPublicAvailableDays,
 
+
   // Stats
   getPlayerStats: statsRouter.getPlayerStats,
   getPublicPlayerStats: statsRouter.getPublicPlayerStats,
@@ -65,6 +68,10 @@ export const userRouter = router({
   getSongDetails: songsRouter.getSongDetails,
   getSongScores: songsRouter.getSongScores,
   getSimpleSongDetails: songsRouter.getSimpleSongDetails,
+
+  // Recommendations
+  getRecommendations: recommendationsRouter.getRecommendations,
+  getPublicRecommendations: recommendationsRouter.getPublicRecommendations,
 
   // Flags
   getUserSelectableFlags: flagsRouter.getUserSelectableFlags,

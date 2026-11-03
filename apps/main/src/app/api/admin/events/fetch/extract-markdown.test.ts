@@ -1,6 +1,5 @@
 import { describe, it, expect } from "vitest";
 import { extractAsMarkdown, discoverLinks } from "./route";
-import { logger } from "@/lib/logger";
 
 const BASE_URL = "https://gamerch.com/maimai/910515";
 
@@ -328,7 +327,6 @@ describe("extractAsMarkdown integration", () => {
 });
 
 describe("discoverLinks integration", () => {
-  const log = logger.child({ test: true });
 
   async function fetchContent(url: string) {
     const response = await fetch(url, {
@@ -345,7 +343,7 @@ describe("discoverLinks integration", () => {
   it("discovers all expected pages from the main page (533627)", async () => {
     const url = "https://gamerch.com/maimai/533627";
     const content = await fetchContent(url);
-    const result = await discoverLinks(content, url, new Set(), log);
+    const result = await discoverLinks(content, url, new Set());
 
     console.log("Main page discovery:", JSON.stringify(result, null, 2));
 
@@ -391,7 +389,7 @@ describe("discoverLinks integration", () => {
   it("discovers expected event detail links from PRiSM past events page (910515)", async () => {
     const url = "https://gamerch.com/maimai/910515";
     const content = await fetchContent(url);
-    const result = await discoverLinks(content, url, new Set(), log);
+    const result = await discoverLinks(content, url, new Set());
 
     console.log("PRiSM page discovery:", JSON.stringify(result, null, 2));
 

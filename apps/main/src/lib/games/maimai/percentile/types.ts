@@ -28,8 +28,8 @@ export type PercentileMap = Record<string, PercentileEntry>;
 
 /** Shape consumed by the `PercentileDistribution` UI component. */
 export interface PercentileDistributionData extends PercentileEntry {
-  /** the viewer's own achievement on this chart (×10000) */
-  userAchievement: number;
+  /** the viewer's own achievement on this chart (×10000), null when they haven't played it */
+  userAchievement: number | null;
 }
 
 /** Anonymous clusters; ratings are only available in 125-point bands. */

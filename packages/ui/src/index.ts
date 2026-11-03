@@ -38,6 +38,7 @@ export * from "./components/tabs";
 export * from "./components/textarea";
 export * from "./components/threads-icon";
 export * from "./components/tooltip";
+export * from "./components/tooltip-friendly";
 export * from "./components/x-icon";
 
 export * from "./utils";

@@ -7,7 +7,7 @@ const mocks = vi.hoisted(() => ({
 }));
 vi.mock("../user", () => ({ findDiscordUser: vi.fn() }));
 vi.mock("@vercel/functions", () => ({ waitUntil: vi.fn() }));
-vi.mock("@/lib/request-logger", () => ({ getLogger: () => mocks.log }));
+vi.mock("@/lib/logger", async (importOriginal) => ({ ...(await importOriginal<typeof import("@/lib/logger")>()), logger: mocks.log }));
 vi.mock("@/server/services/games/fetch-sessions", () => ({ startScoreFetch: mocks.start, getScoreFetchStatus: vi.fn() }));
 vi.mock("../image-utils", () => ({ generateAndSendProfileImage: vi.fn() }));
 vi.mock("../responses", async importOriginal => ({ ...await importOriginal<typeof import("../responses")>(), editDiscordMessage: mocks.edit }));

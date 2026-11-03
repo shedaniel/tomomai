@@ -252,6 +252,11 @@ export type GameSite = {
   segaId?: SegaIdSiteForm;
   /** Skip certificate verification for a host whose chain Node cannot verify. */
   legacyTls?: true;
+  /**
+   * How many connections a signed-in session spreads its requests over, the one that started it
+   * included. Defaults to 1, which keeps requests that depend on each other on one backend.
+   */
+  sessionConnections?: number;
   maintenance: {
     startHour: number;
     endHour: number;

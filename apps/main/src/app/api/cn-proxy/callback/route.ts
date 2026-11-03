@@ -6,7 +6,8 @@ import { startScoreFetch } from "@/server/services/games/fetch-sessions";
 import { fetchStartRejection } from "@/server/services/games/fetch-errors";
 import { siteRoot, siteUrl } from "@/lib/games/sites";
 import { requestGameSite, responseCookies } from "@/server/services/games/sega/http";
-import { requestLogger } from "@/lib/request-logger";
+import { logger } from "@/lib/logger";
+import { withRequestLogContext } from "@/lib/request-logger";
 import { requireFrontendGame } from "@/lib/games/current";
 
 export const dynamic = "force-dynamic";
@@ -63,9 +64,8 @@ interface WebhookPayload {
   t?: string;
 }
 
-export async function POST(req: NextRequest) {
+export const POST = withRequestLogContext("cn-proxy/callback", async (req: NextRequest) => {
   requireFrontendGame("maimai");
-  const { log } = requestLogger(req, "cn-proxy/callback");
   let body: WebhookPayload;
   try {
     body = (await req.json()) as WebhookPayload;
@@ -82,14 +82,14 @@ export async function POST(req: NextRequest) {
 
   const verified = verifyCnProxyToken(body.token);
   if (!verified) {
-    log.warn("Webhook rejected an invalid or expired token");
+    logger.warn("Webhook rejected an invalid or expired token");
     return NextResponse.json({ ok: false, error: "invalid token" }, { status: 401 });
   }
   const { userId } = verified;
 
   if (process.env.DEBUG_CN_FETCH) {
     const debugUrl = siteUrl("maimai", "cn", entryPath(body.maimaiToken)).href;
-    log.info({ url: debugUrl }, "DEBUG_CN_FETCH — open in your browser to capture cookies manually");
+    logger.info({ url: debugUrl }, "DEBUG_CN_FETCH — open in your browser to capture cookies manually");
     return NextResponse.json({ ok: true, debug: true, url: debugUrl });
   }
 
@@ -108,25 +108,25 @@ export async function POST(req: NextRequest) {
     }
     const playerName = extractPlayerNameQuick(html);
     token = formatCnCookies(cookies);
-    log.info({ userId, r: body.r, size: html.length, playerName: playerName ?? "?" }, "cookies verified");
+    logger.info({ userId, r: body.r, size: html.length, playerName: playerName ?? "?" }, "cookies verified");
   } catch (err) {
     const error = err instanceof Error ? err.message : String(err);
-    log.warn({ userId, r: body.r, err }, "verification failed");
+    logger.warn({ userId, r: body.r, err }, "verification failed");
     await deleteToken("maimai", userId, "cn").catch(() => {});
     return NextResponse.json({ ok: false, error }, { status: 502 });
   }
 
   try {
     const result = await startScoreFetch({ userId, game: "maimai", region: "cn", token });
-    log.info({ userId, sessionId: result.sessionId }, "started fetch session");
+    logger.info({ userId, sessionId: result.sessionId }, "started fetch session");
     return NextResponse.json({ ok: true, sessionId: result.sessionId });
   } catch (err) {
     const rejection = fetchStartRejection(err);
     if (rejection) {
-      log.warn({ userId, err }, "fetch refused");
+      logger.warn({ userId, err }, "fetch refused");
       return NextResponse.json({ ok: false, error: rejection.message, code: rejection.code }, rejection.init);
     }
-    log.error({ userId, err }, "startFetch failed");
+    logger.error({ userId, err }, "startFetch failed");
     return NextResponse.json({ ok: false, error: err instanceof Error ? err.message : String(err) }, { status: 500 });
   }
-}
+});
