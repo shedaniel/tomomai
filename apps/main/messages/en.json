@@ -1340,6 +1340,11 @@
           "bottom": "Bottom {percent}",
           "median": "Median"
         },
+        "sections": {
+          "rating": "Rating",
+          "history": "History",
+          "compare": "Compare"
+        },
         "history": {
           "title": "Your history",
           "sinceMonth": "+{delta} in 30 days",

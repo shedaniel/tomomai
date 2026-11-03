@@ -13,6 +13,7 @@ import { formatEstimated, formatGameScore, formatGameRating, getGameDifficulty, 
 import { GAME_UI } from "@/components/games/registry";
 import { useFormatter } from "next-intl";
 import { ScoreHistoryChart } from "./score-history-chart";
+import { useMediaQuery } from "@/hooks/use-media-query";
 import { useSongInsights } from "./song-insights";
 import { playerRatingGain, ratingBucketFloor, ratingBucketOf, type RatingStanding } from "@/lib/games/rating-standing";
 
@@ -60,8 +61,9 @@ function SongChartDialogGrid({ chart, score, standing }: { chart: SongExtendedId
   const format = useFormatter();
   const insights = useSongInsights();
   const history = insights?.history[chart.region]?.[chart.difficulty] ?? [];
+  const wide = useMediaQuery("(min-width: 1024px)");
   const gainCell = (scoreValue: number, comboStatus = 0) => gains && <span className="py-2 px-3 text-xs border-b border-l font-medium tabular-nums text-primary">{gain(scoreValue, comboStatus)}</span>;
-  return <div className="space-y-2">
+  const table = <div className="space-y-2">
     {gains && <RatingStandingNote chart={chart} standing={gains} />}
     <div className={cn("grid rounded-md overflow-hidden border", gains ? "grid-cols-[minmax(100px,5fr)_minmax(80px,1fr)_minmax(80px,1fr)]" : "grid-cols-[minmax(100px,5fr)_minmax(100px,1fr)]")}>
       <div className="contents text-xs bg-accent/50 font-medium text-muted-foreground">
@@ -87,14 +89,33 @@ function SongChartDialogGrid({ chart, score, standing }: { chart: SongExtendedId
         </div>
       </Fragment>)}
     </div>
-    {history.length > 0 && <div className="space-y-1">
-      <div className="text-xs font-medium">{t("db.songs.detail.history.title")}</div>
-      {history.length > 1
-        ? <ScoreHistoryChart points={history} label={t("db.songs.detail.history.title")} />
-        : <p className="text-xs text-muted-foreground">{t("db.songs.detail.history.first", { date: format.dateTime(history[0].fetchedAt, { year: "numeric", month: "short", day: "numeric" }) })}</p>}
-    </div>}
-    {ChartInsights && <ChartInsights chart={chart} score={score} playerRating={standing?.playerRating ?? null} regionCharts={insights?.regionCharts[chart.region] ?? [{ chart, score }]} />}
   </div>;
+  const historyView = history.length > 0 && <div className="space-y-1">
+    {wide && <div className="text-xs font-medium">{t("db.songs.detail.history.title")}</div>}
+    {history.length > 1
+      ? <ScoreHistoryChart points={history} label={t("db.songs.detail.history.title")} />
+      : <p className="text-xs text-muted-foreground">{t("db.songs.detail.history.first", { date: format.dateTime(history[0].fetchedAt, { year: "numeric", month: "short", day: "numeric" }) })}</p>}
+  </div>;
+  // ChartInsights compares against players around the viewer's rating, so it renders nothing without one.
+  const insightsView = ChartInsights && (standing?.playerRating ?? 0) > 0 && <ChartInsights chart={chart} score={score} playerRating={standing?.playerRating ?? null} regionCharts={insights?.regionCharts[chart.region] ?? [{ chart, score }]} />;
+
+  if (wide) {
+    return <div className="flex items-start gap-6">
+      <div className="w-[26rem] shrink-0">{table}</div>
+      {(historyView || insightsView) && <div className="w-[24rem] shrink-0 space-y-4">{historyView}{insightsView}</div>}
+    </div>;
+  }
+  const sections = [
+    { key: "rating", label: t("db.songs.detail.sections.rating"), view: table },
+    historyView && { key: "history", label: t("db.songs.detail.sections.history"), view: historyView },
+    insightsView && { key: "compare", label: t("db.songs.detail.sections.compare"), view: insightsView },
+  ].filter(section => !!section);
+  return <Tabs defaultValue="rating">
+    <TabsList className={cn("grid w-full", { 2: "grid-cols-2", 3: "grid-cols-3" }[sections.length], sections.length <= 1 && "hidden")}>
+      {sections.map(section => <TabsTrigger key={section.key} value={section.key}>{section.label}</TabsTrigger>)}
+    </TabsList>
+    <TabsContents>{sections.map(section => <TabsContent key={section.key} value={section.key} className="pt-2">{section.view}</TabsContent>)}</TabsContents>
+  </Tabs>;
 }
 
 export function SongChartDialogContent({ charts, scores, standings }: { charts: SongExtendedIdentified[]; scores: Partial<Record<Region, UserScore>>; standings?: Partial<Record<Region, RatingStanding>> }) {

@@ -280,7 +280,7 @@ export function SongChartRow({ difficulty, charts, index, data, hasNoteCounts, h
           )}
         </div>
       </ResponsiveDialogTrigger>
-      <ResponsiveDialogContent className="grid w-full gap-4">
+      <ResponsiveDialogContent className="grid w-full gap-4 lg:max-w-fit">
         <SongChartDialogContent charts={charts} scores={chartScores} standings={standings} />
       </ResponsiveDialogContent>
     </ResponsiveDialog>
