@@ -11,6 +11,8 @@ const ROW = 60;
 const LABEL_WIDTH = 92;
 const EDGE = 28;
 const AXIS = 22;
+// levelPrecise is stored ×10, so this is one whole level.
+const MIN_SPAN = 10;
 // Version labels are drawn at 10px; this is roughly a character's width there.
 const CHAR_WIDTH = 6;
 
@@ -25,8 +27,9 @@ function shortNames(names: readonly string[]): string[] {
 type Versions = SongDetails["regions"][number]["versions"];
 
 /**
- * Each chart's constant across the versions of one region, one row per chart whose constant changed. Rows scale
- * on their own, since a 0.2 change on a 14 would vanish on an axis shared with a 7.
+ * Each chart's constant across the versions of one region, one row per difficulty. Rows scale on their own, since
+ * a 0.2 change on a 14 would vanish on an axis shared with a 7, but over at least a whole level so a 0.1 nudge
+ * does not fill the row.
  */
 export function ConstantHistoryChart({ versions, label }: { versions: Versions; label: string }) {
   const game = useGame().id;
@@ -55,19 +58,21 @@ export function ConstantHistoryChart({ versions, label }: { versions: Versions; 
       }
     });
     const series = [...byDifficulty.entries()]
-      .filter(([, points]) => new Set(points.map(point => point.levelPrecise)).size > 1)
       .map(([difficulty, points]) => {
         const levels = points.map(point => point.levelPrecise);
-        return { presentation: getGameDifficulty(game, codeOf(game, "difficulty", difficulty)), points, min: Math.min(...levels), max: Math.max(...levels) };
+        const code = codeOf(game, "difficulty", difficulty);
+        return { code, presentation: getGameDifficulty(game, code), points, min: Math.min(...levels), max: Math.max(...levels) };
       })
-      .sort((a, b) => b.max - a.max);
+      .sort((a, b) => a.code - b.code);
     if (series.length === 0) return null;
     const left = LABEL_WIDTH;
     const right = width - EDGE;
     const x = (index: number) => left + index / Math.max(ordered.length - 1, 1) * (right - left);
     const y = (row: number, level: number) => {
       const { min, max } = series[row];
-      return row * ROW + 20 + (1 - (level - min) / Math.max(max - min, 1)) * (ROW - 30);
+      const span = Math.max(max - min, MIN_SPAN);
+      const floor = (min + max) / 2 - span / 2;
+      return row * ROW + 20 + (1 - (level - floor) / span) * (ROW - 30);
     };
     const names = shortNames(ordered.map(version => getVersion(game, version.gameVersion)?.name ?? `v${version.gameVersion}`));
     // Every version gets a tick; names are skipped evenly when the columns are too narrow for all of them.

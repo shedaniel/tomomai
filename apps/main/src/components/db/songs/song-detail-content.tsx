@@ -588,52 +588,6 @@ export function SongDetailContent({ songName, artist, slug, type, parentIds, ini
             </div>
 
             <ConstantHistoryChart versions={versions} label={t('db.songs.detail.constants')} />
-
-            <div className="space-y-3 pl-4 border-l-2 border-muted">
-              {versions.map(({ gameVersion, charts }) => {
-                const versionInfo = getVersion(game.id, gameVersion);
-
-                // Group charts by difficulty to show level changes
-                const byDifficulty = new Map<string, (SongDetailChart | SongDetailHistoricalChart)[]>();
-                charts.forEach(chart => {
-                  if (!byDifficulty.has(chart.difficulty)) {
-                    byDifficulty.set(chart.difficulty, []);
-                  }
-                  byDifficulty.get(chart.difficulty)!.push(chart);
-                });
-
-                // Sort by difficulty order
-                const sortedDifficulties = Array.from(byDifficulty.entries())
-                  .map(([difficulty, diffCharts]) => [codeOf(game.id, "difficulty", difficulty), diffCharts] as const)
-                  .sort((a, b) => a[0] - b[0]);
-
-                return (
-                  <div key={gameVersion} className="space-y-1">
-                    <div className="flex items-center gap-2 text-xs">
-                      <Calendar className="w-3 h-3 text-muted-foreground" />
-                      <span className="font-medium">{versionInfo?.name ?? `v${gameVersion}`}</span>
-                    </div>
-                    <div className="flex flex-wrap gap-1.5 pl-5">
-                      {sortedDifficulties.map(([difficultyCode, diffCharts]) => {
-                        const chart = diffCharts[0];
-                        const difficulty = getGameDifficulty(game.id, difficultyCode);
-                        return (
-                          <div
-                            key={difficultyCode}
-                            className={cn(
-                              "px-2 py-0.5 rounded text-xs font-medium text-white",
-                              difficulty.classes.solidBg
-                            )}
-                          >
-                            {difficulty.label} <ChartLevel chart={chart} />
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
           </div>
         ))}
       </div>
