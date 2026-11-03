@@ -273,8 +273,8 @@ export function CommandPalette() {
           </button>
         ) : !isMobile && <Kbd>esc</Kbd>}
       </CommandInput>
-      <div className="flex min-h-0 flex-1">
-        <CommandList className={cn("min-h-0 flex-1 py-1", isMobile ? "max-h-none" : "max-h-[min(60vh,28rem)]")}>
+      <div className={cn("flex min-h-0", isMobile ? "flex-1" : "h-[min(60vh,28rem)] shrink-0")}>
+        <CommandList className="max-h-none min-h-0 flex-1 py-1">
           <CommandEmpty>
             {(catalogLoading || charts.loading || (searchesPlayers && playersLoading)) && query ? t("loadingCatalog") : scope === "players" && playerQuery.length < 2 ? t("playersHint") : t("empty", { query: scopedQuery })}
           </CommandEmpty>
