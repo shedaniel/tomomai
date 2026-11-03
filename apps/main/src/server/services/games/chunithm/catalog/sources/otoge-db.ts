@@ -54,7 +54,8 @@ function parseCount(value: string | undefined): number | undefined {
 function addedVersionAt(region: Region, date: Date, sourceVersion: number | undefined): number {
   const version = getVersionFromDate("chunithm", region, date, sourceVersion);
   // INTL rates songs it receives ahead of its own update by their version tag, once that version is out in INTL.
-  const sourceReleased = sourceVersion !== undefined && getGame("chunithm").versions.regional(region, sourceVersion) !== null;
+  // A release date alone is not enough: an announced date can still be in the future.
+  const sourceReleased = sourceVersion !== undefined && sourceVersion <= getCurrentVersion("chunithm", region);
   return sourceReleased && sourceVersion > version ? sourceVersion : version;
 }
 
