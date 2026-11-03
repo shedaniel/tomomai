@@ -94,7 +94,7 @@ export function RelatedSongs({ songName, artist, type, charts, inPlace }: {
                   {inPlace ? (
                     <button type="button" className="w-full text-left" onClick={() => openSongDetail({ publicId: song.parentIds[0] })}>{body}</button>
                   ) : (
-                    <Link href={`/db/songs/${encodeURIComponent(song.slug)}`} scroll={false} className="block">{body}</Link>
+                    <Link href={`/db/songs/${encodeURIComponent(song.slug)}`} scroll={false} prefetch={false} className="block">{body}</Link>
                   )}
                 </li>
               );

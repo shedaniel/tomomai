@@ -519,13 +519,13 @@ export function SongDetailContent({ songName, artist, slug, type, parentIds, ini
         <div className="flex flex-wrap gap-2">
           {showDatabaseLink && (
             <Button asChild className="rounded-full">
-              <Link href={`/db/songs/${encodeURIComponent(slug)}`}>
+              <Link href={`/db/songs/${encodeURIComponent(slug)}`} prefetch={false}>
                 <Database className="w-4 h-4" />
                 {t('db.songs.detail.openInDatabase', { brand: game.brand.productName })}
               </Link>
             </Button>
           )}
-          <Link href={`/db/songs/${slug}`} onClick={async (e) => {
+          <Link href={`/db/songs/${slug}`} prefetch={false} onClick={async (e) => {
             const baseUrl = resolveBaseUrl();
             navigator.clipboard.writeText(`${baseUrl}/db/songs/${slug}`);
             e.preventDefault();

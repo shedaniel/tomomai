@@ -46,6 +46,7 @@ export function SongRow({ song, index, isSelected, onSelect, disableInitialAnima
     >
       <Link
         href={href}
+        prefetch={false}
         onClick={handleClick}
         className={cn(
           "flex items-center gap-3 py-2 px-2 rounded-lg hover:bg-muted/50 transition-colors",
