@@ -1266,7 +1266,6 @@
         "added": "Added",
         "share": "Share Link",
         "youtube": "YouTube",
-        "viewCharts": "View Charts",
         "summary": "{songName} is a {chartLabel} chart by {artist} in the {genre} genre, added in {versionName}. Difficulty ranges from {minLevel} to {maxLevel} across {chartCount, plural, =1 {# chart} other {# charts}}{bpmFragment}.",
         "summaryBpmFragment": " (BPM {bpm})",
         "loadFailed": "Failed to load song details",

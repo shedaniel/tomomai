@@ -1296,7 +1296,6 @@
         "added": "追加版本",
         "share": "分享",
         "youtube": "YouTube 搜尋",
-        "viewCharts": "查看譜面",
         "summary": "{songName} 是由 {artist} 製作的 {chartLabel} 譜面，屬於 {genre} 類型，於 {versionName} 收錄。難度範圍為 {minLevel} 至 {maxLevel}，共 {chartCount, plural, =1 {# 張譜面} other {# 張譜面}}{bpmFragment}。",
         "summaryBpmFragment": "（BPM {bpm}）",
         "loadFailed": "載入歌曲詳情失敗",

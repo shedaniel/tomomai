@@ -8,21 +8,13 @@ import type { VersionRow } from "@/lib/games/version-table";
 import { useGame } from "@/components/providers/game-provider";
 import { trpc } from "@/lib/trpc-client";
 import { cn } from "@/lib/utils";
-import { Activity, Calendar, ChevronRight, ListPlus, Loader2, Music } from "lucide-react";
+import { Activity, Calendar, ChevronRight, Music } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { CoverImage } from "@/components/cover-image";
-import { useMemo, useState } from "react";
-import { DialogTrigger } from "@tomomai/ui";
-import { AnimatedDialog, AnimatedDialogContent } from "@tomomai/ui";
-import { SongChartDialogContent } from "@/components/db/songs/song-detail-dialog";
-import type { Region } from "@/lib/games/ids";
+import { useState } from "react";
 import type { GamePlayerScore } from "@/lib/games/player-view";
-import { codeToChartType, codeToDifficulty } from "@/lib/games/maimai/codes";
 import { ChartTypeBadge } from "@/components/games/chart-type-badge";
-import { parseSongId } from "@tomomai/games/song-ids";
-import { getChartsByDifficulty, getChartScores } from "@/components/db/songs/song-detail-content";
-import { UserScore } from "@/components/db/songs/types";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { Drawer, DrawerContent, DrawerTrigger, DrawerHeader, DrawerTitle, DrawerDescription } from "@tomomai/ui";
 import { PercentileDistribution } from "@/components/games/maimai/percentile-distribution";
@@ -39,61 +31,6 @@ interface SongHoverCardProps {
   percentileSource?: ScoreHoverProps["percentileSource"];
   side?: "top" | "bottom" | "left" | "right";
   className?: string;
-}
-
-function SongDetailDialog({ score }: { score: HoverScore }) {
-  const t = useTranslations();
-  const game = useGame().id;
-  const [open, setOpen] = useState(false);
-  const parsedId = parseSongId(score.songId);
-  const difficulty = codeToDifficulty(score.difficultyCode);
-
-  const { data: songDetails, isLoading } = trpc.user.getSongDetails.useQuery(
-    {
-      game,
-      songName: score.songName,
-      artist: score.artist,
-      type: codeToChartType(score.typeCode),
-      parentIds: parsedId ? [parsedId.parentPublicId] : undefined,
-    },
-    {
-      enabled: open,
-      staleTime: 1000 * 60 * 60, // 1 hour
-    }
-  );
-
-  const chartsMap = useMemo(() => {
-    return getChartsByDifficulty(songDetails?.regions ?? []);
-  }, [songDetails?.regions]);
-  const charts = useMemo(() => {
-    return chartsMap.get(difficulty) ?? [];
-  }, [chartsMap, difficulty]);
-  const chartScores: Record<Region, UserScore> = useMemo(() => {
-    return getChartScores(charts, songDetails?.userScores);
-  }, [charts, songDetails?.userScores]);
-
-  return (
-    <AnimatedDialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button
-          className="w-full h-8 text-xs"
-          variant="outline"
-        >
-          <ListPlus className="w-3.5 h-3.5 mr-2" />
-          {t('db.songs.detail.viewCharts')}
-        </Button>
-      </DialogTrigger>
-      <AnimatedDialogContent>
-        {isLoading ? (
-          <div className="flex items-center justify-center py-20">
-            <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-          </div>
-        ) : (
-          <SongChartDialogContent charts={charts} scores={chartScores} />
-        )}
-      </AnimatedDialogContent>
-    </AnimatedDialog>
-  )
 }
 
 function SongCardContent({
@@ -185,7 +122,6 @@ function SongCardContent({
 
       {/* Action */}
       <div className="pt-1 flex items-center gap-2 flex-col">
-        <SongDetailDialog score={score} />
         <Button className="relative w-full h-8 text-xs" variant="default" onClick={onOpenDetails}>
           <Music className="w-3.5 h-3.5 mr-2" />
           {t('db.songs.detail.openDetails')}

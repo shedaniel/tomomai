@@ -1296,7 +1296,6 @@
         "added": "添加版本",
         "share": "分享",
         "youtube": "YouTube 搜索",
-        "viewCharts": "查看谱面",
         "summary": "{songName} 是由 {artist} 制作的 {chartLabel} 谱面，属于 {genre} 类型，于 {versionName} 收录。难度范围为 {minLevel} 至 {maxLevel}，共 {chartCount, plural, =1 {# 张谱面} other {# 张谱面}}{bpmFragment}。",
         "summaryBpmFragment": "（BPM {bpm}）",
         "loadFailed": "加载歌曲详情失败",
