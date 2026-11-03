@@ -2,6 +2,7 @@ import { TRPCError } from "@trpc/server";
 import { and, desc, eq, inArray, isNotNull, sql } from "drizzle-orm";
 import { z } from "zod";
 import { locales, type Locale } from "@tomomai/i18n/locale";
+import type { CanonicalGameId } from "@/lib/games/ids";
 import { db } from "@/lib/db";
 import { user, userSnapshots } from "@/lib/db/schema-pg";
 import { offersCapability } from "@/lib/games/capabilities";
@@ -17,6 +18,8 @@ import { gameOnlyProcedure } from "../game-procedures";
 const MAX_PLAYERS = 8;
 // A display name is read from every snapshot of the game, so it waits for a more specific query.
 const MIN_DISPLAY_NAME_QUERY = 3;
+// Older snapshots can match a name the player no longer uses, so more are read than are shown.
+const DISPLAY_NAME_CANDIDATES = MAX_PLAYERS * 4;
 
 export type PlayerSearchResult = {
   username: string;
@@ -28,6 +31,22 @@ export type PlayerSearchResult = {
 
 function escapeLike(text: string): string {
   return text.replace(/[\\%_]/g, char => `\\${char}`);
+}
+
+// Posts and guides ship with the deployment, so a running server only has to read them once.
+const documentCache = new Map<string, ReturnType<typeof readSearchDocuments>>();
+
+async function readSearchDocuments(game: CanonicalGameId, locale: Locale) {
+  const posts = offersCapability(getGame(game), "posts")
+    ? getAllPostsMeta(locale).map(post => ({ title: post.title, summary: post.summary, date: post.date, href: `/db/posts/${post.slug}` }))
+    : [];
+  const guides = (await listGuides()).map(guide => ({ title: guide.title, summary: guide.description ?? null, href: `/developer/guides/${guide.slug}` }));
+  const endpoints = getRegistry().map(spec => ({
+    title: `${spec.method} ${spec.path}`,
+    summary: spec.summary,
+    href: `/developer/reference/${routeSlug(spec)}`,
+  }));
+  return { posts, guides, endpoints };
 }
 
 export const searchRouter = router({
@@ -42,8 +61,9 @@ export const searchRouter = router({
       if (limited.limited) throw new TRPCError({ code: "TOO_MANY_REQUESTS", message: "Too many searches, please slow down" });
 
       const { game } = ctx;
-      const usernameQuery = input.query.replace(/^@/, "").replace(/[^a-zA-Z0-9_-]/g, "").toLowerCase();
       const nameQuery = input.query.normalize("NFKC").toLowerCase();
+      // Normalised first, so a full-width "＠ｋｕｒｏ" still reads as a username.
+      const usernameQuery = nameQuery.replace(/^@/, "").replace(/[^a-z0-9_-]/g, "");
       const listed = and(eq(user.publishProfile, true), eq(user.profileShowInSearch, true), isNotNull(user.username));
 
       const byUsername = usernameQuery.length >= 2
@@ -70,17 +90,17 @@ export const searchRouter = router({
             sql`lower(normalize(${userSnapshots.displayName}, NFKC)) like ${`%${escapeLike(nameQuery)}%`}`,
           ))
           .orderBy(userSnapshots.userId, desc(userSnapshots.fetchedAt))
-          .limit(MAX_PLAYERS)
+          .limit(DISPLAY_NAME_CANDIDATES)
         : [];
 
       const seen = new Set<string>();
-      const users = [...byUsername, ...byDisplayName].filter(row => {
+      const candidates = [...byUsername, ...byDisplayName].filter(row => {
         if (!row.username || seen.has(row.id)) return false;
         seen.add(row.id);
         return true;
-      }).slice(0, MAX_PLAYERS);
+      });
 
-      const headers = users.length > 0
+      const headers = candidates.length > 0
         ? await db
           .selectDistinctOn([userSnapshots.userId], {
             userId: userSnapshots.userId,
@@ -89,10 +109,14 @@ export const searchRouter = router({
             iconUrl: userSnapshots.iconUrl,
           })
           .from(userSnapshots)
-          .where(and(eq(userSnapshots.game, game), inArray(userSnapshots.userId, users.map(row => row.id))))
+          .where(and(eq(userSnapshots.game, game), inArray(userSnapshots.userId, candidates.map(row => row.id))))
           .orderBy(userSnapshots.userId, desc(userSnapshots.fetchedAt))
         : [];
       const headerByUser = new Map(headers.map(header => [header.userId, header]));
+      // A display name matched in an older snapshot only counts while the player still goes by it.
+      const usernameMatches = new Set(byUsername.map(row => row.id));
+      const users = candidates.filter(row => usernameMatches.has(row.id)
+        || (headerByUser.get(row.id)?.displayName.normalize("NFKC").toLowerCase().includes(nameQuery) ?? false)).slice(0, MAX_PLAYERS);
 
       const results: PlayerSearchResult[] = users.map(row => {
         const header = headerByUser.get(row.id);
@@ -120,16 +144,12 @@ export const searchRouter = router({
   /** Changelog posts and developer docs the palette searches on the client. */
   getSearchDocuments: gameOnlyProcedure(publicProcedure, "catalog")
     .input(z.object({ locale: z.enum(locales as [Locale, ...Locale[]]) }))
-    .query(async ({ ctx, input }) => {
-      const posts = offersCapability(getGame(ctx.game), "posts")
-        ? getAllPostsMeta(input.locale).map(post => ({ title: post.title, summary: post.summary, date: post.date, href: `/db/posts/${post.slug}` }))
-        : [];
-      const guides = (await listGuides()).map(guide => ({ title: guide.title, summary: guide.description ?? null, href: `/developer/guides/${guide.slug}` }));
-      const endpoints = getRegistry().map(spec => ({
-        title: `${spec.method} ${spec.path}`,
-        summary: spec.summary,
-        href: `/developer/reference/${routeSlug(spec)}`,
-      }));
-      return { posts, guides, endpoints };
+    .query(({ ctx, input }) => {
+      const key = `${ctx.game}:${input.locale}`;
+      const cached = documentCache.get(key);
+      if (cached) return cached;
+      const documents = readSearchDocuments(ctx.game, input.locale);
+      if (process.env.NODE_ENV === "production") documentCache.set(key, documents);
+      return documents;
     }),
 });

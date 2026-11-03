@@ -38,6 +38,27 @@ describe("searchPlayers", () => {
     expect(byUsername.params).toContain("%she\\_d%");
   });
 
+  it("reads a full-width username query as its ASCII form", async () => {
+    proxy.answer(() => []);
+    await caller.searchPlayers({ game: "chunithm", query: "＠ｋｕｒｏ" });
+    expect(proxy.queries[0].params).toContain("%kuro%");
+  });
+
+  it("drops a display-name match the player no longer goes by", async () => {
+    proxy.answer(({ sql }) => sql.includes("normalize")
+      ? [{ id: "renamed", username: "renamed", image: null }, { id: "current", username: "current", image: null }]
+      : sql.includes("distinct on") && sql.includes('"displayName"')
+        ? [
+          { userId: "renamed", displayName: "OTHER", rating: 1, iconUrl: "" },
+          { userId: "current", displayName: "ＳＨＩＲＯＧＡＮＥ", rating: 2, iconUrl: "" },
+        ]
+        : []);
+
+    const results = await caller.searchPlayers({ game: "chunithm", query: "shirog" });
+
+    expect(results.map(result => result.username)).toEqual(["current"]);
+  });
+
   it("refuses a burst of searches from one client", async () => {
     mocks.limited = true;
     await expect(caller.searchPlayers({ game: "chunithm", query: "shed" })).rejects.toMatchObject({ code: "TOO_MANY_REQUESTS" });

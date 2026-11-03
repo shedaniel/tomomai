@@ -47,7 +47,9 @@ function SongChartDialogGrid({ chart, score, standing }: { chart: SongExtendedId
   } : null;
   const gain = (scoreValue: number, comboStatus = 0) => {
     if (!gains || !placement) return null;
-    const value = playerRatingGain(game.id, gains, placement, chartRating(scoreValue, comboStatus));
+    // Rated at the snapshot's version, like the ratings it is compared with, since bonuses differ between versions.
+    const candidate = gameRating.chartRating({ scoreValue, levelPrecise: chart.levelPrecise, difficultyCode, comboStatus }, gains.gameVersion);
+    const value = playerRatingGain(game.id, gains, placement, candidate);
     return value > 0 ? `+${formatGameRating(game.id, value)}` : "—";
   };
   const gainCell = (scoreValue: number, comboStatus = 0) => gains && <span className="py-2 px-3 text-xs border-b border-l font-medium tabular-nums text-primary">{gain(scoreValue, comboStatus)}</span>;

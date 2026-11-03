@@ -264,6 +264,7 @@ export function SongDetailContent({ songName, artist, slug, type, parentIds, ini
     previousViewerId.current = viewerId;
     if (previous === undefined || previous === null || previous === viewerId) return;
     void utils.user.getSongScores.reset();
+    void utils.user.getSongRatingStanding.reset();
   }, [utils, viewerId]);
   const {
     data: fetchedData,
@@ -277,10 +278,12 @@ export function SongDetailContent({ songName, artist, slug, type, parentIds, ini
     { game: game.id, songName, artist: artist ?? initialData?.artist, type, parentIds: parentIds ?? initialData?.parentIds },
     { enabled: hasInitialData && viewerId !== null && supportsGameFeature(game, "scores") }
   );
-  const { data: standings } = trpc.user.getSongRatingStanding.useQuery(
+  const { data: standingsData } = trpc.user.getSongRatingStanding.useQuery(
     { game: game.id, songName, artist: artist ?? initialData?.artist ?? fetchedData?.artist, type, parentIds: parentIds ?? initialData?.parentIds },
     { enabled: viewerId !== null && supportsGameFeature(game, "rating"), staleTime: 60000, retry: false },
   );
+  // A disabled query still returns its cached data, so a signed-out viewer must not see the last viewer's.
+  const standings = viewerId !== null ? standingsData : undefined;
   const data = useMemo(() => {
     if (!initialData) return fetchedData;
     return {
