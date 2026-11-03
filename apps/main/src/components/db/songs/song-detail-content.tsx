@@ -27,7 +27,8 @@ import { Activity, Calendar, ChevronRight, Database, Globe, Link2, Loader2, Musi
 import { CoverImage } from "@/components/cover-image";
 import { ChartLevel } from "@/components/games/chart-level";
 import { ChartTypeBadge } from "@/components/games/chart-type-badge";
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Tabs, TabsContent, TabsContents, TabsList, TabsTrigger } from "@/components/animate-ui/components/radix/tabs";
 import type { RatingStanding } from "@/lib/games/rating-standing";
 import { ChartTypeKey, SongDetailChart, SongDetailHistoricalChart, SongDetails, SongExtendedIdentified, UserScore } from "./types";
 
@@ -283,6 +284,35 @@ export function SongChartRow({ difficulty, charts, index, data, hasNoteCounts, h
         <SongChartDialogContent charts={charts} scores={chartScores} standings={standings} />
       </ResponsiveDialogContent>
     </ResponsiveDialog>
+  );
+}
+
+function SongAvailability({ regions, userScores }: { regions: SongDetails["regions"]; userScores: SongDetails["userScores"] }) {
+  const t = useTranslations();
+  const [region, setRegion] = useState(() => regions.find(r => userScores?.[r.region])?.region ?? regions[0]?.region);
+  if (regions.length === 0) return null;
+  const single = regions.length === 1;
+
+  return (
+    <div className="space-y-3">
+      <h2 className="text-sm font-semibold flex items-center gap-2">
+        <Globe className="w-4 h-4" />
+        {t('db.songs.detail.availability')}
+        {single && <span className="font-normal text-muted-foreground">· {t(`regions.${regions[0].region}`)}</span>}
+      </h2>
+      <Tabs value={region} onValueChange={value => setRegion(value as Region)}>
+        <TabsList className={cn("grid w-full", { 2: "grid-cols-2", 3: "grid-cols-3" }[regions.length], single && "hidden")}>
+          {regions.map(r => <TabsTrigger key={r.region} value={r.region}>{t(`regions.${r.region}`)}</TabsTrigger>)}
+        </TabsList>
+        <TabsContents>
+          {regions.map(r => (
+            <TabsContent key={r.region} value={r.region} className="pt-2">
+              <ConstantHistoryChart versions={r.versions} label={t('db.songs.detail.constants')} />
+            </TabsContent>
+          ))}
+        </TabsContents>
+      </Tabs>
+    </div>
   );
 }
 
@@ -572,25 +602,7 @@ export function SongDetailContent({ songName, artist, slug, type, parentIds, ini
       {activity && <SongRecentPlays plays={activity.recentPlays} showRegion={data.regions.length > 1} />}
       {activity && <SongPhotos photos={activity.albums} />}
 
-      {/* Availability by region */}
-      <div className="space-y-4">
-        <h2 className="text-sm font-semibold flex items-center gap-2">
-          <Globe className="w-4 h-4" />
-          {t('db.songs.detail.availability')}
-        </h2>
-
-        {data.regions.map(({ region, versions }) => (
-          <div key={region} className="space-y-2">
-            <div className="flex items-center gap-2">
-              <h3 className="text-sm font-medium">
-                {t(`regions.${region}`)}
-              </h3>
-            </div>
-
-            <ConstantHistoryChart versions={versions} label={t('db.songs.detail.constants')} />
-          </div>
-        ))}
-      </div>
+      <SongAvailability regions={data.regions} userScores={data.userScores} />
 
       <RelatedSongs songName={data.songName} artist={data.artist} type={data.type} charts={allCharts} inPlace={!!showDatabaseLink} />
     </div>
