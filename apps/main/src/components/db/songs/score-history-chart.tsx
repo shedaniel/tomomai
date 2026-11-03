@@ -4,6 +4,8 @@ import { useId, useMemo, useState } from "react";
 import { useFormatter } from "next-intl";
 import { useGame } from "@/components/providers/game-provider";
 import { formatGameScore, getGameStatusLabels } from "@/lib/games/presentation";
+import { edgeAnchor } from "@/lib/chart-tooltip";
+import { cn } from "@/lib/utils";
 
 export type ScoreHistoryPoint = { fetchedAt: Date; scoreValue: number; comboStatus: number; syncStatus: number; clearStatus: number };
 
@@ -66,7 +68,7 @@ export function ScoreHistoryChart({ points, label }: { points: readonly ScoreHis
       </svg>
       {active && (
         <div
-          className="pointer-events-none absolute top-0 z-10 -translate-x-1/2 rounded-md border bg-popover px-2 py-1 text-xs shadow-md"
+          className={cn("pointer-events-none absolute top-0 z-10 rounded-md border bg-popover px-2 py-1 text-xs whitespace-nowrap shadow-md", edgeAnchor(active.cx / WIDTH))}
           style={{ left: `${active.cx / WIDTH * 100}%` }}
         >
           <div className="text-muted-foreground">{date(active.point.fetchedAt)}</div>

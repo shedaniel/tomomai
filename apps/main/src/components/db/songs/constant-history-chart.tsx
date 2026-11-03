@@ -5,6 +5,8 @@ import { useGame } from "@/components/providers/game-provider";
 import { codeOf } from "@/lib/games/codes";
 import { getGameDifficulty } from "@/lib/games/presentation";
 import { getVersion } from "@/lib/games/versions";
+import { edgeAnchor } from "@/lib/chart-tooltip";
+import { cn } from "@/lib/utils";
 import type { SongDetails } from "./types";
 
 const ROW = 60;
@@ -152,7 +154,7 @@ export function ConstantHistoryChart({ versions, label }: { versions: Versions; 
         </svg>
         {hover && active && (
           <div
-            className="pointer-events-none absolute z-10 -translate-x-1/2 -translate-y-full rounded-md border bg-popover px-2 py-1 text-xs shadow-md"
+            className={cn("pointer-events-none absolute z-10 -translate-y-full rounded-md border bg-popover px-2 py-1 text-xs whitespace-nowrap shadow-md", edgeAnchor(chart.x(active.index) / width))}
             style={{ left: `${chart.x(active.index) / width * 100}%`, top: `${(chart.y(hover.series, active.levelPrecise) - 8) / chart.height * 100}%` }}
           >
             <div className="text-muted-foreground">{versionName(active.index)}</div>
