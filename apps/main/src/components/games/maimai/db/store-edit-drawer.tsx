@@ -258,7 +258,7 @@ export function StoreEditDrawer({ open, onOpenChange, store, isLoggedIn }: Store
             <DrawerTitle>Arcade Edits</DrawerTitle>
             <DrawerDescription>View and vote on arcade edits</DrawerDescription>
           </VisuallyHidden>
-          <div className="relative px-4 pt-4 pb-8 max-w-2xl mx-auto w-full max-h-[80vh] overflow-y-auto">
+          <div className="relative px-4 pb-8 max-w-2xl mx-auto w-full max-h-[80vh] overflow-y-auto">
             {/* Loading Overlay */}
             <AnimatePresence>
               {isLoading && (

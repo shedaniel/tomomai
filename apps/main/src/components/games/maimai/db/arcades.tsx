@@ -830,7 +830,7 @@ export function ArcadesMap() {
               <DrawerTitle>{selectedStore?.name || "Arcade Details"}</DrawerTitle>
               <DrawerDescription>{selectedStore?.address || "Address of the arcade"}</DrawerDescription>
             </VisuallyHidden>
-            <div className="relative px-4 pt-4 pb-8"> {/* Adjusted padding to account for hidden header */}
+            <div className="relative px-4 pb-8">
               <div className="absolute -top-2 right-3 z-20">
                 <Button variant="secondary" size="icon" className="h-8 w-8 rounded-full" onClick={closeSelection}>
                   <X className="h-4 w-4 text-neutral-400 stroke-3" />

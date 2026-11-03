@@ -50,7 +50,7 @@ function SongDetailDrawer({ publicId, open, onClose }: { publicId: string | null
           <DrawerTitle>{t("db.songs.detail.title")}</DrawerTitle>
           <DrawerDescription>{t("db.songs.detail.artist")}</DrawerDescription>
         </VisuallyHidden>
-        <div className="relative overflow-y-auto px-6 pt-1 pb-8" style={{ scrollbarGutter: "stable" }}>
+        <div className="relative overflow-y-auto px-6 pb-8" style={{ scrollbarGutter: "stable" }}>
           <div className="absolute top-2 right-3 z-20">
             <Button variant="secondary" size="icon" className="h-8 w-8 rounded-full" onClick={onClose} aria-label={t("common.close")}>
               <X className="h-4 w-4 stroke-3 text-neutral-400" />

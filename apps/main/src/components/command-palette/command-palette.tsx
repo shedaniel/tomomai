@@ -328,7 +328,7 @@ export function CommandPalette() {
           <DrawerContent className="h-[92dvh]">
             <DrawerTitle className="sr-only">{t("title")}</DrawerTitle>
             <DrawerDescription className="sr-only">{t("description")}</DrawerDescription>
-            <div className="flex min-h-0 flex-1 flex-col pt-2">{body}</div>
+            <div className="flex min-h-0 flex-1 flex-col">{body}</div>
           </DrawerContent>
         </Drawer>
       ) : (
