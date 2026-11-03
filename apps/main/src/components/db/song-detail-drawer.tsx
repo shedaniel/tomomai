@@ -99,7 +99,7 @@ export function SongDetailDrawer({ children }: SongDetailDrawerProps) {
         </VisuallyHidden>
         <div
           className={cn(
-            "relative px-6 pt-4",
+            "relative px-6 pt-1",
             snap === 1 ? "overflow-y-auto" : "overflow-hidden"
           )}
           style={{ scrollbarGutter: "stable" }}
