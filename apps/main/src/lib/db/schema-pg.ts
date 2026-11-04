@@ -343,6 +343,8 @@ export const userRecentSongs = pgTable("user_recent_songs", {
   game: gameEnum("game").notNull(),
   metadata: jsonb("metadata").$type<Record<string, unknown>>(),
   songId: bigint("songId", { mode: "bigint" }).notNull(),
+  parentId: bigint("parentId", { mode: "bigint" }).notNull(),
+  region: regionEnum("region").notNull(),
   playedAt: timestamp("playedAt", { precision: 0 }).notNull(),
   scoreValue: integer("scoreValue").notNull(),
   secondaryScore: smallint("secondaryScore").notNull(),
@@ -352,8 +354,8 @@ export const userRecentSongs = pgTable("user_recent_songs", {
   clearStatus: smallint("clearStatus").notNull().default(0),
   track: smallint("track").notNull(),
 }, (table) => [
-  // Prevents duplicate plays, and also serves a user's play history of one song
-  unique("user_recent_songs_userid_game_songid_playedat_unique").on(table.userId, table.game, table.songId, table.playedAt),
+  // Keyed on the version-less chart, so a play fetched again after a version cutoff is still the same play
+  unique("user_recent_songs_userid_game_parentid_region_playedat_unique").on(table.userId, table.game, table.parentId, table.region, table.playedAt),
   // Primary query pattern: get recent plays for a user (ordered by playedAt DESC)
   index("user_recent_songs_userid_game_playedat_idx").on(table.userId, table.game, table.playedAt.desc()),
   // For queries related to specific songs across all users (analytics/admin)
@@ -362,6 +364,11 @@ export const userRecentSongs = pgTable("user_recent_songs", {
     columns: [table.songId, table.game],
     foreignColumns: [songs.id, songs.game],
     name: "user_recent_songs_song_game_fk",
+  }).onDelete("cascade"),
+  foreignKey({
+    columns: [table.parentId, table.game],
+    foreignColumns: [parentSong.id, parentSong.game],
+    name: "user_recent_songs_parent_game_fk",
   }).onDelete("cascade"),
   check("user_recent_songs_maimai_fields", sql`${table.game} <> 'maimai' OR ${table.maxSecondaryScore} IS NOT NULL`),
 ]);

@@ -41,7 +41,7 @@ const fetched: GameFetchResult = {
   scores: [],
 };
 const start = { userId: "same-user", game: "maimai" as const, region: "jp" as const, token: "new-token", flags: {} as Flags, options: { skipAfter: true } };
-const persisted: PersistedSnapshotContext = { game: "maimai", userId: "same-user", region: "jp", snapshotId: 1, gameVersion: 14, chartResolution: new Map() };
+const persisted: PersistedSnapshotContext = { game: "maimai", userId: "same-user", region: "jp", snapshotId: 1, gameVersion: 14, chartResolution: new Map(), recentSongIds: new Map() };
 const missing: NotFoundScore[] = [{ songName: "Missing", difficulty: 3, type: 0 }];
 
 function sessionStatuses() {

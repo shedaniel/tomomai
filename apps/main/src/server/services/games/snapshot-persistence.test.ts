@@ -15,7 +15,7 @@ vi.mock("./score-storage", async importOriginal => ({
 }));
 vi.mock("@/lib/logger", async (importOriginal) => ({ ...(await importOriginal<typeof import("@/lib/logger")>()), logger: state.log }));
 
-import { chartKey } from "./score-storage";
+import { chartKey, recentKey } from "./score-storage";
 import { persistFetchResult } from "./snapshot-persistence";
 
 const fetched: GameFetchResult = {
@@ -47,7 +47,7 @@ it("persists the captured version and zero scores, and returns the snapshot's co
   ] });
   expect(proxy.inserted("user_snapshots")).toEqual([expect.objectContaining({ game: "maimai", gameVersion: 14 })]);
   expect(persisted).toEqual({
-    context: { game: "maimai", userId: "same-user", region: "jp", snapshotId: 1, gameVersion: 14, chartResolution },
+    context: { game: "maimai", userId: "same-user", region: "jp", snapshotId: 1, gameVersion: 14, chartResolution, recentSongIds: new Map() },
     notFoundScores: [],
   });
   expect(state.log.warn).not.toHaveBeenCalled();
@@ -76,14 +76,47 @@ it("persists events against the new snapshot and game", async () => {
   expect(proxy.inserted("user_events")).toEqual([{ ...event, snapshotId: 1, game: "maimai" }]);
 });
 
-it("persists recent plays with their track and maximum secondary score", async () => {
+function recentAt(chart: NormalizedScore["chart"], playedAt: string) {
+  return { ...score(chart, 1005000), secondaryScore: 2100, playedAt: new Date(playedAt), track: 3, maxSecondaryScore: 2400 };
+}
+
+function resolveByVersion(chart: NormalizedScore["chart"], songIdByVersion: Record<number, number>) {
+  state.resolveCharts.mockImplementation(async (_tx, _game, _region, version: number) => {
+    const songId = songIdByVersion[version];
+    if (songId === undefined) return { chartResolution: new Map(), songsById: new Map() };
+    const id = BigInt(songId);
+    return { chartResolution: new Map([[chartKey(chart), id]]), songsById: new Map([[id, { id, parentId: BigInt(5), gameVersion: version }]]) };
+  });
+}
+
+it("persists recent plays with their chart, track and maximum secondary score", async () => {
   const chart = { game: "maimai" as const, region: "jp" as const, version: 14, songName: "Recent", chartType: 1, difficulty: 3 };
-  state.resolveCharts.mockResolvedValue({ chartResolution: new Map([[chartKey(chart), BigInt(7)]]), songsById: new Map() });
-  const recent = { ...score(chart, 1005000), secondaryScore: 2100, playedAt: new Date("2026-09-01T00:00:00Z"), track: 3, maxSecondaryScore: 2400 };
-  await persistFetchResult({ ...persist, fetched: { ...fetched, recents: [recent] } });
+  resolveByVersion(chart, { 14: 7 });
+  const recent = recentAt(chart, "2026-10-01T00:00:00Z");
+  const { context } = await persistFetchResult({ ...persist, fetched: { ...fetched, recents: [recent] } });
   expect(proxy.inserted("user_recent_songs")).toEqual([expect.objectContaining({
-    game: "maimai", userId: "same-user", songId: BigInt(7), scoreValue: 1005000, secondaryScore: 2100, maxSecondaryScore: 2400, track: 3,
+    game: "maimai", userId: "same-user", songId: BigInt(7), parentId: BigInt(5), region: "jp",
+    scoreValue: 1005000, secondaryScore: 2100, maxSecondaryScore: 2400, track: 3,
   })]);
+  expect(context.recentSongIds).toEqual(new Map([[recentKey(recent), BigInt(7)]]));
+});
+
+it("matches each recent play in the version it was played in, either side of a cutoff", async () => {
+  const chart = { game: "maimai" as const, region: "jp" as const, version: 14, songName: "Recent", chartType: 1, difficulty: 3 };
+  resolveByVersion(chart, { 13: 6, 14: 7 });
+  const before = recentAt(chart, "2026-09-17T06:59:00+09:00");
+  const after = recentAt(chart, "2026-09-17T07:00:00+09:00");
+  const { context } = await persistFetchResult({ ...persist, fetched: { ...fetched, recents: [before, after] } });
+  expect(proxy.inserted("user_recent_songs").map(row => [row.songId, row.parentId])).toEqual([[BigInt(6), BigInt(5)], [BigInt(7), BigInt(5)]]);
+  expect(context.recentSongIds).toEqual(new Map([[recentKey(before), BigInt(6)], [recentKey(after), BigInt(7)]]));
+  expect(state.resolveCharts.mock.calls.map(call => call[3])).toEqual([14, 13]);
+});
+
+it("matches a recent play in the fetch's version when the version it was played in lacks the chart", async () => {
+  const chart = { game: "maimai" as const, region: "jp" as const, version: 14, songName: "Recent", chartType: 1, difficulty: 3 };
+  resolveByVersion(chart, { 14: 7 });
+  await persistFetchResult({ ...persist, fetched: { ...fetched, recents: [recentAt(chart, "2026-09-01T00:00:00Z")] } });
+  expect(proxy.inserted("user_recent_songs")).toEqual([expect.objectContaining({ songId: BigInt(7), parentId: BigInt(5) })]);
 });
 
 it("rejects an expired persistence deadline before writing", async () => {

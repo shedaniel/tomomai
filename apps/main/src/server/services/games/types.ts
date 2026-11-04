@@ -90,6 +90,8 @@ export type PersistedSnapshotContext = {
   snapshotId: number;
   gameVersion: number;
   chartResolution: ChartResolutionMap;
+  /** The chart of each stored recent play, in the version it was played in, by recentKey. */
+  recentSongIds: ReadonlyMap<string, bigint>;
 };
 
 /** Work that completes a saved snapshot, such as per-play details. It runs after the session completes, so its failure never fails the fetch. */
