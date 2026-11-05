@@ -280,6 +280,10 @@
       "applications": {
         "title": "应用程序",
         "description": "已授权访问你账户的 OAuth 应用程序。"
+      },
+      "friends": {
+        "title": "好友",
+        "description": "同样在用 {brand} 的游戏内好友，导入数据时会自动找到。"
       }
     },
     "language": {
@@ -369,6 +373,22 @@
         "description": "你可以与他人分享的公开主页链接。",
         "copied": "主页链接已复制到剪贴板！",
         "copyFailed": "复制链接到剪贴板失败"
+      },
+      "visibility": {
+        "label": "谁可以查看你的主页",
+        "description": "导入数据时，会根据你的 {game} 好友列表自动匹配游戏内好友。",
+        "private": {
+          "label": "仅自己",
+          "description": "其他人无法打开你的主页"
+        },
+        "friends": {
+          "label": "仅限好友",
+          "description": "已匹配的好友可以打开"
+        },
+        "public": {
+          "label": "所有人",
+          "description": "任何有链接的人都可以打开"
+        }
       }
     },
     "saveChanges": "保存变更",
@@ -670,6 +690,32 @@
       "revokeSuccess": "访问权限已撤销",
       "revokeError": "撤销访问权限失败"
     },
+    "friends": {
+      "matching": {
+        "label": "查找我的游戏内好友",
+        "description": "每次导入数据时会读取你的 {game} 好友列表，每天最多一次。好友代码不会展示给任何人。"
+      },
+      "listTitle": "{count, plural, =0 {好友} other {# 位好友}}",
+      "lastSynced": "好友列表读取于 {date}",
+      "off": "好友功能已关闭。开启后可以看到哪些游戏内好友也在用 {brand}。",
+      "notSynced": "导入成绩后就能找到你的好友。好友列表会从 {game} 官方网站读取。",
+      "empty": "你的游戏内好友还没有人在用 {brand}。",
+      "notShared": "未公开主页",
+      "hide": "隐藏",
+      "hideTitle": "要隐藏 {name} 吗？",
+      "hideDescription": "即使你们在游戏内仍是好友，在 {brand} 上也不再是好友。对方不会收到通知，你之后也可以取消隐藏。",
+      "hidden": {
+        "title": "已隐藏",
+        "description": "你隐藏的用户。他们无法查看你仅对好友公开的主页。"
+      },
+      "unhide": "取消隐藏",
+      "error": "无法更新好友，请重试。",
+      "disable": {
+        "title": "要关闭好友功能吗？",
+        "description": "已保存的好友列表会被删除，你也会从所有人的好友中移除。重新开启后，下次导入数据时会再次找到他们。",
+        "confirm": "关闭"
+      }
+    },
     "unsaved": {
       "bar": "你有未保存的更改",
       "title": "要不保存就离开吗？",
@@ -688,6 +734,8 @@
     "fetchingData": "导入数据中...",
     "lastUpdate": "最后更新",
     "noDataInstructions": "此区域没有任何数据。点击“导入新数据”来导入你的 {game} 成绩。",
+    "friendView": "仅好友可见",
+    "friendViewHint": "仅对游戏内好友公开",
     "deleteSnapshot": "删除所选快照",
     "moreOptions": "更多选项"
   },
@@ -717,8 +765,11 @@
   "profileVisibility": {
     "public": "公开主页",
     "private": "私人主页",
+    "friends": "好友限定主页",
     "accessibleBy": "可通过 ",
     "accessibleByEnd": " 访问！",
+    "friendsAccessibleBy": "游戏内好友可通过 ",
+    "friendsAccessibleByEnd": " 访问。",
     "youMayChangePrivacySettings": "你可以在右上角图标 → 设置 → 公开主页 中更改隐私设置。",
     "onlyAccessibleByYou": "只有你可以访问！你可以在右上角图标 → 设置 → 公开主页 中更改隐私设置。"
   },
@@ -1141,7 +1192,7 @@
   "onboarding": {
     "step1": {
       "title": "设定用户名",
-      "publishToggleLabel": "和朋友分享我的资料",
+      "publishToggleLabel": "公开我的主页",
       "publishToggleDescription": "让其他人通过公开链接查看你的成绩。默认关闭，你可以随时更改。",
       "publicUrlHint": "你的公开资料："
     },
@@ -1326,6 +1377,13 @@
           "artist": "{artist} 的更多歌曲",
           "designer": "{designer} 的其他谱面",
           "level": "{difficulty} {level} 左右"
+        },
+        "friends": {
+          "title": "好友",
+          "ranking": "好友排行"
+        },
+        "sections": {
+          "friends": "好友"
         }
       },
       "filter": {
@@ -1706,6 +1764,7 @@
     "showAllSongs": "在数据库中查看全部 {count} 首歌曲",
     "groups": {
       "recent": "最近",
+      "friends": "好友",
       "songs": "歌曲",
       "pages": "页面",
       "actions": "操作",
@@ -1748,7 +1807,8 @@
     },
     "preview": {
       "yourScores": "你的最佳成绩",
-      "rating": "Rating {rating}"
+      "rating": "Rating {rating}",
+      "friend": "游戏内好友"
     },
     "playersHint": "输入用户名或游戏内名称来查找玩家",
     "charts": {
@@ -1766,6 +1826,7 @@
       "filters": "你未 FC 的 13+ 谱面",
       "random": "随机一首 13+ 谱面",
       "calculator": "13.7 在这个成绩下的 Rating"
-    }
+    },
+    "friend": "好友"
   }
 }

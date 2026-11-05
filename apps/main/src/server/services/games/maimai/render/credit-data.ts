@@ -231,7 +231,7 @@ export async function prepareCreditData(
 
   const [userRecord, snapshot] = await Promise.all([
     db
-      .select({ username: user.username, publishProfile: user.publishProfile })
+      .select({ username: user.username, profileVisibility: user.profileVisibility })
       .from(user)
       .where(eq(user.id, userId))
       .limit(1),
@@ -258,7 +258,7 @@ export async function prepareCreditData(
   log.debug({ durationMs: Date.now() - startTime }, 'User privacy settings and snapshot fetched');
 
   // Determine visitable profile URL
-  const visitableProfileAt = userRecord[0].publishProfile && userRecord[0].username
+  const visitableProfileAt = userRecord[0].profileVisibility === "public" && userRecord[0].username
     ? userRecord[0].username
     : null;
 

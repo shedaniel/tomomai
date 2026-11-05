@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
-import { ArrowRight, AtSign, BookOpen, Code, CornerDownLeft, FileText, History, Link2, Music, Search, User, X } from "lucide-react";
+import { ArrowRight, AtSign, BookOpen, Code, CornerDownLeft, FileText, History, Link2, Music, Search, User, Users, X } from "lucide-react";
 import { createSearchIndex, parseSearchQuery, searchIndex, type SearchField } from "@tomomai/utils/search";
 import {
   AnimatedDialog, AnimatedDialogContent, Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList,
@@ -27,6 +27,7 @@ import { trpc } from "@/lib/trpc-client";
 import { catalogSongFields } from "@/lib/search/song-search";
 import { cn } from "@/lib/utils";
 import type { UniqueSong } from "@/components/db/songs/types";
+import type { CanonicalGameId } from "@/lib/games/ids";
 import { useCommandPalette } from "./command-palette-provider";
 import { clearRecents, readRecents, rememberRecent } from "./recents";
 import { useCalculatorItem, useChartResults, useTipItems } from "./chart-sources";
@@ -34,10 +35,15 @@ import { useActionItems, usePageItems } from "./sources";
 import type { PaletteGroup, PaletteItem, RecentItem } from "./types";
 
 const SONG_RESULTS = 8;
+const FRIEND_SUGGESTIONS = 5;
 const ITEM_FIELDS: SearchField<PaletteItem>[] = [
   { get: item => item.title, weight: 3 },
   { get: item => item.keywords, weight: 2 },
   { get: item => item.subtitle },
+];
+const FRIEND_FIELDS: SearchField<PaletteItem>[] = [
+  { get: item => item.title, weight: 3 },
+  { get: item => item.keywords, weight: 3 },
 ];
 
 type Section = { group: PaletteGroup; items: PaletteItem[] };
@@ -64,6 +70,23 @@ function recentItem(recent: RecentItem): PaletteItem {
     cover: recent.cover,
     icon: recent.kind === "song" ? Music : recent.kind === "player" ? User : History,
     href: recent.href,
+  };
+}
+
+type PlayerResult = { username: string; displayName: string | null; rating: number | null; iconUrl: string | null; image: string | null };
+
+function playerItem(game: CanonicalGameId, player: PlayerResult, friend: boolean, friendLabel: string): PaletteItem {
+  return {
+    id: `player:${player.username}`,
+    group: "players",
+    title: player.displayName ?? player.username,
+    subtitle: [friend ? friendLabel : null, `@${player.username}`, player.rating !== null ? formatGameRating(game, player.rating) : null].filter(Boolean).join(" · "),
+    cover: player.iconUrl ?? undefined,
+    icon: friend ? Users : AtSign,
+    href: `/profile/${player.username}`,
+    keywords: [player.username],
+    player: { username: player.username, displayName: player.displayName, rating: player.rating, image: player.iconUrl ?? player.image, friend },
+    remember: true,
   };
 }
 
@@ -97,6 +120,7 @@ export function useShortcutLabel(): string[] {
 export function CommandPalette() {
   const { open, setOpen, contextualActions } = useCommandPalette();
   const t = useTranslations("commandPalette");
+  const tAll = useTranslations();
   const game = useGame();
   const router = useRouter();
   const isMobile = useMediaQuery("(max-width: 768px)", { initializeWithValue: false });
@@ -134,6 +158,12 @@ export function CommandPalette() {
     retry: false,
   });
 
+  const { data: friends } = trpc.user.getFriendPlayers.useQuery({ game: game.id }, {
+    enabled: open && !!session?.user && supportsGameFeature(game, "friends"),
+    staleTime: 300000,
+    retry: false,
+  });
+
   const region = getGameRegion(game, userData?.region);
   const filterText = scope === "all" ? scopedQuery : "";
   const charts = useChartResults({ open, text: filterText, catalog, region });
@@ -147,10 +177,13 @@ export function CommandPalette() {
   const basePages = usePageItems();
   const baseActions = useActionItems({ openTheme });
   const username = userData?.username ?? null;
-  const pages = useMemo<PaletteItem[]>(() => username
-    ? [{ id: "page:my-profile", group: "pages", title: t("pages.myProfile"), subtitle: `@${username}`, icon: User, href: `/profile/${username}`, keywords: ["profile", "me", username], remember: true }, ...basePages]
-    : basePages, [basePages, username, t]);
-  const actions = useMemo<PaletteItem[]>(() => username && userData?.publishProfile
+  const friendsOn = !!session?.user && !!friends;
+  const pages = useMemo<PaletteItem[]>(() => [
+    ...(username ? [{ id: "page:my-profile", group: "pages" as const, title: t("pages.myProfile"), subtitle: `@${username}`, icon: User, href: `/profile/${username}`, keywords: ["profile", "me", username], remember: true }] : []),
+    ...basePages,
+    ...(friendsOn ? [{ id: "page:settings:friends", group: "pages" as const, title: tAll("settings.pages.friends.title"), subtitle: tAll("common.settings"), icon: Users, href: "/settings/friends", keywords: ["friends", "settings"], remember: true }] : []),
+  ], [basePages, username, friendsOn, t, tAll]);
+  const actions = useMemo<PaletteItem[]>(() => username && userData && userData.profileVisibility !== "private"
     ? [...baseActions, {
       id: "action:copy-profile",
       group: "actions",
@@ -162,7 +195,7 @@ export function CommandPalette() {
           .then(() => toast.success(t("actions.copiedProfileLink")), () => undefined);
       },
     }]
-    : baseActions, [baseActions, username, userData?.publishProfile, locale, t]);
+    : baseActions, [baseActions, username, userData, locale, t]);
 
   const documentItems = useMemo<PaletteItem[]>(() => documents ? [
     ...documents.posts.map(post => ({ id: `post:${post.href}`, group: "posts" as const, title: post.title, subtitle: [post.date, post.summary].filter(Boolean).join(" · "), icon: FileText, href: post.href, remember: true, searchOnly: true })),
@@ -170,18 +203,21 @@ export function CommandPalette() {
     ...documents.endpoints.map(endpoint => ({ id: `doc:${endpoint.href}`, group: "docs" as const, title: endpoint.title, subtitle: endpoint.summary, icon: Code, href: endpoint.href, keywords: ["endpoint"], remember: true, searchOnly: true })),
   ] : [], [documents]);
 
-  const playerItems = useMemo<PaletteItem[]>(() => (searchesPlayers ? players ?? [] : []).map(player => ({
-    id: `player:${player.username}`,
-    group: "players",
-    title: player.displayName ?? player.username,
-    subtitle: [`@${player.username}`, player.rating !== null ? formatGameRating(game.id, player.rating) : null].filter(Boolean).join(" · "),
-    cover: player.iconUrl ?? undefined,
-    icon: AtSign,
-    href: `/profile/${player.username}`,
-    keywords: [player.username],
-    player: { username: player.username, displayName: player.displayName, rating: player.rating, image: player.iconUrl ?? player.image },
-    remember: true,
-  })), [players, searchesPlayers, game.id]);
+  const friendItems = useMemo<PaletteItem[]>(
+    () => (friends ?? []).map(friend => playerItem(game.id, friend, true, t("friend"))),
+    [friends, game.id, t],
+  );
+  const friendIndex = useMemo(() => createSearchIndex(friendItems, FRIEND_FIELDS), [friendItems]);
+  // Friends are matched on the client and lead, since a friend is who the viewer most likely means.
+  const playerItems = useMemo<PaletteItem[]>(() => {
+    const tokens = parseSearchQuery(scopedQuery);
+    const friendHits = scope === "actions" || tokens.length === 0 ? [] : searchIndex(friendIndex, tokens).map(hit => hit.item);
+    const friendNames = new Set(friendItems.map(item => item.player!.username));
+    const others = (searchesPlayers ? players ?? [] : [])
+      .filter(player => !friendNames.has(player.username))
+      .map(player => playerItem(game.id, player, false, t("friend")));
+    return [...friendHits, ...others];
+  }, [scopedQuery, scope, friendIndex, friendItems, players, searchesPlayers, game.id, t]);
 
   const songFields = useMemo(() => catalogSongFields(game.id), [game.id]);
   const songIndex = useMemo(() => catalog ? createSearchIndex(catalog, songFields) : null, [catalog, songFields]);
@@ -195,6 +231,7 @@ export function CommandPalette() {
         songMatchCount: 0,
         sections: [
           { group: "recent", items: recents.map(recentItem) },
+          { group: "friends", items: friendItems.slice(0, FRIEND_SUGGESTIONS) },
           { group: "actions", items: allActions.filter(item => !item.searchOnly).slice(0, 5) },
           { group: "pages", items: pages.slice(0, 8) },
           { group: "tips", items: tips },
@@ -208,7 +245,8 @@ export function CommandPalette() {
       return { songMatchCount: 0, sections: items.length > 0 ? [{ group: "actions", items }] : [] };
     }
     if (scope === "players") {
-      return { songMatchCount: 0, sections: playerItems.length > 0 ? [{ group: "players", items: playerItems }] : [] };
+      const items = tokens.length === 0 ? friendItems.map(item => ({ ...item, group: "friends" as const })) : playerItems;
+      return { songMatchCount: 0, sections: items.length > 0 ? [{ group: items[0].group, items }] : [] };
     }
 
     const songHits = songIndex ? searchIndex(songIndex, tokens) : [];
@@ -234,7 +272,7 @@ export function CommandPalette() {
       ...(charts.items.length > 0 ? [{ group: "charts" as const, items: charts.items }] : []),
     ];
     return { songMatchCount: songHits.length, sections: [...answers, ...ranked.map(({ group, items }) => ({ group, items }))] };
-  }, [scopedQuery, scope, songIndex, pageIndex, playerItems, pages, actions, contextualActions, recents, tips, calculator, charts.items]);
+  }, [scopedQuery, scope, songIndex, pageIndex, playerItems, friendItems, pages, actions, contextualActions, recents, tips, calculator, charts.items]);
 
   const allItems = useMemo(() => sections.flatMap(section => section.items), [sections]);
   const selectedItem = allItems.find(item => item.id === selected) ?? allItems[0];
@@ -276,7 +314,7 @@ export function CommandPalette() {
       <div className={cn("flex min-h-0", isMobile ? "flex-1" : "h-[min(60vh,28rem)] shrink-0")}>
         <CommandList className="max-h-none min-h-0 flex-1 py-1">
           <CommandEmpty>
-            {(catalogLoading || charts.loading || (searchesPlayers && playersLoading)) && query ? t("loadingCatalog") : scope === "players" && playerQuery.length < 2 ? t("playersHint") : t("empty", { query: scopedQuery })}
+            {(catalogLoading || charts.loading || (searchesPlayers && playersLoading)) && query ? t("loadingCatalog") : scope === "players" && playerQuery.length < 2 && friendItems.length === 0 ? t("playersHint") : t("empty", { query: scopedQuery })}
           </CommandEmpty>
           {sections.map(section => (
             <CommandGroup key={section.group} heading={(
@@ -442,6 +480,9 @@ function Preview({ item }: { item: PaletteItem }) {
             <p className="text-base font-semibold">{player.displayName ?? player.username}</p>
             <p className="text-sm text-muted-foreground">@{player.username}</p>
           </div>
+          {player.friend && (
+            <p className="flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary"><Users className="size-3.5" />{t("preview.friend")}</p>
+          )}
           {player.rating !== null && (
             <p className="rounded-full bg-muted/70 px-3 py-1 text-sm font-semibold tabular-nums">{t("preview.rating", { rating: formatGameRating(game, player.rating) })}</p>
           )}

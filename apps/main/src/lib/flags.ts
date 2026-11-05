@@ -13,6 +13,7 @@ export interface Flags {
   recommendationFilters: boolean;
   // profile
   scorePercentile: boolean;
+  friends: boolean;
   // settings
   settingsApplications: boolean;
   settingsDeveloper: boolean;
@@ -145,6 +146,12 @@ const registry = {
     category: "profile",
     decide: () => true,
   }),
+  friends: defineFlag("friends", {
+    defaultValue: false,
+    userSelectable: true,
+    category: "profile",
+    decide: () => false,
+  }),
 
   // ── settings ─────────────────────────────────────────────────────────────
   settingsApplications: defineFlag("settingsApplications", {
@@ -269,6 +276,7 @@ export const useAlbumsCard = registry.albumsCard.fn;
 export const useRecommendationFilters = registry.recommendationFilters.fn;
 // profile
 export const useScorePercentile = registry.scorePercentile.fn;
+export const useFriends = registry.friends.fn;
 // settings
 export const useSettingsApplications = registry.settingsApplications.fn;
 export const useSettingsDeveloper = registry.settingsDeveloper.fn;

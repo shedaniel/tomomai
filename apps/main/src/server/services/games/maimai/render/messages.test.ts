@@ -20,7 +20,7 @@ const expectedHeader = {
 let tables: Record<string, ProxyRow[]>;
 beforeEach(() => {
   proxy.reset();
-  tables = { user: [{ username: "player", publishProfile: true }], user_snapshots: [snapshot] };
+  tables = { user: [{ username: "player", profileVisibility: "public" }], user_snapshots: [snapshot] };
   proxy.answer(({ table }) => table ? tables[table] : undefined);
 });
 

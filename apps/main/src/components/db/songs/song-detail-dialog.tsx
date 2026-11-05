@@ -15,6 +15,7 @@ import { useFormatter } from "next-intl";
 import { ScoreHistoryChart } from "./score-history-chart";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { useSongInsights } from "./song-insights";
+import { ChartFriendsRanking } from "./song-friends";
 import { playerRatingGain, ratingBucketFloor, ratingBucketOf, type RatingStanding } from "@/lib/games/rating-standing";
 
 
@@ -97,12 +98,15 @@ function SongChartDialogGrid({ chart, score, standing }: { chart: SongExtendedId
   </div>;
   // ChartInsights compares against players around the viewer's rating, so it renders nothing without one.
   const insightsView = ChartInsights && (standing?.playerRating ?? 0) > 0 && <ChartInsights chart={chart} score={score} playerRating={standing?.playerRating ?? null} regionCharts={insights?.regionCharts[chart.region] ?? [{ chart, score }]} />;
+  const hasFriends = insights?.friends.some(friend => friend.region === chart.region && friend.scores[chart.difficulty]) ?? false;
+  const friendsView = hasFriends && <ChartFriendsRanking chart={chart} score={score} />;
 
   if (wide) {
     return <div className="flex items-start gap-5">
       <div className="w-[24rem] shrink-0">{table}</div>
-      {(historyView || insightsView) && <div className={cn("w-[24rem] shrink-0 space-y-3", historyView && insightsView ? "sticky top-0" : "self-center", "[&:not(:has(>section:not(:empty)))]:hidden")}>
+      {(historyView || insightsView || friendsView) && <div className={cn("w-[24rem] shrink-0 space-y-3", [historyView, insightsView, friendsView].filter(Boolean).length > 1 ? "sticky top-0" : "self-center", "[&:not(:has(>section:not(:empty)))]:hidden")}>
         {historyView && <section className="rounded-xl border bg-muted/30 p-4">{historyView}</section>}
+        {friendsView && <section className="rounded-xl border bg-muted/30 p-4">{friendsView}</section>}
         {insightsView && <section className="rounded-xl border bg-muted/30 p-4 empty:hidden">{insightsView}</section>}
       </div>}
     </div>;
@@ -110,6 +114,7 @@ function SongChartDialogGrid({ chart, score, standing }: { chart: SongExtendedId
   const sections = [
     { key: "rating", label: t("db.songs.detail.sections.rating"), view: table },
     historyView && { key: "history", label: t("db.songs.detail.sections.history"), view: historyView },
+    friendsView && { key: "friends", label: t("db.songs.detail.sections.friends"), view: friendsView },
     insightsView && {
       key: "compare",
       label: t("db.songs.detail.sections.compare"),
@@ -117,7 +122,7 @@ function SongChartDialogGrid({ chart, score, standing }: { chart: SongExtendedId
     },
   ].filter(section => !!section);
   return <Tabs defaultValue="rating">
-    <TabsList className={cn("grid w-full", { 2: "grid-cols-2", 3: "grid-cols-3" }[sections.length], sections.length <= 1 && "hidden")}>
+    <TabsList className={cn("grid w-full", { 2: "grid-cols-2", 3: "grid-cols-3", 4: "grid-cols-4" }[sections.length], sections.length <= 1 && "hidden")}>
       {sections.map(section => <TabsTrigger key={section.key} value={section.key}>{section.label}</TabsTrigger>)}
     </TabsList>
     <TabsContents>{sections.map(section => <TabsContent key={section.key} value={section.key} className="pt-2">{section.view}</TabsContent>)}</TabsContents>

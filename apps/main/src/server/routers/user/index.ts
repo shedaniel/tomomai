@@ -13,6 +13,7 @@ import { recommendationsRouter } from './recommendations';
 import { searchRouter } from './search';
 import { flagsRouter } from './flags';
 import { legalRouter } from './legal';
+import { friendsRouter } from './friends';
 
 export const userRouter = router({
   // Snapshots
@@ -26,7 +27,7 @@ export const userRouter = router({
   getProfileSettings: profileRouter.getProfileSettings,
   updateProfileDescription: profileRouter.updateProfileDescription,
   submitProfileReport: profileReportsRouter.submitProfileReport,
-  updatePublishProfile: profileRouter.updatePublishProfile,
+  updateProfileVisibility: profileRouter.updateProfileVisibility,
   updateRegion: profileRouter.updateRegion,
   updateProfileMainRegion: profileRouter.updateProfileMainRegion,
   updateProfilePrivacySettings: profileRouter.updateProfilePrivacySettings,
@@ -46,6 +47,14 @@ export const userRouter = router({
   createInvite: invitesRouter.createInvite,
   revokeInvite: invitesRouter.revokeInvite,
   validateInvite: invitesRouter.validateInvite,
+
+  // Friends
+  getFriends: friendsRouter.getFriends,
+  getFriendPlayers: friendsRouter.getFriendPlayers,
+  getSongFriendScores: friendsRouter.getSongFriendScores,
+  setFriendsEnabled: friendsRouter.setFriendsEnabled,
+  hideFriend: friendsRouter.hideFriend,
+  unhideFriends: friendsRouter.unhideFriends,
 
   // Recents
   getRecentSongs: recentsRouter.getRecentSongs,

@@ -89,7 +89,7 @@ export async function buildExportImageMessage(opts: ExportImageRequest): Promise
 
   const [userRow, rankings] = await Promise.all([
     db
-      .select({ username: user.username, publishProfile: user.publishProfile })
+      .select({ username: user.username, profileVisibility: user.profileVisibility })
       .from(user)
       .where(eq(user.id, row.userId))
       .limit(1),
@@ -101,7 +101,7 @@ export async function buildExportImageMessage(opts: ExportImageRequest): Promise
   }
 
   const visitableProfileAt =
-    userRow[0].publishProfile && userRow[0].username ? userRow[0].username : null;
+    userRow[0].profileVisibility === "public" && userRow[0].username ? userRow[0].username : null;
 
   return {
     ok: true,

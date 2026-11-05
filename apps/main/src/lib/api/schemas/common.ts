@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { PROFILE_AUDIENCES } from "@/lib/profile-audience";
 import type { CodeKind } from "@/lib/games/codes";
 import type { CanonicalGameId } from "@/lib/games/ids";
 import type { GameSnapshotSummary } from "@/lib/games/player-view";
@@ -72,8 +73,11 @@ const levelPreciseField = z
 const scoreValueField = z.number().int().describe("The score as an integer. The overview guide gives each game's scale.");
 const secondaryScoreField = z.number().int().describe("The secondary score, such as maimai's DX score. 0 for a game without one.");
 
+const profileAudience = z.enum(PROFILE_AUDIENCES);
+
 export const profileSettings = z.object({
-  publishProfile: z.boolean(),
+  publishProfile: z.boolean().describe("Whether anyone may open the profile. The same as `profileVisibility` being `public`."),
+  profileVisibility: profileAudience.describe("Who may open the profile: only the user, their matched in-game friends, or anyone."),
   profileMainRegion: regionSchema
     .nullable()
     .describe("The region the public profile shows first: the user's choice for this site's game, else the game's first enabled region. Null only while the game enables no region."),
@@ -83,7 +87,14 @@ export const profileSettings = z.object({
   profileShowPlayCounts: z.boolean(),
   profileShowEvents: z.boolean(),
   profileShowInSearch: z.boolean(),
-});
+  profileAudiences: z.object({
+    allScores: profileAudience,
+    scoreDetails: profileAudience,
+    plates: profileAudience,
+    playCounts: profileAudience,
+    events: profileAudience,
+  }).describe("Who may see each part of the profile. A part never reaches further than `profileVisibility`."),
+}).describe("Profile privacy. The `profileShow*` switches say what anyone may see, with the profile itself public.");
 
 /** A fetched score that matched no single catalog chart. Fetch sessions store their report in this shape. */
 export const notFoundScore = z.object({

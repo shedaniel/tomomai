@@ -81,6 +81,7 @@ export const maimaiDefinition = {
     "community-banner",
     "discord-bot",
     "last-credit",
+    "friends",
   ],
   regionCapabilityOverrides: { cn: ["albums"] },
   versions: maimaiVersionTable,

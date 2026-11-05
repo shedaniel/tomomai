@@ -1,10 +1,11 @@
 "use client";
 
-import { ProfilePrivacyFields } from "@/components/profile-privacy-fields";
+import { ProfilePrivacyFields, ProfileVisibilityField } from "@/components/profile-privacy-fields";
 import { useGame } from "@/components/providers/game-provider";
 import { SettingsField } from "@/components/settings/primitives";
 import { getGameRegion, isGameRegion } from "@/lib/games/frontend";
-import type { ProfilePrivacySettings, ProfileSettings } from "@/lib/types";
+import type { ProfileSettings } from "@/lib/types";
+import type { ProfileAudienceSettings } from "@/lib/profile-audience";
 import type { Region } from "@/lib/games/ids";
 import {
   AlertDialog,
@@ -23,7 +24,6 @@ import {
   ResponsiveDialogFooter,
   ResponsiveDialogHeader,
   ResponsiveDialogTitle,
-  Switch,
 } from "@tomomai/ui";
 import {
   Select,
@@ -37,9 +37,8 @@ import { useTranslations } from "next-intl";
 import type { Dispatch, SetStateAction } from "react";
 
 export type VisibilityDraft = {
-  publishProfile: boolean;
+  audiences: ProfileAudienceSettings;
   profileMainRegion: Region | null;
-  privacySettings: ProfilePrivacySettings;
 };
 
 export interface VisibilityController {
@@ -89,23 +88,15 @@ export function ProfileVisibilityDialog({
           </div>
         ) : (
           <div className="grid gap-5 py-2">
-            <SettingsField
-              layout="inline"
-              htmlFor="inline-publish-profile"
-              label={t("settings.profile.publishProfile")}
-              description={t("settings.profile.publishDescription")}
-              action={
-                <Switch
-                  id="inline-publish-profile"
-                  checked={controller.draft.publishProfile}
-                  onCheckedChange={(checked) =>
-                    controller.setDraft((current) =>
-                      current ? { ...current, publishProfile: checked } : current,
-                    )
-                  }
-                  disabled={controller.isSaving}
-                />
+            <ProfileVisibilityField
+              id="inline-profile-visibility"
+              value={controller.draft.audiences.profileVisibility}
+              onChange={(profileVisibility) =>
+                controller.setDraft((current) =>
+                  current ? { ...current, audiences: { ...current.audiences, profileVisibility } } : current,
+                )
               }
+              disabled={controller.isSaving}
             />
 
             {game.regions.length > 1 ? (
@@ -146,11 +137,9 @@ export function ProfileVisibilityDialog({
             <div className="grid gap-3">
               <Label>{t("settings.profile.privacy.label")}</Label>
               <ProfilePrivacyFields
-                value={controller.draft.privacySettings}
-                onChange={(nextPrivacySettings) =>
-                  controller.setDraft((current) =>
-                    current ? { ...current, privacySettings: nextPrivacySettings } : current,
-                  )
+                value={controller.draft.audiences}
+                onChange={(audiences) =>
+                  controller.setDraft((current) => (current ? { ...current, audiences } : current))
                 }
                 disabled={controller.isSaving}
                 idPrefix="inline-profile-privacy"

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { PROFILE_AUDIENCES } from "@/lib/profile-audience";
 import { defineRoute } from "@/lib/api/registry";
 import { regionSchema } from "@/lib/api/schemas";
 
@@ -21,7 +22,8 @@ export const spec = defineRoute({
     region: regionSchema
       .nullable()
       .describe("The region the dashboard opens with: the user's choice for this site's game, else the game's first enabled region. Null only while the game enables no region."),
-    publishProfile: z.boolean().describe("Whether the user's profile is publicly visible."),
+    publishProfile: z.boolean().describe("Whether anyone may open the user's profile. The same as `profileVisibility` being `public`."),
+    profileVisibility: z.enum(PROFILE_AUDIENCES).describe("Who may open the profile: only the user, their matched in-game friends, or anyone."),
     role: z.string().nullable().describe("Account role: `user`, `admin`, etc."),
   }),
   examples: [
@@ -33,6 +35,7 @@ export const spec = defineRoute({
         image: "https://cdn.discordapp.com/avatars/123456789012345678/a1b2c3d4e5f6.png",
         region: "intl",
         publishProfile: true,
+        profileVisibility: "public",
         role: "user",
       },
     },

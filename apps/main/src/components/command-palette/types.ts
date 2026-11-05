@@ -1,7 +1,7 @@
 import type { LucideIcon } from "lucide-react";
 import type { UniqueSong } from "@/components/db/songs/types";
 
-export type PaletteGroup = "calculator" | "charts" | "tips" | "recent" | "songs" | "players" | "events" | "pages" | "minigames" | "posts" | "docs" | "actions";
+export type PaletteGroup = "calculator" | "charts" | "tips" | "recent" | "friends" | "songs" | "players" | "events" | "pages" | "minigames" | "posts" | "docs" | "actions";
 
 /** One result of the command palette: a place to go or something to do. */
 export type PaletteItem = {
@@ -21,7 +21,7 @@ export type PaletteItem = {
   /** The difficulty key of the one chart a chart result stands for. */
   chart?: string;
   /** A player shows their in-game name and rating in the preview pane. */
-  player?: { username: string; displayName: string | null; rating: number | null; image: string | null };
+  player?: { username: string; displayName: string | null; rating: number | null; image: string | null; friend?: boolean };
   /** Kept in the recent list after it is opened. */
   remember?: boolean;
   /** Left out of the suggestions shown before anything is typed, such as one item per language. */

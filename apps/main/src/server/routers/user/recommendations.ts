@@ -31,7 +31,7 @@ export const recommendationsRouter = router({
   getPublicRecommendations: gameProcedure(publicProcedure, "scores")
     .input(z.object({ username: z.string(), usePeers: z.boolean() }))
     .query(async ({ ctx, input }) => {
-      const { profile, snapshotData } = await fetchPublicGameProfile(ctx.game, input.username, ctx.region);
+      const { profile, snapshotData } = await fetchPublicGameProfile(ctx.game, input.username, ctx.region, ctx.session?.user.id);
       if (!snapshotData) {
         throw new TRPCError({
           code: 'NOT_FOUND',

@@ -35,7 +35,7 @@ export async function resolvePlaysOwner(
         resolveGameContext(game, { region: ownRegion, capability });
         return { userId: viewerId, region: ownRegion };
       }
-      const { userId, region } = await resolvePublicSnapshotAccess(game, query.snapshotId, { capability, view: "recentPlays" });
+      const { userId, region } = await resolvePublicSnapshotAccess(game, query.snapshotId, { capability, view: "recentPlays", viewerId });
       return { userId, region };
     }
     const { region } = resolveGameContext(game, { region: query.region, capability });

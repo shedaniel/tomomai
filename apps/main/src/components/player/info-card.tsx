@@ -6,7 +6,8 @@ import { supportsGameFeature } from "@/lib/games/frontend";
 import type { GameSnapshotData } from "@/lib/games/player-view";
 import { formatGameRating } from "@/lib/games/presentation";
 import { DescriptionDiscardDialog, ProfileAboutSection } from "@/components/profile-about-section";
-import { PROFILE_PRIVACY_FIELDS } from "@/components/profile-privacy-fields";
+import { PROFILE_PRIVACY_FIELDS, profileAudiencesEqual, profileAudiencesOf } from "@/components/profile-privacy-fields";
+import { privacyFor, type ProfileAudience, type ProfileAudienceSettings } from "@/lib/profile-audience";
 import {
   ConfirmUnpublishDialog,
   ProfileVisibilityDialog,
@@ -28,19 +29,9 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
-function privacySettingsFromProfile(settings: ProfileSettings): ProfilePrivacySettings {
-  return {
-    profileShowAllScores: settings.profileShowAllScores,
-    profileShowScoreDetails: settings.profileShowScoreDetails,
-    profileShowPlates: settings.profileShowPlates,
-    profileShowPlayCounts: settings.profileShowPlayCounts,
-    profileShowEvents: settings.profileShowEvents,
-    profileShowInSearch: settings.profileShowInSearch,
-  };
-}
-
-function privacySettingsEqual(left: ProfilePrivacySettings, right: ProfilePrivacySettings) {
-  return PROFILE_PRIVACY_FIELDS.every(({ key }) => left[key] === right[key]);
+/** What the widest audience sees, which is what the owner's own view marks as shared. */
+function sharedView(settings: ProfileAudienceSettings): ProfilePrivacySettings {
+  return privacyFor(settings, "friend");
 }
 
 interface UseInfoCardOwnerSettingsOptions {
@@ -52,7 +43,7 @@ interface UseInfoCardOwnerSettingsOptions {
   onDescriptionEditingChange(value: boolean): void;
   onProfileDescriptionChange(value: string | null): void;
   onPrivacySettingsChange(value: ProfilePrivacySettings): void;
-  onPublishProfileChange(value: boolean): void;
+  onProfileVisibilityChange(value: ProfileAudience): void;
 }
 
 function useInfoCardOwnerSettings({
@@ -64,7 +55,7 @@ function useInfoCardOwnerSettings({
   onDescriptionEditingChange,
   onProfileDescriptionChange,
   onPrivacySettingsChange,
-  onPublishProfileChange,
+  onProfileVisibilityChange,
 }: UseInfoCardOwnerSettingsOptions) {
   const t = useTranslations();
   const router = useRouter();
@@ -83,20 +74,18 @@ function useInfoCardOwnerSettings({
     });
 
   const updateProfileDescription = trpc.user.updateProfileDescription.useMutation();
-  const updatePublishProfile = trpc.user.updatePublishProfile.useMutation();
   const updateProfileMainRegion = trpc.user.updateProfileMainRegion.useMutation();
   const updateProfilePrivacySettings = trpc.user.updateProfilePrivacySettings.useMutation();
 
   const canonicalDescription = profileSettings?.profileDescription ?? profileDescription ?? null;
   const visibilitySaving =
-    updatePublishProfile.isPending ||
     updateProfileMainRegion.isPending ||
     updateProfilePrivacySettings.isPending;
 
   useEffect(() => {
     if (!profileSettings) return;
-    onPublishProfileChange(profileSettings.publishProfile);
-    onPrivacySettingsChange(privacySettingsFromProfile(profileSettings));
+    onProfileVisibilityChange(profileSettings.profileVisibility);
+    onPrivacySettingsChange(sharedView(profileSettings));
     onProfileDescriptionChange(profileSettings.profileDescription);
     if (!isDescriptionEditing) {
       onDescriptionDraftChange(profileSettings.profileDescription ?? "");
@@ -106,7 +95,7 @@ function useInfoCardOwnerSettings({
     onDescriptionDraftChange,
     onPrivacySettingsChange,
     onProfileDescriptionChange,
-    onPublishProfileChange,
+    onProfileVisibilityChange,
     profileSettings,
   ]);
 
@@ -149,36 +138,30 @@ function useInfoCardOwnerSettings({
 
   function visibilityIsDirty(draft: VisibilityDraft, settings: ProfileSettings) {
     return (
-      draft.publishProfile !== settings.publishProfile ||
       draft.profileMainRegion !== settings.profileMainRegion ||
-      !privacySettingsEqual(draft.privacySettings, privacySettingsFromProfile(settings))
+      !profileAudiencesEqual(draft.audiences, profileAudiencesOf(settings))
     );
   }
 
   async function saveVisibilitySettings() {
     if (!profileSettings || !visibilityDraft || visibilitySaving) return;
 
-    const publishChanged = visibilityDraft.publishProfile !== profileSettings.publishProfile;
     const regionChanged = visibilityDraft.profileMainRegion !== profileSettings.profileMainRegion;
-    const previousPrivacy = privacySettingsFromProfile(profileSettings);
-    const privacyChanged = !privacySettingsEqual(visibilityDraft.privacySettings, previousPrivacy);
-    const revealsHiddenData = PROFILE_PRIVACY_FIELDS.some(
-      ({ key }) => !previousPrivacy[key] && visibilityDraft.privacySettings[key],
-    );
+    const privacyChanged = !profileAudiencesEqual(visibilityDraft.audiences, profileAudiencesOf(profileSettings));
+    const previousView = sharedView(profileSettings);
+    const nextView = sharedView(visibilityDraft.audiences);
+    const revealsHiddenData = PROFILE_PRIVACY_FIELDS.some(({ key }) => !previousView[key] && nextView[key]);
 
     setVisibilityError(undefined);
     try {
       const mutations: Promise<unknown>[] = [];
-      if (publishChanged) {
-        mutations.push(updatePublishProfile.mutateAsync({ publishProfile: visibilityDraft.publishProfile }));
-      }
       if (regionChanged && visibilityDraft.profileMainRegion) {
         mutations.push(
           updateProfileMainRegion.mutateAsync({ profileMainRegion: visibilityDraft.profileMainRegion }),
         );
       }
       if (privacyChanged) {
-        mutations.push(updateProfilePrivacySettings.mutateAsync(visibilityDraft.privacySettings));
+        mutations.push(updateProfilePrivacySettings.mutateAsync(visibilityDraft.audiences));
       }
       await Promise.all(mutations);
 
@@ -186,14 +169,13 @@ function useInfoCardOwnerSettings({
         current
           ? {
               ...current,
-              publishProfile: visibilityDraft.publishProfile,
               profileMainRegion: visibilityDraft.profileMainRegion,
-              ...visibilityDraft.privacySettings,
+              ...visibilityDraft.audiences,
             }
           : current,
       );
-      onPublishProfileChange(visibilityDraft.publishProfile);
-      onPrivacySettingsChange(visibilityDraft.privacySettings);
+      onProfileVisibilityChange(visibilityDraft.audiences.profileVisibility);
+      onPrivacySettingsChange(nextView);
       setVisibilityOpen(false);
       toast.success(t("publicProfile.visibilitySettings.saveSuccess"));
       if (revealsHiddenData) router.refresh();
@@ -205,9 +187,8 @@ function useInfoCardOwnerSettings({
   function openVisibilitySettings() {
     if (!profileSettings) return;
     setVisibilityDraft({
-      publishProfile: profileSettings.publishProfile,
+      audiences: profileAudiencesOf(profileSettings),
       profileMainRegion: profileSettings.profileMainRegion,
-      privacySettings: privacySettingsFromProfile(profileSettings),
     });
     setVisibilityError(undefined);
     setVisibilityOpen(true);
@@ -223,7 +204,7 @@ function useInfoCardOwnerSettings({
   }
 
   function requestSaveVisibility() {
-    if (profileSettings?.publishProfile && visibilityDraft?.publishProfile === false) {
+    if (profileSettings?.profileVisibility === "public" && visibilityDraft?.audiences.profileVisibility === "private") {
       setConfirmUnpublishOpen(true);
       return;
     }
@@ -266,6 +247,7 @@ type Snapshot = GameSnapshotData["snapshot"];
 
 interface ProfileVisibilityBannerProps {
   visitableProfileAt: string | null;
+  profileVisibility: ProfileAudience;
   isOwner: boolean;
   profileSettingsLoading: boolean;
   onOpenSettings(): void;
@@ -273,6 +255,7 @@ interface ProfileVisibilityBannerProps {
 
 function ProfileVisibilityBanner({
   visitableProfileAt,
+  profileVisibility,
   isOwner,
   profileSettingsLoading,
   onOpenSettings,
@@ -284,16 +267,18 @@ function ProfileVisibilityBanner({
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         {visitableProfileAt ? (
           <div>
-            <h3 className="mb-1 font-medium text-foreground">{t("profileVisibility.public")}</h3>
+            <h3 className="mb-1 font-medium text-foreground">
+              {t(profileVisibility === "public" ? "profileVisibility.public" : "profileVisibility.friends")}
+            </h3>
             <p className="text-sm text-muted-foreground">
-              {t("profileVisibility.accessibleBy")}
+              {t(profileVisibility === "public" ? "profileVisibility.accessibleBy" : "profileVisibility.friendsAccessibleBy")}
               <Link
                 href={`/profile/${visitableProfileAt}`}
                 className="text-foreground underline hover:text-foreground/80"
               >
                 {resolveBaseUrl()}/profile/{visitableProfileAt}
               </Link>
-              {t("profileVisibility.accessibleByEnd")}
+              {t(profileVisibility === "public" ? "profileVisibility.accessibleByEnd" : "profileVisibility.friendsAccessibleByEnd")}
             </p>
           </div>
         ) : (
@@ -417,14 +402,14 @@ export type PlayerProfile = {
   profileDescription?: string | null;
   profileUserId?: string | null;
   isOwner?: boolean;
-  publishProfile: boolean;
+  profileVisibility: ProfileAudience;
   descriptionDraft: string;
   isDescriptionEditing: boolean;
   onDescriptionDraftChange(value: string): void;
   onDescriptionEditingChange(value: boolean): void;
   onProfileDescriptionChange(value: string | null): void;
   onPrivacySettingsChange(value: ProfilePrivacySettings): void;
-  onPublishProfileChange(value: boolean): void;
+  onProfileVisibilityChange(value: ProfileAudience): void;
 };
 
 type InfoCardProps = PlayerProfile & {
@@ -440,14 +425,14 @@ export function InfoCard({
   profileDescription,
   profileUserId,
   isOwner = false,
-  publishProfile,
+  profileVisibility,
   descriptionDraft,
   isDescriptionEditing,
   onDescriptionDraftChange,
   onDescriptionEditingChange,
   onProfileDescriptionChange,
   onPrivacySettingsChange,
-  onPublishProfileChange,
+  onProfileVisibilityChange,
 }: InfoCardProps) {
   const ownerSettings = useInfoCardOwnerSettings({
     isOwner,
@@ -458,7 +443,7 @@ export function InfoCard({
     onDescriptionEditingChange,
     onProfileDescriptionChange,
     onPrivacySettingsChange,
-    onPublishProfileChange,
+    onProfileVisibilityChange,
   });
   const { snapshot } = selectedSnapshotData;
   const aboutUsername = profileUsername ?? snapshot.displayName;
@@ -467,6 +452,7 @@ export function InfoCard({
     <div className="space-y-4 md:space-y-6">
       <ProfileVisibilityBanner
         visitableProfileAt={visitableProfileAt}
+        profileVisibility={profileVisibility}
         isOwner={isOwner}
         profileSettingsLoading={ownerSettings.profileSettingsLoading}
         onOpenSettings={ownerSettings.visibility.openSettings}
@@ -482,7 +468,7 @@ export function InfoCard({
         descriptionDraft={descriptionDraft}
         isDescriptionEditing={isDescriptionEditing}
         isOwner={isOwner}
-        publishProfile={publishProfile}
+        profileVisibility={profileVisibility}
         profileSettingsLoading={ownerSettings.profileSettingsLoading}
         onDescriptionDraftChange={onDescriptionDraftChange}
         controller={ownerSettings.description}

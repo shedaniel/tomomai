@@ -40,8 +40,8 @@ export function gameOnlyProcedure<TContextOverrides extends object>(base: BasePr
 export function publicSnapshotProcedure<TContextOverrides extends object>(base: BaseProcedure<TContextOverrides>, capability: GameCapability, view: PublicView) {
   return base
     .input(z.object({ game: gameIdSchema, snapshotId: z.string() }))
-    .use(async ({ input, next }) => {
-      const snapshot = await resolvePublicSnapshotAccess(input.game, input.snapshotId, { capability, view });
+    .use(async ({ ctx, input, next }) => {
+      const snapshot = await resolvePublicSnapshotAccess(input.game, input.snapshotId, { capability, view, viewerId: ctx.session?.user.id });
       return next({ ctx: { game: input.game, region: snapshot.region, snapshot } });
     });
 }

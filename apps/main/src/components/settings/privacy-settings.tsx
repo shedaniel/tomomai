@@ -8,7 +8,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@tomomai/ui/select-friendly";
-import { Switch } from "@tomomai/ui";
 import {
   SettingsField,
   SettingsFooter,
@@ -18,13 +17,13 @@ import {
   useSettingsReset,
   useSettingsSave,
 } from "@/components/settings/primitives";
-import { ProfilePrivacyFields } from "@/components/profile-privacy-fields";
+import { ProfilePrivacyFields, ProfileVisibilityField, profileAudiencesEqual, profileAudiencesOf } from "@/components/profile-privacy-fields";
 import { useGame } from "@/components/providers/game-provider";
 import { getGameRegion, isGameRegion } from "@/lib/games/frontend";
 import { trpc } from "@/lib/trpc-client";
-import { ProfilePrivacySettings } from "@/lib/types";
+import { DEFAULT_PROFILE_AUDIENCES, type ProfileAudienceSettings } from "@/lib/profile-audience";
 import type { Region } from "@/lib/games/ids";
-import { Copy, ExternalLink, Globe } from "lucide-react";
+import { Copy, ExternalLink } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -58,51 +57,32 @@ function PrivacyFields() {
 
   const username = userData?.username ?? undefined;
 
-  const [selectedPublishProfile, setSelectedPublishProfile] = useState<boolean | null>(null);
   const [selectedMainRegion, setSelectedMainRegion] = useState<Region | null>(null);
-  const [selectedPrivacySettings, setSelectedPrivacySettings] = useState<ProfilePrivacySettings | null>(null);
+  const [selectedAudiences, setSelectedAudiences] = useState<ProfileAudienceSettings | null>(null);
 
-  const effectivePublishProfile = selectedPublishProfile ?? profileSettings?.publishProfile ?? false;
+  const savedAudiences = profileSettings ? profileAudiencesOf(profileSettings) : DEFAULT_PROFILE_AUDIENCES;
+  const audiences = selectedAudiences ?? savedAudiences;
   const effectiveMainRegion = getGameRegion(game, selectedMainRegion ?? profileSettings?.profileMainRegion);
-  const effectivePrivacySettings = selectedPrivacySettings ?? {
-    profileShowAllScores: profileSettings?.profileShowAllScores ?? true,
-    profileShowScoreDetails: profileSettings?.profileShowScoreDetails ?? true,
-    profileShowPlates: profileSettings?.profileShowPlates ?? true,
-    profileShowPlayCounts: profileSettings?.profileShowPlayCounts ?? true,
-    profileShowEvents: profileSettings?.profileShowEvents ?? true,
-    profileShowInSearch: profileSettings?.profileShowInSearch ?? true,
-  };
 
-  const updatePublishProfile = trpc.user.updatePublishProfile.useMutation();
   const updateProfileMainRegion = trpc.user.updateProfileMainRegion.useMutation();
   const updateProfilePrivacySettings = trpc.user.updateProfilePrivacySettings.useMutation();
 
-  const publishDirty = !!profileSettings && effectivePublishProfile !== profileSettings.publishProfile;
   const regionDirty = !!profileSettings && selectedMainRegion !== null && selectedMainRegion !== profileSettings.profileMainRegion;
-  const privacyDirty = !!profileSettings && (
-    effectivePrivacySettings.profileShowAllScores !== profileSettings.profileShowAllScores ||
-    effectivePrivacySettings.profileShowScoreDetails !== profileSettings.profileShowScoreDetails ||
-    effectivePrivacySettings.profileShowPlates !== profileSettings.profileShowPlates ||
-    effectivePrivacySettings.profileShowPlayCounts !== profileSettings.profileShowPlayCounts ||
-    effectivePrivacySettings.profileShowEvents !== profileSettings.profileShowEvents ||
-    effectivePrivacySettings.profileShowInSearch !== profileSettings.profileShowInSearch
-  );
+  const privacyDirty = !!profileSettings && !profileAudiencesEqual(audiences, savedAudiences);
 
-  useDirtyFlag("privacy", publishDirty || regionDirty || privacyDirty);
+  useDirtyFlag("privacy", regionDirty || privacyDirty);
 
   useSettingsSave("privacy", async () => {
     if (!profileSettings) return;
     const promises: Promise<unknown>[] = [];
-    if (publishDirty) promises.push(updatePublishProfile.mutateAsync({ publishProfile: effectivePublishProfile }));
     if (regionDirty && effectiveMainRegion) promises.push(updateProfileMainRegion.mutateAsync({ profileMainRegion: effectiveMainRegion }));
-    if (privacyDirty) promises.push(updateProfilePrivacySettings.mutateAsync(effectivePrivacySettings));
+    if (privacyDirty) promises.push(updateProfilePrivacySettings.mutateAsync(audiences));
     await Promise.all(promises);
   });
 
   useSettingsReset("privacy", () => {
-    setSelectedPublishProfile(null);
     setSelectedMainRegion(null);
-    setSelectedPrivacySettings(null);
+    setSelectedAudiences(null);
   });
 
   const getProfileUrl = () => {
@@ -129,24 +109,13 @@ function PrivacyFields() {
 
   return (
     <div className="grid gap-6">
-      <SettingsField
-        layout="inline"
-        icon={Globe}
-        label={t("settings.profile.publishProfile")}
-        description={t("settings.profile.publishDescription")}
-        htmlFor="publish-profile"
-        action={
-          <Switch
-            id="publish-profile"
-            checked={effectivePublishProfile}
-            onCheckedChange={(v) => setSelectedPublishProfile(v)}
-            disabled={isLoadingSettings}
-          />
-        }
+      <ProfileVisibilityField
+        value={audiences.profileVisibility}
+        onChange={profileVisibility => setSelectedAudiences({ ...audiences, profileVisibility })}
+        disabled={isLoadingSettings}
       />
 
-
-      {effectivePublishProfile && (
+      {audiences.profileVisibility !== "private" && (
         <div className="grid gap-4 pl-4 border-l-2 border-muted">
           {game.regions.length > 1 && (
             <SettingsField
@@ -179,8 +148,8 @@ function PrivacyFields() {
           <div className="grid gap-3">
             <Label>{t("settings.profile.privacy.label")}</Label>
             <ProfilePrivacyFields
-              value={effectivePrivacySettings}
-              onChange={setSelectedPrivacySettings}
+              value={audiences}
+              onChange={setSelectedAudiences}
               disabled={isLoadingSettings}
               idPrefix="settings-profile-privacy"
             />

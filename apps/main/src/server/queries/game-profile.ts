@@ -8,13 +8,14 @@ import { resolvePublicUserByUsername } from "./public-access";
 import { fetchLatestSnapshotData, gameSnapshotColumns } from "./snapshots";
 import { GAME_SERVER_MODULES } from "@/server/services/games/registry";
 
-async function resolvePublicProfile(game: CanonicalGameId, username: string, region: Region) {
+async function resolvePublicProfile(game: CanonicalGameId, username: string, region: Region, viewerId?: string) {
   resolveGameContext(game, { region, capability: "scores" });
-  return resolvePublicUserByUsername(game, username);
+  return resolvePublicUserByUsername(game, username, viewerId);
 }
 
-export const fetchPublicGameProfile = cache(async (game: CanonicalGameId, username: string, region: Region) => {
-  const profile = await resolvePublicProfile(game, username, region);
+/** The profile a visitor may open, with its latest snapshot in the region. A signed-in friend passes their id. */
+export const fetchPublicGameProfile = cache(async (game: CanonicalGameId, username: string, region: Region, viewerId?: string) => {
+  const profile = await resolvePublicProfile(game, username, region, viewerId);
   const data = await GAME_SERVER_MODULES[game].reserved?.snapshot(username, region)
     ?? await fetchLatestSnapshotData(game, profile.id, region);
   return {
@@ -23,7 +24,7 @@ export const fetchPublicGameProfile = cache(async (game: CanonicalGameId, userna
   };
 });
 
-/** The published profile and only the header of its latest snapshot, for views that show no scores. */
+/** The published profile and only the header of its latest snapshot, for views that show no scores. Never reached through friends, since crawlers read it. */
 export const fetchPublicGameProfileHeader = cache(async (game: CanonicalGameId, username: string, region: Region) => {
   const profile = await resolvePublicProfile(game, username, region);
   const reserved = await GAME_SERVER_MODULES[game].reserved?.snapshot(username, region);

@@ -18,7 +18,7 @@ afterEach(() => vi.unstubAllEnvs());
 
 it("shows a visitor the snapshot owner's plays in the snapshot's region, when the owner shares them", async () => {
   await expect(resolvePlaysOwner("maimai", { snapshotId: "snapshot" }, "daily-plays")).resolves.toEqual({ userId: "owner", region: "jp" });
-  expect(mocks.access).toHaveBeenCalledWith("maimai", "snapshot", { capability: "daily-plays", view: "recentPlays" });
+  expect(mocks.access).toHaveBeenCalledWith("maimai", "snapshot", { capability: "daily-plays", view: "recentPlays", viewerId: "viewer" });
 });
 
 it("shows the owner their own snapshot's plays without a published profile", async () => {
@@ -30,7 +30,13 @@ it("shows the owner their own snapshot's plays without a published profile", asy
 
 it("checks a visitor's snapshot in the game the image is for", async () => {
   await resolvePlaysOwner("chunithm", { snapshotId: "snapshot" }, "daily-plays");
-  expect(mocks.access).toHaveBeenCalledWith("chunithm", "snapshot", { capability: "daily-plays", view: "recentPlays" });
+  expect(mocks.access).toHaveBeenCalledWith("chunithm", "snapshot", { capability: "daily-plays", view: "recentPlays", viewerId: "viewer" });
+});
+
+it("checks a signed-out visitor's access without a viewer", async () => {
+  mocks.session.mockResolvedValueOnce(null);
+  await expect(resolvePlaysOwner("maimai", { snapshotId: "snapshot" }, "daily-plays")).resolves.toEqual({ userId: "owner", region: "jp" });
+  expect(mocks.access).toHaveBeenCalledWith("maimai", "snapshot", { capability: "daily-plays", view: "recentPlays", viewerId: undefined });
 });
 
 it("answers 404 for a snapshot a visitor may not see", async () => {

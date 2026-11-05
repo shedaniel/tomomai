@@ -19,6 +19,8 @@ interface ProfilePageProps {
   initialTab?: string;
   flags: Flags;
   isOwner: boolean;
+  /** The visitor sees this profile only because its owner shares it with in-game friends. */
+  friendView?: boolean;
 }
 
 export function ProfilePage({
@@ -29,6 +31,7 @@ export function ProfilePage({
   initialTab,
   flags,
   isOwner,
+  friendView = false,
 }: ProfilePageProps) {
   const game = getCurrentGame();
 
@@ -50,6 +53,7 @@ export function ProfilePage({
             gameVersion: snapshotData.snapshot.gameVersion,
           } : null}
           profileUsername={username}
+          friendView={friendView}
         />
 
         <Suspense>
@@ -69,7 +73,7 @@ export function ProfilePage({
             profileDescription={profileData.profileDescription}
             profileUsername={username}
             profileUserId={profileData.id}
-            publishProfile={profileData.publishProfile}
+            profileVisibility={friendView ? "friends" : "public"}
             isOwner={isOwner}
             initialTab={initialTab}
             visitedBySelf={false}

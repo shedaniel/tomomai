@@ -137,7 +137,7 @@ export async function prepareDailyPlays(
   }
 
   const userRow = await db
-    .select({ username: user.username, publishProfile: user.publishProfile })
+    .select({ username: user.username, profileVisibility: user.profileVisibility })
     .from(user)
     .where(eq(user.id, userId))
     .limit(1);
@@ -154,7 +154,7 @@ export async function prepareDailyPlays(
     day,
     plays,
     snapshot,
-    visitableProfileAt: userRow[0].publishProfile && userRow[0].username ? userRow[0].username : null,
+    visitableProfileAt: userRow[0].profileVisibility === "public" && userRow[0].username ? userRow[0].username : null,
   };
 }
 

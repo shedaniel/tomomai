@@ -18,7 +18,7 @@ function createSubmitDependencies(
   return {
     findTarget: vi.fn().mockResolvedValue({
       id: "target-user",
-      publishProfile: true,
+      profileVisibility: "public",
       profileDescription: "Reported **description**",
     }),
     checkRateLimit: vi.fn().mockResolvedValue({ limited: false }),
@@ -85,8 +85,8 @@ describe("submitProfileReport", () => {
 
   it.each([
     null,
-    { id: "target-user", publishProfile: false, profileDescription: "hidden" },
-    { id: "target-user", publishProfile: true, profileDescription: null },
+    { id: "target-user", profileVisibility: "friends", profileDescription: "hidden" },
+    { id: "target-user", profileVisibility: "public", profileDescription: null },
   ])("rejects missing or unpublished descriptions", async (target) => {
     const dependencies = createSubmitDependencies({
       findTarget: vi.fn().mockResolvedValue(target),
@@ -106,7 +106,7 @@ describe("submitProfileReport", () => {
     const dependencies = createSubmitDependencies({
       findTarget: vi.fn().mockResolvedValue({
         id: "reporter-user",
-        publishProfile: true,
+        profileVisibility: "public",
         profileDescription: "description",
       }),
     });

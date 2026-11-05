@@ -12,6 +12,9 @@ import { z } from 'zod';
 import { fetchProfileSettings, fetchUserData } from '@/server/queries/profile';
 import { saveGamePreference } from '@/server/queries/game-preferences';
 import { profileDescriptionInputSchema } from '@/lib/profile-description';
+import { PROFILE_AUDIENCES } from '@/lib/profile-audience';
+
+const profileAudienceSchema = z.enum(PROFILE_AUDIENCES);
 
 // Region choices are offered from the served game's regions, so they are validated against the same list.
 function requireGameRegion(game: FrontendGame, region: Region): void {
@@ -60,15 +63,15 @@ export const profileRouter = router({
       return { success: true };
     }),
 
-  updatePublishProfile: protectedProcedure
+  updateProfileVisibility: protectedProcedure
     .input(z.object({
-      publishProfile: z.boolean(),
+      profileVisibility: profileAudienceSchema,
     }))
     .mutation(async ({ ctx, input }) => {
       await db
         .update(user)
         .set({
-          publishProfile: input.publishProfile,
+          profileVisibility: input.profileVisibility,
           updatedAt: new Date(),
         })
         .where(eq(user.id, ctx.session.user.id));
@@ -103,11 +106,12 @@ export const profileRouter = router({
 
   updateProfilePrivacySettings: protectedProcedure
     .input(z.object({
-      profileShowAllScores: z.boolean(),
-      profileShowScoreDetails: z.boolean(),
-      profileShowPlates: z.boolean(),
-      profileShowPlayCounts: z.boolean(),
-      profileShowEvents: z.boolean(),
+      profileVisibility: profileAudienceSchema,
+      profileAllScoresAudience: profileAudienceSchema,
+      profileScoreDetailsAudience: profileAudienceSchema,
+      profilePlatesAudience: profileAudienceSchema,
+      profilePlayCountsAudience: profileAudienceSchema,
+      profileEventsAudience: profileAudienceSchema,
       profileShowInSearch: z.boolean(),
     }))
     .mutation(async ({ ctx, input }) => {

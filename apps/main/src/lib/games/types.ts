@@ -35,6 +35,7 @@ export const GAME_CAPABILITIES = [
   "community-banner",
   "discord-bot",
   "last-credit",
+  "friends",
 ] as const;
 export type GameCapability = (typeof GAME_CAPABILITIES)[number];
 

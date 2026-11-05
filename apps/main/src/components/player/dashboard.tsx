@@ -283,9 +283,9 @@ export function Dashboard({ user, initialUserData, initialRegion, initialSnapsho
           region={selectedRegion}
           selectedSnapshotData={selectedSnapshotData || null}
           isLoading={isLoadingSnapshots}
-          visitableProfileAt={userData?.publishProfile ? userData?.username : null}
+          visitableProfileAt={userData && userData.profileVisibility !== "private" ? userData.username : null}
           profileUsername={userData?.username}
-          publishProfile={userData?.publishProfile}
+          profileVisibility={userData?.profileVisibility}
           isOwner={true}
           visitedBySelf={true}
           flags={flags}
@@ -317,7 +317,7 @@ export function Dashboard({ user, initialUserData, initialRegion, initialSnapsho
         onComplete={handleUsernameSetupComplete}
         initialRegion={selectedRegion}
         initialUsername={userData?.username}
-        initialPublishProfile={userData?.publishProfile}
+        initialPublishProfile={userData ? userData.profileVisibility === "public" : undefined}
       />
 
       <AboutDialog open={dialogType === "about"} onOpenChange={open => setDialogType(open ? "about" : null)} />

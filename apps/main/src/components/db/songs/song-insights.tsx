@@ -3,6 +3,7 @@
 import { createContext, useContext } from "react";
 import type { Region } from "@/lib/games/ids";
 import type { RatingStanding } from "@/lib/games/rating-standing";
+import type { FriendSongScores } from "@/server/services/friends/view";
 import type { ScoreHistoryPoint } from "./score-history-chart";
 import type { SongExtendedIdentified, UserScore } from "./types";
 
@@ -11,6 +12,7 @@ export type SongInsights = {
   standings: Partial<Record<Region, RatingStanding>>;
   history: Partial<Record<Region, Record<string, ScoreHistoryPoint[]>>>;
   regionCharts: Partial<Record<Region, { chart: SongExtendedIdentified; score?: UserScore }[]>>;
+  friends: readonly FriendSongScores[];
 };
 
 export const SongInsightsContext = createContext<SongInsights | null>(null);

@@ -280,6 +280,10 @@
       "applications": {
         "title": "應用程式",
         "description": "已授權存取你帳戶的 OAuth 應用程式。"
+      },
+      "friends": {
+        "title": "好友",
+        "description": "同樣使用 {brand} 的遊戲內好友，匯入資料時會自動找到。"
       }
     },
     "language": {
@@ -369,6 +373,22 @@
         "description": "你可以與他人分享的公開個人檔案連結。",
         "copied": "個人檔案網址已複製到剪貼簿！",
         "copyFailed": "複製網址到剪貼簿失敗"
+      },
+      "visibility": {
+        "label": "誰可以查看你的個人檔案",
+        "description": "匯入資料時，會從你的 {game} 好友名單自動配對遊戲內好友。",
+        "private": {
+          "label": "只有我",
+          "description": "其他人無法開啟你的個人檔案"
+        },
+        "friends": {
+          "label": "僅限好友",
+          "description": "已配對的好友可以開啟"
+        },
+        "public": {
+          "label": "所有人",
+          "description": "任何擁有連結的人都可以開啟"
+        }
       }
     },
     "saveChanges": "儲存變更",
@@ -670,6 +690,32 @@
       "revokeSuccess": "已撤銷存取權",
       "revokeError": "撤銷存取權失敗"
     },
+    "friends": {
+      "matching": {
+        "label": "尋找我的遊戲內好友",
+        "description": "每次匯入資料時會讀取你的 {game} 好友名單，每日最多一次。好友代碼不會顯示給任何人。"
+      },
+      "listTitle": "{count, plural, =0 {好友} other {# 位好友}}",
+      "lastSynced": "好友名單讀取於 {date}",
+      "off": "好友功能已關閉。開啟後就能看到哪些遊戲內好友也在使用 {brand}。",
+      "notSynced": "匯入成績後便能找到你的好友。好友名單會從 {game} 官方網站讀取。",
+      "empty": "你的遊戲內好友還沒有人使用 {brand}。",
+      "notShared": "未分享個人檔案",
+      "hide": "隱藏",
+      "hideTitle": "要隱藏 {name} 嗎？",
+      "hideDescription": "即使你們在遊戲內仍是好友，在 {brand} 上也不會再是好友。對方不會收到通知，你之後也可以取消隱藏。",
+      "hidden": {
+        "title": "已隱藏",
+        "description": "你隱藏的用戶。他們無法查看你只分享給好友的個人檔案。"
+      },
+      "unhide": "取消隱藏",
+      "error": "無法更新好友，請再試一次。",
+      "disable": {
+        "title": "要關閉好友功能嗎？",
+        "description": "已儲存的好友名單會被刪除，你亦會從所有人的好友中移除。重新開啟後，下次匯入資料時會再次找到他們。",
+        "confirm": "關閉"
+      }
+    },
     "unsaved": {
       "bar": "你有未儲存的更改",
       "title": "要不儲存就離開嗎？",
@@ -688,6 +734,8 @@
     "fetchingData": "匯入資料中……",
     "lastUpdate": "最後更新",
     "noDataInstructions": "此區域沒有任何資料。點擊「匯入新資料」以匯入你的 {game} 成績。",
+    "friendView": "僅限好友",
+    "friendViewHint": "只分享給遊戲內好友",
     "deleteSnapshot": "刪除所選快照",
     "moreOptions": "更多選項"
   },
@@ -717,8 +765,11 @@
   "profileVisibility": {
     "public": "公開個人檔案",
     "private": "私人個人檔案",
+    "friends": "好友限定個人檔案",
     "accessibleBy": "可透過 ",
     "accessibleByEnd": " 存取！",
+    "friendsAccessibleBy": "遊戲內好友可透過 ",
+    "friendsAccessibleByEnd": " 查看。",
     "youMayChangePrivacySettings": "你可以在右上角圖示 → 設定 → 公開個人檔案 中變更私隱設定。",
     "onlyAccessibleByYou": "只有你可以查看！你可以在右上角圖示 → 設定 → 公開個人檔案 中變更私隱設定。"
   },
@@ -1141,7 +1192,7 @@
   "onboarding": {
     "step1": {
       "title": "設定用戶名稱",
-      "publishToggleLabel": "與朋友分享我的個人檔案",
+      "publishToggleLabel": "公開我的個人檔案",
       "publishToggleDescription": "讓其他人透過公開連結查看你的成績。預設為關閉，你可以隨時更改。",
       "publicUrlHint": "你的公開個人檔案："
     },
@@ -1326,6 +1377,13 @@
           "artist": "{artist} 的更多歌曲",
           "designer": "{designer} 的其他譜面",
           "level": "{difficulty} {level} 左右"
+        },
+        "friends": {
+          "title": "好友",
+          "ranking": "好友排行"
+        },
+        "sections": {
+          "friends": "好友"
         }
       },
       "filter": {
@@ -1706,6 +1764,7 @@
     "showAllSongs": "在資料庫查看全部 {count} 首歌曲",
     "groups": {
       "recent": "最近",
+      "friends": "好友",
       "songs": "歌曲",
       "pages": "頁面",
       "actions": "操作",
@@ -1748,7 +1807,8 @@
     },
     "preview": {
       "yourScores": "你的最佳成績",
-      "rating": "Rating {rating}"
+      "rating": "Rating {rating}",
+      "friend": "遊戲內好友"
     },
     "playersHint": "輸入用戶名稱或遊戲內名稱來尋找玩家",
     "charts": {
@@ -1766,6 +1826,7 @@
       "filters": "你未 FC 的 13+ 譜面",
       "random": "隨機一首 13+ 譜面",
       "calculator": "13.7 在這個成績下的 Rating"
-    }
+    },
+    "friend": "好友"
   }
 }

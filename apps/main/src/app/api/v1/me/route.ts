@@ -16,7 +16,8 @@ export const GET = withApiKey(spec, async (_req, key) => {
     username: userData.username,
     image: userData.image,
     region: getGameRegion(game, userData.region),
-    publishProfile: userData.publishProfile,
+    publishProfile: userData.profileVisibility === "public",
+    profileVisibility: userData.profileVisibility,
     role: userData.role,
   });
 });

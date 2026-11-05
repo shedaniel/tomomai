@@ -45,7 +45,7 @@ export async function buildExportImageMessage({ snapshotId, scale, ttlSeconds }:
   if (!row) return { ok: false, status: 404, error: "Snapshot not found" };
 
   const [[owner], rankings] = await Promise.all([
-    db.select({ username: user.username, publishProfile: user.publishProfile }).from(user).where(eq(user.id, row.userId)).limit(1),
+    db.select({ username: user.username, profileVisibility: user.profileVisibility }).from(user).where(eq(user.id, row.userId)).limit(1),
     fetchSnapshotRankings("chunithm", row.userId, row.snapshot),
   ]);
   if (!owner) return { ok: false, status: 404, error: "User not found" };
@@ -57,7 +57,7 @@ export async function buildExportImageMessage({ snapshotId, scale, ttlSeconds }:
       route: "export-image",
       header: renderHeader(row.snapshot, row.region, scale, renderTokenExpiry(ttlSeconds)),
       payload: {
-        visitableProfileAt: owner.publishProfile && owner.username ? owner.username : null,
+        visitableProfileAt: owner.profileVisibility === "public" && owner.username ? owner.username : null,
         newCharts: rankings.newScores.map(chartRecord),
         oldCharts: rankings.oldScores.map(chartRecord),
       },

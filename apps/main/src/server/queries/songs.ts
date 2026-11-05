@@ -110,6 +110,35 @@ function songFilter({ game, songName, type, artist, parentIds }: SongQuery) {
   );
 }
 
+/** Several users' best scores on one song's charts, from each user's latest snapshot in every region. */
+export async function querySongScoresOf({ userIds, ...song }: SongQuery & { userIds: string[] }) {
+  if (userIds.length === 0) return [];
+  const { game } = song;
+  const latest = db
+    .selectDistinctOn([userSnapshots.userId, userSnapshots.region], { id: userSnapshots.id })
+    .from(userSnapshots)
+    .where(and(eq(userSnapshots.game, game), inArray(userSnapshots.userId, userIds)))
+    .orderBy(userSnapshots.userId, userSnapshots.region, desc(userSnapshots.fetchedAt));
+  return db
+    .select({
+      userId: userSnapshots.userId,
+      region: userSnapshots.region,
+      displayName: userSnapshots.displayName,
+      iconUrl: userSnapshots.iconUrl,
+      difficulty: sql`${parentSong.difficulty}`.mapWith(value => keyOf(game, "difficulty", Number(value))).as("difficulty"),
+      scoreValue: scoreData.scoreValue,
+      comboStatus: scoreData.comboStatus,
+      syncStatus: scoreData.syncStatus,
+      clearStatus: scoreData.clearStatus,
+    })
+    .from(snapshotScores)
+    .innerJoin(userSnapshots, eq(snapshotScores.snapshotId, userSnapshots.id))
+    .innerJoin(scoreData, eq(snapshotScores.scoreId, scoreData.id))
+    .innerJoin(songs, eq(scoreData.songId, songs.id))
+    .innerJoin(parentSong, eq(songs.parentId, parentSong.id))
+    .where(and(songFilter(song), inArray(snapshotScores.snapshotId, latest)));
+}
+
 /**
  * The viewer's own record of one song: each chart's best score whenever it changed between snapshots, the song's
  * latest plays and the arcade photos taken of it.

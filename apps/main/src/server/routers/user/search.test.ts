@@ -33,7 +33,7 @@ describe("searchPlayers", () => {
 
     expect(results).toEqual([{ username: "shedaniel", image: null, displayName: "ＳＨＥＤ", rating: 1700000, iconUrl: "https://example.test/icon.png" }]);
     const [byUsername] = proxy.queries;
-    expect(byUsername.sql).toContain('"user"."publishProfile" =');
+    expect(byUsername.sql).toContain('"user"."profileVisibility" =');
     expect(byUsername.sql).toContain('"user"."profileShowInSearch" =');
     expect(byUsername.params).toContain("%she\\_d%");
   });

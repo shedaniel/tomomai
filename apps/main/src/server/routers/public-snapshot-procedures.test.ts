@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { NextRequest } from "next/server";
 import type { ProfilePrivacySettings } from "@/lib/types";
 import type { ProxyRow } from "@/test/pg-proxy";
+import { PROFILE_PART_AUDIENCES, type ProfileAudience } from "@/lib/profile-audience";
 
 type Privacy = Pick<ProfilePrivacySettings, "profileShowAllScores" | "profileShowScoreDetails" | "profileShowPlates" | "profileShowPlayCounts" | "profileShowEvents">;
 const SHARED: Privacy = { profileShowAllScores: true, profileShowScoreDetails: true, profileShowPlates: true, profileShowPlayCounts: true, profileShowEvents: true };
@@ -13,27 +14,40 @@ vi.mock("@/lib/logger", async (importOriginal) => ({
   logger: { child: () => ({ info: vi.fn(), warn: vi.fn(), error: vi.fn() }), error: vi.fn() },
 }));
 vi.mock("@/lib/db", () => ({ db: proxy.db }));
+const friends = vi.hoisted(() => ({ areFriends: vi.fn() }));
+vi.mock("@/server/services/friends/queries", () => friends);
 
-import { router } from "@/lib/trpc";
+import { router, type Context } from "@/lib/trpc";
 import { statsRouter } from "./user/stats";
 import { recentsRouter } from "./user/recents";
 import { platesRouter } from "./maimai/plates";
 import { dailyPlaysRouter } from "./user/daily-plays";
 import { creditsRouter } from "./maimai/credits";
 
-const caller = router({
+const routes = router({
   stats: statsRouter.getPublicPlayerStats,
   recents: recentsRouter.getPublicRecentSongs,
   plates: platesRouter.getPublicPlateSongs,
   days: dailyPlaysRouter.getPublicAvailableDays,
   credits: creditsRouter.getPublicCredits,
   credit: creditsRouter.getPublicCredit,
-}).createCaller({ session: null, req: new NextRequest("http://localhost/api/trpc") });
+});
+const caller = routes.createCaller({ session: null, req: new NextRequest("http://localhost/api/trpc") });
+const friendCaller = routes.createCaller({
+  session: { user: { id: "friend" } } as unknown as Context["session"],
+  req: new NextRequest("http://localhost/api/trpc"),
+});
 
 const stored = { snapshot: null as ProxyRow | null, scores: [] as ProxyRow[], catalog: [] as ProxyRow[] };
 
-function publish(privacy: Partial<Privacy> = {}, region = "jp") {
-  stored.snapshot = { userId: "owner", snapshotInternalId: 41, gameVersion: 13, region, privacy: { ...SHARED, ...privacy } };
+type Owner = { profileVisibility: ProfileAudience; profileShowInSearch: boolean };
+const PUBLIC: Owner = { profileVisibility: "public", profileShowInSearch: true };
+
+/** Stores a snapshot whose owner shares each part with everyone, or with no one where `privacy` turns it off. */
+function publish(privacy: Partial<Privacy> = {}, region = "jp", owner: Owner = PUBLIC) {
+  const shared = { ...SHARED, ...privacy };
+  const audiences = Object.fromEntries(Object.entries(PROFILE_PART_AUDIENCES).map(([part, key]) => [key, shared[part as keyof Privacy] ? "public" : "private"]));
+  stored.snapshot = { userId: "owner", snapshotInternalId: 41, gameVersion: 13, region, ...audiences, ...owner };
 }
 
 /** The queries after the access check, which is always the first one. */
@@ -43,6 +57,7 @@ function dataQueries() {
 
 beforeEach(() => {
   proxy.reset();
+  friends.areFriends.mockReset().mockResolvedValue(false);
   Object.assign(stored, { snapshot: null, scores: [], catalog: [] });
   // The snapshot's scores answer only a read of its id, and the catalog only a read of the game's catalog in its region and version.
   proxy.answer(({ sql, table, params }) => {
@@ -58,15 +73,40 @@ beforeEach(() => {
 afterEach(() => vi.unstubAllEnvs());
 
 describe("public snapshot access", () => {
-  // A fake cannot evaluate the owner's profile flags, so the access query itself is the contract.
-  it("reads only a snapshot of the game whose owner publishes their profile, listed or not", async () => {
+  it("reads only a snapshot of the game", async () => {
     publish();
     await caller.days({ game: "maimai", snapshotId: "snapshot" });
     const [access] = proxy.queries;
     expect(access.sql).toContain('"user_snapshots"."game" = $1');
-    expect(access.sql).toContain('"user"."publishProfile" = $3');
-    expect(access.sql).not.toContain("profileShowInSearch");
-    expect(access.params).toEqual(["maimai", "snapshot", true, 1]);
+    expect(access.params).toEqual(["maimai", "snapshot", 1]);
+  });
+
+  it("hides a private profile's snapshot from visitors", async () => {
+    publish({}, "jp", { ...PUBLIC, profileVisibility: "private" });
+    await expect(caller.days({ game: "maimai", snapshotId: "snapshot" })).rejects.toMatchObject({ code: "NOT_FOUND" });
+    expect(dataQueries()).toEqual([]);
+  });
+
+  it("serves an unlisted profile's snapshot, which only search and the sitemap leave out", async () => {
+    publish({}, "jp", { ...PUBLIC, profileShowInSearch: false });
+    await expect(caller.days({ game: "maimai", snapshotId: "snapshot" })).resolves.toBeDefined();
+  });
+
+  it("opens a friends-only profile only for a matched friend", async () => {
+    publish({}, "jp", { ...PUBLIC, profileVisibility: "friends" });
+    await expect(caller.days({ game: "maimai", snapshotId: "snapshot" })).rejects.toMatchObject({ code: "NOT_FOUND" });
+    await expect(friendCaller.days({ game: "maimai", snapshotId: "snapshot" })).rejects.toMatchObject({ code: "NOT_FOUND" });
+    expect(friends.areFriends).toHaveBeenLastCalledWith("maimai", "friend", "owner");
+
+    friends.areFriends.mockResolvedValue(true);
+    await expect(friendCaller.days({ game: "maimai", snapshotId: "snapshot" })).resolves.toBeDefined();
+  });
+
+  it("never opens a private profile, even for a friend", async () => {
+    publish({}, "jp", { ...PUBLIC, profileVisibility: "private" });
+    friends.areFriends.mockResolvedValue(true);
+    await expect(friendCaller.days({ game: "maimai", snapshotId: "snapshot" })).rejects.toMatchObject({ code: "NOT_FOUND" });
+    expect(friends.areFriends).not.toHaveBeenCalled();
   });
 
   it("answers NOT_FOUND for a missing or unpublished snapshot without reading any data", async () => {

@@ -5,6 +5,7 @@ import { supportsGameFeature } from "@/lib/games/frontend";
 import type { GameSnapshotData } from "@/lib/games/player-view";
 import { PUBLIC_VIEWS } from "@/lib/games/public-player";
 import type { ProfilePrivacySettings } from "@/lib/types";
+import type { ProfileAudience } from "@/lib/profile-audience";
 import type { Region } from "@/lib/games/ids";
 import { Sidebar, SidebarItem } from "@tomomai/ui";
 import { Database, Loader2 } from "lucide-react";
@@ -37,7 +38,7 @@ interface DataContentProps {
   profileDescription?: string | null;
   profileUsername?: string | null;
   profileUserId?: string | null;
-  publishProfile?: boolean;
+  profileVisibility?: ProfileAudience;
   isOwner?: boolean;
   initialTab?: string;
   visitedBySelf: boolean;
@@ -52,7 +53,7 @@ export function DataContent({
   profileDescription,
   profileUsername,
   profileUserId,
-  publishProfile,
+  profileVisibility,
   isOwner = false,
   initialTab,
   visitedBySelf,
@@ -64,7 +65,8 @@ export function DataContent({
   const searchParams = useSearchParams();
   const isDesktop = useMediaQuery("(min-width: 768px)", { initializeWithValue: false });
   const [localPrivacySettings, setLocalPrivacySettings] = useState(privacySettings);
-  const [localPublishProfile, setLocalPublishProfile] = useState(publishProfile ?? !!visitableProfileAt);
+  const initialVisibility = profileVisibility ?? (visitableProfileAt ? "public" : "private");
+  const [localProfileVisibility, setLocalProfileVisibility] = useState<ProfileAudience>(initialVisibility);
   const [localProfileDescription, setLocalProfileDescription] = useState(profileDescription ?? null);
   const [descriptionDraft, setDescriptionDraft] = useState(profileDescription ?? "");
   const [isDescriptionEditing, setIsDescriptionEditing] = useState(false);
@@ -74,8 +76,8 @@ export function DataContent({
   }, [privacySettings]);
 
   useEffect(() => {
-    setLocalPublishProfile(publishProfile ?? !!visitableProfileAt);
-  }, [publishProfile, visitableProfileAt]);
+    setLocalProfileVisibility(initialVisibility);
+  }, [initialVisibility]);
 
   useEffect(() => {
     setLocalProfileDescription(profileDescription ?? null);
@@ -83,7 +85,7 @@ export function DataContent({
   }, [profileDescription, isDescriptionEditing]);
 
   const effectiveProfileUsername = profileUsername ?? visitableProfileAt;
-  const effectiveVisitableProfileAt = localPublishProfile ? effectiveProfileUsername : null;
+  const effectiveVisitableProfileAt = localProfileVisibility !== "private" ? effectiveProfileUsername : null;
 
   // SSR passes initialTab, and a client navigation only has the search params.
   const getInitialTab = (): PlayerTabId => {
@@ -156,14 +158,14 @@ export function DataContent({
     profileDescription: localProfileDescription,
     profileUserId,
     isOwner,
-    publishProfile: localPublishProfile,
+    profileVisibility: localProfileVisibility,
     descriptionDraft,
     isDescriptionEditing,
     onDescriptionDraftChange: setDescriptionDraft,
     onDescriptionEditingChange: setIsDescriptionEditing,
     onProfileDescriptionChange: setLocalProfileDescription,
     onPrivacySettingsChange: setLocalPrivacySettings,
-    onPublishProfileChange: setLocalPublishProfile,
+    onProfileVisibilityChange: setLocalProfileVisibility,
   };
 
   if (isLoading) {
