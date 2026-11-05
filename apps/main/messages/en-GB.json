@@ -1344,6 +1344,13 @@
           "artist": "More by {artist}",
           "designer": "Also charted by {designer}",
           "level": "Around {difficulty} {level}"
+        },
+        "friends": {
+          "title": "Friends",
+          "ranking": "Among your friends"
+        },
+        "sections": {
+          "friends": "Friends"
         }
       },
       "filter": {
@@ -1754,6 +1761,7 @@
     "showAllSongs": "Show all {count} songs in the database",
     "groups": {
       "recent": "Recent",
+      "friends": "Friends",
       "songs": "Songs",
       "pages": "Pages",
       "actions": "Actions",
@@ -1796,7 +1804,8 @@
     },
     "preview": {
       "yourScores": "Your best scores",
-      "rating": "Rating {rating}"
+      "rating": "Rating {rating}",
+      "friend": "In-game friend"
     },
     "playersHint": "Type a username or in-game name to find players",
     "charts": {
@@ -1814,6 +1823,7 @@
       "filters": "Your 13+ charts without a full combo",
       "random": "A random 13+ chart",
       "calculator": "The rating of a 13.7 at this score"
-    }
+    },
+    "friend": "Friend"
   }
 }

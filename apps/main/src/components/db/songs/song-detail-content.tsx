@@ -15,6 +15,7 @@ import { SongInsightsContext, scoreMonthAgo, useSongInsights, type SongInsights 
 import { ConstantHistoryChart } from "./constant-history-chart";
 import { RelatedSongs } from "./related-songs";
 import { SongPhotos, SongRecentPlays } from "./song-activity";
+import { SongFriends } from "./song-friends";
 import { isGameCnExclusive, supportsGameFeature } from "@/lib/games/frontend";
 import { getGame } from "@/lib/games/registry";
 import { getVersion } from "@/lib/games/versions";
@@ -332,6 +333,7 @@ export function SongDetailContent({ songName, artist, slug, type, parentIds, ini
     void utils.user.getSongScores.reset();
     void utils.user.getSongRatingStanding.reset();
     void utils.user.getSongActivity.reset();
+    void utils.user.getSongFriendScores.reset();
   }, [utils, viewerId]);
   const {
     data: fetchedData,
@@ -356,6 +358,11 @@ export function SongDetailContent({ songName, artist, slug, type, parentIds, ini
     { enabled: viewerId !== null && supportsGameFeature(game, "scores"), staleTime: 60000, retry: false },
   );
   const activity = viewerId !== null ? activityData : undefined;
+  const { data: friendScoresData } = trpc.user.getSongFriendScores.useQuery(
+    { game: game.id, songName, artist: artist ?? initialData?.artist ?? fetchedData?.artist, type, parentIds: parentIds ?? initialData?.parentIds },
+    { enabled: viewerId !== null && supportsGameFeature(game, "friends"), staleTime: 60000, retry: false },
+  );
+  const friendScores = viewerId !== null ? friendScoresData : undefined;
   const data = useMemo(() => {
     if (!initialData) return fetchedData;
     return {
@@ -380,8 +387,8 @@ export function SongDetailContent({ songName, artist, slug, type, parentIds, ini
     for (const chart of allCharts) {
       (regionCharts[chart.region] ??= []).push({ chart, score: data?.userScores?.[chart.region]?.[chart.difficulty] });
     }
-    return { standings: standings ?? {}, history: activity?.history ?? {}, regionCharts };
-  }, [allCharts, data?.userScores, standings, activity?.history]);
+    return { standings: standings ?? {}, history: activity?.history ?? {}, regionCharts, friends: friendScores ?? [] };
+  }, [allCharts, data?.userScores, standings, activity?.history, friendScores]);
 
   // Pre-compute SEO summary inputs (visible prose paragraph below the header).
   const summary = useMemo(() => {
@@ -599,6 +606,7 @@ export function SongDetailContent({ songName, artist, slug, type, parentIds, ini
         </div>
       )}
 
+      {friendScores && <SongFriends friends={friendScores} difficulties={[...chartsByDifficulty.keys()]} showRegion={data.regions.length > 1} />}
       {activity && <SongRecentPlays plays={activity.recentPlays} showRegion={data.regions.length > 1} />}
       {activity && <SongPhotos photos={activity.albums} />}
 

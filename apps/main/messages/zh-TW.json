@@ -1374,6 +1374,13 @@
           "artist": "{artist} 的更多歌曲",
           "designer": "{designer} 的其他譜面",
           "level": "{difficulty} {level} 左右"
+        },
+        "friends": {
+          "title": "好友",
+          "ranking": "好友排行"
+        },
+        "sections": {
+          "friends": "好友"
         }
       },
       "filter": {
@@ -1754,6 +1761,7 @@
     "showAllSongs": "在資料庫查看全部 {count} 首歌曲",
     "groups": {
       "recent": "最近",
+      "friends": "好友",
       "songs": "歌曲",
       "pages": "頁面",
       "actions": "操作",
@@ -1796,7 +1804,8 @@
     },
     "preview": {
       "yourScores": "你的最佳成績",
-      "rating": "Rating {rating}"
+      "rating": "Rating {rating}",
+      "friend": "遊戲內好友"
     },
     "playersHint": "輸入使用者名稱或遊戲內名稱來尋找玩家",
     "charts": {
@@ -1814,6 +1823,7 @@
       "filters": "你未 FC 的 13+ 譜面",
       "random": "隨機一首 13+ 譜面",
       "calculator": "13.7 在這個成績下的 Rating"
-    }
+    },
+    "friend": "好友"
   }
 }

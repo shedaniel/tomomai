@@ -15,7 +15,7 @@ import { z } from 'zod';
 import { queryAllUniqueSongs, querySongActivity, querySongDetails, querySongRatingStanding, querySongScores } from '@/server/queries/songs';
 
 // Declares the game again so the chart type can be checked against it.
-const songInputSchema = z.object({
+export const songInputSchema = z.object({
   game: gameIdSchema,
   songName: z.string(),
   artist: z.string().optional(),

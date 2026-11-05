@@ -1078,6 +1078,13 @@
           "artist": "{artist}의 다른 곡",
           "designer": "{designer}의 다른 채보",
           "level": "{difficulty} {level} 전후"
+        },
+        "friends": {
+          "title": "친구",
+          "ranking": "친구 순위"
+        },
+        "sections": {
+          "friends": "친구"
         }
       },
       "filter": {
@@ -1482,6 +1489,7 @@
     "showAllSongs": "데이터베이스에서 곡 {count}개 모두 보기",
     "groups": {
       "recent": "최근",
+      "friends": "친구",
       "songs": "곡",
       "pages": "페이지",
       "actions": "작업",
@@ -1524,7 +1532,8 @@
     },
     "preview": {
       "yourScores": "내 최고 점수",
-      "rating": "Rating {rating}"
+      "rating": "Rating {rating}",
+      "friend": "게임 내 친구"
     },
     "playersHint": "사용자 이름이나 게임 내 이름을 입력해 플레이어 찾기",
     "charts": {
@@ -1542,6 +1551,7 @@
       "filters": "풀콤보하지 못한 13+ 채보",
       "random": "무작위 13+ 채보",
       "calculator": "13.7을 이 점수로 클리어했을 때의 레이팅"
-    }
+    },
+    "friend": "친구"
   }
 }

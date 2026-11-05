@@ -1374,6 +1374,13 @@
           "artist": "{artist}の他の曲",
           "designer": "{designer}の他の譜面",
           "level": "{difficulty} {level}前後"
+        },
+        "friends": {
+          "title": "フレンド",
+          "ranking": "フレンド内ランキング"
+        },
+        "sections": {
+          "friends": "フレンド"
         }
       },
       "filter": {
@@ -1754,6 +1761,7 @@
     "showAllSongs": "データベースで{count}曲すべてを表示",
     "groups": {
       "recent": "最近",
+      "friends": "フレンド",
       "songs": "曲",
       "pages": "ページ",
       "actions": "操作",
@@ -1796,7 +1804,8 @@
     },
     "preview": {
       "yourScores": "あなたのベストスコア",
-      "rating": "Rating {rating}"
+      "rating": "Rating {rating}",
+      "friend": "ゲーム内フレンド"
     },
     "playersHint": "ユーザー名またはプレイヤー名を入力してプレイヤーを探す",
     "charts": {
@@ -1814,6 +1823,7 @@
       "filters": "フルコンボしていない13+の譜面",
       "random": "13+の譜面をランダムに選ぶ",
       "calculator": "13.7をこのスコアで出したときのRating"
-    }
+    },
+    "friend": "フレンド"
   }
 }

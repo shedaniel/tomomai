@@ -50,6 +50,8 @@ export const userRouter = router({
 
   // Friends
   getFriends: friendsRouter.getFriends,
+  getFriendPlayers: friendsRouter.getFriendPlayers,
+  getSongFriendScores: friendsRouter.getSongFriendScores,
   setFriendsEnabled: friendsRouter.setFriendsEnabled,
   updateFriendSharing: friendsRouter.updateFriendSharing,
   hideFriend: friendsRouter.hideFriend,

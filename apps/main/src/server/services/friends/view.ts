@@ -5,6 +5,8 @@ import { friendHides, playerIdentities, user, userSnapshots } from "@/lib/db/sch
 import type { CanonicalGameId, Region } from "@/lib/games/ids";
 import { gamePreference } from "@/server/queries/game-preferences";
 import { latestSnapshot } from "@/server/queries/latest-snapshot";
+import { querySongScoresOf, type SongQuery } from "@/server/queries/songs";
+import type { UserScore } from "@/components/db/songs/types";
 import { findFriends } from "./queries";
 
 export type FriendPlayer = { region: Region; displayName: string; rating: number; iconUrl: string };
@@ -29,38 +31,43 @@ export type FriendsOverview = {
   hidden: HiddenFriend[];
 };
 
-export async function friendsOverview(game: CanonicalGameId, userId: string): Promise<FriendsOverview> {
-  const [[viewer], identities, matched, hidden] = await Promise.all([
-    db.select({ enabled: user.friendsEnabled }).from(user).where(eq(user.id, userId)).limit(1),
-    db.select({ region: playerIdentities.region, syncedAt: playerIdentities.friendsSyncedAt })
-      .from(playerIdentities)
-      .where(and(eq(playerIdentities.userId, userId), eq(playerIdentities.game, game))),
-    findFriends(game, userId),
-    db.select({ userId: user.id, username: user.username, name: user.name, image: user.image })
-      .from(friendHides)
-      .innerJoin(user, eq(user.id, friendHides.hiddenUserId))
-      .where(eq(friendHides.userId, userId))
-      .orderBy(desc(friendHides.createdAt)),
-  ]);
-
-  const rows = matched.size === 0 ? [] : await db
+async function readFriendRows(game: CanonicalGameId, ids: string[]) {
+  if (ids.length === 0) return [];
+  return db
     .select({
       userId: user.id,
       username: user.username,
       name: user.name,
       image: user.image,
       publishProfile: user.publishProfile,
-      profileShowInSearch: user.profileShowInSearch,
       profileShareWithFriends: user.profileShareWithFriends,
+      profileShowAllScores: user.profileShowAllScores,
+      profileShowScoreDetails: user.profileShowScoreDetails,
       mainRegion: gamePreference(game, "profileMainRegion"),
     })
     .from(user)
-    .where(inArray(user.id, [...matched.keys()]));
+    .where(inArray(user.id, ids));
+}
 
+type FriendRow = Awaited<ReturnType<typeof readFriendRows>>[number];
+
+/** Matches resolvePublicUserByUsername: a friend opens a published profile or one shared with friends. */
+function mayOpen(row: FriendRow): row is FriendRow & { username: string } {
+  return row.username !== null && (row.publishProfile || row.profileShareWithFriends);
+}
+
+function shownRegion(row: FriendRow, regions: Region[]): Region | undefined {
+  return row.mainRegion && regions.includes(row.mainRegion) ? row.mainRegion : regions[0];
+}
+
+/** The user's matched friends, highest rated first, each with a player only when the user may open their profile. */
+export async function listFriends(game: CanonicalGameId, userId: string): Promise<FriendEntry[]> {
+  const matched = await findFriends(game, userId);
+  const rows = await readFriendRows(game, [...matched.keys()]);
   const friends = await Promise.all(rows.map(async (row): Promise<FriendEntry> => {
     const regions = matched.get(row.userId) ?? [];
-    const visible = row.username !== null && ((row.publishProfile && row.profileShowInSearch) || row.profileShareWithFriends);
-    const region = row.mainRegion && regions.includes(row.mainRegion) ? row.mainRegion : regions[0];
+    const visible = mayOpen(row);
+    const region = shownRegion(row, regions);
     const snapshot = visible && region
       ? await latestSnapshot(game, row.userId, region, {
         displayName: userSnapshots.displayName,
@@ -77,7 +84,22 @@ export async function friendsOverview(game: CanonicalGameId, userId: string): Pr
       player: snapshot && region ? { region, ...snapshot } : null,
     };
   }));
-  friends.sort((a, b) => (b.player?.rating ?? -1) - (a.player?.rating ?? -1) || a.name.localeCompare(b.name));
+  return friends.sort((a, b) => (b.player?.rating ?? -1) - (a.player?.rating ?? -1) || a.name.localeCompare(b.name));
+}
+
+export async function friendsOverview(game: CanonicalGameId, userId: string): Promise<FriendsOverview> {
+  const [[viewer], identities, friends, hidden] = await Promise.all([
+    db.select({ enabled: user.friendsEnabled }).from(user).where(eq(user.id, userId)).limit(1),
+    db.select({ region: playerIdentities.region, syncedAt: playerIdentities.friendsSyncedAt })
+      .from(playerIdentities)
+      .where(and(eq(playerIdentities.userId, userId), eq(playerIdentities.game, game))),
+    listFriends(game, userId),
+    db.select({ userId: user.id, username: user.username, name: user.name, image: user.image })
+      .from(friendHides)
+      .innerJoin(user, eq(user.id, friendHides.hiddenUserId))
+      .where(eq(friendHides.userId, userId))
+      .orderBy(desc(friendHides.createdAt)),
+  ]);
 
   return {
     enabled: viewer?.enabled ?? false,
@@ -85,4 +107,48 @@ export async function friendsOverview(game: CanonicalGameId, userId: string): Pr
     friends,
     hidden,
   };
+}
+
+export type FriendSongScores = {
+  username: string;
+  name: string;
+  image: string | null;
+  region: Region;
+  displayName: string;
+  iconUrl: string;
+  /** Best score on each of the song's charts the friend has played, by difficulty. */
+  scores: Record<string, UserScore>;
+};
+
+/**
+ * Friends' best scores on one song, in each region the viewer is their friend in. A friend is included only when
+ * the viewer may open their profile and they share every score; statuses are cleared unless they share score details.
+ */
+export async function friendSongScores(game: CanonicalGameId, userId: string, song: Omit<SongQuery, "game">): Promise<FriendSongScores[]> {
+  const matched = await findFriends(game, userId);
+  const rows = (await readFriendRows(game, [...matched.keys()])).filter(row => mayOpen(row) && row.profileShowAllScores);
+  if (rows.length === 0) return [];
+
+  const scores = await querySongScoresOf({ ...song, game, userIds: rows.map(row => row.userId) });
+  const byUser = new Map(rows.map(row => [row.userId, row]));
+  const entries = new Map<string, FriendSongScores>();
+  for (const score of scores) {
+    const row = byUser.get(score.userId);
+    if (!row || !mayOpen(row) || !matched.get(score.userId)?.includes(score.region)) continue;
+    const key = `${score.userId}:${score.region}`;
+    const entry = entries.get(key) ?? {
+      username: row.username,
+      name: row.name,
+      image: row.image,
+      region: score.region,
+      displayName: score.displayName,
+      iconUrl: score.iconUrl,
+      scores: {},
+    };
+    entry.scores[score.difficulty] = row.profileShowScoreDetails
+      ? { scoreValue: score.scoreValue, comboStatus: score.comboStatus, syncStatus: score.syncStatus, clearStatus: score.clearStatus }
+      : { scoreValue: score.scoreValue, comboStatus: 0, syncStatus: 0, clearStatus: 0 };
+    entries.set(key, entry);
+  }
+  return [...entries.values()];
 }
