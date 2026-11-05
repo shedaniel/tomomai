@@ -325,7 +325,7 @@
           "description": "Nobody else can open your profile"
         },
         "friends": {
-          "label": "In-game friends",
+          "label": "Friends only",
           "description": "Friends you're matched with can open it"
         },
         "public": {

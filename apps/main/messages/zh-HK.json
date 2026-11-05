@@ -382,7 +382,7 @@
           "description": "其他人無法開啟你的個人檔案"
         },
         "friends": {
-          "label": "遊戲內好友",
+          "label": "僅限好友",
           "description": "已配對的好友可以開啟"
         },
         "public": {

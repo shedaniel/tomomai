@@ -315,7 +315,7 @@
           "description": "다른 사람은 프로필을 볼 수 없습니다"
         },
         "friends": {
-          "label": "게임 내 친구",
+          "label": "친구만",
           "description": "찾은 친구만 볼 수 있습니다"
         },
         "public": {

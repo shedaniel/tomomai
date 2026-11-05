@@ -334,7 +334,7 @@
           "description": "其他人无法打开你的主页"
         },
         "friends": {
-          "label": "游戏内好友",
+          "label": "仅限好友",
           "description": "已匹配的好友可以打开"
         },
         "public": {

@@ -382,7 +382,7 @@
           "description": "他の人はプロフィールを見られません"
         },
         "friends": {
-          "label": "ゲーム内フレンド",
+          "label": "フレンドのみ",
           "description": "見つかったフレンドだけが見られます"
         },
         "public": {
