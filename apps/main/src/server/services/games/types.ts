@@ -1,3 +1,4 @@
+import type { RenderMessage } from "@tomomai/render-token";
 import type { ProfileData } from "@/lib/types";
 import type { Region, CanonicalGameId } from "@/lib/games/ids";
 import type { Flags } from "@/lib/flags";
@@ -9,7 +10,9 @@ import type { CatalogStage } from "@/server/services/catalog/ingestion/runner";
 import type { GameEvent, GameSnapshotData } from "@/lib/games/player-view";
 import type { RecentPlayDetails } from "@/lib/games/recent-details";
 import type { FetchStartError } from "./fetch-errors";
+import type { RecommendationPeers } from "@/lib/games/recommendations";
 import type { FetchRun } from "./fetch-run";
+import type { GameSiteSession } from "./sega/http";
 
 export type ChartRef = GameRegionContext & {
   version: number;
@@ -60,7 +63,7 @@ export interface CatalogSource {
   levelPolicy: (version: number) => CatalogLevelPolicy;
   images: CatalogImagePolicy;
   /** Logs in with a player token for a region the definition's `catalogTokenRegions` lists, and returns the session cookies the source stages read the game site with. */
-  authenticate?: (region: Region, token: string) => Promise<string>;
+  authenticate?: (region: Region, token: string) => Promise<GameSiteSession>;
   /** Decodes an upload record in a retired format, which the upload contract then validates like any other. Returns undefined for a record in the current format. */
   parseLegacyRecord?: (input: unknown) => CatalogChart | undefined;
 }
@@ -110,6 +113,36 @@ export interface ReservedProfileProvider {
   snapshot: (username: string, region: Region) => Promise<GameSnapshotData | null>;
 }
 
+export type ImageMessageResult =
+  | { ok: true; message: RenderMessage }
+  | { ok: false; status: number; error: string };
+
+export type ExportImageRequest = {
+  snapshotId: string;
+  /** With `region`, names a demo profile whose snapshot is not stored. */
+  username?: string;
+  region?: Region;
+  scale: 1 | 2;
+  ttlSeconds?: number;
+};
+
+export type DailyPlaysImageRequest = {
+  userId: string;
+  region: Region;
+  /** "YYYY-MM-DD". The latest play day when left out. */
+  day?: string;
+  scale: 1 | 2;
+  ttlSeconds?: number;
+};
+
+/** Builds the signed messages of the game's images. Which of them a site serves is the game's capabilities. */
+export interface GameImageBuilders {
+  /** The rating image of a snapshot (capability `image-export`). */
+  exportImage: (request: ExportImageRequest) => Promise<ImageMessageResult>;
+  /** The plays of one play day (capability `daily-plays`). */
+  dailyPlays: (request: DailyPlaysImageRequest) => Promise<ImageMessageResult>;
+}
+
 /** A stored recent play as the shared recents query reads it, before its game adds the details. */
 export type StoredRecentPlay = {
   recentSongId: bigint;
@@ -124,4 +157,10 @@ export interface GameServerModule<G extends CanonicalGameId = CanonicalGameId> {
   reserved?: ReservedProfileProvider;
   /** Reads what only this game records about each of a page of recent plays, in the same order. */
   recentDetails: (plays: readonly StoredRecentPlay[]) => Promise<RecentPlayDetails<G>[]>;
+  images: GameImageBuilders;
+  /**
+   * Nearby-Rating peer evidence per chart for recommendations, for a game that offers `percentiles`.
+   * `knownParentIds` skips the parent lookup for charts the caller already read.
+   */
+  recommendationPeers?: (publicSongIds: readonly string[], userRating: number, knownParentIds: ReadonlyMap<string, bigint>) => Promise<Record<string, RecommendationPeers>>;
 }

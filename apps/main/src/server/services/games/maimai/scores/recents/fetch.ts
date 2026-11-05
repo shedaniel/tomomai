@@ -1,14 +1,14 @@
 import "server-only";
 import { load } from "cheerio";
 import { normalizeName } from "@/lib/name-utils";
-import { getLogger } from "@/lib/request-logger";
 import type { Difficulty, FullCombo, FullSync, SongType } from "@/lib/games/maimai/types";
 import type { GameSiteClient } from "@/server/services/games/sega/http";
 import { musicTypeFromIcon } from "../parse-utils";
 import type { RecentSongData } from "../types";
+import { logger } from "@/lib/logger";
 
 export async function fetchRecentSongsData(site: GameSiteClient): Promise<RecentSongData[]> {
-  const log = getLogger();
+  const log = logger;
   const recentSongsHtml = await site.html("record/");
 
   const $ = load(recentSongsHtml);

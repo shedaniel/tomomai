@@ -9,6 +9,7 @@ import { FetchToastContainer } from "@/components/fetch-toast";
 import { TokenDialog } from "@/components/token-dialog";
 import { OnboardingDialog } from "@/components/onboarding-dialog";
 import { AlbumPrivacyDialog } from "@/components/games/maimai/album-privacy-dialog";
+import { useSiteFetchGate } from "@/components/site-status-dialog";
 import { useFetchSession } from "@/hooks/useFetchSession";
 import { useSnapshots } from "@/hooks/useSnapshots";
 import type { Flags } from "@/lib/flags";
@@ -17,9 +18,12 @@ import { fetchErrorDetail, parseFetchErrorCode } from "@/lib/games/fetch-error-c
 import { trpc } from "@/lib/trpc-client";
 import type { User, UserData } from "@/lib/types";
 import type { Region } from "@/lib/games/ids";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
+import { Globe, RefreshCw } from "lucide-react";
+import { useCommandPaletteActions } from "@/components/command-palette/command-palette-provider";
+import type { PaletteItem } from "@/components/command-palette/types";
 import { AboutDialog } from "@/components/about-dialog";
 import { AdminDialog } from "@/components/dialogs/admin-dialog";
 import { ExperimentsDialog } from "@/components/experiments-dialog";
@@ -84,6 +88,8 @@ export function Dashboard({ user, initialUserData, initialRegion, initialSnapsho
     initialSnapshotData,
   });
 
+  const { confirmFetch, gateDialog } = useSiteFetchGate(selectedRegion);
+
   const {
     isFetching,
     currentSession,
@@ -140,6 +146,7 @@ export function Dashboard({ user, initialUserData, initialRegion, initialSnapsho
   };
 
   const handleFetchData = async () => {
+    if (!(await confirmFetch())) return;
     try {
 
       await startAutomaticFetch(selectedRegion);
@@ -162,7 +169,38 @@ export function Dashboard({ user, initialUserData, initialRegion, initialSnapsho
     }
   };
 
+  // The palette calls the latest handlers, so its actions only change with what they show.
+  const paletteHandlers = useRef({ fetch: handleFetchData, region: handleRegionChange });
+  useEffect(() => {
+    paletteHandlers.current = { fetch: handleFetchData, region: handleRegionChange };
+  });
+  const tPalette = useTranslations("commandPalette.actions");
+  const tRegions = useTranslations("regions");
+  const paletteActions = useMemo<PaletteItem[]>(() => [
+    ...(isFetching ? [] : [{
+      id: "dashboard:fetch",
+      group: "actions" as const,
+      title: tPalette("fetch"),
+      icon: RefreshCw,
+      keywords: ["fetch", "update", "sync", "import"],
+      perform: () => void paletteHandlers.current.fetch(),
+    }]),
+    ...game.regions.filter(region => region !== selectedRegion).map(region => ({
+      id: `dashboard:region:${region}`,
+      group: "actions" as const,
+      title: tPalette("switchRegion", { region: tRegions(region) }),
+      icon: Globe,
+      keywords: ["region", region],
+      perform: () => void paletteHandlers.current.region(region),
+    })),
+  ], [isFetching, game.regions, selectedRegion, tPalette, tRegions]);
+  useCommandPaletteActions("dashboard", paletteActions);
+
   const handleTokenUpdate = async (token: string) => {
+    if (!(await confirmFetch())) {
+      // Keeps the TokenDialog open with what the user typed.
+      throw new Error("Fetch postponed");
+    }
     try {
       // Just start the fetch with the new token (this will save and use it)
       await startDataFetch(selectedRegion, token);
@@ -286,6 +324,8 @@ export function Dashboard({ user, initialUserData, initialRegion, initialSnapsho
       <InvitesDialog isOpen={dialogType === "invites"} onOpenChange={open => setDialogType(open ? "invites" : null)} />
       <AdminDialog open={dialogType === "admin"} onOpenChange={open => setDialogType(open ? "admin" : null)} />
       <ExperimentsDialog open={dialogType === "experiments"} onOpenChange={open => setDialogType(open ? "experiments" : null)} />
+
+      {gateDialog}
 
       {supportsGameFeature(game, "albums", selectedRegion) && <AlbumPrivacyDialog
         open={dialogType === "albumPrivacy"}

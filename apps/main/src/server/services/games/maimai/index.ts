@@ -16,8 +16,8 @@ export const maimaiServerModule: GameServerModule<"maimai"> = {
     levelPolicy: maimaiLevelPolicy,
     images: maimaiImagePolicy,
     async authenticate(region, token) {
-      const { loginAndGetCookies } = await import("./login");
-      return loginAndGetCookies(region, token);
+      const { signInMaimaiCatalog } = await import("./login");
+      return signInMaimaiCatalog(region, token);
     },
     parseLegacyRecord: parseLegacyCatalogRecord,
   },
@@ -47,5 +47,19 @@ export const maimaiServerModule: GameServerModule<"maimai"> = {
   async recentDetails(plays) {
     const { loadMaimaiRecentDetails } = await import("./recent-details");
     return loadMaimaiRecentDetails(plays);
+  },
+  async recommendationPeers(publicSongIds, userRating, knownParentIds) {
+    const { fetchRecommendationPeers } = await import("./percentile/peers");
+    return fetchRecommendationPeers(publicSongIds, userRating, knownParentIds);
+  },
+  images: {
+    async exportImage(request) {
+      const { buildExportImageMessage } = await import("./render/messages");
+      return buildExportImageMessage(request);
+    },
+    async dailyPlays(request) {
+      const { buildDailyPlaysMessage } = await import("./render/messages");
+      return buildDailyPlaysMessage(request);
+    },
   },
 };

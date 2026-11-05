@@ -5,6 +5,9 @@ import { ArrowUpRight, Sparkles, Headphones } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { getTransition } from "@/lib/animation-constants";
 
+export const GUESSER_URL = "https://guesser.tomomai.lol";
+export const HEARDLE_URL = "https://heardle.tomomai.lol";
+
 interface MinigameCardProps {
   href: string;
   title: string;
@@ -58,7 +61,7 @@ export function MinigameCards({ className = "grid-cols-2" }: { className?: strin
   return (
     <div className={`grid gap-3 ${className}`}>
       <MinigameCard
-        href="https://guesser.tomomai.lol"
+        href={GUESSER_URL}
         title={t("guesser.title")}
         tagline={t("guesser.tagline")}
         glyph="?"
@@ -74,7 +77,7 @@ export function MinigameCards({ className = "grid-cols-2" }: { className?: strin
         }}
       />
       <MinigameCard
-        href="https://heardle.tomomai.lol"
+        href={HEARDLE_URL}
         title={t("heardle.title")}
         tagline={t("heardle.tagline")}
         glyph="♪"

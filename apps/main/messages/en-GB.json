@@ -44,6 +44,7 @@
     "selectAnOption": "Select an option",
     "ok": "OK",
     "email": "Email",
+    "resetToDefault": "Reset to default",
     "retry": "Try again",
     "previous": "Previous",
     "next": "Next"
@@ -113,7 +114,6 @@
       "inviteUsed": "That invitation has already been used.",
       "inviteExpired": "That invitation has expired.",
       "accountNotLinked": "That provider account isn't linked to your user and couldn't be linked automatically.\n\nYou may already have an account using the same email.\n\nTry signing in with the provider you originally signed up with, then link this one from Settings → Account.",
-      "emailMismatch": "That account's email doesn't match your current account.",
       "alreadyLinked": "That account is already linked to a different user.",
       "emailMissing": "That account didn't share an email address, which {brand} needs to sign you in.",
       "restart": "Your sign-in was interrupted or took too long. Please try again.",
@@ -658,6 +658,15 @@
         "description": "Your saved friend lists are deleted, and you're removed from everyone's friends. If you turn it back on, your next fetch finds them again.",
         "confirm": "Turn off"
       }
+    },
+    "unsaved": {
+      "bar": "You have unsaved changes",
+      "title": "Leave without saving?",
+      "description": "Your changes on this page haven't been saved yet.",
+      "keepEditing": "Keep editing",
+      "discard": "Discard",
+      "saveAndLeave": "Save and leave",
+      "saving": "Saving..."
     }
   },
   "dataBanner": {
@@ -669,7 +678,23 @@
     "lastUpdate": "Last updated",
     "noDataInstructions": "No data found for this region. Click \"Fetch New Data\" to import your {game} scores. You'll need your {game} token for this process.",
     "friendView": "Friends only",
-    "friendViewHint": "Shared only with in-game friends"
+    "friendViewHint": "Shared only with in-game friends",
+    "deleteSnapshot": "Delete selected snapshot",
+    "moreOptions": "More options"
+  },
+  "siteStatus": {
+    "lockedBadge": "Temporarily locked",
+    "lockedTitle": "Fetching is paused for a bit",
+    "lockedDescription": "{net} got too many requests in a short time and is turning new ones away for now. Give it a moment and try again when the timer runs out.",
+    "retryIn": "You can try again in {time}",
+    "ready": "You can fetch again now",
+    "gotIt": "Got it",
+    "fetchNow": "Fetch now",
+    "busyBadge": "High traffic",
+    "busyTitle": "{net} is busy",
+    "busyDescription": "Lots of players are fetching right now, so yours may take longer than usual. Fetching a little later should be quicker.",
+    "fetchAnyway": "Fetch anyway",
+    "later": "Later"
   },
   "profileMetadata": {
     "title": "{username} | {brand}",
@@ -764,7 +789,10 @@
       "dayLabel": "Day",
       "dayPlaceholder": "Select a day",
       "dayLoading": "Loading days...",
-      "noPlays": "No daily plays available"
+      "noPlays": "No daily plays available",
+      "chooseCredit": "Choose a credit",
+      "creditLoading": "Loading credits...",
+      "noCredits": "No credits available"
     },
     "loadError": "Unable to load your scores. Please try again."
   },
@@ -795,12 +823,23 @@
   },
   "recommendations": {
     "peerAchieved": "Achieved by ≈{percent} peers",
+    "stretchBadge": "Stretch",
     "newBadge": "New",
     "oldBadge": "Old",
     "currentToTarget": "Current → Target",
     "noRecommendations": "No Recommendations Available",
     "allOptimal": "All your scores are already optimal! Keep up the great work.",
     "description": "Songs recommended to improve your rating based on your current {new}/{old} scores.",
+    "tryNewDescription": "Charts you haven't played yet that could raise your Rating, ranked by the Rating you'd likely gain based on how players near your Rating score on them. The people icon shows their typical score, and Stretch marks targets above it.",
+    "tabs": {
+      "improve": "Improve scores",
+      "tryNew": "Try new charts"
+    },
+    "target": "Target",
+    "peerTypical": "Players near your Rating usually get {score}",
+    "noUnplayed": "No New Charts to Suggest",
+    "noUnplayedDescription": "None of the charts you haven't played would raise your Rating right now.",
+    "loadError": "Couldn't load recommendations. Please try again later.",
     "filterButton": "Filter",
     "filters": {
       "all": "All",
@@ -840,7 +879,8 @@
       "totalLoss": "Loss"
     },
     "clickToExpand": "Click to expand details",
-    "clickToCollapse": "Click to collapse"
+    "clickToCollapse": "Click to collapse",
+    "exportCredit": "Export this credit"
   },
   "events": {
     "title": "Events",
@@ -867,6 +907,16 @@
     "achievementGrades": "Achievement Grades",
     "fullCombo": "Full Combo",
     "fullSync": "Full Sync",
+    "allLevels": "All",
+    "level": "Lv {level}",
+    "levelAndBelow": "≤ Lv {level}",
+    "expandLevels": "Show each level from Lv {level} down",
+    "collapseLevels": "Hide levels from Lv {level} down",
+    "tierTooltip": "{tier}: {count} of {total} ({percent}%)",
+    "orBetter": "{tier} or better",
+    "played": "Played",
+    "chartCount": "{count, plural, one {# chart} other {# charts}}",
+    "breakdownDescription": "How many charts at this level reach each tier or better",
     "noDataAvailable": "No data available",
     "noMatchingScores": "No scores match the selected filters",
     "selectVersionForPlates": "Please select a specific version to view plate progress",
@@ -1264,11 +1314,37 @@
         "added": "Added",
         "share": "Share Link",
         "youtube": "YouTube",
-        "viewCharts": "View Charts",
         "summary": "{songName} is a {chartLabel} chart by {artist} in the {genre} genre, added in {versionName}. Difficulty ranges from {minLevel} to {maxLevel} across {chartCount, plural, =1 {# chart} other {# charts}}{bpmFragment}.",
         "summaryBpmFragment": " (BPM {bpm})",
         "loadFailed": "Failed to load song details",
-        "score": "Score"
+        "score": "Score",
+        "ratingGain": "Your rating",
+        "standing": {
+          "inBest": "#{rank} in your {bucket}",
+          "toEnter": "Beat a chart rating of {rating} to enter your {bucket}",
+          "room": "Any rated score adds to your {bucket}"
+        },
+        "openDetails": "Song details",
+        "openInDatabase": "Open in {brand} DB",
+        "peers": {
+          "top": "Top {percent}",
+          "bottom": "Bottom {percent}",
+          "median": "Median"
+        },
+        "history": {
+          "title": "Your history",
+          "sinceMonth": "+{delta} in 30 days"
+        },
+        "next": "Next: {target} for +{gain}",
+        "recentPlays": "Your recent plays",
+        "photos": "Your photos",
+        "constants": "Chart constant by version",
+        "related": {
+          "title": "Related songs",
+          "artist": "More by {artist}",
+          "designer": "Also charted by {designer}",
+          "level": "Around {difficulty} {level}"
+        }
       },
       "filter": {
         "type": "Type",
@@ -1334,6 +1410,8 @@
       "fetchActivityHeatmap": "Fetch Activity by Hour & Weekday",
       "playActivityHeatmap": "Play Activity by Hour & Weekday",
       "heatmapTimezoneNote": "Hours shown in JST (UTC+9), last 90 days.",
+      "heatmapCell": "{slot} · {count}",
+      "heatmapPeak": "Busiest: {slot} · {count}",
       "topSongsWindow": {
         "label": "Time Range",
         "all": "All time",
@@ -1574,6 +1652,7 @@
     "title": "Score comparison",
     "view": "Comparison view",
     "you": "You · {achievement}",
+    "notPlayed": "Not played yet",
     "curveTab": "Score curve",
     "ratingTab": "By Rating",
     "ratingHeading": "Achievement by player Rating",
@@ -1587,6 +1666,7 @@
     "lessThan": "<{percent}",
     "ratingDescription": "Achievement versus Rating for {count} players, based on all play records. Dots group sampled scores into 125 Rating points and 0.1% achievement, with approximate positions spread within each bin. Your Rating is {rating}, achievement {achievement}.",
     "curveDescription": "Estimated share of players with similar Rating scoring at or below each achievement. {percent} scored at or below your {achievement}. Ties are included.",
+    "unplayedDescription": "Best scores of players on this chart. You haven't played it yet.",
     "clusterDescription": "Rating {ratingMin}–{ratingMax}; {achievementMin}–{achievementMax}: {count, plural, one {# sampled score} other {# sampled scores}}",
     "youDescription": "You: {rating} Rating, {achievement}"
   },
@@ -1661,5 +1741,79 @@
     "scrollToEnd": "Scroll to the end",
     "scrollHint": "Scroll to review all permissions",
     "groupCount": "{count, plural, one {# permission} other {# permissions}}"
+  },
+  "commandPalette": {
+    "title": "Search",
+    "description": "Search songs, pages and actions",
+    "button": "Search…",
+    "placeholder": "Search {game} songs, pages and actions…",
+    "clear": "Clear search",
+    "empty": "No results for “{query}”",
+    "loadingCatalog": "Loading songs…",
+    "clearRecent": "Clear",
+    "showAllSongs": "Show all {count} songs in the database",
+    "groups": {
+      "recent": "Recent",
+      "songs": "Songs",
+      "pages": "Pages",
+      "actions": "Actions",
+      "players": "Players",
+      "events": "Events",
+      "posts": "Changelog",
+      "docs": "Developer docs",
+      "calculator": "Rating calculator",
+      "charts": "Your charts",
+      "tips": "Try",
+      "minigames": "Minigames"
+    },
+    "hints": {
+      "navigate": "Navigate",
+      "open": "Open",
+      "close": "Close",
+      "openPage": "Press Enter to open",
+      "runAction": "Press Enter to run",
+      "players": "players",
+      "actions": "actions",
+      "openProfile": "Press Enter to open the profile"
+    },
+    "actions": {
+      "signIn": "Sign in",
+      "signOut": "Sign out",
+      "theme": "Change theme",
+      "language": "Switch language to {language}",
+      "updateToken": "Update your token",
+      "fetch": "Fetch new data",
+      "switchRegion": "Switch region to {region}",
+      "copyProfileLink": "Copy my profile link",
+      "copiedProfileLink": "Profile link copied",
+      "copySongLink": "Copy the link to {song}",
+      "copiedSongLink": "Copied the song link",
+      "searchVideo": "Search videos of {song}",
+      "copyThisProfileLink": "Copy @{username}'s profile link"
+    },
+    "pages": {
+      "myProfile": "My profile"
+    },
+    "preview": {
+      "yourScores": "Your best scores",
+      "rating": "Rating {rating}"
+    },
+    "playersHint": "Type a username or in-game name to find players",
+    "charts": {
+      "signIn": "Sign in to filter by your scores",
+      "unplayed": "Unplayed",
+      "reroll": "Pick another",
+      "count": "{count, plural, one {# chart} other {# charts}}",
+      "noScores": "Fetch your scores to filter by them"
+    },
+    "calculator": {
+      "result": "Rating {rating}",
+      "copied": "Copied {rating}"
+    },
+    "tips": {
+      "filters": "Your 13+ charts without a full combo",
+      "random": "A random 13+ chart",
+      "calculator": "The rating of a 13.7 at this score"
+    }
   }
 }

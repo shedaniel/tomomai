@@ -5,7 +5,7 @@ import { isCodeKey } from "@/lib/games/codes";
 import { normalizeName } from "@/lib/name-utils";
 import type { NoteCounts } from "@/lib/types";
 import type { DxRatingResponse } from "./dxrating-types";
-import { getLogger } from "@/lib/request-logger";
+import { logger } from "@/lib/logger";
 import { asCatalogFetcher } from "@/server/services/catalog/ingestion/merge";
 import { maimaiChart } from "../chart";
 
@@ -39,7 +39,7 @@ export const DxDataFetcher = asCatalogFetcher(async ({ version, region, notice }
 
 // Helper function to fetch dxdata.json
 export async function fetchDxDataJson(): Promise<DxRatingResponse> {
-  getLogger().info("Fetching dxdata.json...");
+  logger.info("Fetching dxdata.json...");
   const dxDataResponse = await fetch(DXDATA_URL, {
     headers: {
       "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
@@ -51,7 +51,7 @@ export async function fetchDxDataJson(): Promise<DxRatingResponse> {
   }
 
   const dxData = await dxDataResponse.json();
-  getLogger().info(`Loaded ${dxData.songs.length} songs from dxdata.json`);
+  logger.info(`Loaded ${dxData.songs.length} songs from dxdata.json`);
   return dxData;
 }
 

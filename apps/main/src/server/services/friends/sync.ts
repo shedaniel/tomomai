@@ -1,9 +1,9 @@
 import "server-only";
 import { and, eq, inArray, ne } from "drizzle-orm";
 import { db } from "@/lib/db";
+import { logger } from "@/lib/logger";
 import { friendHides, playerFriends, playerIdentities, user } from "@/lib/db/schema-pg";
 import type { CanonicalGameId, Region } from "@/lib/games/ids";
-import type { Logger } from "pino";
 import { hashFriendCode } from "./codes";
 
 const RESYNC_MS = 20 * 60 * 60 * 1000;
@@ -37,8 +37,6 @@ export type PlayerFriendData = {
  */
 export async function savePlayerFriends(
   input: { userId: string; game: CanonicalGameId; region: Region } & PlayerFriendData,
-  /** Bound to the fetch's user, game and region. */
-  log: Logger,
   now = new Date(),
 ): Promise<void> {
   const { userId, game, region } = input;
@@ -70,7 +68,7 @@ export async function savePlayerFriends(
     return taken.length;
   });
 
-  if (moved > 0) log.info({ count: moved }, "Friend code moved to this account from another");
+  if (moved > 0) logger.info({ count: moved }, "Friend code moved to this account from another");
 }
 
 /** Turning friends off forgets every saved player and friend list of the user. */

@@ -2,6 +2,7 @@
 
 import { useGame } from "@/components/providers/game-provider";
 import { FetchToastContainer } from "@/components/fetch-toast";
+import { useSiteFetchGate } from "@/components/site-status-dialog";
 import { TokenDialog } from "@/components/token-dialog";
 import { Button } from "@tomomai/ui";
 import {
@@ -71,6 +72,7 @@ function FetchFields() {
     : profileSettings?.fetchUseAlbums ?? null;
 
   const { startDataFetch, fetchToastState } = useFetchSession();
+  const { confirmFetch, gateDialog } = useSiteFetchGate(selectedRegion);
   const updateAlbumPreference = trpc.user.setAlbumPreference.useMutation();
   const deleteTokenMutation = trpc.user.deleteToken.useMutation();
 
@@ -89,6 +91,10 @@ function FetchFields() {
 
   const handleTokenUpdate = async (token: string) => {
     if (!selectedRegion) return;
+    if (!(await confirmFetch())) {
+      // Keeps the TokenDialog open with what the user typed.
+      throw new Error("Fetch postponed");
+    }
     await startDataFetch(selectedRegion, token);
   };
 
@@ -189,6 +195,8 @@ function FetchFields() {
         onOpenChange={setTokenDialogOpen}
         onTokenUpdate={handleTokenUpdate}
       />}
+
+      {gateDialog}
 
       <FetchToastContainer state={fetchToastState} />
     </>

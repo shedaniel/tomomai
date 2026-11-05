@@ -7,11 +7,16 @@ const mocks = vi.hoisted(() => ({
   detailedRows: [] as { songId: string; playedAt: string }[],
 }));
 const proxy = await vi.hoisted(async () => (await import("@/test/pg-proxy")).createProxyDb());
-vi.mock("../login", () => ({ loginAndGetCookies: mocks.login }));
+vi.mock("@/server/services/games/sega/budget", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/server/services/games/sega/budget")>()),
+  takeSiteRequest: async () => {},
+  markSiteLocked: async () => {},
+}));
+vi.mock("../login", () => ({ signInChunithm: mocks.login }));
 vi.mock("@/lib/http-agent", () => ({ agentFetch: vi.fn() }));
 vi.mock("@/lib/r2", () => ({ uploadIconToR2: mocks.upload }));
 vi.mock("@/server/services/games/fetch-progress", () => ({ appendFetchState: mocks.progress }));
-vi.mock("@/lib/request-logger", () => ({ getLogger: () => mocks.log }));
+vi.mock("@/lib/logger", async (importOriginal) => ({ ...(await importOriginal<typeof import("@/lib/logger")>()), logger: mocks.log }));
 vi.mock("@/lib/db", () => ({ db: proxy.db }));
 
 import { getGame } from "@/lib/games/registry";
@@ -67,7 +72,7 @@ beforeEach(() => {
   proxy.reset();
   proxy.answer(({ sql }) => sql.startsWith("select") ? mocks.detailedRows : undefined);
   mocks.detailedRows = [];
-  mocks.login.mockResolvedValue("session=start");
+  mocks.login.mockResolvedValue({ cookies: "session=start" });
   mocks.upload.mockResolvedValue({ url: "https://images.test/icons/character.png" });
 });
 afterEach(() => vi.unstubAllGlobals());
@@ -184,7 +189,7 @@ it("keeps the scores and the other recents when one play cannot be read", async 
 
 it("has nothing to enrich without recent plays", async () => {
   const [site] = sites;
-  serveSite(site, "");
+  serveSite(site, "<html><body></body></html>");
   const { result, enrich } = await fetchScores();
   expect(result.recents).toEqual([]);
   expect(enrich).toBeUndefined();

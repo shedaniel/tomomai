@@ -81,7 +81,7 @@ export async function generateMetadata({ params }: RegionProfilePageProps): Prom
       ...await describeProfile({ game, username, region, snapshot: snapshotData?.snapshot }),
       ogType: "profile",
       image: "route",
-      ...(profile.access === "friend" ? { noindex: true } : {}),
+      ...(profile.access === "public" && profile.profileShowInSearch ? {} : { noindex: true }),
     });
   } catch (error) {
     if (error instanceof TRPCError && error.code === "NOT_FOUND") {

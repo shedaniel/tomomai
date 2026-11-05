@@ -87,6 +87,7 @@ export function SongCard({ song, index, isSelected, onSelect, disableInitialAnim
     >
       <Link
         href={href}
+        prefetch={false}
         onClick={handleClick}
         className={cn(
           "block relative rounded-md overflow-hidden cursor-pointer ring-2 transition-all duration-300 ease-out",

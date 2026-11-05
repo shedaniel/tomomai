@@ -3,6 +3,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
+import { useUnsavedChanges } from "./unsaved-changes";
 
 type SaveHandler = () => Promise<void> | void;
 type ResetHandler = () => void;
@@ -14,7 +15,8 @@ type SettingsFormContextValue = {
   registerSave: (key: string, fn: SaveHandler) => void;
   registerReset: (key: string, fn: ResetHandler) => void;
   unregister: (key: string) => void;
-  runSave: () => Promise<void>;
+  /** Resolves true once every section saved. */
+  runSave: () => Promise<boolean>;
   runReset: () => void;
 };
 
@@ -67,9 +69,11 @@ export function SettingsForm({ children }: { children: ReactNode }) {
     try {
       await Promise.all(Array.from(saveHandlers.current.values()).map((fn) => fn()));
       toast.success(t("settings.saved"));
+      return true;
     } catch (err) {
       console.error("Failed to save settings:", err);
       toast.error(t("settings.errorSaving"));
+      return false;
     } finally {
       setIsLoading(false);
     }
@@ -80,6 +84,13 @@ export function SettingsForm({ children }: { children: ReactNode }) {
   }, []);
 
   const isDirty = Object.keys(dirtyFlags).length > 0;
+
+  const unsaved = useUnsavedChanges();
+  useEffect(() => {
+    if (!unsaved) return;
+    unsaved.register({ dirty: isDirty, save: runSave, discard: runReset });
+    return () => unsaved.register(null);
+  }, [unsaved, isDirty, runSave, runReset]);
 
   const value = useMemo<SettingsFormContextValue>(
     () => ({ isLoading, isDirty, registerDirty, registerSave, registerReset, unregister, runSave, runReset }),

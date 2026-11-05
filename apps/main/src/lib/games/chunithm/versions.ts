@@ -24,5 +24,5 @@ export const chunithmVersionTable = createVersionTable<VersionRow>([
   { id: 6, name: "CHUNITHM VERSE", shortName: "VERSE", releaseDates: { jp: "2024/12/12", intl: "2025/04/17" } },
   { id: 7, name: "CHUNITHM X-VERSE", shortName: "X-VERSE", releaseDates: { jp: "2025/07/16", intl: "2025/11/20" } },
   { id: 8, name: "CHUNITHM X-VERSE-X", shortName: "X-VERSE-X", releaseDates: { jp: "2025/12/11", intl: "2026/04/16" } },
-  { id: 9, name: "CHUNITHM Mate", shortName: "Mate", releaseDates: { jp: "2026/07/02" } },
+  { id: 9, name: "CHUNITHM Mate", shortName: "Mate", releaseDates: { jp: "2026/07/02", intl: "2026/10/22" } },
 ]);

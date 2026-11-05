@@ -1,6 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({ agentFetch: vi.fn(), fetch: vi.fn() }));
+vi.mock("@/server/services/games/sega/budget", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/server/services/games/sega/budget")>()),
+  takeSiteRequest: async () => {},
+  markSiteLocked: async () => {},
+}));
 vi.mock("@/lib/http-agent", () => ({ agentFetch: mocks.agentFetch }));
 
 import { openGameSite, requestGameSite } from "./http";

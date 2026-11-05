@@ -1,3 +1,4 @@
+import { logger } from "@/lib/logger";
 import { adminRoute } from "../admin-route";
 import { AdminRequestError, requireAdminCatalogVersion, requireAdminRegion } from "@/server/services/catalog/admin-game";
 import type { CanonicalGameId } from "@/lib/games/ids";
@@ -10,15 +11,14 @@ import { and, eq, inArray } from "drizzle-orm";
 import { publishSongCatalog } from "@/server/services/catalog/publication";
 import { lockCatalogWrites } from "@/server/services/catalog/ingestion/lock";
 import { revalidateCatalog } from "@/server/services/catalog/revalidation";
-import type { Logger } from "pino";
 
-export const GET = adminRoute("admin/db", async ({ request, game, log }) => {
+export const GET = adminRoute("admin/db", async ({request, game }) => {
   const type = request.nextUrl.searchParams.get("type") || "normalize";
   if (type !== "normalize") throw new AdminRequestError("Invalid 'type' parameter. Must be 'normalize'");
-  return normalize(game, request.nextUrl.searchParams, log);
+  return normalize(game, request.nextUrl.searchParams);
 }, { game: "write" });
 
-async function normalize(game: CanonicalGameId, searchParams: URLSearchParams, log: Logger) {
+async function normalize(game: CanonicalGameId, searchParams: URLSearchParams) {
   // Ingestion keeps a game's source titles unless it has a rule, so renaming them here would orphan the parents.
   const { normalizeCatalogTitle } = getGame(game);
   if (!normalizeCatalogTitle) {
@@ -53,8 +53,8 @@ async function normalize(game: CanonicalGameId, searchParams: URLSearchParams, l
   });
 
   await publishSongCatalog(game);
-  await revalidateCatalog(game, { log });
-  log.info({ totalMasterNamesNormalized }, "Parent song names normalized");
+  await revalidateCatalog(game, { log: logger });
+  logger.info({ totalMasterNamesNormalized }, "Parent song names normalized");
   return Response.json({
     success: true,
     message: "Song data normalization completed",

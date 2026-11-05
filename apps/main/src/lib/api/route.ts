@@ -4,7 +4,8 @@ import { resolveGameContext } from "@/lib/games/access";
 import { GameError, gameErrorResponse } from "@/lib/games/errors";
 import type { CanonicalGameId, Region } from "@/lib/games/ids";
 import { gameIdSchema } from "@/lib/games/schema";
-import { requestLogger } from "@/lib/request-logger";
+import { logger } from "@/lib/logger";
+import { withRequestLogContext } from "@/lib/request-logger";
 import { parseParams, parseQuery } from "./parse-input";
 import type { GameRouteSpec, RouteScope } from "./registry";
 import { zodJson } from "./zod-response";
@@ -28,15 +29,18 @@ export type GameHandler<Q extends z.ZodObject | undefined, R extends z.ZodObject
 
 const STALE_WHILE_REVALIDATE_SECONDS = 86400;
 
-/** Binds the request logger for a v1 handler and answers an unexpected failure with a JSON 500. */
-export async function runApiRequest(req: NextRequest, run: () => Promise<Response>): Promise<Response> {
-  const { log } = requestLogger(req, req.nextUrl.pathname.replace(/^\/api\//, ""));
-  try {
-    return await run();
-  } catch (err) {
-    log.error({ err }, "API handler error");
-    return Response.json({ error: "Internal server error" }, { status: 500 });
-  }
+/** Runs a v1 handler under its route's log context and answers an unexpected failure with a JSON 500. */
+export function withApiRequest<Context extends object>(
+  handler: (req: NextRequest, context: Context) => Promise<Response>,
+): (req: NextRequest, context: Context) => Promise<Response> {
+  return withRequestLogContext<Context>(req => req.nextUrl.pathname.replace(/^\/api\//, ""), async (req, context) => {
+    try {
+      return await handler(req, context);
+    } catch (err) {
+      logger.error({ err }, "API handler error");
+      return Response.json({ error: "Internal server error" }, { status: 500 });
+    }
+  });
 }
 
 /**
@@ -48,7 +52,7 @@ export function definePublicGameHandler<Q extends z.ZodObject | undefined, R ext
   handler: GameHandler<NoInfer<Q>, NoInfer<R>, NoInfer<P>>,
 ): (req: NextRequest, context: RouteContext) => Promise<Response> {
   const serve = bindGameRoute(spec, handler);
-  return (req, context) => runApiRequest(req, () => serve(req, context, {}));
+  return withApiRequest<RouteContext>((req, context) => serve(req, context, {}));
 }
 
 /**

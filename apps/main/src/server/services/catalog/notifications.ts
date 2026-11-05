@@ -2,11 +2,11 @@ import { isDeepStrictEqual } from "node:util";
 import { regionDisplayName } from "@/lib/discord/i18n";
 import { DEFAULT_FRONTEND_GAME, type Region, type CanonicalGameId } from "@/lib/games/ids";
 import { getGame } from "@/lib/games/registry";
-import { getLogger } from "@/lib/request-logger";
 import { postDiscordEmbed } from "@/server/services/discord/webhook";
 import type { AddedChange, DeletedChange, FieldChange, ModifiedChange } from "./ingestion/persistence/analyze";
 import { keyOf } from "@/lib/games/codes";
 import { getGameChartType } from "@/lib/games/presentation";
+import { logger } from "@/lib/logger";
 
 /** The fields the public update channel reports. Covers and metadata are internal. */
 const PUBLIC_FIELDS: ReadonlySet<FieldChange["field"]> = new Set([
@@ -243,14 +243,14 @@ export async function sendDiscordWebhook(
 ) {
   const webhookUrl = resolveUpdateWebhook(game, region);
   if (!webhookUrl) {
-    getLogger().debug({ game, region }, "No update webhook configured, skipping webhook notification");
+    logger.debug({ game, region }, "No update webhook configured, skipping webhook notification");
     return;
   }
 
   const filteredModified = modified.filter(m => m.fieldChanges.some(c => PUBLIC_FIELDS.has(c.field)));
 
   if (added.length === 0 && deleted.length === 0 && filteredModified.length === 0) {
-    getLogger().debug({ game, region }, "No changes detected, skipping webhook notification");
+    logger.debug({ game, region }, "No changes detected, skipping webhook notification");
     return;
   }
 

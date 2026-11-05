@@ -35,6 +35,7 @@ export const maimaiDefinition = {
       origin: "https://maimaidx-eng.com",
       mobileRoot: "/maimai-mobile/",
       aime: { siteId: "maimaidxex", backUrl: "https://maimai.sega.com/" },
+      sessionConnections: 4,
       maintenance: { startHour: 1, endHour: 2, weekdayEndHours: { 3: 4 } },
     },
     jp: {
@@ -43,6 +44,7 @@ export const maimaiDefinition = {
       segaId: { entryPath: "", formToken: "cookie:_t", cardSelection: { method: "GET", path: "aimeList/submit/?idx=0" } },
       // The host sends its leaf certificate without the GlobalSign intermediate.
       legacyTls: true,
+      sessionConnections: 4,
       maintenance: { startHour: 4, endHour: 7 },
     },
     cn: {
@@ -78,6 +80,7 @@ export const maimaiDefinition = {
     "minigames",
     "community-banner",
     "discord-bot",
+    "last-credit",
     "friends",
   ],
   regionCapabilityOverrides: { cn: ["albums"] },

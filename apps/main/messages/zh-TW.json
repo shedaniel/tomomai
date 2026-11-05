@@ -44,6 +44,7 @@
       "fri": "五",
       "sat": "六"
     },
+    "resetToDefault": "恢復預設",
     "retry": "重試",
     "previous": "上一頁",
     "next": "下一頁"
@@ -113,7 +114,6 @@
       "inviteUsed": "這個邀請已被使用。",
       "inviteExpired": "這個邀請已過期。",
       "accountNotLinked": "這個帳號尚未連結到你的使用者，且無法自動連結。\n\n你可能已經有一個使用相同電子郵件的帳號。\n\n請先用最初註冊時的方式登入，再到「設定 → 帳號」連結此帳號。",
-      "emailMismatch": "此帳號的電子郵件與目前帳號不符。",
       "alreadyLinked": "此帳號已連結到其他使用者。",
       "emailMissing": "此帳號沒有提供電子郵件地址，而登入 {brand} 需要電子郵件地址。",
       "restart": "登入過程被中斷或逾時，請再試一次。",
@@ -715,6 +715,15 @@
         "description": "已儲存的好友清單會被刪除，你也會從所有人的好友中移除。重新開啟後，下次匯入資料時會再次找到他們。",
         "confirm": "關閉"
       }
+    },
+    "unsaved": {
+      "bar": "你有尚未儲存的變更",
+      "title": "要不儲存就離開嗎？",
+      "description": "這個頁面的變更還沒有儲存。",
+      "keepEditing": "繼續編輯",
+      "discard": "捨棄",
+      "saveAndLeave": "儲存並離開",
+      "saving": "儲存中……"
     }
   },
   "dataBanner": {
@@ -726,7 +735,23 @@
     "lastUpdate": "最後更新",
     "noDataInstructions": "此區域沒有任何資料。點擊「匯入新資料」來匯入你的 {game} 成績。",
     "friendView": "僅限好友",
-    "friendViewHint": "只分享給遊戲內好友"
+    "friendViewHint": "只分享給遊戲內好友",
+    "deleteSnapshot": "刪除所選快照",
+    "moreOptions": "更多選項"
+  },
+  "siteStatus": {
+    "lockedBadge": "暫時受限",
+    "lockedTitle": "暫時無法匯入資料",
+    "lockedDescription": "短時間內的連線太多，{net} 暫時不接受新的請求。等倒數結束後再試一次吧。",
+    "retryIn": "{time} 後可以再匯入",
+    "ready": "現在可以再次匯入了",
+    "gotIt": "知道了",
+    "fetchNow": "立即匯入",
+    "busyBadge": "使用人數眾多",
+    "busyTitle": "{net} 目前比較忙碌",
+    "busyDescription": "現在有很多玩家正在匯入資料，可能會比平常慢一些。晚一點再匯入會比較快。",
+    "fetchAnyway": "仍要匯入",
+    "later": "稍後再說"
   },
   "profileMetadata": {
     "title": "{username} | {brand}",
@@ -821,7 +846,10 @@
       "dayLabel": "日期",
       "dayPlaceholder": "選擇日期",
       "dayLoading": "正在載入日期...",
-      "noPlays": "目前沒有每日遊玩紀錄"
+      "noPlays": "目前沒有每日遊玩紀錄",
+      "chooseCredit": "選擇一局",
+      "creditLoading": "正在載入...",
+      "noCredits": "沒有遊玩紀錄"
     },
     "loadError": "無法載入成績，請重試。"
   },
@@ -852,12 +880,23 @@
   },
   "recommendations": {
     "peerAchieved": "約 {percent} 同程度玩家達成",
+    "stretchBadge": "挑戰",
     "newBadge": "新曲",
     "oldBadge": "舊曲",
     "currentToTarget": "目前 → 目標",
     "noRecommendations": "無推薦歌曲",
     "allOptimal": "沒有其他能夠提升 R 值的歌曲了。做得很好！",
     "description": "根據你目前的成績推薦可提升 R 值的歌曲。",
+    "tryNewDescription": "你還沒玩過、能提升 R 值的譜面，依同程度玩家成績估算的提升幅度排序。人形圖示表示他們的常見成績，「挑戰」表示目標高於該成績。",
+    "tabs": {
+      "improve": "提升成績",
+      "tryNew": "嘗試新譜面"
+    },
+    "target": "目標",
+    "peerTypical": "同程度玩家通常達到 {score}",
+    "noUnplayed": "暫無可推薦的新譜面",
+    "noUnplayedDescription": "目前沒有未玩過的譜面能提升你的 R 值。",
+    "loadError": "無法載入推薦，請稍後再試。",
     "filterButton": "篩選",
     "filters": {
       "all": "全部",
@@ -897,7 +936,8 @@
       "totalLoss": "失分"
     },
     "clickToExpand": "點擊展開詳情",
-    "clickToCollapse": "點擊收起"
+    "clickToCollapse": "點擊收起",
+    "exportCredit": "匯出這一局"
   },
   "events": {
     "title": "活動地圖",
@@ -924,6 +964,16 @@
     "achievementGrades": "達成等級",
     "fullCombo": "Full Combo",
     "fullSync": "Full Sync",
+    "allLevels": "全部",
+    "level": "Lv {level}",
+    "levelAndBelow": "≤ Lv {level}",
+    "expandLevels": "展開 Lv {level} 及以下的各等級",
+    "collapseLevels": "收起 Lv {level} 及以下的等級",
+    "tierTooltip": "{tier}：{count} / {total}（{percent}%）",
+    "orBetter": "{tier} 及以上",
+    "played": "已遊玩",
+    "chartCount": "{count, plural, other {# 個譜面}}",
+    "breakdownDescription": "此等級中達到各級別及以上的譜面數量",
     "noDataAvailable": "無可用資料",
     "noMatchingScores": "沒有符合篩選條件的成績",
     "selectVersionForPlates": "請選擇特定版本以查看稱號進度",
@@ -1294,11 +1344,37 @@
         "added": "追加版本",
         "share": "分享",
         "youtube": "YouTube 搜尋",
-        "viewCharts": "查看譜面",
         "summary": "{songName} 是由 {artist} 製作的 {chartLabel} 譜面，屬於 {genre} 類型，於 {versionName} 收錄。難度範圍為 {minLevel} 至 {maxLevel}，共 {chartCount, plural, =1 {# 張譜面} other {# 張譜面}}{bpmFragment}。",
         "summaryBpmFragment": "（BPM {bpm}）",
         "loadFailed": "載入歌曲詳情失敗",
-        "score": "分數"
+        "score": "分數",
+        "ratingGain": "你的 Rating",
+        "standing": {
+          "inBest": "{bucket} 第 {rank} 名",
+          "toEnter": "譜面 Rating 超過 {rating} 即可進入{bucket}",
+          "room": "任何計入 Rating 的成績都會加入{bucket}"
+        },
+        "openDetails": "歌曲詳情",
+        "openInDatabase": "在 {brand} DB 中開啟",
+        "peers": {
+          "top": "前 {percent}",
+          "bottom": "後 {percent}",
+          "median": "中位數附近"
+        },
+        "history": {
+          "title": "你的成績變化",
+          "sinceMonth": "30 天內 +{delta}"
+        },
+        "next": "下一目標:{target},+{gain}",
+        "recentPlays": "最近遊玩",
+        "photos": "你的照片",
+        "constants": "各版本的譜面定數",
+        "related": {
+          "title": "相關歌曲",
+          "artist": "{artist} 的更多歌曲",
+          "designer": "{designer} 的其他譜面",
+          "level": "{difficulty} {level} 左右"
+        }
       },
       "filter": {
         "type": "類型",
@@ -1364,6 +1440,8 @@
       "fetchActivityHeatmap": "依時段與星期分布的同步活動",
       "playActivityHeatmap": "依時段與星期分布的遊玩活動",
       "heatmapTimezoneNote": "時段以 JST（UTC+9）顯示，近 90 天。",
+      "heatmapCell": "{slot} · {count}",
+      "heatmapPeak": "最活躍：{slot} · {count}",
       "topSongsWindow": {
         "label": "時間範圍",
         "all": "全部時間",
@@ -1631,6 +1709,7 @@
     "title": "成績比較",
     "view": "比較檢視",
     "you": "你 · {achievement}",
+    "notPlayed": "尚未遊玩",
     "curveTab": "成績曲線",
     "ratingTab": "依 Rating",
     "ratingHeading": "玩家 Rating 與達成率",
@@ -1644,6 +1723,7 @@
     "lessThan": "低於 {percent}",
     "ratingDescription": "依據所有遊玩紀錄，比較 {count} 位玩家的 Rating 與達成率。圓點將樣本按 125 點 Rating 和 0.1% 達成率分組，並分散在各組範圍內顯示，位置為概略值。你的 Rating 為 {rating}，達成率為 {achievement}。",
     "curveDescription": "估計相近 Rating 玩家中，達成率不高於各數值的比例。有 {percent} 的玩家達成率不高於你的 {achievement}，包含同分。",
+    "unplayedDescription": "玩家在此譜面的最佳成績。你還沒玩過這個譜面。",
     "clusterDescription": "Rating {ratingMin}–{ratingMax}；達成率 {achievementMin}–{achievementMax}：{count} 筆樣本",
     "youDescription": "你：Rating {rating}，達成率 {achievement}"
   },
@@ -1660,6 +1740,80 @@
         "title": "範例個人檔案",
         "description": "看看 @shedaniel 的成績"
       }
+    }
+  },
+  "commandPalette": {
+    "title": "搜尋",
+    "description": "搜尋歌曲、頁面和操作",
+    "button": "搜尋…",
+    "placeholder": "搜尋 {game} 的歌曲、頁面和操作…",
+    "clear": "清除搜尋",
+    "empty": "找不到與「{query}」相符的結果",
+    "loadingCatalog": "正在載入歌曲……",
+    "clearRecent": "清除",
+    "showAllSongs": "在資料庫查看全部 {count} 首歌曲",
+    "groups": {
+      "recent": "最近",
+      "songs": "歌曲",
+      "pages": "頁面",
+      "actions": "操作",
+      "players": "玩家",
+      "events": "活動",
+      "posts": "更新紀錄",
+      "docs": "開發者文件",
+      "calculator": "Rating 計算",
+      "charts": "你的譜面",
+      "tips": "試試看",
+      "minigames": "小遊戲"
+    },
+    "hints": {
+      "navigate": "選擇",
+      "open": "開啟",
+      "close": "關閉",
+      "openPage": "按 Enter 開啟",
+      "runAction": "按 Enter 執行",
+      "players": "玩家",
+      "actions": "操作",
+      "openProfile": "按 Enter 開啟個人頁面"
+    },
+    "actions": {
+      "signIn": "登入",
+      "signOut": "登出",
+      "theme": "更換主題",
+      "language": "切換語言為{language}",
+      "updateToken": "更新權杖",
+      "fetch": "匯入新資料",
+      "switchRegion": "切換地區為{region}",
+      "copyProfileLink": "複製我的個人頁面連結",
+      "copiedProfileLink": "已複製個人頁面連結",
+      "copySongLink": "複製 {song} 的連結",
+      "copiedSongLink": "已複製歌曲連結",
+      "searchVideo": "搜尋 {song} 的影片",
+      "copyThisProfileLink": "複製 @{username} 的個人檔案連結"
+    },
+    "pages": {
+      "myProfile": "我的個人頁面"
+    },
+    "preview": {
+      "yourScores": "你的最佳成績",
+      "rating": "Rating {rating}"
+    },
+    "playersHint": "輸入使用者名稱或遊戲內名稱來尋找玩家",
+    "charts": {
+      "signIn": "登入後可依你的成績篩選",
+      "unplayed": "未遊玩",
+      "reroll": "換一首",
+      "count": "{count} 個譜面",
+      "noScores": "取得成績後即可篩選"
+    },
+    "calculator": {
+      "result": "Rating {rating}",
+      "copied": "已複製 {rating}"
+    },
+    "tips": {
+      "filters": "你未 FC 的 13+ 譜面",
+      "random": "隨機一首 13+ 譜面",
+      "calculator": "13.7 在這個成績下的 Rating"
     }
   }
 }

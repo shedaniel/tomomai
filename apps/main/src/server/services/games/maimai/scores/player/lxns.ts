@@ -1,9 +1,9 @@
 import "server-only";
-import { getLogger } from "@/lib/request-logger";
 import { mirrorPlayerIcon } from "@/server/services/games/icons";
 import { openPublicAssets } from "@/server/services/games/sega/http";
 import type { PlayerData } from "../types";
 import { parseLxnsPlayerData, unwrapLxnsPlayerResponse } from "./lxns-parse";
+import { logger } from "@/lib/logger";
 
 const LXNS_PLAYER_URL = "https://maimai.lxns.net/api/v0/user/maimai/player";
 
@@ -41,7 +41,7 @@ async function mirrorLxnsIcon(url: string, signal: AbortSignal): Promise<string>
     return await mirrorPlayerIcon(openPublicAssets(signal), url, signal);
   } catch (err) {
     signal.throwIfAborted();
-    getLogger().warn({ err, providerId: "lxns" }, "Could not mirror the player icon");
+    logger.warn({ err, providerId: "lxns" }, "Could not mirror the player icon");
     return "";
   }
 }

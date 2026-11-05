@@ -24,9 +24,14 @@ it("resolves a published profile with its main region for the requested game", a
   await expect(resolvePublicUserByUsername("chunithm", "stranger")).rejects.toMatchObject({ code: "NOT_FOUND" });
 });
 
-it.each(["publishProfile", "profileShowInSearch"])("hides a profile without %s", async flag => {
-  proxy.respond([{ ...published, [flag]: false }]);
+it("hides an unpublished profile", async () => {
+  proxy.respond([{ ...published, publishProfile: false }]);
   await expect(resolvePublicUserByUsername("chunithm", "owner")).rejects.toMatchObject({ code: "NOT_FOUND" });
+});
+
+it("serves an unlisted profile, which only search and the sitemap leave out", async () => {
+  proxy.respond([{ ...published, profileShowInSearch: false }]);
+  await expect(resolvePublicUserByUsername("chunithm", "owner")).resolves.toMatchObject({ id: "owner", profileShowInSearch: false, access: "public" });
 });
 
 it("opens a profile shared with friends for a matched friend in the same game", async () => {

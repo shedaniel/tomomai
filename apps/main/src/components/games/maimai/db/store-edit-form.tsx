@@ -251,7 +251,7 @@ export function StoreEditForm({ open, onOpenChange, store, existingEdit }: Store
           <DrawerTitle>{existingEdit ? "Edit" : "Create"} Arcade Data</DrawerTitle>
           <DrawerDescription>Submit your arcade information</DrawerDescription>
         </VisuallyHidden>
-        <div className="px-4 pt-4 pb-8 max-w-2xl mx-auto w-full max-h-[80vh] overflow-y-auto">
+        <div className="px-4 pb-8 max-w-2xl mx-auto w-full max-h-[80vh] overflow-y-auto">
           <h3 className="font-semibold text-lg mb-4">
             {existingEdit ? "Edit" : "Create"} Arcade Data
           </h3>

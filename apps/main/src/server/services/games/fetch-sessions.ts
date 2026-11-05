@@ -2,7 +2,6 @@ import "server-only";
 import { and, desc, eq } from "drizzle-orm";
 import { nanoid } from "nanoid";
 import { after } from "next/server";
-import type { Logger } from "pino";
 import { z } from "zod";
 import { notFoundScore, type NotFoundScore } from "@/lib/api/schemas";
 import { db } from "@/lib/db";
@@ -15,11 +14,13 @@ import { getGameMaintenance, getGameMaintenanceError } from "@/lib/games/mainten
 import { getGame } from "@/lib/games/registry";
 import type { CanonicalGameId, Region } from "@/lib/games/ids";
 import { getCurrentVersion } from "@/lib/games/versions";
-import { flushLogger } from "@/lib/logger";
-import { getLogger } from "@/lib/request-logger";
+import { flushLogger, logger } from "@/lib/logger";
+import { withLogContext } from "@/lib/request-logger";
 import { FetchStartError } from "./fetch-errors";
 import { createFetchRun, fetchFailure } from "./fetch-run";
 import { GAME_SERVER_MODULES } from "./registry";
+import { getGameSiteStatus } from "./sega/budget";
+import { GameSiteLockedError } from "./sega/errors";
 import { persistFetchResult } from "./snapshot-persistence";
 import { readToken, saveToken } from "./tokens";
 import type { Enrichment, PersistedSnapshotContext, ScoreFetchContext } from "./types";
@@ -89,7 +90,7 @@ async function demoScoreFetch(userId: string, game: CanonicalGameId, region: Reg
       }
       await markSession(session.id, { status: "completed" });
     } catch (err) {
-      getLogger().error({ err, game, region }, "Error during demo score fetch");
+      logger.error({ err, game, region }, "Error during demo score fetch");
       await markSession(session.id, { status: "failed", errorMessage: failureMessage(err) });
     }
   })();
@@ -175,6 +176,12 @@ export async function startScoreFetch(input: {
     throw new FetchStartError("MAINTENANCE", getGameMaintenanceError(maintenance), retryAfterSeconds);
   }
 
+  // Every request would extend the lock, so a fetch waits it out instead.
+  const siteStatus = await getGameSiteStatus(game, region);
+  if (siteStatus.locked) {
+    throw new FetchStartError("RATE_LIMITED", new GameSiteLockedError(game, siteStatus.retryAfterSeconds).message, siteStatus.retryAfterSeconds);
+  }
+
   const gameVersion = getCurrentVersion(game, region);
   const flags = input.flags ?? await resolveFlagsForUser(userId);
   const fetchAlbums = await shouldFetchAlbums(userId, game, region);
@@ -182,9 +189,10 @@ export async function startScoreFetch(input: {
 
   const session = await openSession(userId, game, region);
   const controller = new AbortController();
-  const work = () => runScoreFetch({
+  // Every line the fetch logs carries its public id, so it can be found from what the user sees.
+  const work = () => withLogContext({ sessionId: session.publicId, userId, game, region }, () => runScoreFetch({
     game, userId, region, sessionId: session.id, gameVersion, flags, token, shouldFetchAlbums: fetchAlbums, signal: controller.signal,
-  }, controller);
+  }, controller));
 
   const result: StartScoreFetchResult = { sessionId: session.publicId, status: "pending" };
   if (input.options?.skipAfter) {
@@ -222,24 +230,25 @@ async function runScoreFetch(ctx: ScoreFetchContext, controller: AbortController
       // Stops the stages still running beside the one that failed.
       controller.abort(error);
       const failure = fetchFailure(error);
-      run.log.error(failure, "Error during score fetch");
+      logger.error(failure, "Error during score fetch");
       await markSession(ctx.sessionId, { status: "failed", errorMessage: failureMessage(failure.err) });
       return;
     }
 
     // The snapshot is saved and its session completed, so enrichment failures are only logged.
-    if (saved.enrich) enrichment = enrichSnapshot(saved.enrich, saved.context, run.log);
+    if (saved.enrich) enrichment = enrichSnapshot(saved.enrich, saved.context);
   } finally {
     await enrichment;
+    run.settle();
     await flushLogger();
   }
 }
 
-async function enrichSnapshot(enrich: Enrichment, context: PersistedSnapshotContext, log: Logger): Promise<void> {
+async function enrichSnapshot(enrich: Enrichment, context: PersistedSnapshotContext): Promise<void> {
   try {
     await enrich(context);
   } catch (err) {
-    log.error({ err, stepType: "enrich" }, "Score fetch enrichment failed");
+    logger.error({ err, stepType: "enrich" }, "Score fetch enrichment failed");
   }
 }
 

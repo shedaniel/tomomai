@@ -34,6 +34,7 @@ export const GAME_CAPABILITIES = [
   "minigames",
   "community-banner",
   "discord-bot",
+  "last-credit",
   "friends",
 ] as const;
 export type GameCapability = (typeof GAME_CAPABILITIES)[number];
@@ -174,6 +175,8 @@ type PresentationOf<G extends CanonicalGameId> = {
   formatScore(value: number, precision: "full" | "compact"): string;
   /** The difference between two scores as shown at compact precision. */
   formatScoreDelta(from: number, to: number): string;
+  /** A score as a player types it, such as "100.5%" or "1,007,500", or null when it is not one. */
+  parseScore(text: string): number | null;
   /** The score's name, a key in each message namespace that labels scores. */
   scoreLabel: "achievement" | "score";
   ratingRules: RatingRules;
@@ -186,6 +189,8 @@ type PresentationOf<G extends CanonicalGameId> = {
   grades: readonly GradeRow[];
   /** Hosts whose images browsers load through /api/image-proxy instead of directly. */
   imageProxyHosts: readonly string[];
+  /** The canvas of the images apps/render draws, so a page can hold their space before one loads. */
+  imageSize: { width: number; height: number };
 };
 
 /** Keyed by code key, so a key added to a game's code table needs its presentation. */
@@ -250,6 +255,11 @@ export type GameSite = {
   segaId?: SegaIdSiteForm;
   /** Skip certificate verification for a host whose chain Node cannot verify. */
   legacyTls?: true;
+  /**
+   * How many connections a signed-in session spreads its requests over, the one that started it
+   * included. Defaults to 1, which keeps requests that depend on each other on one backend.
+   */
+  sessionConnections?: number;
   maintenance: {
     startHour: number;
     endHour: number;

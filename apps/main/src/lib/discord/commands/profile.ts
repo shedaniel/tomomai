@@ -1,4 +1,4 @@
-import { getLogger } from '@/lib/request-logger';
+import { logger } from '@/lib/logger';
 import { waitUntil } from '@vercel/functions';
 import type { Region } from '@/lib/games/ids';
 import { generateAndSendProfileImage } from '../image-utils';
@@ -81,7 +81,7 @@ export async function executeProfileCommand({
       locale,
     });
   } catch (error) {
-    getLogger().error({ err: error }, 'Error generating profile image');
+    logger.error({ err: error }, 'Error generating profile image');
     await editDiscordMessage(applicationId, interactionToken, {
       content: t(locale, 'profile.error'),
       embeds: [],
@@ -138,7 +138,7 @@ export async function handleProfileCommand({
 
     return deferredResponse;
   } catch (error) {
-    getLogger().error({ err: error }, 'Error fetching user rating');
+    logger.error({ err: error }, 'Error fetching user rating');
     return createErrorResponse(t(locale, 'profile.error'));
   }
 }

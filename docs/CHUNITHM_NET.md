@@ -284,7 +284,6 @@ Not yet observed or verified:
 - Pagination on other accounts. Every individual-row status of the JP icon vocabulary. An account with both chain variants.
 - An expired session or a maintenance page, whose selectors and messages must be captured before classifying them.
 - Starting from a browser-imported gateway cookie: bookmarklet fragment retention and gateway cookie visibility. The browser helpers read `document.cookie`, so they need a JavaScript-readable `clal` on the gateway origin and cannot read HttpOnly cookies or gateway cookies from the game origin. A copied cookie may expire.
-- A complete application fetch against the live sites, including the JP card selection's Referer.
 - WORLD'S END, which is not fetched until its charts have a catalog representation.
 
 Model limits to check against real observations:

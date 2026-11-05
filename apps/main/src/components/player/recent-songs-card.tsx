@@ -8,16 +8,34 @@ import { Clock, Loader2, AlertCircle } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { RecentSongsCardSkeleton } from "./recent-songs-card.skeleton";
 import { RecentPlayRow } from "./recent-play-row";
-import { useCallback, useState, useEffect, useRef } from "react";
+import { useCallback, useState, useEffect, useMemo, useRef } from "react";
 import { useInfiniteScroll } from "@/hooks/use-infinite-scroll";
 
 interface RecentSongsCardProps {
   region: Region;
   beforeDate?: Date;
   snapshotId?: string;
+  /** Opens the export tab on a credit, keyed by its first track's unix time. */
+  onOpenCredit?: (at: number) => void;
 }
 
-export function RecentSongsCard({ region, beforeDate, snapshotId }: RecentSongsCardProps) {
+// Track numbers count down within a credit, so each play's credit starts at the
+// end of its descending run. Unknown when that run may continue on the next page.
+function creditStartTimes(plays: { track: number; playedAt: Date | string }[], hasMore: boolean): (number | null)[] {
+  const starts: (number | null)[] = new Array(plays.length).fill(null);
+  let runStart = 0;
+  for (let i = 0; i < plays.length; i++) {
+    const endsRun = i === plays.length - 1 || plays[i + 1].track >= plays[i].track;
+    if (!endsRun) continue;
+    const cutOff = i === plays.length - 1 && hasMore && plays[i].track > 1;
+    const at = cutOff ? null : Math.floor(new Date(plays[i].playedAt).getTime() / 1000);
+    starts.fill(at, runStart, i + 1);
+    runStart = i + 1;
+  }
+  return starts;
+}
+
+export function RecentSongsCard({ region, beforeDate, snapshotId, onOpenCredit }: RecentSongsCardProps) {
   const game = useGame().id;
   const errorsT = useTranslations("dataContent");
   const t = useTranslations('recentPlays');
@@ -89,6 +107,7 @@ export function RecentSongsCard({ region, beforeDate, snapshotId }: RecentSongsC
   }, []);
 
   const sentinelRef = useInfiniteScroll(loadMore, hasMore && !isFetching);
+  const creditStarts = useMemo(() => (onOpenCredit ? creditStartTimes(allPlays, hasMore) : []), [onOpenCredit, allPlays, hasMore]);
 
   if (isLoading && offset === 0) {
     return <RecentSongsCardSkeleton />;
@@ -143,6 +162,8 @@ export function RecentSongsCard({ region, beforeDate, snapshotId }: RecentSongsC
               isLast={i === allPlays.length - 1}
               onToggleExpand={toggleExpand}
               isExpanded={expandedIds.has(play.recentSongId.toString())}
+              creditAt={creditStarts[i] ?? null}
+              onOpenCredit={onOpenCredit}
             />
           ))}
 

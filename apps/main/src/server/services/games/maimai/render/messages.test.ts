@@ -3,7 +3,7 @@ import type { ProxyRow } from "@/test/pg-proxy";
 
 const proxy = await vi.hoisted(async () => (await import("@/test/pg-proxy")).createProxyDb());
 vi.mock("@/lib/db", () => ({ db: proxy.db }));
-vi.mock("@/lib/request-logger", () => ({ getLogger: () => ({ child: () => ({ debug: vi.fn(), warn: vi.fn() }) }) }));
+vi.mock("@/lib/logger", async (importOriginal) => ({ ...(await importOriginal<typeof import("@/lib/logger")>()), logger: ({ child: () => ({ debug: vi.fn(), warn: vi.fn() }) }) }));
 
 import { buildDailyPlaysMessage, buildExportImageMessage, buildLastCreditMessage } from "./messages";
 
@@ -33,6 +33,7 @@ it("mints the export image from the snapshot's stored rankings in maimai vocabul
   expect(result).toEqual({
     ok: true,
     message: {
+      game: "maimai",
       route: "export-image",
       header: expectedHeader,
       payload: { visitableProfileAt: "player", charts: [{ songId: "abc:j13", achievement: 1005000, fc: "ap+", fs: "fdx+" }] },
@@ -46,6 +47,7 @@ it("mints a day's plays with the header of the snapshot before it", async () => 
   expect(result).toEqual({
     ok: true,
     message: {
+      game: "maimai",
       route: "daily-plays",
       header: expectedHeader,
       payload: { day: "2026-09-01", plays: [{ songId: "abc:j13", achievement: 990000, fc: "fc", fs: "fs" }] },
@@ -73,6 +75,7 @@ it("mints the latest credit's tracks in play order with their judgement details"
   expect(result).toEqual({
     ok: true,
     message: {
+      game: "maimai",
       route: "last-credit",
       header: expectedHeader,
       payload: {
@@ -87,4 +90,32 @@ it("mints the latest credit's tracks in play order with their judgement details"
       },
     },
   });
+});
+
+it("mints a picked credit with the header of the fetch that imported it", async () => {
+  const play = (playedAt: string, songId: string, track: number) =>
+    ({ playedAt, songId, scoreValue: 1000000, secondaryScore: 1000, comboStatus: 0, syncStatus: 0, maxDxScore: 1200, track, playlog: null });
+  tables.user_recent_songs = [
+    play("2026-09-01 01:05:00", "a:j13", 1),
+    play("2026-09-01 01:10:00", "b:j13", 2),
+    play("2026-09-01 01:30:00", "c:j13", 1),
+  ];
+  const result = await buildLastCreditMessage({ userId: "owner", region: "jp", startAt: new Date("2026-09-01T01:05:00Z"), scale: 2 });
+  expect(result).toMatchObject({
+    ok: true,
+    message: {
+      header: expectedHeader,
+      payload: { playedAt: Date.parse("2026-09-01T01:05:00Z") / 1000, tracks: [{ songId: "a:j13" }, { songId: "b:j13" }] },
+    },
+  });
+  const snapshotQuery = proxy.queries.find(query => query.table === "user_snapshots");
+  expect(snapshotQuery?.sql).toMatch(/"fetchedAt" >= \$\d+.* order by "user_snapshots"\."fetchedAt" asc/);
+  expect(snapshotQuery?.params).toContain("2026-09-01T01:10:00.000Z");
+});
+
+it("lists a day's plays oldest first", async () => {
+  const play = (playedAt: string, songId: string) => ({ playedAt, songId, scoreValue: 990000, secondaryScore: 1500, comboStatus: 0, syncStatus: 0 });
+  tables.user_recent_songs = [play("2026-09-01 02:00:00", "b:j13"), play("2026-09-01 01:00:00", "a:j13")];
+  const result = await buildDailyPlaysMessage({ userId: "owner", region: "jp", day: "2026-09-01", scale: 2 });
+  expect(result).toMatchObject({ ok: true, message: { payload: { plays: [{ songId: "a:j13" }, { songId: "b:j13" }] } } });
 });

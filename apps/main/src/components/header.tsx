@@ -7,6 +7,7 @@ import { signOut } from "@/lib/auth-client";
 import { useGame } from "@/components/providers/game-provider";
 import { AboutDialog } from "@/components/about-dialog";
 import { ThemeDialog } from "@/components/theme-dialog";
+import { SearchButton } from "@/components/command-palette/search-button";
 import { Button } from "@tomomai/ui";
 import { DiscordIcon } from "@tomomai/ui";
 import { user } from "@/lib/db/schema-pg";
@@ -587,7 +588,8 @@ export function Header({ currentTab, showDiscordBanner = true, customThemesEnabl
           <NavbarButtons currentTab={currentTab} />
         </div>
 
-        <div className="flex items-center space-x-4">
+        <div className="flex items-center space-x-4 max-md:space-x-2">
+          <SearchButton />
           {!isGameCnExclusive(game) && <div className="max-md:hidden"><LocaleSwitcher /></div>}
           {user?.menu && game.regions.length > 1 && <div className="max-md:hidden"><RegionSwitcher header={true} value={user.menu.selectedRegion} onChange={user.menu.onRegionChange} /></div>}
           {user ? (

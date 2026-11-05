@@ -49,6 +49,13 @@ describe("CHUNITHM otoge-db collection", () => {
     expect(updatedUltima).toMatchObject({ addedVersion: 8 });
     expect(updatedUltima?.metadata).not.toHaveProperty("addedVersionEstimated");
   });
+  it("files an early INTL arrival under its version tag only from that version's INTL release", async () => {
+    const melodiniq = async (version: number) => (await collect(intlFixture, "intl", version)).find(chart => chart.songName === "Melodiniq" && chart.difficulty === 3);
+    vi.setSystemTime(new Date("2026-10-22T06:59:59+09:00"));
+    expect(await melodiniq(8)).toMatchObject({ addedVersion: 8 });
+    vi.setSystemTime(new Date("2026-10-22T07:00:00+09:00"));
+    expect(await melodiniq(9)).toMatchObject({ addedVersion: 9 });
+  });
   it("uses the source version label to disambiguate tied regional release dates", async () => {
     const charts = await collect([{ ...intlFixture[1], version: "CHUNITHM STAR PLUS" }], "intl");
     expect(charts.find(chart => chart.difficulty === 3)?.addedVersion).toBe(-7);

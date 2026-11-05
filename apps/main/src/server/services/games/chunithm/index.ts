@@ -22,4 +22,14 @@ export const chunithmServerModule: GameServerModule<"chunithm"> = {
   async recentDetails(plays) {
     return plays.map(play => ({ game: "chunithm", playlog: decodeChunithmPlaylog(play.metadata) }));
   },
+  images: {
+    async exportImage(request) {
+      const { buildExportImageMessage } = await import("./render/messages");
+      return buildExportImageMessage(request);
+    },
+    async dailyPlays(request) {
+      const { buildDailyPlaysMessage } = await import("./render/messages");
+      return buildDailyPlaysMessage(request);
+    },
+  },
 };

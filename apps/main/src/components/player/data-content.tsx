@@ -3,6 +3,7 @@
 import { useGame } from "@/components/providers/game-provider";
 import { supportsGameFeature } from "@/lib/games/frontend";
 import type { GameSnapshotData } from "@/lib/games/player-view";
+import { PUBLIC_VIEWS } from "@/lib/games/public-player";
 import type { ProfilePrivacySettings } from "@/lib/types";
 import type { Region } from "@/lib/games/ids";
 import { Sidebar, SidebarItem } from "@tomomai/ui";
@@ -93,12 +94,21 @@ export function DataContent({
 
   const [selectedTab, setSelectedTab] = useState<PlayerTabId>(getInitialTab);
 
+  // A link to another tab of the same page, such as one from the command palette, only changes the query.
+  const tabParam = searchParams.get("tab");
+  useEffect(() => {
+    if (isPlayerTabId(tabParam)) setSelectedTab(tabParam);
+  }, [tabParam]);
+
   // Update the URL via the native History API so Next.js doesn't re-fetch the
   // RSC payload and re-suspend the <Suspense> boundary that wraps DataContent
   // (which is what caused the tab+content to flash out on every tab switch).
   const updateTabUrl = (value: PlayerTabId) => {
     if (typeof window === "undefined") return;
     const params = new URLSearchParams(window.location.search);
+    if (value !== "exportImage") {
+      for (const key of ["export", "credit", "day"]) params.delete(key);
+    }
     if (value === DEFAULT_PLAYER_TAB) {
       params.delete('tab');
     } else {
@@ -117,6 +127,18 @@ export function DataContent({
 
   const tabContext: PlayerTabContext = { visitedBySelf, privacy: localPrivacySettings, flags };
   const visibleTabs = getVisiblePlayerTabs(game, region, tabContext);
+
+  const openCreditExport = (at: number) => {
+    const params = new URLSearchParams(window.location.search);
+    params.set('export', 'credit');
+    params.set('credit', String(at));
+    params.delete('day');
+    window.history.replaceState(null, "", `${window.location.pathname}?${params.toString()}`);
+    handleTabChange("exportImage");
+  };
+  const canOpenCredit = supportsGameFeature(game, "last-credit", region)
+    && (visitedBySelf || PUBLIC_VIEWS.recentPlays(localPrivacySettings))
+    && visibleTabs.some(tab => tab.id === "exportImage");
   const activeTab = visibleTabs.find(tab => tab.id === selectedTab) ?? visibleTabs[0];
   const activeTabId = activeTab?.id;
 
@@ -187,6 +209,7 @@ export function DataContent({
                 region={region}
                 profile={profile}
                 publicSnapshotId={visitedBySelf ? undefined : selectedSnapshotData.snapshot.publicId}
+                onOpenCredit={canOpenCredit ? openCreditExport : undefined}
               />
             )}
           </motion.div>

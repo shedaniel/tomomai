@@ -4,26 +4,33 @@ import { DrizzleQueryError } from "drizzle-orm";
 import { GameError } from "@/lib/games/errors";
 
 const mocks = vi.hoisted(() => {
-  const log = { child: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() };
-  log.child.mockReturnValue(log);
-  return { log, flush: vi.fn(), ambient: vi.fn() };
+  const log = { info: vi.fn(), warn: vi.fn(), error: vi.fn() };
+  return { log, flush: vi.fn(), context: vi.fn() };
 });
-vi.mock("@/lib/logger", () => ({ flushLogger: mocks.flush }));
-vi.mock("@/lib/request-logger", () => ({
-  requestLogger: () => ({ log: mocks.log, requestId: "admin-test" }),
-  runWithLogger: (log: unknown, run: () => unknown) => { mocks.ambient(log); return run(); },
+vi.mock("@/lib/logger", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/logger")>()),
+  flushLogger: mocks.flush,
+  logger: mocks.log,
 }));
+vi.mock("@/lib/request-logger", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/request-logger")>();
+  return {
+    ...actual,
+    withLogContext: <T>(fields: Record<string, unknown>, run: () => T) => { mocks.context(fields); return actual.withLogContext(fields, run); },
+  };
+});
 
 import { adminRoute } from "./admin-route";
 import { AdminRequestError } from "@/server/services/catalog/admin-game";
 
 function request(path: string, token: string | null = "admin-secret") {
-  return new NextRequest(`https://example.test/api/admin/${path}`, { headers: token ? { authorization: `Bearer ${token}` } : {} });
+  return new NextRequest(`https://example.test/api/admin/${path}`, {
+    headers: { "x-request-id": "admin-test", ...(token ? { authorization: `Bearer ${token}` } : {}) },
+  });
 }
 
 beforeEach(() => {
   vi.clearAllMocks();
-  mocks.log.child.mockReturnValue(mocks.log);
   vi.stubEnv("ADMIN_UPDATE_TOKEN", "admin-secret");
   vi.stubEnv("FRONTEND_GAME", "maimai");
 });
@@ -59,12 +66,11 @@ describe("adminRoute", () => {
     expect(await response.json()).toEqual({ id: "abc" });
   });
 
-  it("resolves the game, binds it to the logger and serves any game for reads", async () => {
+  it("resolves the game, adds it to the log context and serves any game for reads", async () => {
     const route = adminRoute("admin/test", async ({ game }) => Response.json({ game }), { game: "read" });
     const response = await route(request("test?game=chunithm"));
     expect(await response.json()).toEqual({ game: "chunithm" });
-    expect(mocks.log.child).toHaveBeenCalledWith({ game: "chunithm" });
-    expect(mocks.ambient).toHaveBeenCalledWith(mocks.log);
+    expect(mocks.context).toHaveBeenCalledWith({ game: "chunithm" });
   });
 
   it("answers a missing game with UNKNOWN_GAME and the request id", async () => {

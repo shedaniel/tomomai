@@ -10,6 +10,7 @@ import { resolveBaseUrl } from '@/lib/base-url';
 import { protectedProcedure, router } from '@/lib/trpc';
 import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
+import { getGameSiteStatus } from "@/server/services/games/sega/budget";
 
 export const fetchRouter = router({
   getLoginOtp: gameProcedure(protectedProcedure, "scores")
@@ -48,6 +49,11 @@ export const fetchRouter = router({
         throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to start fetch", cause: error });
       }
     }),
+
+  // Whether the game site has locked us out or the shared request budget is busy, so
+  // the fetch dialog can warn before the user starts a fetch.
+  getSiteStatus: gameProcedure(protectedProcedure, "scores")
+    .query(({ ctx }) => getGameSiteStatus(ctx.game, ctx.region)),
 
   getFetchStatus: gameProcedure(protectedProcedure, "scores")
     .query(({ ctx }) => {

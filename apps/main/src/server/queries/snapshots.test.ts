@@ -5,7 +5,7 @@ import type { ProxyQuery } from "@/test/pg-proxy";
 const proxy = await vi.hoisted(async () => (await import("@/test/pg-proxy")).createProxyDb());
 vi.mock("@/lib/db", () => ({ db: proxy.db }));
 vi.mock("@/lib/r2", () => ({ deleteFromR2: vi.fn(), isR2IconUrl: () => false, r2KeyFromIconUrl: vi.fn() }));
-vi.mock("@/lib/request-logger", () => ({ getLogger: () => ({ info: vi.fn(), warn: vi.fn() }) }));
+vi.mock("@/lib/logger", async (importOriginal) => ({ ...(await importOriginal<typeof import("@/lib/logger")>()), logger: ({ info: vi.fn(), warn: vi.fn() }) }));
 
 import { fetchLatestSnapshotData, fetchSnapshotData, fetchSnapshotDataByPublicId, fetchSnapshotRankings } from "./snapshots";
 

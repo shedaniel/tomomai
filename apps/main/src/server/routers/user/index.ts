@@ -5,9 +5,12 @@ import { profileReportsRouter } from './profile-reports';
 import { fetchRouter } from './fetch';
 import { invitesRouter } from './invites';
 import { recentsRouter } from './recents';
+import { dailyPlaysRouter } from './daily-plays';
 import { statsRouter } from './stats';
 import { albumsRouter } from './albums';
 import { songsRouter } from './songs';
+import { recommendationsRouter } from './recommendations';
+import { searchRouter } from './search';
 import { flagsRouter } from './flags';
 import { legalRouter } from './legal';
 import { friendsRouter } from './friends';
@@ -34,6 +37,7 @@ export const userRouter = router({
   getLoginOtp: fetchRouter.getLoginOtp,
   startFetch: fetchRouter.startFetch,
   getFetchStatus: fetchRouter.getFetchStatus,
+  getSiteStatus: fetchRouter.getSiteStatus,
   getLatestFetchSessionId: fetchRouter.getLatestFetchSessionId,
   deleteToken: fetchRouter.deleteToken,
 
@@ -55,6 +59,11 @@ export const userRouter = router({
   getRecentSongs: recentsRouter.getRecentSongs,
   getPublicRecentSongs: recentsRouter.getPublicRecentSongs,
 
+  // Daily plays
+  getDailyPlaysAvailableDays: dailyPlaysRouter.getAvailableDays,
+  getPublicDailyPlaysAvailableDays: dailyPlaysRouter.getPublicAvailableDays,
+
+
   // Stats
   getPlayerStats: statsRouter.getPlayerStats,
   getPublicPlayerStats: statsRouter.getPublicPlayerStats,
@@ -67,7 +76,17 @@ export const userRouter = router({
   getAllUniqueSongs: songsRouter.getAllUniqueSongs,
   getSongDetails: songsRouter.getSongDetails,
   getSongScores: songsRouter.getSongScores,
+  getSongRatingStanding: songsRouter.getSongRatingStanding,
+  getSongActivity: songsRouter.getSongActivity,
   getSimpleSongDetails: songsRouter.getSimpleSongDetails,
+
+  // Search
+  searchPlayers: searchRouter.searchPlayers,
+  getSearchDocuments: searchRouter.getSearchDocuments,
+
+  // Recommendations
+  getRecommendations: recommendationsRouter.getRecommendations,
+  getPublicRecommendations: recommendationsRouter.getPublicRecommendations,
 
   // Flags
   getUserSelectableFlags: flagsRouter.getUserSelectableFlags,

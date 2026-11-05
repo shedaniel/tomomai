@@ -8,7 +8,10 @@ const SHARED: Privacy = { profileShowAllScores: true, profileShowScoreDetails: t
 
 const proxy = await vi.hoisted(async () => (await import("@/test/pg-proxy")).createProxyDb());
 vi.mock("@/lib/auth", () => ({ auth: {} }));
-vi.mock("@/lib/logger", () => ({ logger: { child: () => ({ info: vi.fn(), warn: vi.fn(), error: vi.fn() }), error: vi.fn() } }));
+vi.mock("@/lib/logger", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/logger")>()),
+  logger: { child: () => ({ info: vi.fn(), warn: vi.fn(), error: vi.fn() }), error: vi.fn() },
+}));
 vi.mock("@/lib/db", () => ({ db: proxy.db }));
 const friends = vi.hoisted(() => ({ areFriends: vi.fn() }));
 vi.mock("@/server/services/friends/queries", () => friends);
@@ -17,13 +20,16 @@ import { router, type Context } from "@/lib/trpc";
 import { statsRouter } from "./user/stats";
 import { recentsRouter } from "./user/recents";
 import { platesRouter } from "./maimai/plates";
-import { dailyPlaysRouter } from "./maimai/daily-plays";
+import { dailyPlaysRouter } from "./user/daily-plays";
+import { creditsRouter } from "./maimai/credits";
 
 const routes = router({
   stats: statsRouter.getPublicPlayerStats,
   recents: recentsRouter.getPublicRecentSongs,
   plates: platesRouter.getPublicPlateSongs,
   days: dailyPlaysRouter.getPublicAvailableDays,
+  credits: creditsRouter.getPublicCredits,
+  credit: creditsRouter.getPublicCredit,
 });
 const caller = routes.createCaller({ session: null, req: new NextRequest("http://localhost/api/trpc") });
 const friendCaller = routes.createCaller({
@@ -65,47 +71,49 @@ afterEach(() => vi.unstubAllEnvs());
 describe("public snapshot access", () => {
   it("reads only a snapshot of the game", async () => {
     publish();
-    await caller.days({ snapshotId: "snapshot" });
+    await caller.days({ game: "maimai", snapshotId: "snapshot" });
     const [access] = proxy.queries;
     expect(access.sql).toContain('"user_snapshots"."game" = $1');
     expect(access.params).toEqual(["maimai", "snapshot", 1]);
   });
 
-  it.each([
-    ["unpublished", { ...PUBLIC, publishProfile: false }],
-    ["unlisted", { ...PUBLIC, profileShowInSearch: false }],
-  ])("hides an %s profile's snapshot from visitors", async (_, owner) => {
-    publish({}, "jp", owner);
-    await expect(caller.days({ snapshotId: "snapshot" })).rejects.toMatchObject({ code: "NOT_FOUND" });
+  it("hides an unpublished profile's snapshot from visitors", async () => {
+    publish({}, "jp", { ...PUBLIC, publishProfile: false });
+    await expect(caller.days({ game: "maimai", snapshotId: "snapshot" })).rejects.toMatchObject({ code: "NOT_FOUND" });
     expect(dataQueries()).toEqual([]);
+  });
+
+  it("serves an unlisted profile's snapshot, which only search and the sitemap leave out", async () => {
+    publish({}, "jp", { ...PUBLIC, profileShowInSearch: false });
+    await expect(caller.days({ game: "maimai", snapshotId: "snapshot" })).resolves.toBeDefined();
   });
 
   it("opens a profile shared with friends only for a matched friend", async () => {
     publish({}, "jp", { publishProfile: false, profileShowInSearch: true, profileShareWithFriends: true });
-    await expect(caller.days({ snapshotId: "snapshot" })).rejects.toMatchObject({ code: "NOT_FOUND" });
-    await expect(friendCaller.days({ snapshotId: "snapshot" })).rejects.toMatchObject({ code: "NOT_FOUND" });
+    await expect(caller.days({ game: "maimai", snapshotId: "snapshot" })).rejects.toMatchObject({ code: "NOT_FOUND" });
+    await expect(friendCaller.days({ game: "maimai", snapshotId: "snapshot" })).rejects.toMatchObject({ code: "NOT_FOUND" });
     expect(friends.areFriends).toHaveBeenLastCalledWith("maimai", "friend", "owner");
 
     friends.areFriends.mockResolvedValue(true);
-    await expect(friendCaller.days({ snapshotId: "snapshot" })).resolves.toBeDefined();
+    await expect(friendCaller.days({ game: "maimai", snapshotId: "snapshot" })).resolves.toBeDefined();
   });
 
   it("never opens a profile its owner does not share with friends, even for a friend", async () => {
     publish({}, "jp", { publishProfile: false, profileShowInSearch: true, profileShareWithFriends: false });
     friends.areFriends.mockResolvedValue(true);
-    await expect(friendCaller.days({ snapshotId: "snapshot" })).rejects.toMatchObject({ code: "NOT_FOUND" });
+    await expect(friendCaller.days({ game: "maimai", snapshotId: "snapshot" })).rejects.toMatchObject({ code: "NOT_FOUND" });
     expect(friends.areFriends).not.toHaveBeenCalled();
   });
 
   it("answers NOT_FOUND for a missing or unpublished snapshot without reading any data", async () => {
-    await expect(caller.days({ snapshotId: "missing" })).rejects.toMatchObject({ code: "NOT_FOUND" });
+    await expect(caller.days({ game: "maimai", snapshotId: "missing" })).rejects.toMatchObject({ code: "NOT_FOUND" });
     expect(dataQueries()).toEqual([]);
   });
 
   it("checks the capability in the snapshot's own region", async () => {
     publish({}, "intl");
     vi.stubEnv("NEXT_PUBLIC_ENABLED_MAIMAI_REGIONS", "jp");
-    await expect(caller.days({ snapshotId: "snapshot" })).rejects.toMatchObject({ code: "BAD_REQUEST" });
+    await expect(caller.days({ game: "maimai", snapshotId: "snapshot" })).rejects.toMatchObject({ code: "BAD_REQUEST" });
     expect(dataQueries()).toEqual([]);
   });
 });
@@ -168,16 +176,31 @@ describe("getPublicPlateSongs", () => {
   });
 });
 
+describe("getPublicCredits and getPublicCredit", () => {
+  it("are hidden unless the owner shares score details", async () => {
+    publish({ profileShowScoreDetails: false });
+    await expect(caller.credits({ snapshotId: "snapshot" })).rejects.toMatchObject({ code: "NOT_FOUND" });
+    await expect(caller.credit({ snapshotId: "snapshot", at: 1 })).rejects.toMatchObject({ code: "NOT_FOUND" });
+    expect(proxy.queries.filter(query => query.table !== "user_snapshots")).toEqual([]);
+  });
+
+  it("read the snapshot owner's maimai credits in the snapshot's region", async () => {
+    publish({}, "intl");
+    await expect(caller.credits({ snapshotId: "snapshot" })).resolves.toEqual({ credits: [], nextCursor: null });
+    expect(dataQueries()[0].params).toEqual(expect.arrayContaining(["maimai", "owner", "intl"]));
+  });
+});
+
 describe("getPublicDailyPlaysAvailableDays", () => {
   it("is hidden unless the owner shares score details", async () => {
     publish({ profileShowScoreDetails: false });
-    await expect(caller.days({ snapshotId: "snapshot" })).rejects.toMatchObject({ code: "NOT_FOUND" });
+    await expect(caller.days({ game: "maimai", snapshotId: "snapshot" })).rejects.toMatchObject({ code: "NOT_FOUND" });
     expect(dataQueries()).toEqual([]);
   });
 
   it("lists the snapshot owner's play days in the snapshot's region", async () => {
     publish({}, "intl");
-    await expect(caller.days({ snapshotId: "snapshot" })).resolves.toEqual([]);
+    await expect(caller.days({ game: "maimai", snapshotId: "snapshot" })).resolves.toEqual([]);
     expect(dataQueries()[0].params).toEqual(["maimai", "owner", "intl"]);
   });
 });

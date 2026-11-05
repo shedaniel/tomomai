@@ -16,20 +16,20 @@ export function StatsCardSkeleton() {
           <Skeleton className="h-8 w-full sm:w-40" />
         </div>
       </div>
-      <div className="space-y-4">
-        <Skeleton className="h-4 w-32" />
-        {Array.from({ length: 6 }).map((_, i) => (
-          <div key={i} className="space-y-2">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Skeleton className="w-12 h-6 rounded" />
-                <Skeleton className="h-4 w-24" />
-              </div>
+      <div className="space-y-3">
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <Skeleton className="h-4 w-36" />
+          <Skeleton className="h-3 w-72 max-w-full" />
+        </div>
+        <div className="space-y-2.5">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <div key={i} className={`grid grid-cols-[4rem_1fr_2.75rem] sm:grid-cols-[5.5rem_1fr_4.5rem] items-center gap-2 sm:gap-3 ${i === 0 ? "pb-2.5 border-b border-dashed" : ""}`}>
               <Skeleton className="h-4 w-12" />
+              <Skeleton className={`${i === 0 ? "h-4" : "h-3"} w-full rounded-full`} />
+              <Skeleton className="h-3 w-10 ml-auto" />
             </div>
-            <Skeleton className="h-2 w-full" />
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
     </div>
   );

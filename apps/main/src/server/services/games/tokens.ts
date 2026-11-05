@@ -3,9 +3,9 @@ import { and, eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { userTokens } from "@/lib/db/schema-pg";
 import type { CanonicalGameId, Region } from "@/lib/games/ids";
-import { getLogger } from "@/lib/request-logger";
 import { decryptToken, encryptToken } from "@/lib/token-crypto";
 import { FetchStartError } from "./fetch-errors";
+import { logger } from "@/lib/logger";
 
 function tokenScope(game: CanonicalGameId, userId: string, region: Region) {
   return and(eq(userTokens.userId, userId), eq(userTokens.game, game), eq(userTokens.region, region));
@@ -18,7 +18,7 @@ export async function readToken(game: CanonicalGameId, userId: string, region: R
   try {
     return decryptToken(record.token);
   } catch (err) {
-    getLogger().error({ err, game, region }, "Failed to decrypt token");
+    logger.error({ err, game, region }, "Failed to decrypt token");
     throw new FetchStartError("TOKEN_UNREADABLE", "Failed to decrypt stored token. Please re-add your authentication tokens.");
   }
 }

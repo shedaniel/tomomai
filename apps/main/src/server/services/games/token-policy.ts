@@ -2,14 +2,14 @@ import "server-only";
 import { getGame } from "@/lib/games/registry";
 import { isSegaToken, parseToken, TOKEN_PROVIDERS, type ParsedToken, type SegaToken } from "@/lib/games/token-format";
 import type { CanonicalGameId, Region } from "@/lib/games/ids";
-import { getLogger } from "@/lib/request-logger";
 import { deleteToken } from "./tokens";
+import { logger } from "@/lib/logger";
 
 const UNSUPPORTED_HERE = "Invalid token format. This kind of token is not supported in this region.";
 
 /** Deletes the player's stored token, which can never sign in, and fails with the reason. Without a user nothing is deleted. */
 export async function refuseToken(game: CanonicalGameId, userId: string | null, region: Region, reason: string): Promise<never> {
-  getLogger().warn({ game, region, userId }, "Refused a token that cannot sign in");
+  logger.warn({ game, region, userId }, "Refused a token that cannot sign in");
   if (userId) await deleteToken(game, userId, region);
   throw new Error(reason);
 }

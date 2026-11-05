@@ -4,8 +4,8 @@ import { formatSegaCookie } from "@/lib/games/token-format";
 import { startScoreFetch } from "@/server/services/games/fetch-sessions";
 import { fetchStartRejection } from "@/server/services/games/fetch-errors";
 import { NextRequest, NextResponse } from "next/server";
-import { flushLogger } from "@/lib/logger";
-import { requestLogger } from "@/lib/request-logger";
+import { logger } from "@/lib/logger";
+import { withRequestLogContext } from "@/lib/request-logger";
 import { securityMiddleware, validateContentType } from "@/lib/security/middleware";
 
 export const dynamic = "force-dynamic";
@@ -30,8 +30,7 @@ export async function OPTIONS() {
   return withCors(response);
 }
 
-export async function POST(request: NextRequest) {
-  const { log, requestId } = requestLogger(request, "login");
+export const POST = withRequestLogContext("login", async (request: NextRequest, { requestId }) => {
   // Apply security middleware
   const securityResponse = await securityMiddleware(request);
   if (securityResponse.status !== 200) {
@@ -69,14 +68,12 @@ export async function POST(request: NextRequest) {
     return jsonResponse({ success: true, sessionId: result.sessionId, status: result.status });
   } catch (error) {
     const rejection = fetchStartRejection(error);
-    if (rejection) log.warn({ err: error }, "Login fetch refused");
-    else log.error({ err: error }, "Login error");
-    // Flush only on the error path — login is user-facing and low-volume.
-    await flushLogger();
+    if (rejection) logger.warn({ err: error }, "Login fetch refused");
+    else logger.error({ err: error }, "Login error");
 
     if (rejection) {
       return jsonResponse({ success: false, error: rejection.message, code: rejection.code, requestId }, rejection.init);
     }
     return jsonResponse({ success: false, error: "Unexpected error.", requestId }, { status: 500 });
   }
-}
+});

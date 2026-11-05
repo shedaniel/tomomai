@@ -7,10 +7,11 @@ const mocks = vi.hoisted(() => {
   return { log, update: vi.fn() };
 });
 vi.mock("@/server/services/catalog/apply", () => ({ updateCatalogRegion: mocks.update }));
-vi.mock("@/lib/logger", () => ({ flushLogger: vi.fn() }));
+vi.mock("@/lib/logger", () => ({ flushLogger: vi.fn(), logger: mocks.log }));
 vi.mock("@/lib/request-logger", () => ({
-  requestLogger: () => ({ log: mocks.log, requestId: "update-all-test" }),
-  runWithLogger: (_log: unknown, run: () => unknown) => run(),
+  withRequestLogContext: (_route: string, handler: (request: unknown, context: object) => unknown) =>
+    (request: unknown, context: object) => handler(request, { ...context, requestId: "update-all-test" }),
+  withLogContext: (_fields: object, run: () => unknown) => run(),
 }));
 
 import { GET } from "./route";

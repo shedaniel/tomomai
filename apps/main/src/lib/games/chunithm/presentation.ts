@@ -1,4 +1,5 @@
 import type { GamePresentation } from "../types";
+import { CANVAS_HEIGHT, CANVAS_WIDTH } from "./image-spec";
 import { CHUNITHM_GRADES } from "./grades";
 
 const integer = new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 });
@@ -6,6 +7,12 @@ const integer = new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 });
 export const chunithmPresentation = {
   formatScore: value => integer.format(value),
   formatScoreDelta: (from, to) => integer.format(to - from),
+  parseScore: text => {
+    const match = /^(\d{1,4}(?:\.\d{1,3})?)k$|^(\d{1,3}(?:,\d{3})+|\d{1,7})$/i.exec(text.trim());
+    if (!match) return null;
+    const value = match[1] ? Math.round(Number(match[1]) * 1000) : Number(match[2].replaceAll(",", ""));
+    return value <= 1_010_000 ? value : null;
+  },
   scoreLabel: "score",
   ratingRules: { scale: 100, aggregation: "average", axisStep: 10, distributionStep: 10, filterBucketWidth: 50 },
   difficulties: {
@@ -140,4 +147,5 @@ export const chunithmPresentation = {
   ],
   grades: CHUNITHM_GRADES,
   imageProxyHosts: [],
+  imageSize: { width: CANVAS_WIDTH, height: CANVAS_HEIGHT },
 } satisfies GamePresentation<"chunithm">;

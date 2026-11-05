@@ -11,10 +11,11 @@ vi.mock("@/server/services/catalog/revalidation", async importOriginal => ({
   revalidateCatalogLocal: mocks.local,
   revalidateCatalog: mocks.fanOut,
 }));
-vi.mock("@/lib/logger", () => ({ flushLogger: vi.fn() }));
+vi.mock("@/lib/logger", () => ({ flushLogger: vi.fn(), logger: mocks.log }));
 vi.mock("@/lib/request-logger", () => ({
-  requestLogger: () => ({ log: mocks.log, requestId: "peer-test" }),
-  runWithLogger: (_log: unknown, run: () => unknown) => run(),
+  withRequestLogContext: (_route: string, handler: (request: unknown, context: object) => unknown) =>
+    (request: unknown, context: object) => handler(request, { ...context, requestId: "peer-test" }),
+  withLogContext: (_fields: object, run: () => unknown) => run(),
 }));
 
 import { POST } from "./route";

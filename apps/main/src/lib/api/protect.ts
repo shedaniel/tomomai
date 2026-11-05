@@ -5,7 +5,7 @@ import { auth } from "@/lib/auth";
 import { verifyAccessToken } from "better-auth/oauth2";
 import { API_SCOPES, isInternalScope, type ScopeKey, scopesToPermissions } from "@/lib/api/scopes";
 import { requiredScopes, type GameRouteSpec, type RouteScope, type RouteSpec } from "@/lib/api/registry";
-import { bindGameRoute, runApiRequest, type GameHandler, type RouteContext } from "@/lib/api/route";
+import { bindGameRoute, withApiRequest, type GameHandler, type RouteContext } from "@/lib/api/route";
 import { resolveBaseUrl } from "@/lib/base-url";
 import { db } from "@/lib/db";
 import { oauthAccessToken, oauthClient, oauthConsent } from "@/lib/db/schema-pg";
@@ -164,7 +164,7 @@ export function withApiKey(
   handler: (req: NextRequest, key: ApiKeyInfo, ctx: RouteContext) => Promise<Response>
 ) {
   const scopes = requiredScopes(spec);
-  return (req: NextRequest, context: RouteContext) => runApiRequest(req, async () => {
+  return withApiRequest<RouteContext>(async (req, context) => {
     const key = await authenticate(req, scopes);
     if (key instanceof Response) return key;
     return meter(key, spec.cost, () => handler(req, key, context));

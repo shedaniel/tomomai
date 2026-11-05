@@ -6,14 +6,12 @@ vi.mock("next/font/local", () => ({ default: () => ({ variable: "font" }) }));
 vi.mock("@/lib/db", () => ({ db: {} }));
 vi.mock("@/lib/auth-server", () => ({ getServerSession: vi.fn() }));
 
-type Handler = (request: NextRequest) => unknown;
+type Handler = (request: NextRequest, context: object) => unknown;
 
-// Every handler here serves a maimai-only feature: renders, the China proxy, lxns sign-in, the userscript and
-// the percentile refresh cron, which every deployment registers.
+// Every handler here serves a maimai-only feature: the last credit render, the China proxy, lxns sign-in, the
+// userscript and the percentile refresh cron, which every deployment registers.
 const ROUTES: Record<string, () => Promise<Handler>> = {
   "GET /api/cron/percentile-bands": async () => (await import("./api/cron/percentile-bands/route")).GET,
-  "GET /api/daily-plays": async () => (await import("./api/daily-plays/route")).GET,
-  "GET /api/export-image": async () => (await import("./api/export-image/route")).GET,
   "GET /api/last-credit": async () => (await import("./api/last-credit/route")).GET,
   "POST /api/cn-proxy/callback": async () => (await import("./api/cn-proxy/callback/route")).POST,
   "GET /api/cn-proxy/yaml": async () => (await import("./api/cn-proxy/yaml/route")).GET,
@@ -36,7 +34,7 @@ describe("maimai-only routes on the CHUNITHM site", () => {
 
   it.each(Object.keys(ROUTES))("%s answers 404", async route => {
     const handler = await ROUTES[route]();
-    await expect(async () => handler(new NextRequest("https://tomochu.test/"))).rejects.toThrow("NEXT_NOT_FOUND");
+    await expect(async () => handler(new NextRequest("https://tomochu.test/"), {})).rejects.toThrow("NEXT_NOT_FOUND");
   });
 });
 
@@ -46,6 +44,6 @@ describe("maimai-only routes on the maimai site", () => {
 
   it("serves the China proxy pages", async () => {
     const handler = await ROUTES["/{locale}/cn-proxy pages"]();
-    expect(() => handler(new NextRequest("https://tomomai.test/"))).not.toThrow();
+    expect(() => handler(new NextRequest("https://tomomai.test/"), {})).not.toThrow();
   });
 });

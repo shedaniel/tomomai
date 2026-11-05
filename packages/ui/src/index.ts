@@ -5,6 +5,7 @@ export * from "./components/animated-select";
 export * from "./components/badge";
 export * from "./components/button";
 export * from "./components/card";
+export * from "./components/command";
 export * from "./components/carousel";
 export * from "./components/chart";
 export * from "./components/comparison";
@@ -38,6 +39,7 @@ export * from "./components/tabs";
 export * from "./components/textarea";
 export * from "./components/threads-icon";
 export * from "./components/tooltip";
+export * from "./components/tooltip-friendly";
 export * from "./components/x-icon";
 
 export * from "./utils";

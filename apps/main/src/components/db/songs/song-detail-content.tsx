@@ -7,27 +7,38 @@ import {
 } from "@tomomai/ui";
 import { useGame, usePresentation } from "@/components/providers/game-provider";
 import { codeOf } from "@/lib/games/codes";
-import { formatEstimated, formatGameScore, formatGameRating, getGameDifficulty, getGameScoreGrade, getGameStatusBadges } from "@/lib/games/presentation";
+import { formatEstimated, formatGameScore, formatGameScoreDelta, formatGameRating, getGameDifficulty, getGameScoreGrade, getGameStatusBadges } from "@/lib/games/presentation";
+import { formatRecommendationTarget } from "@/lib/games/recommendations";
+import { nextRatingTarget, ratingBucketOf } from "@/lib/games/rating-standing";
+import { GAME_UI } from "@/components/games/registry";
+import { SongInsightsContext, scoreMonthAgo, useSongInsights, type SongInsights } from "./song-insights";
+import { ConstantHistoryChart } from "./constant-history-chart";
+import { RelatedSongs } from "./related-songs";
+import { SongPhotos, SongRecentPlays } from "./song-activity";
 import { isGameCnExclusive, supportsGameFeature } from "@/lib/games/frontend";
 import { getGame } from "@/lib/games/registry";
 import { getVersion } from "@/lib/games/versions";
 import { trpc } from "@/lib/trpc-client";
 import { useSession } from "@/lib/auth-client";
 import type { Region } from "@/lib/games/ids";
-import { cn } from "@/lib/utils";
-import { Activity, Calendar, ChevronRight, Globe, Loader2, Music, Pencil, Share } from "lucide-react";
+import { cn, safeDecodeURIComponent } from "@/lib/utils";
+import { Activity, Calendar, ChevronRight, Database, Globe, Link2, Loader2, Music, Pencil, PlayCircle, Share } from "lucide-react";
 
 import { CoverImage } from "@/components/cover-image";
 import { ChartLevel } from "@/components/games/chart-level";
 import { ChartTypeBadge } from "@/components/games/chart-type-badge";
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Tabs, TabsContent, TabsContents, TabsList, TabsTrigger } from "@/components/animate-ui/components/radix/tabs";
+import type { RatingStanding } from "@/lib/games/rating-standing";
 import { ChartTypeKey, SongDetailChart, SongDetailHistoricalChart, SongDetails, SongExtendedIdentified, UserScore } from "./types";
 
 import { Button } from "@tomomai/ui";
 import { Separator } from "@tomomai/ui";
 import { resolveBaseUrl } from "@/lib/base-url";
 import { useTranslations } from "next-intl";
-import { Link } from "@/i18n/navigation"
+import { Link, usePathname } from "@/i18n/navigation";
+import { useCommandPaletteActions } from "@/components/command-palette/command-palette-provider";
+import type { PaletteItem } from "@/components/command-palette/types";
 import { toast } from "sonner";
 import { SongChartDialogContent } from "./song-detail-dialog";
 
@@ -45,6 +56,8 @@ interface SongDetailContentProps {
   type: ChartTypeKey;
   parentIds?: string[];
   initialData?: SongDetails | null;
+  /** Shown away from the database, so the song can be opened there. */
+  showDatabaseLink?: boolean;
 }
 
 export function getChartsByDifficulty(regions: SongDetails['regions']): Map<string, SongExtendedIdentified[]> {
@@ -88,6 +101,8 @@ function ScoreGrid({
   const t = useTranslations();
   const game = useGame();
   const { scoreLabel } = usePresentation();
+  const insights = useSongInsights();
+  const { ChartBadge } = GAME_UI[game.id];
 
   return (
     <div className={cn(
@@ -104,6 +119,16 @@ function ScoreGrid({
         }, chart.gameVersion) : null;
 
         const label = t(`regions.${region}`);
+        const difficultyCode = codeOf(game.id, "difficulty", chart.difficulty);
+        const standing = insights?.standings[region as Region];
+        const placement = standing?.charts[chart.difficulty];
+        const next = standing && score ? nextRatingTarget(game.id, standing, {
+          bucket: placement?.bucket ?? ratingBucketOf(game.id, chart.addedVersion, standing.gameVersion),
+          index: placement?.index ?? null,
+          levelPrecise: chart.levelPrecise,
+          difficultyCode,
+        }, score) : null;
+        const monthAgo = score ? scoreMonthAgo(insights?.history[region as Region]?.[chart.difficulty]) : null;
 
         return (
           <div key={region} className="contents">
@@ -117,7 +142,17 @@ function ScoreGrid({
                     <span className="text-sm font-semibold tabular-nums truncate">
                       {formatGameScore(game.id, score.scoreValue)}
                     </span>
-                    <SongBadges score={score} />
+                    <div className="flex flex-wrap items-center gap-1">
+                      <SongBadges score={score} />
+                      {ChartBadge && insights && (
+                        <ChartBadge chart={chart} score={score} playerRating={standing?.playerRating ?? null} regionCharts={insights.regionCharts[region as Region] ?? []} />
+                      )}
+                    </div>
+                    {monthAgo && (
+                      <span className="text-[10px] tabular-nums text-emerald-600 dark:text-emerald-400">
+                        {t("db.songs.detail.history.sinceMonth", { delta: formatGameScoreDelta(game.id, monthAgo.scoreValue, score.scoreValue) })}
+                      </span>
+                    )}
                   </>
                 ) : (
                   <span className="text-sm text-muted-foreground">-</span>
@@ -143,6 +178,11 @@ function ScoreGrid({
                   <span className="text-sm text-muted-foreground">-</span>
                 )}
               </div>
+              {next && (
+                <span className="text-[10px] text-muted-foreground">
+                  {t("db.songs.detail.next", { target: formatRecommendationTarget(game.id, next.target), gain: formatGameRating(game.id, next.gain) })}
+                </span>
+              )}
             </div>
           </div>
         );
@@ -151,13 +191,14 @@ function ScoreGrid({
   );
 }
 
-export function SongChartRow({ difficulty, charts, index, data, hasNoteCounts, hasTouch }: {
+export function SongChartRow({ difficulty, charts, index, data, hasNoteCounts, hasTouch, standings }: {
   difficulty: string;
   charts: SongExtendedIdentified[];
   index: number;
   data: SongDetails;
   hasNoteCounts: boolean;
   hasTouch: boolean;
+  standings?: Partial<Record<Region, RatingStanding>>;
 }) {
   const t = useTranslations();
   const game = useGame();
@@ -239,14 +280,43 @@ export function SongChartRow({ difficulty, charts, index, data, hasNoteCounts, h
           )}
         </div>
       </ResponsiveDialogTrigger>
-      <ResponsiveDialogContent className="grid w-full gap-4">
-        <SongChartDialogContent charts={charts} scores={chartScores} />
+      <ResponsiveDialogContent className="grid w-full gap-4 lg:max-w-fit">
+        <SongChartDialogContent charts={charts} scores={chartScores} standings={standings} />
       </ResponsiveDialogContent>
     </ResponsiveDialog>
   );
 }
 
-export function SongDetailContent({ songName, artist, slug, type, parentIds, initialData }: SongDetailContentProps) {
+function SongAvailability({ regions, userScores }: { regions: SongDetails["regions"]; userScores: SongDetails["userScores"] }) {
+  const t = useTranslations();
+  const [region, setRegion] = useState(() => regions.find(r => userScores?.[r.region])?.region ?? regions[0]?.region);
+  if (regions.length === 0) return null;
+  const single = regions.length === 1;
+
+  return (
+    <div className="space-y-3">
+      <h2 className="text-sm font-semibold flex items-center gap-2">
+        <Globe className="w-4 h-4" />
+        {t('db.songs.detail.availability')}
+        {single && <span className="font-normal text-muted-foreground">· {t(`regions.${regions[0].region}`)}</span>}
+      </h2>
+      <Tabs value={region} onValueChange={value => setRegion(value as Region)}>
+        <TabsList className={cn("grid w-full", { 2: "grid-cols-2", 3: "grid-cols-3" }[regions.length], single && "hidden")}>
+          {regions.map(r => <TabsTrigger key={r.region} value={r.region}>{t(`regions.${r.region}`)}</TabsTrigger>)}
+        </TabsList>
+        <TabsContents>
+          {regions.map(r => (
+            <TabsContent key={r.region} value={r.region} className="pt-2">
+              <ConstantHistoryChart versions={r.versions} label={t('db.songs.detail.constants')} />
+            </TabsContent>
+          ))}
+        </TabsContents>
+      </Tabs>
+    </div>
+  );
+}
+
+export function SongDetailContent({ songName, artist, slug, type, parentIds, initialData, showDatabaseLink }: SongDetailContentProps) {
   const t = useTranslations();
   const game = useGame();
   const hasInitialData = !!initialData;
@@ -260,6 +330,8 @@ export function SongDetailContent({ songName, artist, slug, type, parentIds, ini
     previousViewerId.current = viewerId;
     if (previous === undefined || previous === null || previous === viewerId) return;
     void utils.user.getSongScores.reset();
+    void utils.user.getSongRatingStanding.reset();
+    void utils.user.getSongActivity.reset();
   }, [utils, viewerId]);
   const {
     data: fetchedData,
@@ -273,6 +345,17 @@ export function SongDetailContent({ songName, artist, slug, type, parentIds, ini
     { game: game.id, songName, artist: artist ?? initialData?.artist, type, parentIds: parentIds ?? initialData?.parentIds },
     { enabled: hasInitialData && viewerId !== null && supportsGameFeature(game, "scores") }
   );
+  const { data: standingsData } = trpc.user.getSongRatingStanding.useQuery(
+    { game: game.id, songName, artist: artist ?? initialData?.artist ?? fetchedData?.artist, type, parentIds: parentIds ?? initialData?.parentIds },
+    { enabled: viewerId !== null && supportsGameFeature(game, "rating"), staleTime: 60000, retry: false },
+  );
+  // A disabled query still returns its cached data, so a signed-out viewer must not see the last viewer's.
+  const standings = viewerId !== null ? standingsData : undefined;
+  const { data: activityData } = trpc.user.getSongActivity.useQuery(
+    { game: game.id, songName, artist: artist ?? initialData?.artist ?? fetchedData?.artist, type, parentIds: parentIds ?? initialData?.parentIds },
+    { enabled: viewerId !== null && supportsGameFeature(game, "scores"), staleTime: 60000, retry: false },
+  );
+  const activity = viewerId !== null ? activityData : undefined;
   const data = useMemo(() => {
     if (!initialData) return fetchedData;
     return {
@@ -291,6 +374,14 @@ export function SongDetailContent({ songName, artist, slug, type, parentIds, ini
   }, [chartsByDifficulty]);
   const hasNoteCounts = supportsGameFeature(game, "note-counts");
   const hasTouch = allCharts.some(chart => chart.touchCount !== null);
+
+  const insights = useMemo((): SongInsights => {
+    const regionCharts: SongInsights["regionCharts"] = {};
+    for (const chart of allCharts) {
+      (regionCharts[chart.region] ??= []).push({ chart, score: data?.userScores?.[chart.region]?.[chart.difficulty] });
+    }
+    return { standings: standings ?? {}, history: activity?.history ?? {}, regionCharts };
+  }, [allCharts, data?.userScores, standings, activity?.history]);
 
   // Pre-compute SEO summary inputs (visible prose paragraph below the header).
   const summary = useMemo(() => {
@@ -320,6 +411,33 @@ export function SongDetailContent({ songName, artist, slug, type, parentIds, ini
     }
   }, [data, game]);
 
+  // The drawer keeps the last song mounted while it closes, so its actions follow the URL rather than the mount.
+  const tPalette = useTranslations("commandPalette");
+  const pathname = usePathname();
+  const onSongPage = safeDecodeURIComponent(pathname ?? "") === `/db/songs/${slug}`;
+  const paletteActions = useMemo<PaletteItem[]>(() => !data || !onSongPage ? [] : [
+    {
+      id: "song:copy-link",
+      group: "actions",
+      title: tPalette("actions.copySongLink", { song: data.songName }),
+      icon: Link2,
+      keywords: ["share", "link", "url", data.songName],
+      perform: () => {
+        void navigator.clipboard.writeText(`${resolveBaseUrl()}/db/songs/${slug}`)
+          .then(() => toast.success(tPalette("actions.copiedSongLink")), () => undefined);
+      },
+    },
+    ...(videoSearchURL ? [{
+      id: "song:video",
+      group: "actions" as const,
+      title: tPalette("actions.searchVideo", { song: data.songName }),
+      icon: PlayCircle,
+      keywords: ["video", "youtube", "bilibili", "chart", data.songName],
+      perform: () => void window.open(videoSearchURL, "_blank", "noopener,noreferrer"),
+    }] : []),
+  ], [data, onSongPage, slug, videoSearchURL, tPalette]);
+  useCommandPaletteActions("song-detail", paletteActions);
+
   if (!data) {
     if (isLoading) {
       return (
@@ -341,6 +459,7 @@ export function SongDetailContent({ songName, artist, slug, type, parentIds, ini
   const addedVersionInfo = getVersion(game.id, data.addedVersion);
 
   return (
+    <SongInsightsContext.Provider value={insights}>
     <div className="space-y-6">
       {/* Cover and basic info */}
       <div className="flex gap-4">
@@ -397,8 +516,16 @@ export function SongDetailContent({ songName, artist, slug, type, parentIds, ini
         </div>
 
         {/* Buttons or Links */}
-        <div className="flex gap-2">
-          <Link href={`/db/songs/${slug}`} onClick={async (e) => {
+        <div className="flex flex-wrap gap-2">
+          {showDatabaseLink && (
+            <Button asChild className="rounded-full">
+              <Link href={`/db/songs/${encodeURIComponent(slug)}`} prefetch={false}>
+                <Database className="w-4 h-4" />
+                {t('db.songs.detail.openInDatabase', { brand: game.brand.productName })}
+              </Link>
+            </Button>
+          )}
+          <Link href={`/db/songs/${slug}`} prefetch={false} onClick={async (e) => {
             const baseUrl = resolveBaseUrl();
             navigator.clipboard.writeText(`${baseUrl}/db/songs/${slug}`);
             e.preventDefault();
@@ -465,75 +592,20 @@ export function SongDetailContent({ songName, artist, slug, type, parentIds, ini
                 data={data}
                 hasNoteCounts={hasNoteCounts}
                 hasTouch={hasTouch}
+                standings={standings}
               />
             ))}
           </div>
         </div>
       )}
 
-      {/* Availability by region */}
-      <div className="space-y-4">
-        <h2 className="text-sm font-semibold flex items-center gap-2">
-          <Globe className="w-4 h-4" />
-          {t('db.songs.detail.availability')}
-        </h2>
+      {activity && <SongRecentPlays plays={activity.recentPlays} showRegion={data.regions.length > 1} />}
+      {activity && <SongPhotos photos={activity.albums} />}
 
-        {data.regions.map(({ region, versions }) => (
-          <div key={region} className="space-y-2">
-            <div className="flex items-center gap-2">
-              <h3 className="text-sm font-medium">
-                {t(`regions.${region}`)}
-              </h3>
-            </div>
+      <SongAvailability regions={data.regions} userScores={data.userScores} />
 
-            <div className="space-y-3 pl-4 border-l-2 border-muted">
-              {versions.map(({ gameVersion, charts }) => {
-                const versionInfo = getVersion(game.id, gameVersion);
-
-                // Group charts by difficulty to show level changes
-                const byDifficulty = new Map<string, (SongDetailChart | SongDetailHistoricalChart)[]>();
-                charts.forEach(chart => {
-                  if (!byDifficulty.has(chart.difficulty)) {
-                    byDifficulty.set(chart.difficulty, []);
-                  }
-                  byDifficulty.get(chart.difficulty)!.push(chart);
-                });
-
-                // Sort by difficulty order
-                const sortedDifficulties = Array.from(byDifficulty.entries())
-                  .map(([difficulty, diffCharts]) => [codeOf(game.id, "difficulty", difficulty), diffCharts] as const)
-                  .sort((a, b) => a[0] - b[0]);
-
-                return (
-                  <div key={gameVersion} className="space-y-1">
-                    <div className="flex items-center gap-2 text-xs">
-                      <Calendar className="w-3 h-3 text-muted-foreground" />
-                      <span className="font-medium">{versionInfo?.name ?? `v${gameVersion}`}</span>
-                    </div>
-                    <div className="flex flex-wrap gap-1.5 pl-5">
-                      {sortedDifficulties.map(([difficultyCode, diffCharts]) => {
-                        const chart = diffCharts[0];
-                        const difficulty = getGameDifficulty(game.id, difficultyCode);
-                        return (
-                          <div
-                            key={difficultyCode}
-                            className={cn(
-                              "px-2 py-0.5 rounded text-xs font-medium text-white",
-                              difficulty.classes.solidBg
-                            )}
-                          >
-                            {difficulty.label} <ChartLevel chart={chart} />
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        ))}
-      </div>
+      <RelatedSongs songName={data.songName} artist={data.artist} type={data.type} charts={allCharts} inPlace={!!showDatabaseLink} />
     </div>
+    </SongInsightsContext.Provider>
   );
 }

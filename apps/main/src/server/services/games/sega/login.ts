@@ -6,10 +6,11 @@ import { SEGA_AIME_GATEWAY, gameSite, siteUrl } from "@/lib/games/sites";
 import { formatSegaAccount, type SegaAccountToken, type SegaToken } from "@/lib/games/token-format";
 import type { SegaIdSiteForm } from "@/lib/games/types";
 import type { CanonicalGameId, Region } from "@/lib/games/ids";
-import { getLogger } from "@/lib/request-logger";
 import { refuseToken } from "../token-policy";
 import { updateToken } from "../tokens";
-import { cookieValue, mergeCookies, openGameSite, requestGameSite, responseCookies, segaRequestSignal, SEGA_USER_AGENT, type GameSiteSession } from "./http";
+import { logger } from "@/lib/logger";
+import { isThrottlingError } from "./errors";
+import { cookieValue, mergeCookies, openGameSite, pinGameSession, redeemGameSession, releaseGameSiteSession, requestGameSite, responseCookies, segaRequestSignal, SEGA_USER_AGENT, type GameSiteSession } from "./http";
 
 type SiteRef = { game: CanonicalGameId; region: Region };
 type IdSiteConfig = SiteRef & SegaIdSiteForm;
@@ -22,11 +23,12 @@ type LoginOutcome =
 const REJECTED_CREDENTIALS = "Login failed. Please check your username and password.";
 
 /**
- * Signs in with a SEGA token and returns a ready session on the game site, the way the site's definition says.
- * A token SEGA refuses is deleted, and one that failed for a transient reason is kept.
+ * Signs in with a SEGA token and returns a ready session on the game site, the way the site's definition says,
+ * bound to the connection that started it. Release it with releaseGameSiteSession once the work is done.
+ * A token SEGA refuses is deleted, and one that failed for a transient reason or throttling is kept.
  */
 export async function openSegaSession(game: CanonicalGameId, region: Region, userId: string | null, token: SegaToken, signal?: AbortSignal): Promise<GameSiteSession> {
-  const log = getLogger().child({ game, region, userId });
+  const log = logger.child({ game, region, userId });
   const outcome = await signIn({ game, region }, token, log, signal);
   switch (outcome.kind) {
     case "ok":
@@ -50,6 +52,8 @@ function signIn(site: SiteRef, token: SegaToken, log: Logger, signal?: AbortSign
 
 function transientFailure(err: unknown, stepType: string, signal?: AbortSignal): LoginOutcome {
   if (signal?.aborted) throw signal.reason;
+  // Being throttled says nothing about the token.
+  if (isThrottlingError(err)) throw err;
   const reason = err instanceof Error && err.name === "TimeoutError" ? "timed out" : "failed";
   return { kind: "transient", error: `SEGA service request ${reason} during ${stepType}. Please try again later.`, stepType, err };
 }
@@ -127,11 +131,7 @@ async function aimeGatewayLogin(config: SiteRef, credentials: SegaToken, log: Lo
     }
 
     stepType = "exchange";
-    const session = { cookies: "" };
-    await openGameSite(config.game, config.region, session, { signal }).html(callback.href);
-    if (!session.cookies) {
-      return { kind: "transient", error: `${getGame(config.game).brand.netName} did not start a session. Please try again later.`, stepType };
-    }
+    const session = await redeemGameSession(config.game, config.region, { url: callback.href, cookies: "" }, signal);
     return { kind: "ok", session, refreshedToken };
   } catch (err) {
     return transientFailure(err, stepType, signal);
@@ -172,13 +172,16 @@ async function segaIdSiteLogin(config: IdSiteConfig, credentials: SegaAccountTok
       return { kind: "rejected", error: REJECTED_CREDENTIALS };
     }
 
-    const session = { cookies: mergeCookies(cookies, responseCookies(response.headers)) };
-    const site = openGameSite(game, region, session, { signal, pageUrl: entryUrl });
+    const loginCookies = mergeCookies(cookies, responseCookies(response.headers));
     if (config.cardSelection.method === "GET") {
       stepType = "card-selection";
       log.info({ stepType }, "Selecting SEGA account card");
-      await site.html(config.cardSelection.path);
-    } else {
+      const url = siteUrl(game, region, config.cardSelection.path).href;
+      return { kind: "ok", session: await redeemGameSession(game, region, { url, cookies: loginCookies, referer: entryUrl }, signal) };
+    }
+    const session = pinGameSession(game, region, { cookies: loginCookies });
+    try {
+      const site = openGameSite(game, region, session, { signal, pageUrl: entryUrl });
       stepType = "card-list";
       log.info({ stepType }, "Reading SEGA account cards");
       const $ = load(await site.html(location));
@@ -190,8 +193,11 @@ async function segaIdSiteLogin(config: IdSiteConfig, credentials: SegaAccountTok
       stepType = "card-selection";
       log.info({ stepType }, "Selecting SEGA account card");
       await site.post(new URL(action, site.pageUrl).href, fields);
+      return { kind: "ok", session };
+    } catch (err) {
+      releaseGameSiteSession(session);
+      throw err;
     }
-    return { kind: "ok", session };
   } catch (err) {
     return transientFailure(err, stepType, signal);
   }

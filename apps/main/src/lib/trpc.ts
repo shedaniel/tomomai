@@ -2,7 +2,7 @@ import { initTRPC, TRPCError } from '@trpc/server';
 import { auth } from '@/lib/auth';
 import { GAME_ERROR_STATUS, GameError } from '@/lib/games/errors';
 import { logger } from '@/lib/logger';
-import { getRequestId, runWithLogger } from '@/lib/request-logger';
+import { getRequestId, withLogContext } from '@/lib/request-logger';
 import { FetchStartError } from '@/server/services/games/fetch-errors';
 import superjson from 'superjson';
 import type { NextRequest } from 'next/server';
@@ -39,16 +39,17 @@ const SERVER_ERROR_CODES = new Set<TRPCError['code']>([
   'GATEWAY_TIMEOUT',
 ]);
 
-// Bind the ambient request logger for every procedure, so lib code reached
-// from tRPC picks up route/requestId via getLogger() (see request-logger.ts),
-// and log failures with a level chosen by error code. tRPC catches procedure
+// Start the log context for every procedure, so every line logged while it
+// runs carries route/requestId (see request-logger.ts), and log failures with
+// a level chosen by error code. tRPC catches procedure
 // errors and returns them as responses, so they never reach instrumentation's
 // onRequestError — this middleware is where they get logged. A fetch refused
 // before it starts is expected even when its status is 5xx (maintenance).
 const withRequestLogger = t.middleware(({ ctx, path, next }) => {
   const requestId = getRequestId(ctx.req);
-  const log = logger.child({ route: `trpc/${path}`, requestId });
-  return runWithLogger(log, async () => {
+  const context = { route: `trpc/${path}`, requestId };
+  const log = logger.child(context);
+  return withLogContext(context, async () => {
     const result = await next();
     if (!result.ok) {
       const { error } = result;

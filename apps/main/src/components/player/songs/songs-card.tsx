@@ -17,7 +17,8 @@ import type { Flags } from "@/lib/flags";
 import type { PercentileMap } from "@/lib/games/maimai/percentile/types";
 import { SongGridSection, SongSection } from "./bucket-section";
 import { RatingDistributionChart } from "./rating-distribution-chart";
-import { matchesScoreQuery } from "./score-query";
+import { scoreSearchFields } from "./score-query";
+import { catalogByParentId, useSearch } from "@/lib/search/song-search";
 import type { RatedScore } from "./types";
 
 type Rankings = {
@@ -162,19 +163,31 @@ export function SongsCard({ selectedSnapshotData, flags }: { selectedSnapshotDat
   );
   const percentileMap: PercentileMap = percentileData?.percentiles ?? {};
 
+  // The catalog adds each song's readings and displayed levels; it loads once the player starts searching.
+  const { data: catalogSongs } = trpc.user.getAllUniqueSongs.useQuery({ game }, {
+    enabled: searchQuery.trim().length > 0,
+    staleTime: 3600000,
+    refetchOnWindowFocus: false,
+  });
+  const searchFields = useMemo(() => scoreSearchFields(game, catalogByParentId(catalogSongs)), [game, catalogSongs]);
+  const allScores = useMemo(
+    () => [...rankings.newBest, ...rankings.oldBest, ...rankings.newRemaining, ...rankings.oldRemaining],
+    [rankings],
+  );
+  const searchHits = useSearch(allScores, searchFields, searchQuery);
+
+  // Each bucket keeps its rating order; search only narrows it.
   const filteredRankings: Rankings = useMemo(() => {
-    if (!searchQuery.trim()) return rankings;
-
-    const query = searchQuery.toLowerCase().trim();
-    const filterSongs = (songList: RatedScore[]) => songList.filter(song => matchesScoreQuery(game, song, query));
-
+    if (!searchHits) return rankings;
+    const matched = new Set(searchHits.map(hit => hit.item));
+    const filterSongs = (songList: RatedScore[]) => songList.filter(song => matched.has(song));
     return {
       newBest: filterSongs(rankings.newBest),
       oldBest: filterSongs(rankings.oldBest),
       newRemaining: filterSongs(rankings.newRemaining),
       oldRemaining: filterSongs(rankings.oldRemaining),
     };
-  }, [game, searchQuery, rankings]);
+  }, [searchHits, rankings]);
 
   return (
     <div className="space-y-6">

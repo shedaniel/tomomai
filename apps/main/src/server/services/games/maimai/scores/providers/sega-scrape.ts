@@ -1,10 +1,11 @@
 import "server-only";
+import { logger } from "@/lib/logger";
 import { FETCH_STATES, songDataState } from "@/lib/fetch-states";
 import { MAIMAI_CODES } from "@/lib/games/maimai/codes";
 import type { CnCookiesToken, SegaToken } from "@/lib/games/token-format";
 import type { FetchRun } from "@/server/services/games/fetch-run";
 import { mirrorPlayerIcon } from "@/server/services/games/icons";
-import { openGameSite, type GameSiteClient } from "@/server/services/games/sega/http";
+import { openGameSite, releaseGameSiteSession, type GameSiteClient, type GameSiteSession } from "@/server/services/games/sega/http";
 import { openSegaSession } from "@/server/services/games/sega/login";
 import { friendSyncDue, savePlayerFriends } from "@/server/services/friends/sync";
 import type { Enrichment, PersistedSnapshotContext, ScoreFetchContext, ScoreFetchOutcome } from "@/server/services/games/types";
@@ -22,18 +23,20 @@ import type { AlbumData, RecentSongData } from "../types";
 
 /** Scrapes maimai DX NET after signing in with SEGA. */
 export function fetchWithSegaLogin(ctx: ScoreFetchContext, token: SegaToken, run: FetchRun): Promise<ScoreFetchOutcome> {
-  return scrapeMaimaiNet(ctx, run, async () => (await openSegaSession("maimai", ctx.region, ctx.userId, token, ctx.signal)).cookies);
+  return scrapeMaimaiNet(ctx, run, () => openSegaSession("maimai", ctx.region, ctx.userId, token, ctx.signal));
 }
 
 /** Scrapes maimai DX China with the session the CN proxy captured. */
 export function fetchWithCnCookies(ctx: ScoreFetchContext, token: CnCookiesToken, run: FetchRun): Promise<ScoreFetchOutcome> {
-  return scrapeMaimaiNet(ctx, run, async () => token.cookies);
+  return scrapeMaimaiNet(ctx, run, async () => ({ cookies: token.cookies }));
 }
 
-async function scrapeMaimaiNet(ctx: ScoreFetchContext, run: FetchRun, signIn: () => Promise<string>): Promise<ScoreFetchOutcome> {
+async function scrapeMaimaiNet(ctx: ScoreFetchContext, run: FetchRun, signIn: () => Promise<GameSiteSession>): Promise<ScoreFetchOutcome> {
   const { region, signal } = ctx;
-  const cookies = await run.stage("login", signIn, FETCH_STATES.LOGIN);
-  const site = openGameSite("maimai", region, { cookies }, { signal, assertPage: assertMaimaiPage });
+  const session = await run.stage("login", signIn, FETCH_STATES.LOGIN);
+  // Recent play details and album photos are read through the session after the snapshot is saved.
+  run.defer(() => releaseGameSiteSession(session));
+  const site = openGameSite("maimai", region, session, { signal, assertPage: assertMaimaiPage });
 
   // One page first, so an expired session fails before the concurrent reads start.
   const { iconUpstreamUrl, ...player } = await run.stage("profile", async () => parsePlayerData(await site.html("playerData/"), region));
@@ -54,7 +57,7 @@ async function scrapeMaimaiNet(ctx: ScoreFetchContext, run: FetchRun, signIn: ()
       return await fetchHiddenSongsData(site, scores);
     } catch (err) {
       signal.throwIfAborted();
-      run.log.warn({ err }, "Continuing without maimai hidden songs");
+      logger.warn({ err }, "Continuing without maimai hidden songs");
       return [];
     }
   }, FETCH_STATES.HIDDEN_SONGS);
@@ -65,7 +68,7 @@ async function scrapeMaimaiNet(ctx: ScoreFetchContext, run: FetchRun, signIn: ()
         return await fetchEventsData(site, region);
       } catch (err) {
         signal.throwIfAborted();
-        run.log.warn({ err }, "Continuing without maimai events");
+        logger.warn({ err }, "Continuing without maimai events");
         return null;
       }
     })
@@ -78,28 +81,28 @@ async function scrapeMaimaiNet(ctx: ScoreFetchContext, run: FetchRun, signIn: ()
       recents: recents.map(recent => normalizeRecent(recent, ctx)),
       events: events ? normalizeEvents(events) : [],
     },
-    enrich: completeSnapshot(ctx, site, run, recents, albums),
+    enrich: completeSnapshot(ctx, site, recents, albums),
   };
 }
 
 /** Saves each recent play's detail page, the album photos and the friend list through the same site session. */
-function completeSnapshot(ctx: ScoreFetchContext, site: GameSiteClient, run: FetchRun, recents: RecentSongData[], albums: AlbumData[]): Enrichment | undefined {
+function completeSnapshot(ctx: ScoreFetchContext, site: GameSiteClient, recents: RecentSongData[], albums: AlbumData[]): Enrichment | undefined {
   const { friends } = ctx.flags;
   if (recents.length === 0 && albums.length === 0 && !friends) return undefined;
   return async persisted => {
     const [details, photos, friendList] = await Promise.allSettled([
       fetchAndInsertRecentSongsData(persisted.userId, persisted.region, site, recents),
       persistAlbumData(persisted.userId, persisted.chartResolution, albums, async album => (await site.bytes(album.imageUrl)).buffer),
-      friends ? syncFriends(site, run, persisted) : undefined,
+      friends ? syncFriends(site, persisted) : undefined,
     ]);
-    if (details.status === "rejected") run.log.error({ err: details.reason, stepType: "recentDetails" }, "Could not save maimai recent play details");
-    if (photos.status === "rejected") run.log.error({ err: photos.reason, stepType: "albums" }, "Could not save maimai album photos");
-    if (friendList.status === "rejected") run.log.error({ err: friendList.reason, stepType: "friends" }, "Could not save maimai friends");
+    if (details.status === "rejected") logger.error({ err: details.reason, stepType: "recentDetails" }, "Could not save maimai recent play details");
+    if (photos.status === "rejected") logger.error({ err: photos.reason, stepType: "albums" }, "Could not save maimai album photos");
+    if (friendList.status === "rejected") logger.error({ err: friendList.reason, stepType: "friends" }, "Could not save maimai friends");
   };
 }
 
-async function syncFriends(site: GameSiteClient, run: FetchRun, { userId, game, region }: PersistedSnapshotContext): Promise<void> {
+async function syncFriends(site: GameSiteClient, { userId, game, region }: PersistedSnapshotContext): Promise<void> {
   if (!await friendSyncDue(userId, game, region)) return;
   const data = await fetchFriendData(site, region);
-  if (data) await savePlayerFriends({ userId, game, region, ...data }, run.log);
+  if (data) await savePlayerFriends({ userId, game, region, ...data });
 }

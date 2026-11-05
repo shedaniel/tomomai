@@ -8,6 +8,7 @@ import { listGuides } from "@/lib/developer/guides";
 import { DeveloperSidebar } from "@/components/developer/sidebar";
 import { SiteFooter } from "@/components/site-footer";
 import { useDeveloperPortal } from "@/lib/flags";
+import { SearchButton } from "@/components/command-palette/search-button";
 
 export const metadata: Metadata = {
   title: { default: "Developer Center", template: "%s | tomomai Developer Center" },
@@ -53,6 +54,8 @@ export default async function DeveloperLayout({ children }: { children: React.Re
               <SidebarTrigger className="-ml-1" />
               <Separator orientation="vertical" className="data-[orientation=vertical]:h-4" />
             </div>
+            <div className="flex items-center gap-2">
+            <SearchButton />
             <a
               href="/developer/openapi.json"
               className="inline-flex h-8 items-center gap-1.5 rounded-md border border-input bg-card px-2.5 text-xs font-medium text-muted-foreground shadow-xs transition-colors hover:bg-accent hover:text-accent-foreground dark:bg-input/30 dark:hover:bg-input/50"
@@ -60,6 +63,7 @@ export default async function DeveloperLayout({ children }: { children: React.Re
               <FileCode2 className="size-3.5" />
               OpenAPI
             </a>
+            </div>
           </header>
           <main className="min-w-0 flex-1 px-4 py-8 sm:px-6 lg:px-8">
             <div className="mx-auto max-w-5xl">{children}</div>

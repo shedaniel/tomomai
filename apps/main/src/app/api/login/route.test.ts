@@ -4,10 +4,10 @@ import { NextRequest } from "next/server";
 const mocks = vi.hoisted(() => ({ start: vi.fn(), log: { warn: vi.fn(), error: vi.fn() } }));
 vi.mock("@/lib/db", () => ({ db: {} }));
 vi.mock("@/lib/base-url", () => ({ resolveBaseUrl: () => "https://tomomai.test" }));
-vi.mock("@/lib/logger", () => ({ flushLogger: vi.fn() }));
-vi.mock("@/lib/request-logger", () => ({
-  requestLogger: () => ({ log: mocks.log, requestId: "login-test" }),
-  getLogger: () => mocks.log,
+vi.mock("@/lib/logger", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/logger")>()),
+  flushLogger: vi.fn(),
+  logger: mocks.log,
 }));
 vi.mock("@/lib/security/middleware", () => ({
   securityMiddleware: async () => new Response(null), validateContentType: () => null,
@@ -37,7 +37,7 @@ function callback(user: string, otp: string, extra: Record<string, string> = {})
   return POST(new NextRequest("https://tomomai.test/api/login", {
     method: "POST", body: new URLSearchParams({ user, otp, token: "gateway-cookie", ...extra }),
     headers: { "Content-Type": "application/x-www-form-urlencoded", Origin: SEGA_AIME_GATEWAY.origin },
-  }));
+  }), {});
 }
 
 beforeEach(() => {

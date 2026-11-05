@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { PUBLIC_VIEWS, toPublicGameSnapshot } from "./public-player";
+import { PUBLIC_VIEWS, toPublicGameSnapshot, toPublicStats } from "./public-player";
 import { getPlayerRankings, type GameEvent, type GameSnapshotData } from "./player-view";
 import { codeOf } from "./codes";
 
@@ -60,6 +60,20 @@ describe("public game snapshots", () => {
     expect(result.snapshot).toMatchObject({ versionPlayCount: null, totalPlayCount: null });
     expect(result).not.toHaveProperty("events");
     for (const song of result.songs) expect(song).toMatchObject({ secondaryScore: null, comboStatus: 0, syncStatus: 0, clearStatus: 0 });
+  });
+});
+
+describe("public stats", () => {
+  const bucket = { grades: { SSS: 1 }, statuses: { comboStatus: { 3: 1 }, syncStatus: {} }, total: 1 };
+  const stats = { stats: { 9: { 3: bucket } }, totalSongs: { 9: { 3: 4 } }, levels: { 9: { 3: { "14": { ...bucket, charts: 4 } } } } };
+
+  it("drops status counts from every bucket, including the per-level ones, without score details", () => {
+    expect(toPublicStats(stats, { profileShowScoreDetails: false })).toStrictEqual({
+      stats: { 9: { 3: { grades: { SSS: 1 }, statuses: {}, total: 1 } } },
+      totalSongs: { 9: { 3: 4 } },
+      levels: { 9: { 3: { "14": { grades: { SSS: 1 }, statuses: {}, total: 1, charts: 4 } } } },
+    });
+    expect(toPublicStats(stats, { profileShowScoreDetails: true })).toBe(stats);
   });
 });
 

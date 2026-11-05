@@ -5,10 +5,10 @@ import { formatGameScore, formatGameLevel, getGameDifficulty, getGameStatusLabel
 import { hasPlaylog } from "@/lib/games/recent-details";
 import { useGame } from "@/components/providers/game-provider";
 import { cn } from "@/lib/utils";
-import { ChevronDown, ChevronUp, CloudOff } from "lucide-react";
+import { ChevronDown, ChevronUp, CloudOff, ImageDown } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
-import { Badge } from "@tomomai/ui";
+import { Badge, Button } from "@tomomai/ui";
 import { AutoHeight } from "@/components/animate-ui/primitives/effects/auto-height";
 import { CoverImage } from "@/components/cover-image";
 import { ChartTypeBadge } from "@/components/games/chart-type-badge";
@@ -25,9 +25,12 @@ interface RecentPlayRowProps {
   isLast: boolean;
   onToggleExpand: (id: string) => void;
   isExpanded: boolean;
+  /** The unix time of this play's credit's first track, null when unknown. */
+  creditAt?: number | null;
+  onOpenCredit?: (at: number) => void;
 }
 
-export function RecentPlayRow({ play, index, isFirst, isLast, onToggleExpand, isExpanded }: RecentPlayRowProps) {
+export function RecentPlayRow({ play, index, isFirst, isLast, onToggleExpand, isExpanded, creditAt = null, onOpenCredit }: RecentPlayRowProps) {
   const game = useGame().id;
   const t = useTranslations('recentPlays');
   const isDesktop = useMediaQuery("(min-width: 768px)", { initializeWithValue: false });
@@ -179,11 +182,31 @@ export function RecentPlayRow({ play, index, isFirst, isLast, onToggleExpand, is
         </div>
       </div>
 
-      {/* Expand hint */}
-      <button type="button" aria-expanded={isExpanded} className="flex w-full items-center justify-center gap-1 text-xs text-muted-foreground mt-4 md:mt-2">
-        {isExpanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
-        <span>{t(isExpanded ? 'clickToCollapse' : 'clickToExpand')}</span>
-      </button>
+      {/* Expand hint, centred between equal side columns */}
+      <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 mt-4 md:mt-2">
+        <div />
+        <button type="button" aria-expanded={isExpanded} className="flex items-center justify-center gap-1 text-xs text-muted-foreground">
+          {isExpanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+          <span>{t(isExpanded ? 'clickToCollapse' : 'clickToExpand')}</span>
+        </button>
+        <div className="flex justify-end">
+          {creditAt !== null && onOpenCredit && (
+            <Button
+              variant="outline"
+              size="sm"
+              aria-label={t('exportCredit')}
+              className="h-7 gap-1.5 px-2 text-xs"
+              onClick={(event) => {
+                event.stopPropagation();
+                onOpenCredit(creditAt);
+              }}
+            >
+              <ImageDown className="h-3.5 w-3.5" />
+              <span className="max-sm:hidden">{t('exportCredit')}</span>
+            </Button>
+          )}
+        </div>
+      </div>
 
       <AutoHeight deps={[isExpanded]}>
         <div className={cn(!isExpanded && "max-h-0")}>

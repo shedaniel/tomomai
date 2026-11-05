@@ -149,17 +149,17 @@ export function InvitesDialog({ isOpen, onOpenChange }: InvitesDialogProps) {
       if (i < inviteData.quota.activeCount) {
         // Active invite
         circles.push(
-          <div key={i} className="w-4 h-4 rounded-full border-2 border-blue-500" title={t('invites.quotaExplanation.active')} />
+          <div key={i} className="w-4 h-4 rounded-full border-2 border-blue-500" />
         );
       } else if (i < inviteData.quota.used) {
         // Recently claimed
         circles.push(
-          <div key={i} className="w-4 h-4 rounded-full bg-green-500" title={t('invites.quotaExplanation.claimed')} />
+          <div key={i} className="w-4 h-4 rounded-full bg-green-500" />
         );
       } else {
         // Available slot
         circles.push(
-          <div key={i} className="w-4 h-4 rounded-full border-2 border-dashed border-gray-400" title={t('invites.quotaExplanation.available')} />
+          <div key={i} className="w-4 h-4 rounded-full border-2 border-dashed border-gray-400" />
         );
       }
     }

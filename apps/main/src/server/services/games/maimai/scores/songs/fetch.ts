@@ -1,25 +1,25 @@
 import "server-only";
 import { load } from "cheerio";
 import { normalizeName } from "@/lib/name-utils";
-import { getLogger } from "@/lib/request-logger";
 import type { Difficulty } from "@/lib/games/maimai/types";
 import type { GameSiteClient } from "@/server/services/games/sega/http";
 import { musicTypeFromIcon } from "../parse-utils";
 import type { ScoreData } from "../types";
 import { parseScoreData } from "./parse";
+import { logger } from "@/lib/logger";
 
 // maimai DX NET's `diff` search parameter for each difficulty.
 const NET_DIFF_PARAMS: Readonly<Record<Difficulty, number>> = { basic: 0, advanced: 1, expert: 2, master: 3, remaster: 4, utage: 10 };
 
 export async function fetchSongsData(site: GameSiteClient, difficulty: Difficulty): Promise<ScoreData[]> {
   const scores = parseScoreData(await site.html(`record/musicGenre/search/?genre=99&diff=${NET_DIFF_PARAMS[difficulty]}`), difficulty);
-  getLogger().info({ difficulty, recordCount: scores.length }, "Read maimai scores");
+  logger.info({ difficulty, recordCount: scores.length }, "Read maimai scores");
   return scores;
 }
 
 // Hidden songs from the rating-target page (intl only).
 export async function fetchHiddenSongsData(site: GameSiteClient, knownScores: readonly ScoreData[]): Promise<ScoreData[]> {
-  const log = getLogger();
+  const log = logger;
   const html = await site.html("home/ratingTargetMusic/");
 
   const $ = load(html);

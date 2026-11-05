@@ -2,14 +2,14 @@
 
 import { useGame } from "@/components/providers/game-provider";
 import { trpc } from "@/lib/trpc-client";
-import { Activity, Calendar, ChevronRight, Loader2, Music } from "lucide-react";
+import { Activity, Calendar, ChevronRight, Music } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { Link } from "@/i18n/navigation";
 import { Button } from "@tomomai/ui";
 import { Separator } from "@tomomai/ui";
 import { getVersion } from "@/lib/games/versions";
 import { motion } from "motion/react";
 import { SPRING_CONFIGS, getTransition } from "@/lib/animation-constants";
+import { useSongDetail } from "@/components/db/songs/song-detail-provider";
 
 export function ExpandedSongDetails({ publicId }: { publicId: string }) {
   const t = useTranslations();
@@ -22,6 +22,7 @@ export function ExpandedSongDetails({ publicId }: { publicId: string }) {
   );
 
   const addedVersionInfo = songDetails ? getVersion(game, songDetails.addedVersion) : null;
+  const { openSongDetail } = useSongDetail();
 
   return (
     <div className="mt-4 flex flex-col gap-3">
@@ -57,26 +58,10 @@ export function ExpandedSongDetails({ publicId }: { publicId: string }) {
         whileTap={{ scale: 0.98 }}
         transition={getTransition(SPRING_CONFIGS.snappy)}
       >
-        <Button
-          className="w-full h-9 text-xs"
-          variant="secondary"
-          disabled={isLoading || !songDetails?.slug}
-          asChild={!isLoading && !!songDetails?.slug}
-        >
-          {isLoading ? (
-            <>
-              <Loader2 className="w-3.5 h-3.5 mr-2 animate-spin" />
-              {t('common.loading')}
-            </>
-          ) : songDetails?.slug ? (
-            <Link href={`/db/songs/${songDetails.slug}`} target="_blank" className="relative">
-              <Music className="w-3.5 h-3.5 mr-2" />
-              {t('db.songs.detail.viewDetails')}
-              <ChevronRight className="w-3.5 absolute top-0 bottom-0 right-2 my-auto" />
-            </Link>
-          ) : (
-            <span className="text-destructive">Error</span>
-          )}
+        <Button className="relative w-full h-9 text-xs" variant="secondary" onClick={() => openSongDetail({ publicId })}>
+          <Music className="w-3.5 h-3.5 mr-2" />
+          {t('db.songs.detail.openDetails')}
+          <ChevronRight className="w-3.5 absolute top-0 bottom-0 right-2 my-auto" />
         </Button>
       </motion.div>
     </div>

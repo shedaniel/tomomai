@@ -9,7 +9,7 @@ vi.mock("../divingfish/client", async importOriginal => ({
   ...await importOriginal<typeof import("../divingfish/client")>(), fetchDivingFishRecordsByDevToken: mocks.records,
 }));
 vi.mock("@/server/services/games/fetch-progress", () => ({ appendFetchState: mocks.progress }));
-vi.mock("@/lib/request-logger", () => ({ getLogger: () => mocks.log }));
+vi.mock("@/lib/logger", async (importOriginal) => ({ ...(await importOriginal<typeof import("@/lib/logger")>()), logger: mocks.log }));
 vi.mock("@/server/services/games/tokens", () => ({ deleteToken: mocks.remove }));
 
 import { createFetchRun } from "@/server/services/games/fetch-run";

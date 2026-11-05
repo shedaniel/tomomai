@@ -18,18 +18,22 @@ const privacyColumns = {
   profileShowEvents: user.profileShowEvents,
 };
 
-/** How a visitor reaches a profile: it is published and listed, or its owner shares it with them as an in-game friend. */
+/** How a visitor reaches a profile: it is published, or its owner shares it with them as an in-game friend. */
 export type ProfileAccess = "public" | "friend";
 
-type OwnerVisibility = { id: string; publishProfile: boolean; profileShowInSearch: boolean; profileShareWithFriends: boolean };
+type OwnerVisibility = { id: string; publishProfile: boolean; profileShareWithFriends: boolean };
 
 async function profileAccess(game: CanonicalGameId, owner: OwnerVisibility, viewerId: string | undefined): Promise<ProfileAccess | null> {
-  if (owner.publishProfile && owner.profileShowInSearch) return "public";
+  if (owner.publishProfile) return "public";
   if (viewerId && owner.profileShareWithFriends && await areFriends(game, viewerId, owner.id)) return "friend";
   return null;
 }
 
-/** The profile a visitor may open. Signed-in visitors pass their id, so a profile shared with friends opens for its owner's friends. */
+/**
+ * The profile a visitor may open, or NOT_FOUND. Signed-in visitors pass their id, so a profile shared with
+ * friends opens for its owner's friends. An unlisted profile (`profileShowInSearch` off) is still served; it is
+ * only kept out of the sitemap, search engines and in-site search.
+ */
 export async function resolvePublicUserByUsername(game: CanonicalGameId, username: string, viewerId?: string) {
   const reserved = await GAME_SERVER_MODULES[game].reserved?.user(username);
   if (reserved) return { ...reserved, access: "public" as ProfileAccess };
@@ -83,7 +87,6 @@ export async function resolvePublicSnapshotAccess(
       owner: {
         id: user.id,
         publishProfile: user.publishProfile,
-        profileShowInSearch: user.profileShowInSearch,
         profileShareWithFriends: user.profileShareWithFriends,
       },
     })
@@ -105,4 +108,38 @@ export async function resolvePublicSnapshotAccess(
   resolveGameContext(game, { region: snapshot.region, capability });
   const { owner: _, ...access } = snapshot;
   return access;
+}
+
+/** The region of one of the user's own snapshots of the game, whether or not their profile is published. */
+export async function resolveOwnSnapshotRegion(game: CanonicalGameId, snapshotPublicId: string, userId: string) {
+  const [snapshot] = await db
+    .select({ region: userSnapshots.region })
+    .from(userSnapshots)
+    .where(and(
+      eq(userSnapshots.game, game),
+      eq(userSnapshots.publicId, snapshotPublicId),
+      eq(userSnapshots.userId, userId),
+    ))
+    .limit(1);
+  return snapshot?.region ?? null;
+}
+
+/**
+ * Owner of a snapshot whose play history the viewer may render: the owner
+ * themselves, or anyone when the profile is public with score details shown.
+ */
+export async function resolvePlayHistoryOwner(snapshotPublicId: string, viewerId: string | undefined): Promise<string | null> {
+  const [row] = await db
+    .select({
+      userId: userSnapshots.userId,
+      publishProfile: user.publishProfile,
+      showScoreDetails: user.profileShowScoreDetails,
+    })
+    .from(userSnapshots)
+    .innerJoin(user, eq(userSnapshots.userId, user.id))
+    .where(eq(userSnapshots.publicId, snapshotPublicId))
+    .limit(1);
+  if (!row) return null;
+  if (row.userId === viewerId || (row.publishProfile && row.showScoreDetails)) return row.userId;
+  return null;
 }

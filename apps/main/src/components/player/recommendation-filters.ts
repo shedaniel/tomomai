@@ -1,9 +1,18 @@
 import type { LucideIcon } from "lucide-react";
 import type { FilterCategory, GenericFilter } from "@/components/filter-panel";
 import { formatGameRating, getGameChartType, getGameDifficulty } from "@/lib/games/presentation";
-import type { RecommendationData } from "@/lib/games/recommendations";
+import type { GamePlayerScore } from "@/lib/games/player-view";
 import { getGame } from "@/lib/games/registry";
+import type { RecommendationTarget } from "@/lib/games/types";
 import type { CanonicalGameId } from "@/lib/games/ids";
+
+/** What the filters read, which played and unplayed recommendations share. */
+export type FilterableRecommendation = {
+  song: Pick<GamePlayerScore, "difficultyCode" | "typeCode" | "level">;
+  target: RecommendationTarget;
+  targetRating: number;
+  category: "new" | "old";
+};
 
 type VersionLabels = { new: string; old: string };
 
@@ -12,17 +21,17 @@ function codeOptions(codes: number[]): string[] {
   return [...new Set(codes)].sort((a, b) => a - b).map(String);
 }
 
-function levelOptions(recommendations: RecommendationData[]): string[] {
+function levelOptions(recommendations: readonly FilterableRecommendation[]): string[] {
   return [...new Set(recommendations.map(rec => rec.song.level))].sort((a, b) =>
     parseFloat(a.replace("+", ".5")) - parseFloat(b.replace("+", ".5")));
 }
 
-function targetRatingOptions(recommendations: RecommendationData[], width: number): string[] {
+function targetRatingOptions(recommendations: readonly FilterableRecommendation[], width: number): string[] {
   const starts = new Set(recommendations.map(rec => Math.floor(rec.targetRating / width) * width));
   return [...starts].sort((a, b) => a - b).map(start => `${start} - ${start + width - 1}`);
 }
 
-function targetOptions(recommendations: RecommendationData[]): string[] {
+function targetOptions(recommendations: readonly FilterableRecommendation[]): string[] {
   const targets = new Map(recommendations.map(rec => [rec.target.label, rec.target]));
   return [...targets.values()]
     .sort((a, b) => a.scoreValue - b.scoreValue || a.comboStatus - b.comboStatus)
@@ -48,7 +57,7 @@ export function createRecommendationFilterLabel(filter: GenericFilter, translati
 
 /** Categories that would offer a single option are left out, since that option matches every recommendation. */
 export function createRecommendationFilterCategories(
-  recommendations: RecommendationData[],
+  recommendations: readonly FilterableRecommendation[],
   translations: VersionLabels & {
     difficulty: string;
     level: string;
@@ -86,7 +95,7 @@ export function createRecommendationFilterCategories(
   ].filter(({ options }) => options.length > 1);
 }
 
-export function applyRecommendationFilters(recommendations: RecommendationData[], filters: GenericFilter[]): RecommendationData[] {
+export function applyRecommendationFilters<T extends FilterableRecommendation>(recommendations: T[], filters: GenericFilter[]): T[] {
   if (filters.length === 0) return recommendations;
 
   const filtersByCategory = filters.reduce((acc, filter) => {

@@ -4,3 +4,5 @@ export { SettingsSection } from "./settings-section";
 export { SettingsField } from "./settings-field";
 export type { SettingsFieldProps } from "./settings-field";
 export { SettingsFooter } from "./settings-footer";
+export { UnsavedChangesProvider, useGuardedLeave, useUnsavedChanges } from "./unsaved-changes";
+export type { UnsavedChanges } from "./unsaved-changes";
