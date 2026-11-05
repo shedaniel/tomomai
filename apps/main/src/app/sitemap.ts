@@ -39,7 +39,7 @@ async function buildSitemap(game: FrontendGame): Promise<MetadataRoute.Sitemap> 
     ))
     .where(
       and(
-        eq(user.publishProfile, true),
+        eq(user.profileVisibility, "public"),
         eq(user.profileShowInSearch, true),
       ),
     )

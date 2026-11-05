@@ -27,7 +27,7 @@ export const userRouter = router({
   getProfileSettings: profileRouter.getProfileSettings,
   updateProfileDescription: profileRouter.updateProfileDescription,
   submitProfileReport: profileReportsRouter.submitProfileReport,
-  updatePublishProfile: profileRouter.updatePublishProfile,
+  updateProfileVisibility: profileRouter.updateProfileVisibility,
   updateRegion: profileRouter.updateRegion,
   updateProfileMainRegion: profileRouter.updateProfileMainRegion,
   updateProfilePrivacySettings: profileRouter.updateProfilePrivacySettings,
@@ -53,7 +53,6 @@ export const userRouter = router({
   getFriendPlayers: friendsRouter.getFriendPlayers,
   getSongFriendScores: friendsRouter.getSongFriendScores,
   setFriendsEnabled: friendsRouter.setFriendsEnabled,
-  updateFriendSharing: friendsRouter.updateFriendSharing,
   hideFriend: friendsRouter.hideFriend,
   unhideFriends: friendsRouter.unhideFriends,
 

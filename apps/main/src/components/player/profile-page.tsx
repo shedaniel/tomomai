@@ -73,7 +73,7 @@ export function ProfilePage({
             profileDescription={profileData.profileDescription}
             profileUsername={username}
             profileUserId={profileData.id}
-            publishProfile={profileData.publishProfile}
+            profileVisibility={friendView ? "friends" : "public"}
             isOwner={isOwner}
             initialTab={initialTab}
             visitedBySelf={false}

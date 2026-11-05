@@ -91,7 +91,7 @@ export const usersRouter = router({
           banReason: user.banReason,
           banExpires: user.banExpires,
           region: gamePreference(getCurrentGame().id, 'region'),
-          publishProfile: user.publishProfile,
+          profileVisibility: user.profileVisibility,
           fetchUseAlbums: user.fetchUseAlbums,
         })
         .from(user)

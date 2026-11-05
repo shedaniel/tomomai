@@ -1,4 +1,5 @@
 import type { Region } from "./games/ids";
+import type { ProfileAudience, ProfileAudienceSettings } from "./profile-audience";
 
 // ===== CORE TYPES =====
 
@@ -34,29 +35,23 @@ export interface UserData {
   username: string | null;
   email: string;
   image: string | null;
-  publishProfile: boolean;
+  profileVisibility: ProfileAudience;
   /** The dashboard region preference for the served game, null when none is set. */
   region: Region | null;
   role: "user" | "admin";
 }
 
-export interface ProfileSettings {
-  publishProfile: boolean;
+export type ProfileSettings = ProfileAudienceSettings & {
   profileDescription: string | null;
   profileMainRegion: Region | null;
-  profileShowAllScores: boolean;
-  profileShowScoreDetails: boolean;
-  profileShowPlates: boolean;
-  profileShowPlayCounts: boolean;
-  profileShowEvents: boolean;
-  profileShowInSearch: boolean;
+  friendsEnabled: boolean;
   fetchUseAlbums: boolean | null;
-}
+};
 
+/** A profile as one visitor sees it: the switches say what this visitor may see. */
 export interface ProfileData {
   id: string;
   name: string;
-  publishProfile: boolean;
   profileDescription: string | null;
   profileMainRegion: Region | null;
   profileShowAllScores: boolean;
@@ -67,6 +62,7 @@ export interface ProfileData {
   profileShowInSearch: boolean;
 }
 
+/** What one visitor may see of a profile, resolved from its audiences by privacyFor. */
 export interface ProfilePrivacySettings {
   profileShowAllScores: boolean;
   profileShowScoreDetails: boolean;

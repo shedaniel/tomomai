@@ -1,5 +1,6 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
+import type { ProfileAudience } from "@/lib/profile-audience";
 
 export const PROFILE_REPORT_REASONS = [
   "harassment",
@@ -39,7 +40,7 @@ export const STALE_PROFILE_REPORT_MESSAGE = "This profile report is no longer pe
 
 export interface ReportableProfile {
   id: string;
-  publishProfile: boolean;
+  profileVisibility: ProfileAudience;
   profileDescription: string | null;
 }
 
@@ -90,7 +91,7 @@ export async function submitProfileReport(
   }
 
   const target = await dependencies.findTarget(input.targetUserId);
-  if (!target?.publishProfile || !target.profileDescription) {
+  if (target?.profileVisibility !== "public" || !target.profileDescription) {
     throw new TRPCError({
       code: "NOT_FOUND",
       message: "Published profile description not found",

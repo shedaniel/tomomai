@@ -183,7 +183,7 @@ export function CommandPalette() {
     ...basePages,
     ...(friendsOn ? [{ id: "page:settings:friends", group: "pages" as const, title: tAll("settings.pages.friends.title"), subtitle: tAll("common.settings"), icon: Users, href: "/settings/friends", keywords: ["friends", "settings"], remember: true }] : []),
   ], [basePages, username, friendsOn, t, tAll]);
-  const actions = useMemo<PaletteItem[]>(() => username && userData?.publishProfile
+  const actions = useMemo<PaletteItem[]>(() => username && userData && userData.profileVisibility !== "private"
     ? [...baseActions, {
       id: "action:copy-profile",
       group: "actions",
@@ -195,7 +195,7 @@ export function CommandPalette() {
           .then(() => toast.success(t("actions.copiedProfileLink")), () => undefined);
       },
     }]
-    : baseActions, [baseActions, username, userData?.publishProfile, locale, t]);
+    : baseActions, [baseActions, username, userData, locale, t]);
 
   const documentItems = useMemo<PaletteItem[]>(() => documents ? [
     ...documents.posts.map(post => ({ id: `post:${post.href}`, group: "posts" as const, title: post.title, subtitle: [post.date, post.summary].filter(Boolean).join(" · "), icon: FileText, href: post.href, remember: true, searchOnly: true })),

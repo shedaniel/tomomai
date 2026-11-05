@@ -9,6 +9,7 @@ import {
 } from "./types";
 import { CANONICAL_GAME_IDS, REGIONS } from "../games/ids";
 import type { CatalogMetadata } from "../catalog/chart-metadata";
+import { PROFILE_AUDIENCES } from "../profile-audience";
 
 // PostgreSQL enum types
 export const languageEnum = pgEnum("language", LANGUAGE_ENUM);
@@ -20,6 +21,7 @@ export const eventTypeEnum = pgEnum("event_type", EVENT_TYPE_ENUM);
 export const eventStateEnum = pgEnum("event_state", EVENT_STATE_ENUM);
 export const storeStatusEnum = pgEnum("store_status", STORE_STATUS_ENUM);
 export const legalDocTypeEnum = pgEnum("legal_doc_type", ["tos", "privacy"]);
+export const profileAudienceEnum = pgEnum("profile_audience", PROFILE_AUDIENCES);
 export const profileReportReasonEnum = pgEnum("profile_report_reason", [
   "harassment",
   "hate",
@@ -46,17 +48,16 @@ export const user = pgTable("user", {
   banned: boolean("banned").notNull().default(false),
   banReason: text("banReason"),
   banExpires: timestamp("banExpires", { precision: 0 }),
-  // Profile publishing settings
-  publishProfile: boolean("publishProfile").notNull().default(false),
-  profileShowAllScores: boolean("profileShowAllScores").notNull().default(true),
-  profileShowScoreDetails: boolean("profileShowScoreDetails").notNull().default(true),
-  profileShowPlates: boolean("profileShowPlates").notNull().default(true),
-  profileShowPlayCounts: boolean("profileShowPlayCounts").notNull().default(true),
-  profileShowEvents: boolean("profileShowEvents").notNull().default(true),
+  // Who may open the profile, and each part of it within that (lib/profile-audience.ts).
+  profileVisibility: profileAudienceEnum("profileVisibility").notNull().default("friends"),
+  profileAllScoresAudience: profileAudienceEnum("profileAllScoresAudience").notNull().default("public"),
+  profileScoreDetailsAudience: profileAudienceEnum("profileScoreDetailsAudience").notNull().default("public"),
+  profilePlatesAudience: profileAudienceEnum("profilePlatesAudience").notNull().default("public"),
+  profilePlayCountsAudience: profileAudienceEnum("profilePlayCountsAudience").notNull().default("public"),
+  profileEventsAudience: profileAudienceEnum("profileEventsAudience").notNull().default("public"),
+  // Only a public profile is listed: in-site search, the sitemap and search engines.
   profileShowInSearch: boolean("profileShowInSearch").notNull().default(true),
   profileDescription: text("profileDescription"),
-  // Matched in-game friends may view the profile even when it is not published.
-  profileShareWithFriends: boolean("profileShareWithFriends").notNull().default(false),
   // Off keeps no friend list and leaves the user out of everyone's matches.
   friendsEnabled: boolean("friendsEnabled").notNull().default(true),
   // Fetch settings

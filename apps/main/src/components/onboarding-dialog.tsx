@@ -154,12 +154,12 @@ export function OnboardingDialog({
     isLocallyValid && !isOwnUsername && (availabilityQuery.isFetching || availabilityQuery.isLoading);
 
   const setUsernameMutation = trpc.username.setUsername.useMutation();
-  const updatePublishProfileMutation = trpc.user.updatePublishProfile.useMutation();
+  const updateProfileVisibilityMutation = trpc.user.updateProfileVisibility.useMutation();
   const updateRegionMutation = trpc.user.updateRegion.useMutation();
   const updateProfileMainRegionMutation = trpc.user.updateProfileMainRegion.useMutation();
 
   const isSubmittingStep1 =
-    setUsernameMutation.isPending || updatePublishProfileMutation.isPending;
+    setUsernameMutation.isPending || updateProfileVisibilityMutation.isPending;
   const isSubmittingStep2 = updateRegionMutation.isPending || updateProfileMainRegionMutation.isPending;
 
   const baseHost = useMemo(() => stripProtocol(resolveBaseUrl()), []);
@@ -174,7 +174,10 @@ export function OnboardingDialog({
       if (!isOwnUsername) {
         await setUsernameMutation.mutateAsync({ username: username.trim() });
       }
-      await updatePublishProfileMutation.mutateAsync({ publishProfile });
+      // Turning the switch off leaves the default, friends-only, rather than closing the profile to friends.
+      if (publishProfile !== (initialPublishProfile ?? false)) {
+        await updateProfileVisibilityMutation.mutateAsync({ profileVisibility: publishProfile ? "public" : "friends" });
+      }
       setDirection(1);
       setStep(cnOnly ? 3 : 2);
     } catch (error) {

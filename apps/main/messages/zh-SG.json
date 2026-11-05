@@ -708,8 +708,11 @@
   "profileVisibility": {
     "public": "公开主页",
     "private": "私人主页",
+    "friends": "好友限定主页",
     "accessibleBy": "可通过 ",
     "accessibleByEnd": " 访问！",
+    "friendsAccessibleBy": "游戏内好友可通过 ",
+    "friendsAccessibleByEnd": " 访问。",
     "youMayChangePrivacySettings": "你可以在右上角图示 → 设置 → 公开主页 中更改隐私设置。",
     "onlyAccessibleByYou": "只有你可以访问！你可以在右上角图示 → 设置 → 公开主页 中更改隐私设置。"
   },

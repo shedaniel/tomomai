@@ -18,7 +18,7 @@ export const profileReportsRouter = router({
           const [target] = await db
             .select({
               id: user.id,
-              publishProfile: user.publishProfile,
+              profileVisibility: user.profileVisibility,
               profileDescription: user.profileDescription,
             })
             .from(user)

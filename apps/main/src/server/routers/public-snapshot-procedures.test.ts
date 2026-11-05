@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { NextRequest } from "next/server";
 import type { ProfilePrivacySettings } from "@/lib/types";
 import type { ProxyRow } from "@/test/pg-proxy";
+import { PROFILE_PART_AUDIENCES, type ProfileAudience } from "@/lib/profile-audience";
 
 type Privacy = Pick<ProfilePrivacySettings, "profileShowAllScores" | "profileShowScoreDetails" | "profileShowPlates" | "profileShowPlayCounts" | "profileShowEvents">;
 const SHARED: Privacy = { profileShowAllScores: true, profileShowScoreDetails: true, profileShowPlates: true, profileShowPlayCounts: true, profileShowEvents: true };
@@ -39,11 +40,14 @@ const friendCaller = routes.createCaller({
 
 const stored = { snapshot: null as ProxyRow | null, scores: [] as ProxyRow[], catalog: [] as ProxyRow[] };
 
-type Owner = { publishProfile: boolean; profileShowInSearch: boolean; profileShareWithFriends: boolean };
-const PUBLIC: Owner = { publishProfile: true, profileShowInSearch: true, profileShareWithFriends: false };
+type Owner = { profileVisibility: ProfileAudience; profileShowInSearch: boolean };
+const PUBLIC: Owner = { profileVisibility: "public", profileShowInSearch: true };
 
+/** Stores a snapshot whose owner shares each part with everyone, or with no one where `privacy` turns it off. */
 function publish(privacy: Partial<Privacy> = {}, region = "jp", owner: Owner = PUBLIC) {
-  stored.snapshot = { userId: "owner", snapshotInternalId: 41, gameVersion: 13, region, privacy: { ...SHARED, ...privacy }, owner: { id: "owner", ...owner } };
+  const shared = { ...SHARED, ...privacy };
+  const audiences = Object.fromEntries(Object.entries(PROFILE_PART_AUDIENCES).map(([part, key]) => [key, shared[part as keyof Privacy] ? "public" : "private"]));
+  stored.snapshot = { userId: "owner", snapshotInternalId: 41, gameVersion: 13, region, ...audiences, ...owner };
 }
 
 /** The queries after the access check, which is always the first one. */
@@ -77,8 +81,8 @@ describe("public snapshot access", () => {
     expect(access.params).toEqual(["maimai", "snapshot", 1]);
   });
 
-  it("hides an unpublished profile's snapshot from visitors", async () => {
-    publish({}, "jp", { ...PUBLIC, publishProfile: false });
+  it("hides a private profile's snapshot from visitors", async () => {
+    publish({}, "jp", { ...PUBLIC, profileVisibility: "private" });
     await expect(caller.days({ game: "maimai", snapshotId: "snapshot" })).rejects.toMatchObject({ code: "NOT_FOUND" });
     expect(dataQueries()).toEqual([]);
   });
@@ -88,8 +92,8 @@ describe("public snapshot access", () => {
     await expect(caller.days({ game: "maimai", snapshotId: "snapshot" })).resolves.toBeDefined();
   });
 
-  it("opens a profile shared with friends only for a matched friend", async () => {
-    publish({}, "jp", { publishProfile: false, profileShowInSearch: true, profileShareWithFriends: true });
+  it("opens a friends-only profile only for a matched friend", async () => {
+    publish({}, "jp", { ...PUBLIC, profileVisibility: "friends" });
     await expect(caller.days({ game: "maimai", snapshotId: "snapshot" })).rejects.toMatchObject({ code: "NOT_FOUND" });
     await expect(friendCaller.days({ game: "maimai", snapshotId: "snapshot" })).rejects.toMatchObject({ code: "NOT_FOUND" });
     expect(friends.areFriends).toHaveBeenLastCalledWith("maimai", "friend", "owner");
@@ -98,8 +102,8 @@ describe("public snapshot access", () => {
     await expect(friendCaller.days({ game: "maimai", snapshotId: "snapshot" })).resolves.toBeDefined();
   });
 
-  it("never opens a profile its owner does not share with friends, even for a friend", async () => {
-    publish({}, "jp", { publishProfile: false, profileShowInSearch: true, profileShareWithFriends: false });
+  it("never opens a private profile, even for a friend", async () => {
+    publish({}, "jp", { ...PUBLIC, profileVisibility: "private" });
     friends.areFriends.mockResolvedValue(true);
     await expect(friendCaller.days({ game: "maimai", snapshotId: "snapshot" })).rejects.toMatchObject({ code: "NOT_FOUND" });
     expect(friends.areFriends).not.toHaveBeenCalled();

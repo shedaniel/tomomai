@@ -58,17 +58,18 @@ describe("region preferences", () => {
   });
 
   it("reads the served game's region", async () => {
-    answerFor({ username: "player", email: "player@example.test", image: null, publishProfile: true, role: "user", region: "jp" });
+    answerFor({ username: "player", email: "player@example.test", image: null, profileVisibility: "public", role: "user", region: "jp" });
     await expect(caller.getUserData()).resolves.toEqual({
-      hasUsername: true, username: "player", email: "player@example.test", image: null, publishProfile: true, role: "user", region: "jp",
+      hasUsername: true, username: "player", email: "player@example.test", image: null, profileVisibility: "public", role: "user", region: "jp",
     });
   });
 
   it("reads the served game's main region with the account-wide profile settings", async () => {
     answerFor({
-      publishProfile: true, profileDescription: null, profileMainRegion: "intl", profileShowAllScores: true, profileShowScoreDetails: true,
-      profileShowPlates: true, profileShowPlayCounts: true, profileShowEvents: true, profileShowInSearch: true, fetchUseAlbums: null,
+      profileVisibility: "public", profileDescription: null, profileMainRegion: "intl", profileAllScoresAudience: "public",
+      profileScoreDetailsAudience: "public", profilePlatesAudience: "public", profilePlayCountsAudience: "public",
+      profileEventsAudience: "public", profileShowInSearch: true, friendsEnabled: true, fetchUseAlbums: null,
     });
-    await expect(caller.getProfileSettings()).resolves.toMatchObject({ publishProfile: true, profileMainRegion: "intl" });
+    await expect(caller.getProfileSettings()).resolves.toMatchObject({ profileVisibility: "public", profileMainRegion: "intl" });
   });
 });

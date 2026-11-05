@@ -1,5 +1,5 @@
 {
-  "id": "802370ae-4892-4d8f-bb9b-b0179eb0fc6f",
+  "id": "fc839587-dc6c-470f-8ae4-253689451f7c",
   "prevId": "d506f8a6-0ba5-4c8f-83a7-48307e12c57e",
   "version": "7",
   "dialect": "postgresql",
@@ -3577,47 +3577,53 @@
           "primaryKey": false,
           "notNull": false
         },
-        "publishProfile": {
-          "name": "publishProfile",
-          "type": "boolean",
+        "profileVisibility": {
+          "name": "profileVisibility",
+          "type": "profile_audience",
+          "typeSchema": "public",
           "primaryKey": false,
           "notNull": true,
-          "default": false
+          "default": "'friends'"
         },
-        "profileShowAllScores": {
-          "name": "profileShowAllScores",
-          "type": "boolean",
+        "profileAllScoresAudience": {
+          "name": "profileAllScoresAudience",
+          "type": "profile_audience",
+          "typeSchema": "public",
           "primaryKey": false,
           "notNull": true,
-          "default": true
+          "default": "'public'"
         },
-        "profileShowScoreDetails": {
-          "name": "profileShowScoreDetails",
-          "type": "boolean",
+        "profileScoreDetailsAudience": {
+          "name": "profileScoreDetailsAudience",
+          "type": "profile_audience",
+          "typeSchema": "public",
           "primaryKey": false,
           "notNull": true,
-          "default": true
+          "default": "'public'"
         },
-        "profileShowPlates": {
-          "name": "profileShowPlates",
-          "type": "boolean",
+        "profilePlatesAudience": {
+          "name": "profilePlatesAudience",
+          "type": "profile_audience",
+          "typeSchema": "public",
           "primaryKey": false,
           "notNull": true,
-          "default": true
+          "default": "'public'"
         },
-        "profileShowPlayCounts": {
-          "name": "profileShowPlayCounts",
-          "type": "boolean",
+        "profilePlayCountsAudience": {
+          "name": "profilePlayCountsAudience",
+          "type": "profile_audience",
+          "typeSchema": "public",
           "primaryKey": false,
           "notNull": true,
-          "default": true
+          "default": "'public'"
         },
-        "profileShowEvents": {
-          "name": "profileShowEvents",
-          "type": "boolean",
+        "profileEventsAudience": {
+          "name": "profileEventsAudience",
+          "type": "profile_audience",
+          "typeSchema": "public",
           "primaryKey": false,
           "notNull": true,
-          "default": true
+          "default": "'public'"
         },
         "profileShowInSearch": {
           "name": "profileShowInSearch",
@@ -3631,13 +3637,6 @@
           "type": "text",
           "primaryKey": false,
           "notNull": false
-        },
-        "profileShareWithFriends": {
-          "name": "profileShareWithFriends",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": false
         },
         "friendsEnabled": {
           "name": "friendsEnabled",
@@ -4643,6 +4642,15 @@
       "values": [
         "tos",
         "privacy"
+      ]
+    },
+    "public.profile_audience": {
+      "name": "profile_audience",
+      "schema": "public",
+      "values": [
+        "private",
+        "friends",
+        "public"
       ]
     },
     "public.profile_report_reason": {

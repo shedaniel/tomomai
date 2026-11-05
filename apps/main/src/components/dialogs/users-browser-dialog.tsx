@@ -51,7 +51,7 @@ type User = {
   banReason: string | null;
   banExpires: Date | null;
   region: string | null;
-  publishProfile: boolean;
+  profileVisibility: string;
   fetchUseAlbums: boolean | null;
   tokens: string;
 };
@@ -258,7 +258,7 @@ export function UsersBrowserDialog({
                         <TableCell>{u.banned ? "Yes" : "No"}</TableCell>
                         <TableCell>{u.region || "-"}</TableCell>
                         <TableCell className="text-xs">{u.tokens || "-"}</TableCell>
-                        <TableCell>{u.publishProfile ? "Yes" : "No"}</TableCell>
+                        <TableCell>{u.profileVisibility}</TableCell>
                         <TableCell>{u.emailVerified ? "Yes" : "No"}</TableCell>
                         <TableCell>
                           {u.fetchUseAlbums === null

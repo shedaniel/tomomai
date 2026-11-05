@@ -64,7 +64,7 @@ export const searchRouter = router({
       const nameQuery = input.query.normalize("NFKC").toLowerCase();
       // Normalised first, so a full-width "＠ｋｕｒｏ" still reads as a username.
       const usernameQuery = nameQuery.replace(/^@/, "").replace(/[^a-z0-9_-]/g, "");
-      const listed = and(eq(user.publishProfile, true), eq(user.profileShowInSearch, true), isNotNull(user.username));
+      const listed = and(eq(user.profileVisibility, "public"), eq(user.profileShowInSearch, true), isNotNull(user.username));
 
       const byUsername = usernameQuery.length >= 2
         ? await db

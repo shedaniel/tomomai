@@ -17,7 +17,7 @@ describe("maimai score source", () => {
 
 describe("maimai reserved profiles", () => {
   it("resolve reserved usernames case-insensitively and nothing else", async () => {
-    await expect(GAME_SERVER_MODULES.maimai.reserved?.user("MAX")).resolves.toMatchObject({ id: "reserved-max", publishProfile: true });
+    await expect(GAME_SERVER_MODULES.maimai.reserved?.user("MAX")).resolves.toMatchObject({ id: "reserved-max", profileShowPlayCounts: true });
     await expect(GAME_SERVER_MODULES.maimai.reserved?.user("someone")).resolves.toBeNull();
   });
 

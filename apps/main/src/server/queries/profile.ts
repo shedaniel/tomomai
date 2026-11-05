@@ -2,22 +2,17 @@ import { db } from "@/lib/db";
 import { user } from "@/lib/db/schema-pg";
 import { eq } from "drizzle-orm";
 import type { CanonicalGameId } from "@/lib/games/ids";
+import type { ProfileSettings } from "@/lib/types";
 import { gamePreference } from "./game-preferences";
+import { profileAudienceColumns } from "./public-access";
 
 /** The profile main region is the one chosen for `game`. The other settings are account-wide. */
-export async function fetchProfileSettings(game: CanonicalGameId, userId: string) {
+export async function fetchProfileSettings(game: CanonicalGameId, userId: string): Promise<ProfileSettings | null> {
   const [settings] = await db
     .select({
-      publishProfile: user.publishProfile,
+      ...profileAudienceColumns,
       profileDescription: user.profileDescription,
       profileMainRegion: gamePreference(game, "profileMainRegion"),
-      profileShowAllScores: user.profileShowAllScores,
-      profileShowScoreDetails: user.profileShowScoreDetails,
-      profileShowPlates: user.profileShowPlates,
-      profileShowPlayCounts: user.profileShowPlayCounts,
-      profileShowEvents: user.profileShowEvents,
-      profileShowInSearch: user.profileShowInSearch,
-      profileShareWithFriends: user.profileShareWithFriends,
       friendsEnabled: user.friendsEnabled,
       fetchUseAlbums: user.fetchUseAlbums,
     })
@@ -35,7 +30,7 @@ export async function fetchUserData(game: CanonicalGameId, userId: string) {
       username: user.username,
       email: user.email,
       image: user.image,
-      publishProfile: user.publishProfile,
+      profileVisibility: user.profileVisibility,
       role: user.role,
       region: gamePreference(game, "region"),
     })

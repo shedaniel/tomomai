@@ -765,8 +765,11 @@
   "profileVisibility": {
     "public": "Public Profile",
     "private": "Private Profile",
+    "friends": "Friends-only Profile",
     "accessibleBy": "Accessible by ",
     "accessibleByEnd": "!",
+    "friendsAccessibleBy": "Your in-game friends can open it at ",
+    "friendsAccessibleByEnd": ".",
     "youMayChangePrivacySettings": "You may change your privacy settings in top right Icon → Settings → Publish Profile.",
     "onlyAccessibleByYou": "Only accessible by you! You may change your privacy settings in top right Icon → Settings → Publish Profile."
   },

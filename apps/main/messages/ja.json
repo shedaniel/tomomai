@@ -765,8 +765,11 @@
   "profileVisibility": {
     "public": "公開プロフィール",
     "private": "非公開プロフィール",
+    "friends": "フレンド限定プロフィール",
     "accessibleBy": "",
     "accessibleByEnd": " から閲覧できます！",
+    "friendsAccessibleBy": "",
+    "friendsAccessibleByEnd": " からゲーム内フレンドが閲覧できます。",
     "youMayChangePrivacySettings": "右上のアイコン → 設定 → プロフィールを公開 からプライバシー設定を変更できます。",
     "onlyAccessibleByYou": "自分だけが閲覧できます！右上のアイコン → 設定 → プロフィールを公開 からプライバシー設定を変更できます。"
   },

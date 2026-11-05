@@ -765,8 +765,11 @@
   "profileVisibility": {
     "public": "公開個人檔案",
     "private": "私人個人檔案",
+    "friends": "好友限定個人檔案",
     "accessibleBy": "可透過 ",
     "accessibleByEnd": " 存取！",
+    "friendsAccessibleBy": "遊戲內好友可透過 ",
+    "friendsAccessibleByEnd": " 查看。",
     "youMayChangePrivacySettings": "你可以在右上角圖示 → 設定 → 公開個人檔案 中變更隱私設定。",
     "onlyAccessibleByYou": "只有你可以查看！你可以在右上角圖示 → 設定 → 公開個人檔案 中變更隱私設定。"
   },

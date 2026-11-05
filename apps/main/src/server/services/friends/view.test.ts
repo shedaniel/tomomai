@@ -11,8 +11,9 @@ import { friendSongScores } from "./view";
 
 const SONG = { songName: "Song", type: "dx" };
 const OPEN = {
-  username: "open", name: "Open", image: null, publishProfile: true, profileShareWithFriends: false,
-  profileShowAllScores: true, profileShowScoreDetails: true, mainRegion: null,
+  username: "open", name: "Open", image: null, mainRegion: null, profileVisibility: "public",
+  profileAllScoresAudience: "public", profileScoreDetailsAudience: "public", profilePlatesAudience: "public",
+  profilePlayCountsAudience: "public", profileEventsAudience: "public", profileShowInSearch: true,
 };
 
 function score(userId: string, region: string, difficulty = "master") {
@@ -31,23 +32,25 @@ it("reads no scores without friends", async () => {
   expect(mocks.querySongScoresOf).not.toHaveBeenCalled();
 });
 
-it("reads only friends whose profile the viewer may open and who share every score", async () => {
-  mocks.findFriends.mockResolvedValue(new Map([["open", ["jp"]], ["shared", ["jp"]], ["private", ["jp"]], ["best-only", ["jp"]]]));
+it("reads only friends whose profile the viewer may open and who share every score with friends", async () => {
+  const ids = ["open", "shared", "for-friends", "private", "best-only"];
+  mocks.findFriends.mockResolvedValue(new Map(ids.map(id => [id, ["jp"]])));
   proxy.respond([
     { ...OPEN, userId: "open" },
-    { ...OPEN, userId: "shared", username: "shared", publishProfile: false, profileShareWithFriends: true },
-    { ...OPEN, userId: "private", username: "private", publishProfile: false },
-    { ...OPEN, userId: "best-only", username: "best-only", profileShowAllScores: false },
+    { ...OPEN, userId: "shared", username: "shared", profileVisibility: "friends" },
+    { ...OPEN, userId: "for-friends", username: "for-friends", profileAllScoresAudience: "friends" },
+    { ...OPEN, userId: "private", username: "private", profileVisibility: "private" },
+    { ...OPEN, userId: "best-only", username: "best-only", profileAllScoresAudience: "private" },
   ]);
   await friendSongScores("maimai", "me", SONG);
-  expect(mocks.querySongScoresOf).toHaveBeenCalledWith({ ...SONG, game: "maimai", userIds: ["open", "shared"] });
+  expect(mocks.querySongScoresOf).toHaveBeenCalledWith({ ...SONG, game: "maimai", userIds: ["open", "shared", "for-friends"] });
 });
 
 it("keeps only regions the two are friends in, and clears statuses a friend does not share", async () => {
   mocks.findFriends.mockResolvedValue(new Map([["open", ["jp"]], ["quiet", ["intl"]]]));
   proxy.respond([
     { ...OPEN, userId: "open" },
-    { ...OPEN, userId: "quiet", username: "quiet", profileShowScoreDetails: false },
+    { ...OPEN, userId: "quiet", username: "quiet", profileScoreDetailsAudience: "private" },
   ]);
   mocks.querySongScoresOf.mockResolvedValue([score("open", "jp"), score("open", "intl"), score("open", "jp", "expert"), score("quiet", "intl")]);
 

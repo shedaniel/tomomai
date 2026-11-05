@@ -23,6 +23,7 @@ import { Loader2, Pencil, Plus } from "lucide-react";
 import { useTranslations } from "next-intl";
 import dynamic from "next/dynamic";
 import { useMemo } from "react";
+import type { ProfileAudience } from "@/lib/profile-audience";
 
 // Both are owner-only or visitor-only surfaces, so they stay out of the chunk
 // every profile visitor downloads.
@@ -57,7 +58,7 @@ interface ProfileAboutSectionProps {
   descriptionDraft: string;
   isDescriptionEditing: boolean;
   isOwner: boolean;
-  publishProfile: boolean;
+  profileVisibility: ProfileAudience;
   profileSettingsLoading: boolean;
   onDescriptionDraftChange(value: string): void;
   controller: DescriptionController;
@@ -70,7 +71,7 @@ export function ProfileAboutSection({
   descriptionDraft,
   isDescriptionEditing,
   isOwner,
-  publishProfile,
+  profileVisibility,
   profileSettingsLoading,
   onDescriptionDraftChange,
   controller,
@@ -157,7 +158,7 @@ export function ProfileAboutSection({
 
       {isDescriptionEditing ? (
         <div className="space-y-3">
-          {!publishProfile ? (
+          {profileVisibility === "private" ? (
             <p className="text-xs text-muted-foreground">
               {t("publicProfile.descriptionEditor.unpublished")}
             </p>

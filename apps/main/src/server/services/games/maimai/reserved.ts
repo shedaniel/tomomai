@@ -107,7 +107,6 @@ export function getReservedPublicUser(username: string): ProfileData | null {
   return {
     id: profile.userId,
     name: profile.displayName,
-    publishProfile: true,
     profileDescription: null,
     // The user column default. Profile pages fall back to an enabled region when it is not one.
     profileMainRegion: "intl",
