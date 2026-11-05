@@ -37,7 +37,7 @@ export function SongFriends({ friends, difficulties, showRegion }: { friends: re
       <ul className="divide-y rounded-md border">
         {sorted.map(friend => (
           <li key={`${friend.username}-${friend.region}`} className="flex flex-wrap items-center gap-x-3 gap-y-1.5 px-3 py-2 text-sm">
-            <Link href={`/profile/${friend.username}/${friend.region}`} prefetch={false} className="flex min-w-0 flex-1 items-center gap-2 hover:underline">
+            <Link href={`/profile/${friend.username}/${friend.region}`} prefetch={false} className="flex min-w-40 flex-1 items-center gap-2 hover:underline">
               <FriendAvatar friend={friend} />
               <span className="min-w-0">
                 <span className="block truncate font-medium">{friend.displayName}</span>
@@ -46,7 +46,7 @@ export function SongFriends({ friends, difficulties, showRegion }: { friends: re
                 </span>
               </span>
             </Link>
-            <span className="flex flex-wrap justify-end gap-1.5">
+            <span className="ml-auto flex flex-wrap justify-end gap-1.5">
               {difficulties.filter(difficulty => friend.scores[difficulty]).map(difficulty => {
                 const style = getGameDifficulty(game, codeOf(game, "difficulty", difficulty));
                 return (
