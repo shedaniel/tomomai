@@ -1,10 +1,12 @@
 import { NextResponse } from "next/server";
+import { requireFrontendGame } from "@/lib/games/current";
 
 export const dynamic = "force-dynamic";
 
 const { CN_PROXY_HOST, CN_PROXY_PORT = "2560" } = process.env;
 
 export async function GET() {
+  requireFrontendGame("maimai");
   if (!CN_PROXY_HOST) {
     return NextResponse.json({ error: "Proxy not configured" }, { status: 503 });
   }

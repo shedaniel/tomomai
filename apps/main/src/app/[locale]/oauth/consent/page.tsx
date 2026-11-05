@@ -12,10 +12,12 @@ import { useAuthDialog } from "@/components/auth/auth-dialog-provider";
 import { API_SCOPES, OFFLINE_ACCESS, type ScopeKey } from "@/lib/api/scopes";
 import { grantedScopeTree, type TreeNode } from "@/lib/api/scope-tree";
 import { safeHref, safeImg } from "@/lib/security/oauth-url";
-import { cn, isR2Url } from "@/lib/utils";
+import { cn } from "@/lib/utils";
+import { isR2Url } from "@/lib/images";
 import { consentErrorKind, readOAuthAuthorizeError, type ConsentErrorKind } from "@/lib/oauth-errors";
 import { LocaleSwitcher } from "@/components/locale-switcher";
-import { isCNExclusive } from "@/lib/enabled-regions";
+import { useGame } from "@/components/providers/game-provider";
+import { isGameCnExclusive } from "@/lib/games/frontend";
 import { clientIconSrc } from "@/lib/oauth-client-icon";
 import type { UsageBucket } from "@/lib/oauth-official";
 import { AnimatePresence, motion } from "motion/react";
@@ -399,12 +401,13 @@ function useScrollReview() {
 // Concentric corners: the card's radius is the 20px pill button radius plus the 16px footer
 // padding, and rows inset 24px from the card edge get the remaining 12px.
 function ConsentShell({ children }: { children: ReactNode }) {
+  const cnMode = isGameCnExclusive(useGame());
   return (
     <main
       className="relative [--consent-radius:2.25rem] [--consent-inset-radius:0.75rem] flex min-h-dvh items-center justify-center bg-background px-4 py-16"
       style={{ backgroundImage: "radial-gradient(60rem 28rem at 50% -8rem, color-mix(in srgb, var(--primary) 14%, transparent), transparent)" }}
     >
-      {!isCNExclusive() && (
+      {!cnMode && (
         <div className="absolute top-4 right-4">
           <LocaleSwitcher />
         </div>

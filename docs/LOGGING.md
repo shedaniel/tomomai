@@ -71,8 +71,10 @@ Identifiers & domain:
 | `snapshotId`     | Public snapshot id.                                                | `snapshot`, `snap_id`                      |
 | `sessionId`      | Public fetch session id (`fetch_sessions.publicId`).               | `session`                                  |
 | `songId` / `masterSongId` | Numeric song row id(s).                                   | —                                          |
-| `songKey`        | Single `name@type@difficulty` key.                                | `song` (never log the whole object)        |
-| `songKeys`       | Array of song keys (array of strings = 1 field).                  | `songs` (never log the array of objects)   |
+| `songKey`        | Single chart key.                                                 | `song` (never log the whole object)        |
+| `songKeys`       | Array of song keys (array of strings = 1 field). Catalog code logs `catalogChartKey`. | `songs` (never log the array of objects)   |
+| `chartLabel`     | A chart's readable name from `formatChartLabel` (`Song DX MASTER`). Per-chart catalog lines log it. | a key when a person reads the line |
+| `game` | Canonical game ID (`maimai` or `chunithm`). | — |
 | `region`         | `"intl"` / `"jp"` / `"cn"`.                                        | `country`, `locale`                        |
 | `version` / `addedVersion` | Game / chart version (number).                          | —                                          |
 | `difficulty`     | Difficulty name or enum.                                          | `diff`                                     |
@@ -112,8 +114,11 @@ Aggregate namespaces (intentional nested objects — **bounded, fixed keys**; do
 > `playerName`, `index`, `batchIndex`, `progress`, `from`, `to`, `profile`,
 > `addedDate`, `optional`, `modelId`, `uniqueCovers`, `existingR2Covers`,
 > `toDownload`, `skipped`, `duplicateIds`, `urls`, `totalDuplicatesMerged`,
-> `totalMasterNamesNormalized`, `originalName`, `ttlSec`, `scope`, `dateKey`, `mode`) are also registered — keep this
-> list current when you add one.
+> `totalMasterNamesNormalized`, `originalName`, `ttlSec`, `scope`, `value`, `state`, `issues`, `dateKey`, `mode`) are also
+> registered — keep this list current when you add one. `value` is a raw input value as it was given, such as an
+> environment variable or scraped page text that did not parse.
+> `issues` is an array of `path: message` strings from a failed schema check.
+> `state` is a fetch progress state, such as `song_data:master`.
 
 Retired browser recommendation diagnostics (no longer logged, but already in the
 schema, so they still count toward the budget):
@@ -175,8 +180,15 @@ Dynamic routes get Next's context with `requestId` added:
 > Note: a cached/static response keeps the `x-request-id` of the request that
 > populated the cache — it's most meaningful on dynamic (API) responses.
 
-Reference implementations: `src/app/api/admin/update_all/route.ts`,
-`src/app/api/admin/upload/route.ts`, `src/app/api/admin/update/route.ts`.
+Reference implementations: `src/app/api/login/route.ts`,
+`src/app/api/daily-plays/route.ts`, `src/app/api/cn-proxy/callback/route.ts`.
+
+Pages and server components receive no `NextRequest`. Build their logger with
+`await pageLogger("home")`, which reads the same `x-request-id` header.
+
+Admin routes get all of this from `adminRoute` in `src/app/api/admin/admin-route.ts`,
+which wraps the handler with `withRequestLogContext`, adds `game` to the log
+context once resolved, and answers failures with the `requestId`.
 
 ### Log context: every line carries the request's fields
 
@@ -199,8 +211,10 @@ context (build time, scripts) lines simply carry no extra fields.
 
 A context is opened automatically for:
 - any route wrapped with `withRequestLogContext(route, handler)`,
+- every admin route (`adminRoute` in `src/app/api/admin/admin-route.ts`, which adds `game` once resolved),
 - every tRPC procedure (middleware in `src/lib/trpc.ts`, `route: "trpc/<path>"`),
-- every v1 API handler (`withApiKey` in `src/lib/api/protect.ts`).
+- every v1 API handler (`withApiRequest` in `src/lib/api/route.ts`, which `withApiKey`,
+  `defineGameHandler` and `definePublicGameHandler` run through).
 
 #### Adding fields for a scope (`withLogContext`)
 
@@ -210,11 +224,12 @@ current context. Scopes nest, and the outer context is back once `fn` returns:
 ```ts
 import { withLogContext } from "@/lib/request-logger";
 
-await withLogContext({ sessionId, userId, region }, () => fetchMaimaiData(...));
+await withLogContext({ sessionId, userId, game, region }, () => runScoreFetch(...));
 ```
 
-`startFetchServer` does exactly this, so every line of a maimai fetch can be
-found with `sessionId == "<public fetch id>"`. Use it for any long-lived unit
+`startScoreFetch` does exactly this with `{ sessionId, userId, game, region }`,
+so every line of a fetch, in any game, can be found with
+`sessionId == "<public fetch id>"`. Use it for any long-lived unit
 of work (a fetch, a job, a background task); it is also how to open a context
 outside route handlers, as the tRPC middleware and `apps/render`'s Hono
 middleware do.

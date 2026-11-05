@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Agent } from 'undici';
-import { getCachedImageBuffer, cacheImage } from '@/lib/image_cacher';
+import { getCachedImageBuffer, cacheImage } from '@/server/services/image-cache';
 import { logger } from '@/lib/logger';
 import { withRequestLogContext } from '@/lib/request-logger';
-import { isSafeMaimaiImageUrl } from '@/lib/utils';
+import { isProxiedImageUrl } from '@/lib/images';
 
 const imageSuccessHeaders = (contentType: string) => ({
   'Content-Type': contentType,
@@ -20,8 +20,7 @@ export const GET = withRequestLogContext("image-proxy", async (request: NextRequ
     return new NextResponse('Missing url parameter', { status: 400 });
   }
 
-  // Only fetch exact HTTPS hosts from the cover-image allowlist.
-  if (!isSafeMaimaiImageUrl(imageUrl)) {
+  if (!isProxiedImageUrl(imageUrl)) {
     return new NextResponse('Unauthorized domain', { status: 403 });
   }
 

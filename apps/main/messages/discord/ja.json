@@ -23,7 +23,8 @@
       "unableToIdentifyShort": "Discordユーザーを特定できません。",
       "generic": "エラーが発生しました。しばらくしてからもう一度お試しください。",
       "notAvailableToYou": "❌ このボタンはあなたには使用できません。",
-      "unknownCommand": "無効なコマンドです"
+      "unknownCommand": "無効なコマンドです",
+      "noRegion": "現在利用できる maimai DX の地域がありません。しばらくしてからもう一度お試しください。"
     },
     "loading": {
       "title": "⏳ 読み込み中…",
@@ -55,8 +56,7 @@
     }
   },
   "fetch": {
-    "maintenanceWindow": "現在メンテナンス時間中（午前4時〜7時）のため、データ同期はできません。",
-    "maintenanceWindowIntl": "現在メンテナンス時間中（日本時間午前1時〜2時、水曜日は午前1時〜4時）のため、データ同期はできません。",
+    "maintenanceWindow": "現在メンテナンス時間中（日本時間 {start}〜{end}）のため、データ同期はできません。",
     "startError": "データ同期を開始できませんでした。しばらくしてからもう一度お試しください。",
     "initializing": {
       "title": "🔄 {regionName} データを同期中",

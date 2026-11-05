@@ -1,0 +1,218 @@
+"use client";
+
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/animate-ui/components/radix/hover-card";
+import { Button } from "@tomomai/ui";
+import { Separator } from "@tomomai/ui";
+import { getVersion } from "@/lib/games/versions";
+import type { VersionRow } from "@/lib/games/version-table";
+import { useGame } from "@/components/providers/game-provider";
+import { trpc } from "@/lib/trpc-client";
+import { cn } from "@/lib/utils";
+import { Activity, Calendar, ChevronRight, Music } from "lucide-react";
+import { useTranslations } from "next-intl";
+
+import { CoverImage } from "@/components/cover-image";
+import { useState } from "react";
+import type { GamePlayerScore } from "@/lib/games/player-view";
+import { ChartTypeBadge } from "@/components/games/chart-type-badge";
+import { useMediaQuery } from "@/hooks/use-media-query";
+import { Drawer, DrawerContent, DrawerTrigger, DrawerHeader, DrawerTitle, DrawerDescription } from "@tomomai/ui";
+import { PercentileDistribution } from "@/components/games/maimai/percentile-distribution";
+import type { PercentileDistributionData } from "@/lib/games/maimai/percentile/types";
+import type { ScoreHoverProps } from "@/components/games/registry";
+import { useSongDetail } from "@/components/db/songs/song-detail-provider";
+
+type HoverScore = Pick<GamePlayerScore, "songId" | "songName" | "artist" | "cover" | "difficultyCode" | "typeCode">;
+
+interface SongHoverCardProps {
+  children: React.ReactNode;
+  score: HoverScore;
+  percentile?: PercentileDistributionData | null;
+  percentileSource?: ScoreHoverProps["percentileSource"];
+  side?: "top" | "bottom" | "left" | "right";
+  className?: string;
+}
+
+function SongCardContent({
+  score,
+  songDetails,
+  isLoading,
+  addedVersionInfo,
+  t,
+  percentile,
+  percentileLoading,
+  onOpenDetails,
+}: {
+  score: HoverScore,
+  songDetails: any,
+  isLoading: boolean,
+  addedVersionInfo: VersionRow | null,
+  t: any,
+  percentile?: SongHoverCardProps['percentile'],
+  percentileLoading?: boolean,
+  onOpenDetails: () => void,
+}) {
+  return (
+    <div className="p-4 space-y-3">
+      {/* Header */}
+      <div className="flex gap-3">
+        <div className="relative w-16 h-16 shrink-0 rounded-md overflow-hidden ring-1 ring-border">
+          <CoverImage
+            coverUrl={score.cover}
+            alt={score.songName}
+            fill
+            className="object-cover"
+            sizes="64px"
+          />
+        </div>
+        <div className="flex-1 min-w-0 py-0.5">
+          <h4 className="font-bold text-sm leading-tight line-clamp-2 mb-1">
+            {score.songName}
+          </h4>
+          <p className="text-xs text-muted-foreground truncate">
+            {score.artist}
+          </p>
+          <div className="flex items-center gap-1.5 mt-1.5 h-5">
+            <ChartTypeBadge typeCode={score.typeCode} />
+            {songDetails?.genre && (
+              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-secondary text-secondary-foreground font-medium truncate max-w-[120px]">
+                {songDetails.genre}
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <Separator />
+
+      {/* Stats */}
+      <div className="grid grid-cols-[auto_1fr] gap-2 text-xs">
+        <div className="flex items-center gap-2 text-muted-foreground">
+          <Activity className="w-3.5 h-3.5" />
+          <span>{t('db.songs.detail.bpm')}</span>
+        </div>
+        <div className="font-medium text-right">
+          {isLoading ? (
+            <div className="h-4 w-8 bg-muted animate-pulse rounded ml-auto" />
+          ) : (
+            songDetails?.bpm ?? "-"
+          )}
+        </div>
+
+        <div className="flex items-center gap-2 text-muted-foreground">
+          <Calendar className="w-3.5 h-3.5" />
+          <span>{t('db.songs.detail.added')}</span>
+        </div>
+        <div className="font-medium text-right truncate">
+          {isLoading ? (
+            <div className="h-4 w-16 bg-muted animate-pulse rounded ml-auto" />
+          ) : (
+            addedVersionInfo?.name ?? (songDetails?.addedVersion ? `Ver. ${songDetails.addedVersion}` : "-")
+          )}
+        </div>
+      </div>
+
+      {percentile && <PercentileDistribution data={percentile} />}
+      {!percentile && percentileLoading && (
+        <>
+          <Separator />
+          <div className="h-60 bg-muted animate-pulse rounded" />
+        </>
+      )}
+
+      {/* Action */}
+      <div className="pt-1 flex items-center gap-2 flex-col">
+        <Button className="relative w-full h-8 text-xs" variant="default" onClick={onOpenDetails}>
+          <Music className="w-3.5 h-3.5 mr-2" />
+          {t('db.songs.detail.openDetails')}
+          <ChevronRight className="w-3.5 absolute top-0 bottom-0 right-2 my-auto" />
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+export function SongHoverCard({ children, score, percentile, percentileSource, side, className }: SongHoverCardProps) {
+  const t = useTranslations();
+  const game = useGame().id;
+  const [isOpen, setIsOpen] = useState(false);
+  const isDesktop = useMediaQuery("(min-width: 768px)", { initializeWithValue: false });
+
+  const { data: songDetails, isLoading } = trpc.user.getSimpleSongDetails.useQuery(
+    {
+      game,
+      publicId: score.songId,
+    },
+    {
+      enabled: isOpen,
+      staleTime: 1000 * 60 * 60, // 1 hour
+    }
+  );
+
+  const addedVersionInfo = songDetails ? getVersion(game, songDetails.addedVersion) : null;
+  const { openSongDetail } = useSongDetail();
+  const openDetails = () => {
+    setIsOpen(false);
+    openSongDetail({ publicId: score.songId });
+  };
+
+  const loadPercentile = isOpen && !percentile && !!percentileSource && percentileSource.userRating > 0;
+  const { data: loadedPercentiles, isFetching: percentileLoading } = trpc.maimai.getChartPercentiles.useQuery(
+    {
+      songs: [{ publicSongId: score.songId, achievement: percentileSource?.scoreValue ?? 0 }],
+      userRating: percentileSource?.userRating ?? 0,
+    },
+    {
+      enabled: loadPercentile,
+      staleTime: 1000 * 60 * 5,
+    }
+  );
+  const loadedEntry = loadedPercentiles?.percentiles[score.songId];
+  const resolvedPercentile = percentile
+    ?? (loadedEntry && percentileSource ? { ...loadedEntry, userAchievement: percentileSource.scoreValue } : null);
+
+  const content = (
+    <SongCardContent
+      score={score}
+      songDetails={songDetails}
+      isLoading={isLoading}
+      addedVersionInfo={addedVersionInfo}
+      t={t}
+      percentile={resolvedPercentile}
+      percentileLoading={loadPercentile && percentileLoading}
+      onOpenDetails={openDetails}
+    />
+  );
+
+  if (isDesktop) {
+    return (
+      <HoverCard open={isOpen} openDelay={100} closeDelay={50} onOpenChange={setIsOpen}>
+        <HoverCardTrigger asChild>
+          {children}
+        </HoverCardTrigger>
+        <HoverCardContent className={cn("w-80 p-0 overflow-hidden", className)} align="start" sideOffset={8} side={side}>
+          {content}
+        </HoverCardContent>
+      </HoverCard>
+    );
+  }
+
+  return (
+    <Drawer open={isOpen} onOpenChange={setIsOpen}>
+      <DrawerTrigger asChild>
+        {children}
+      </DrawerTrigger>
+      <DrawerContent>
+        <DrawerHeader className="text-left pb-1">
+          <DrawerTitle>{t('db.songs.detail.title')}</DrawerTitle>
+          <DrawerDescription className="hidden">
+            {score.songName}
+          </DrawerDescription>
+        </DrawerHeader>
+        <div className="px-2 pb-8">
+          {content}
+        </div>
+      </DrawerContent>
+    </Drawer>
+  );
+}

@@ -1,4 +1,5 @@
 import localFont from "next/font/local";
+import { requireFrontendGame } from "@/lib/games/current";
 
 const notoSansSC = localFont({
   src: "../../../../public/res/fonts/NotoSansSC-VariableFont_wght.woff2",
@@ -7,6 +8,7 @@ const notoSansSC = localFont({
 });
 
 export default function CnProxyLayout({ children }: { children: React.ReactNode }) {
+  requireFrontendGame("maimai");
   return (
     <div
       lang="zh-CN"

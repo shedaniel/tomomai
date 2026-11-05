@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ProxyAgent, fetch as undiciFetch } from "undici";
-import { verifyCnProxyToken } from "@/lib/cn-proxy-token";
+import { verifyCnProxyToken } from "@/server/services/games/maimai/cn-proxy-token";
 import { resolveBaseUrl } from "@/lib/base-url";
 import { logger } from "@/lib/logger";
+import { withRequestLogContext } from "@/lib/request-logger";
+import { requireFrontendGame } from "@/lib/games/current";
 
 export const dynamic = "force-dynamic";
 
@@ -14,16 +16,15 @@ const proxyAgent =
     ? new ProxyAgent(`http://${CN_PROXY_HOST}:${CN_PROXY_PORT}`)
     : undefined;
 
-export async function GET(req: NextRequest) {
+export const GET = withRequestLogContext("cn-proxy/link", async (req: NextRequest) => {
+  requireFrontendGame("maimai");
   const token = req.nextUrl.searchParams.get("token");
   if (!token) {
     return NextResponse.redirect(ERROR_REDIRECT, 302);
   }
 
-  try {
-    verifyCnProxyToken(token);
-  } catch (err) {
-    logger.warn(`[cn-proxy] invalid auth link token: ${String(err)}`);
+  if (!verifyCnProxyToken(token)) {
+    logger.warn("Invalid or expired CN proxy link token");
     return NextResponse.redirect(ERROR_REDIRECT, 302);
   }
 
@@ -35,7 +36,7 @@ export async function GET(req: NextRequest) {
     );
     location = res.headers.get("location");
   } catch (err) {
-    logger.error(`[cn-proxy] wahlap authorize fetch failed: ${String(err)}`);
+    logger.error({ err }, "Wahlap authorize request failed");
     return NextResponse.redirect(ERROR_REDIRECT, 302);
   }
 
@@ -56,4 +57,4 @@ export async function GET(req: NextRequest) {
   wechatUrl.searchParams.set("redirect_uri", callbackUrl.toString());
 
   return NextResponse.redirect(wechatUrl.toString(), 302);
-}
+});

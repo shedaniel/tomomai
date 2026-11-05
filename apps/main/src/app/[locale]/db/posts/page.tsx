@@ -1,45 +1,40 @@
 import { getAllPostsMeta } from "@/lib/posts";
 import { getLocale, setStaticLocale } from "@/i18n/locale-server";
-import { localizePath, buildAlternates, openGraphLocales } from "@/lib/seo";
+import { buildPageMetadata, MISSING_PAGE_METADATA } from "@/lib/seo";
 import { Metadata } from "next";
 import { Link } from "@/i18n/navigation"
+import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
+import { getCurrentGame } from "@/lib/games/current";
+import { getCatalogSection } from "@/lib/games/frontend";
 
 type Props = {
   params: Promise<{ locale: string }>;
 };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const game = getCurrentGame();
+  if (!getCatalogSection(game, "posts")) return MISSING_PAGE_METADATA;
   const { locale } = await params;
   await setStaticLocale(locale);
   const [t, currentLocale] = await Promise.all([
     getTranslations("db.posts.list"),
     getLocale(),
   ]);
-  const title = `${t("title")} | tomomai`;
-  const description = t("description");
-
-  return {
-    title,
-    description,
-    alternates: await buildAlternates("/db/posts"),
-    openGraph: {
-      title: t("title"),
-      description,
-      type: "website",
-      url: localizePath("/db/posts", currentLocale),
-      siteName: "tomomai ともマイ",
-      ...openGraphLocales(currentLocale),
-    },
-    twitter: {
-      card: "summary_large_image",
-      title,
-      description,
-    },
-  };
+  return buildPageMetadata({
+    brand: game.brand,
+    locale: currentLocale,
+    path: "/db/posts",
+    title: `${t("title")} | ${game.brand.productName}`,
+    ogTitle: t("title"),
+    description: t("description"),
+    ogType: "website",
+    image: "route",
+  });
 }
 
 export default async function PostsPage({ params }: Props) {
+  if (!getCatalogSection(getCurrentGame(), "posts")) notFound();
   const { locale } = await params;
   await setStaticLocale(locale);
   const currentLocale = await getLocale();

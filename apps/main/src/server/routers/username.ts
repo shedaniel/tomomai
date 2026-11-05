@@ -1,12 +1,12 @@
 import { db } from '@/lib/db';
 import { user } from '@/lib/db/schema-pg';
+import { CANONICAL_GAME_IDS } from '@/lib/games/ids';
 import { protectedProcedure, router } from '@/lib/trpc';
-import { RESERVED_USERNAMES } from '@/server/queries/reserved';
+import { GAME_SERVER_MODULES } from '@/server/services/games/registry';
 import { TRPCError } from '@trpc/server';
 import { eq } from 'drizzle-orm';
 import { nanoid } from 'nanoid';
 import { z } from 'zod';
-import { revalidatePublicProfile } from '@/lib/profile-cache';
 
 // Username validation helper
 const isValidUsername = (username: string): boolean => {
@@ -19,6 +19,13 @@ const isValidUsername = (username: string): boolean => {
   const validPattern = /^[a-zA-Z0-9_-]+$/;
   return validPattern.test(username);
 };
+
+const RESERVED_ACCOUNT_NAMES: ReadonlySet<string> = new Set(["admin"]);
+
+function isReservedUsername(username: string): boolean {
+  const name = username.toLowerCase();
+  return RESERVED_ACCOUNT_NAMES.has(name) || CANONICAL_GAME_IDS.some(game => GAME_SERVER_MODULES[game].reserved?.usernames.has(name));
+}
 
 // Generate default username from display name
 const generateDefaultUsername = (displayName: string): string => {
@@ -44,7 +51,7 @@ export const usernameRouter = router({
         };
       }
 
-      if (RESERVED_USERNAMES.has(input.username.toLowerCase())) {
+      if (isReservedUsername(input.username)) {
         return {
           available: false,
           error: 'This username is reserved',
@@ -82,7 +89,7 @@ export const usernameRouter = router({
         });
       }
 
-      if (RESERVED_USERNAMES.has(input.username.toLowerCase())) {
+      if (isReservedUsername(input.username)) {
         throw new TRPCError({
           code: 'CONFLICT',
           message: 'This username is reserved',
@@ -91,7 +98,7 @@ export const usernameRouter = router({
 
       // Check if already taken (but allow current user's username)
       const existingUser = await db
-        .select({ id: user.id, username: user.username })
+        .select({ id: user.id })
         .from(user)
         .where(eq(user.username, input.username))
         .limit(1);
@@ -103,16 +110,6 @@ export const usernameRouter = router({
         });
       }
 
-      const [currentUser] = await db
-        .select({ username: user.username })
-        .from(user)
-        .where(eq(user.id, ctx.session.user.id))
-        .limit(1);
-      if (!currentUser) {
-        throw new TRPCError({ code: 'NOT_FOUND', message: 'User not found' });
-      }
-      if (currentUser.username === input.username) return { success: true };
-
       // Update username
       await db
         .update(user)
@@ -121,8 +118,6 @@ export const usernameRouter = router({
           updatedAt: new Date(),
         })
         .where(eq(user.id, ctx.session.user.id));
-
-      revalidatePublicProfile([currentUser.username, input.username]);
 
       return { success: true };
     }),

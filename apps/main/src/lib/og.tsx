@@ -3,12 +3,13 @@ import path from "path";
 import { readFile } from "fs/promises";
 import sharp from "sharp";
 import type { Locale } from "@/i18n/locale";
-import { getRatingImageUrl } from "@/lib/rating-calculator";
-import type { VersionId } from "@/lib/metadata";
-import { renderLevelPrecise } from "@/lib/name-utils";
-import type { Difficulty, Region } from "@/lib/types";
-
-export const OG_SIZE = { width: 1200, height: 630 };
+import { getRatingImageUrl } from "@/lib/games/maimai/assets";
+import type { Region } from "@/lib/games/ids";
+import { brandTitle, supportsGameFeature, type FrontendGame } from "@/lib/games/frontend";
+import type { GameBrand } from "@/lib/games/types";
+import { codeOf } from "@/lib/games/codes";
+import { formatEstimated, formatGameLevel, formatGameRating, getGameChartType, getGameDifficulty } from "@/lib/games/presentation";
+import { OG_IMAGE_SIZE } from "@/lib/seo";
 
 // Pre-compute grid path: vertical + horizontal lines every 40px
 const gridPath = [
@@ -217,25 +218,6 @@ function avgPixel(pixels: Pixel[]): Pixel {
   return [sum[0] / pixels.length, sum[1] / pixels.length, sum[2] / pixels.length] as Pixel;
 }
 
-/** Extract one dominant color from a remote image, or null if it can't be loaded. */
-async function extractDominantColor(url: string): Promise<string | null> {
-  const buf = await fetchImageBuffer(url);
-  if (!buf) return null;
-  try {
-    const usable = vibrantPixels(await pixelsFrom(buf, 24));
-    // Pick the most-saturated bright pixel — gives a punchier accent than mean.
-    let best: Pixel = usable[0];
-    let bestScore = -Infinity;
-    for (const p of usable) {
-      const score = saturationOf(p) * 1.5 + (luminanceOf(p) / 255) * 0.5;
-      if (score > bestScore) { bestScore = score; best = p; }
-    }
-    return rgb(boostVibrance(best));
-  } catch {
-    return null;
-  }
-}
-
 /** Extract two distinct colors from a remote image (k-means with k=2). */
 async function extractTwoColors(url: string): Promise<[string, string] | null> {
   const buf = await fetchImageBuffer(url);
@@ -275,13 +257,13 @@ async function extractTwoColors(url: string): Promise<[string, string] | null> {
   }
 }
 
-export type Accent = { primary: string; secondary: string };
+type Accent = { primary: string; secondary: string };
 
 /** Default accent (the original purple/cyan brand pair). */
-export const DEFAULT_ACCENT: Accent = { primary: "#8b5cf6", secondary: "#06b6d4" };
+const DEFAULT_ACCENT: Accent = { primary: "#8b5cf6", secondary: "#06b6d4" };
 
 /** Aqua + warm orange — used by the database section. */
-export const DB_ACCENT: Accent = { primary: "#06b6d4", secondary: "#f97316" };
+const DB_ACCENT: Accent = { primary: "#06b6d4", secondary: "#f97316" };
 
 /** Dim a hex color to an `rgba(...)` string at a given alpha [0..1]. */
 function hexToRgba(hex: string, alpha: number): string {
@@ -333,39 +315,48 @@ function GridBackground() {
   );
 }
 
-function BrandChip({ section, icon }: { section?: string; icon: LoadedImage }) {
+/** One of the brand's OpenGraph artworks. */
+type OgArtwork = keyof NonNullable<GameBrand["og"]>;
+
+const BRAND_CHIP_ICON_HEIGHT = 48;
+
+function loadBrandArtwork(brand: GameBrand, artwork: OgArtwork, height: number): Promise<LoadedImage | null> {
+  return brand.og ? loadLocalImage(brand.og[artwork], height) : Promise.resolve(null);
+}
+
+function BrandChip({ brand, section, icon }: { brand: GameBrand; section?: string; icon: LoadedImage | null }) {
   return (
     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
       <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-        <span style={{ color: "#fafafa", fontSize: "20px", fontWeight: 700 }}>tomomai.lol</span>
+        <span style={{ color: "#fafafa", fontSize: "20px", fontWeight: 700 }}>{brand.domain}</span>
         {section && (
           <span style={{ color: "#a1a1aa", fontSize: "20px", fontWeight: 400 }}>· {section}</span>
         )}
       </div>
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={icon.dataUrl} width={icon.width} height={icon.height} alt="tomomai icon" />
+      {icon && <img src={icon.dataUrl} width={icon.width} height={icon.height} alt={brand.productName} />}
     </div>
   );
 }
 
 export type OGImageOptions = {
-  /** Subtitle shown next to "tomomai ·" in the top bar */
+  brand: GameBrand;
+  /** Shown after the domain in the top bar */
   section: string;
   title: string;
   summary?: string;
   /** Optional bottom label (e.g. a date string) */
   label?: string;
   locale?: Locale;
-  accent?: Accent;
 };
 
 export async function createOGImage(options: OGImageOptions) {
-  const { section, title, summary, label, locale = "en", accent = DEFAULT_ACCENT } = options;
+  const { brand, section, title, summary, label, locale = "en" } = options;
 
   const [interFonts, localeFonts, icon] = await Promise.all([
     loadInterFonts(),
     loadLocaleFonts(locale),
-    loadLocalImage("icon-dark.webp", 48),
+    loadBrandArtwork(brand, "logo", BRAND_CHIP_ICON_HEIGHT),
   ]);
 
   const fonts = [...interFonts, ...localeFonts];
@@ -385,8 +376,8 @@ export async function createOGImage(options: OGImageOptions) {
         }}
       >
         <GridBackground />
-        <PrimaryGlow color={accent.primary} />
-        <SecondaryGlow color={accent.secondary} />
+        <PrimaryGlow color={DEFAULT_ACCENT.primary} />
+        <SecondaryGlow color={DEFAULT_ACCENT.secondary} />
 
         <div
           style={{
@@ -398,7 +389,7 @@ export async function createOGImage(options: OGImageOptions) {
             position: "relative",
           }}
         >
-          <BrandChip section={section} icon={icon} />
+          <BrandChip brand={brand} section={section} icon={icon} />
 
           <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
             <div
@@ -444,33 +435,38 @@ export async function createOGImage(options: OGImageOptions) {
         </div>
       </div>
     ),
-    { ...OG_SIZE, fonts },
+    { ...OG_IMAGE_SIZE, fonts },
   );
 }
 
-export type HomeOGImageOptions = {
+export type BrandOGImageOptions = {
+  brand: GameBrand;
   tagline: string;
   locale?: Locale;
-  /** public/-relative path to the logo image. Defaults to the tomomai mark. */
-  logoFile?: string;
-  /** Logo render height in px. */
-  logoHeight?: number;
-  accent?: Accent;
 };
 
-export async function createHomeOGImage(options: HomeOGImageOptions) {
-  const {
-    tagline,
-    locale = "en",
-    logoFile = "icon-dark.webp",
-    logoHeight = 240,
-    accent = DEFAULT_ACCENT,
-  } = options;
+export function createHomeOGImage(options: BrandOGImageOptions) {
+  return createWordmarkOGImage(options, { artwork: "logo", logoHeight: 240, accent: DEFAULT_ACCENT });
+}
+
+/** The database's card, shared by every /db page that has no image of its own. */
+export function createDbOGImage(options: BrandOGImageOptions) {
+  return createWordmarkOGImage(options, { artwork: "dbLogo", logoHeight: 220, accent: DB_ACCENT });
+}
+
+type Wordmark = {
+  artwork: OgArtwork;
+  logoHeight: number;
+  accent: Accent;
+};
+
+async function createWordmarkOGImage(options: BrandOGImageOptions, { artwork, logoHeight, accent }: Wordmark) {
+  const { brand, tagline, locale = "en" } = options;
 
   const [interFonts, localeFonts, logo] = await Promise.all([
     loadInterFonts(),
     loadLocaleFonts(locale),
-    loadLocalImage(logoFile, logoHeight),
+    loadBrandArtwork(brand, artwork, logoHeight),
   ]);
 
   const fonts = [...interFonts, ...localeFonts];
@@ -505,8 +501,12 @@ export async function createHomeOGImage(options: HomeOGImageOptions) {
             position: "relative",
           }}
         >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={logo.dataUrl} width={logo.width} height={logo.height} alt="tomomai" />
+          {logo ? (
+            /* eslint-disable-next-line @next/next/no-img-element */
+            <img src={logo.dataUrl} width={logo.width} height={logo.height} alt={brand.productName} />
+          ) : (
+            <div style={{ color: "#fafafa", fontSize: "96px", fontWeight: 700, lineHeight: 1.1 }}>{brandTitle(brand)}</div>
+          )}
 
           <div
             style={{
@@ -533,12 +533,13 @@ export async function createHomeOGImage(options: HomeOGImageOptions) {
         </div>
       </div>
     ),
-    { ...OG_SIZE, fonts },
+    { ...OG_IMAGE_SIZE, fonts },
   );
 }
 
 export type ProfileOGImageOptions = {
-  /** maimai display name shown in the rating plate area */
+  game: FrontendGame;
+  /** The in-game player name. */
   displayName: string;
   /** account/handle title shown above the display name (small badge) */
   title?: string;
@@ -549,7 +550,7 @@ export type ProfileOGImageOptions = {
   /** raw region key, used to color the chip */
   region: Region;
   rating: number;
-  gameVersion?: VersionId;
+  gameVersion?: number;
   /** optional remote icon URL (http(s) only — data URLs are skipped) */
   iconUrl?: string | null;
   locale?: Locale;
@@ -557,6 +558,7 @@ export type ProfileOGImageOptions = {
 
 export async function createProfileOGImage(options: ProfileOGImageOptions) {
   const {
+    game,
     displayName,
     title,
     username,
@@ -567,9 +569,7 @@ export async function createProfileOGImage(options: ProfileOGImageOptions) {
     iconUrl,
     locale = "en",
   } = options;
-
-  // Build absolute URL for the rating plate (sharp can read public/ directly)
-  const ratingPath = getRatingImageUrl(rating, gameVersion).replace(/^\//, "");
+  const { brand } = game;
 
   const isHttpIcon = !!iconUrl && (iconUrl.startsWith("http://") || iconUrl.startsWith("https://"));
 
@@ -577,8 +577,10 @@ export async function createProfileOGImage(options: ProfileOGImageOptions) {
     loadInterFonts(),
     loadGeistMono(),
     loadLocaleFonts(locale),
-    loadLocalImage("icon-dark.webp", 48),
-    loadLocalImage(ratingPath, 90),
+    loadBrandArtwork(brand, "logo", BRAND_CHIP_ICON_HEIGHT),
+    supportsGameFeature(game, "rating-plate")
+      ? loadLocalImage(getRatingImageUrl(rating, gameVersion ?? 0), 90)
+      : Promise.resolve(null),
     isHttpIcon ? loadRemoteImage(iconUrl!, 220, 220) : Promise.resolve(null),
     isHttpIcon ? extractTwoColors(iconUrl!) : Promise.resolve(null),
   ]);
@@ -620,7 +622,7 @@ export async function createProfileOGImage(options: ProfileOGImageOptions) {
             position: "relative",
           }}
         >
-          <BrandChip section="profile" icon={brandIcon} />
+          <BrandChip brand={brand} section="profile" icon={brandIcon} />
 
           {/* Middle: avatar + name stack + rating plate */}
           <div style={{ display: "flex", alignItems: "center", gap: "40px" }}>
@@ -730,44 +732,66 @@ export async function createProfileOGImage(options: ProfileOGImageOptions) {
                 {displayName}
               </div>
 
-              {/* Rating plate with overlaid number, mirroring InfoCard */}
-              <div
-                style={{
-                  position: "relative",
-                  width: ratingPlate.width,
-                  height: ratingPlate.height,
-                  display: "flex",
-                  marginTop: "4px",
-                }}
-              >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={ratingPlate.dataUrl}
-                  width={ratingPlate.width}
-                  height={ratingPlate.height}
-                  alt={`rating ${rating}`}
-                />
+              {ratingPlate ? (
+                /* Rating plate with overlaid number, mirroring InfoCard */
                 <div
                   style={{
-                    position: "absolute",
-                    top: 19,
-                    left: 19,
-                    width: ratingPlate.width - 35,
-                    height: 54,
-                    color: "white",
+                    position: "relative",
+                    width: ratingPlate.width,
+                    height: ratingPlate.height,
+                    display: "flex",
+                    marginTop: "4px",
+                  }}
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={ratingPlate.dataUrl}
+                    width={ratingPlate.width}
+                    height={ratingPlate.height}
+                    alt={`rating ${rating}`}
+                  />
+                  <div
+                    style={{
+                      position: "absolute",
+                      top: 19,
+                      left: 19,
+                      width: ratingPlate.width - 35,
+                      height: 54,
+                      color: "white",
+                      fontSize: "46px",
+                      fontWeight: 400,
+                      fontFamily: "Geist Mono",
+                      letterSpacing: "4px",
+                      textAlign: "right",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "flex-end",
+                    }}
+                  >
+                    {rating}
+                  </div>
+                </div>
+              ) : (
+                <div
+                  style={{
+                    alignSelf: "flex-start",
+                    display: "flex",
+                    alignItems: "center",
+                    marginTop: "4px",
+                    padding: "10px 24px",
+                    borderRadius: "16px",
+                    background: "rgba(255,255,255,0.06)",
+                    border: "1px solid rgba(255,255,255,0.12)",
+                    color: "#fafafa",
                     fontSize: "46px",
                     fontWeight: 400,
                     fontFamily: "Geist Mono",
                     letterSpacing: "4px",
-                    textAlign: "right",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "flex-end",
                   }}
                 >
-                  {rating}
+                  {formatGameRating(game.id, rating)}
                 </div>
-              </div>
+              )}
             </div>
           </div>
 
@@ -783,50 +807,33 @@ export async function createProfileOGImage(options: ProfileOGImageOptions) {
               }}
             />
             <span style={{ color: "#a1a1aa", fontSize: "18px", fontWeight: 600 }}>
-              tomomai.lol/profile/{username}
+              {brand.domain}/profile/{username}
             </span>
           </div>
         </div>
       </div>
     ),
-    { ...OG_SIZE, fonts },
+    { ...OG_IMAGE_SIZE, fonts },
   );
 }
 
-const DIFFICULTY_HEX: Record<string, string> = {
-  basic: "#10b981",
-  advanced: "#f59e0b",
-  expert: "#f43f5e",
-  master: "#8b5cf6",
-  remaster: "#d8b4fe",
-  utage: "#ec4899",
-};
-
-const DIFFICULTY_LABEL: Record<string, string> = {
-  basic: "BAS",
-  advanced: "ADV",
-  expert: "EXP",
-  master: "MAS",
-  remaster: "ReM",
-  utage: "宴",
-};
-
 export type SongOGImageOptions = {
+  game: Pick<FrontendGame, "id" | "brand">;
   songName: string;
   artist: string;
   /** Resolved cover URL — http(s) only; falls back to placeholder if null/blocked. */
   coverUrl: string;
-  /** "dx" | "std" | "utage" */
   songType: string;
   genre: string;
   /** Pretty version name e.g. "PRiSM PLUS" */
   versionName?: string;
-  difficulties: { difficulty: Difficulty; levelPrecise: number }[];
+  difficulties: { difficulty: string; levelPrecise: number; levelPreciseEstimated?: boolean }[];
   locale?: Locale;
 };
 
 export async function createSongOGImage(options: SongOGImageOptions) {
   const {
+    game: { id: game, brand },
     songName,
     artist,
     coverUrl,
@@ -837,16 +844,15 @@ export async function createSongOGImage(options: SongOGImageOptions) {
     locale = "en",
   } = options;
 
-  const orderedDiffs = [...difficulties].sort((a, b) => {
-    const order = ["basic", "advanced", "expert", "master", "remaster", "utage"];
-    return order.indexOf(a.difficulty) - order.indexOf(b.difficulty);
-  });
+  const orderedDiffs = difficulties
+    .map(d => ({ ...d, code: codeOf(game, "difficulty", d.difficulty) }))
+    .sort((a, b) => a.code - b.code);
 
   const [interFonts, monoFonts, localeFonts, brandIcon, cover, extracted] = await Promise.all([
     loadInterFonts(),
     loadGeistMono(),
     loadLocaleFonts(locale),
-    loadLocalImage("icon-db-dark.webp", 48),
+    loadBrandArtwork(brand, "dbLogo", BRAND_CHIP_ICON_HEIGHT),
     loadRemoteImage(coverUrl, 460, 460),
     extractTwoColors(coverUrl),
   ]);
@@ -854,10 +860,9 @@ export async function createSongOGImage(options: SongOGImageOptions) {
   const fonts = [...interFonts, ...monoFonts, ...localeFonts];
   const fontFamily = getFontFamily(locale);
 
-  const isDx = songType === "dx";
-  const isUtage = songType === "utage";
-  const typeAccent = isUtage ? "#ec4899" : isDx ? "#f59e0b" : "#06b6d4";
-  const typeLabel = isUtage ? "宴会場" : isDx ? "でらっくす" : "スタンダード";
+  const chartType = getGameChartType(game, codeOf(game, "chartType", songType));
+  const typeAccent = chartType.hex;
+  const typeLabel = chartType.implicit ? null : chartType.ogLabel ?? chartType.label;
 
   // Accent: two colors extracted from the cover (with DB defaults as fallback).
   const accent: Accent = extracted
@@ -909,7 +914,7 @@ export async function createSongOGImage(options: SongOGImageOptions) {
             position: "relative",
           }}
         >
-          <BrandChip section="songs" icon={brandIcon} />
+          <BrandChip brand={brand} section="songs" icon={brandIcon} />
 
           {/* Middle: cover + info */}
           <div style={{ display: "flex", alignItems: "center", gap: "56px" }}>
@@ -958,7 +963,7 @@ export async function createSongOGImage(options: SongOGImageOptions) {
             <div style={{ display: "flex", flexDirection: "column", gap: "16px", minWidth: 0, flex: 1 }}>
               {/* Type + version chips */}
               <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
-                <div
+                {typeLabel && <div
                   style={{
                     display: "flex",
                     alignItems: "center",
@@ -973,7 +978,7 @@ export async function createSongOGImage(options: SongOGImageOptions) {
                   }}
                 >
                   {typeLabel}
-                </div>
+                </div>}
                 <div
                   style={{
                     display: "flex",
@@ -1045,7 +1050,8 @@ export async function createSongOGImage(options: SongOGImageOptions) {
               {orderedDiffs.length > 0 && (
                 <div style={{ display: "flex", alignItems: "center", gap: "10px", marginTop: "6px", flexWrap: "wrap" }}>
                   {orderedDiffs.map((d) => {
-                    const color = DIFFICULTY_HEX[d.difficulty] ?? "#71717a";
+                    const difficulty = getGameDifficulty(game, d.code);
+                    const color = difficulty.hex;
                     return (
                       <div
                         key={d.difficulty}
@@ -1060,10 +1066,10 @@ export async function createSongOGImage(options: SongOGImageOptions) {
                         }}
                       >
                         <span style={{ color, fontSize: "18px", fontWeight: 700, letterSpacing: "0.04em" }}>
-                          {DIFFICULTY_LABEL[d.difficulty] ?? d.difficulty.toUpperCase()}
+                          {difficulty.shortLabel}
                         </span>
                         <span style={{ color: "#fafafa", fontSize: "26px", fontWeight: 700, fontFamily: "Geist Mono" }}>
-                          {renderLevelPrecise(d.levelPrecise, d.difficulty)}
+                          {formatEstimated(formatGameLevel(game, d.levelPrecise, d.code), d.levelPreciseEstimated)}
                         </span>
                       </div>
                     );
@@ -1085,12 +1091,12 @@ export async function createSongOGImage(options: SongOGImageOptions) {
               }}
             />
             <span style={{ color: "#a1a1aa", fontSize: "18px", fontWeight: 600 }}>
-              tomomai.lol/db/songs
+              {brand.domain}/db/songs
             </span>
           </div>
         </div>
       </div>
     ),
-    { ...OG_SIZE, fonts },
+    { ...OG_IMAGE_SIZE, fonts },
   );
 }

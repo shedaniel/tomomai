@@ -1,0 +1,57 @@
+{
+  "dashboard": {
+    "title": "tomochu ともチュウ"
+  },
+  "userHeader": {
+    "memberLabel": "ともチュウ member",
+    "discordPrompt": "Facing issues? Or have features or ideas to add to tomochu ともチュウ?"
+  },
+  "db": {
+    "songs": {
+      "gameName": "CHUNITHM",
+      "chartLabel": "CHUNITHM",
+      "detail": {
+        "viewDetails": "View Details on tomochu DB"
+      }
+    }
+  },
+  "onboarding": {
+    "title": "Welcome to tomochu!",
+    "step1": {
+      "description": "Your username is your handle on tomochu. If you choose to share, it also becomes your public profile URL."
+    },
+    "regionTaglines": {
+      "intl": "Asia / International",
+      "jp": "チュウニズム",
+      "cn": "中二节奏"
+    }
+  },
+  "acceptInvitation": {
+    "title": "tomochu ともチュウ",
+    "subtitle": "You've been invited to join the tomochu ともチュウ community",
+    "invitedBy": "{name} has invited you to join tomochu ともチュウ"
+  },
+  "oauthConsent": {
+    "title": "{app} wants to access <nb>your tomochu account</nb>",
+    "signedOutDescription": "{app} is asking for access to your tomochu account. Sign in to review the request.",
+    "trustNotice": "{app} is not run by tomochu. {links, select, both {It handles your data under its own <terms>Terms of Service</terms> and <privacy>Privacy Policy</privacy>.} terms {It handles your data under its own <terms>Terms of Service</terms>.} privacy {It handles your data under its own <privacy>Privacy Policy</privacy>.} other {It hasn't published terms or a privacy policy.}} Only continue if you trust it.",
+    "officialBadge": "Official tomochu app",
+    "officialNotice": "{app} is made and run by tomochu.",
+    "errors": {
+      "redirect": {
+        "body": "The app asked to send you back to an address it never registered with tomochu, so the request was stopped to protect your account. Don't sign in through this link, and let the app's developer know."
+      },
+      "badRequest": {
+        "body": "The app sent a request tomochu doesn't support. Go back to the app and try again, or contact its developer."
+      }
+    },
+    "backHome": "Back to tomochu"
+  },
+  "settings": {
+    "developer": {
+      "oauthApps": {
+        "officialLabel": "Official tomochu app"
+      }
+    }
+  }
+}

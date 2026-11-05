@@ -1,22 +1,14 @@
-import { z } from "zod";
+import type { z } from "zod";
 import { Badge, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@tomomai/ui";
+import { parameterDocs, type ParameterDoc } from "@/lib/api/openapi";
 
 interface ParamTableProps {
-  schema: z.ZodTypeAny | undefined;
-  /** Which kind of params these are — affects column labels. */
-  kind: "query" | "path";
-}
-
-interface Row {
-  name: string;
-  type: string;
-  required: boolean;
-  description?: string;
+  schema: z.ZodObject | undefined;
+  kind: ParameterDoc["in"];
 }
 
 export function ParamTable({ schema, kind }: ParamTableProps) {
-  if (!schema) return null;
-  const rows = paramRows(schema);
+  const rows = parameterDocs(schema, kind);
   if (!rows.length) return null;
 
   return (
@@ -37,7 +29,7 @@ export function ParamTable({ schema, kind }: ParamTableProps) {
                 <code className="font-mono text-xs">{row.name}</code>
               </TableCell>
               <TableCell className="text-muted-foreground">
-                <code className="font-mono text-xs">{row.type}</code>
+                <code className="font-mono text-xs">{typeLabel(row.schema)}</code>
               </TableCell>
               <TableCell>
                 {row.required ? (
@@ -60,28 +52,9 @@ export function ParamTable({ schema, kind }: ParamTableProps) {
   );
 }
 
-function paramRows(schema: z.ZodTypeAny): Row[] {
-  const obj = (schema as unknown as { shape?: Record<string, z.ZodTypeAny> }).shape;
-  if (!obj) return [];
-  return Object.entries(obj).map(([name, sub]) => ({
-    name,
-    type: describeType(sub),
-    required: !sub.safeParse(undefined).success,
-    description: (sub as unknown as { description?: string }).description,
-  }));
-}
-
-function describeType(schema: z.ZodTypeAny): string {
-  try {
-    const json = z.toJSONSchema(schema, { target: "draft-2020-12" }) as Record<string, unknown>;
-    if (Array.isArray(json.enum)) {
-      return (json.enum as unknown[]).map((v) => JSON.stringify(v)).join(" | ");
-    }
-    if (typeof json.type === "string") return json.type;
-    if (Array.isArray(json.type)) return json.type.join(" | ");
-    if (json.anyOf) return "any";
-    return "any";
-  } catch {
-    return "any";
-  }
+function typeLabel(schema: ParameterDoc["schema"]): string {
+  if (Array.isArray(schema.enum)) return schema.enum.map(value => JSON.stringify(value)).join(" | ");
+  if (typeof schema.type === "string") return schema.type;
+  if (Array.isArray(schema.type)) return schema.type.join(" | ");
+  return "any";
 }

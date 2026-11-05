@@ -1,0 +1,57 @@
+{
+  "dashboard": {
+    "title": "ともマイ"
+  },
+  "userHeader": {
+    "memberLabel": "ともマイのメンバー",
+    "discordPrompt": "何かお困りのことはありますか？ともマイへのご意見・アイデアをぜひお聞かせください！"
+  },
+  "db": {
+    "songs": {
+      "gameName": "maimai でらっくす",
+      "chartLabel": "maimai でらっくす {type, select, dx {DX} other {スタンダード}}",
+      "detail": {
+        "viewDetails": "ともマイ DB で詳細を見る"
+      }
+    }
+  },
+  "onboarding": {
+    "title": "ともマイ へようこそ！",
+    "step1": {
+      "description": "ユーザー名は ともマイ でのあなたのハンドルです。公開を選ぶと、公開プロフィールのURLにも使われます。"
+    },
+    "regionTaglines": {
+      "intl": "Asia / International",
+      "jp": "maimai でらっくす",
+      "cn": "舞萌 DX"
+    }
+  },
+  "acceptInvitation": {
+    "title": "ともマイ",
+    "subtitle": "ともマイコミュニティに招待されました！",
+    "invitedBy": "{name}があなたをともマイに招待しました"
+  },
+  "oauthConsent": {
+    "title": "{app} が <nb>tomomai アカウント</nb>へのアクセスを求めています",
+    "signedOutDescription": "{app} が tomomai アカウントへのアクセスを求めています。サインインしてリクエストを確認してください。",
+    "trustNotice": "{app} は tomomai が運営するアプリではありません。{links, select, both {データはこのアプリの<terms>利用規約</terms>と<privacy>プライバシーポリシー</privacy>に基づいて扱われます。} terms {データはこのアプリの<terms>利用規約</terms>に基づいて扱われます。} privacy {データはこのアプリの<privacy>プライバシーポリシー</privacy>に基づいて扱われます。} other {このアプリは利用規約やプライバシーポリシーを公開していません。}}信頼できる場合のみ続行してください。",
+    "officialBadge": "tomomai 公式アプリ",
+    "officialNotice": "{app} は tomomai が開発・運営しています。",
+    "errors": {
+      "redirect": {
+        "body": "アプリが tomomai に登録していないアドレスへ戻ろうとしたため、アカウント保護のためリクエストを停止しました。このリンクからサインインせず、アプリの開発者に知らせてください。"
+      },
+      "badRequest": {
+        "body": "アプリが tomomai の対応していないリクエストを送りました。アプリに戻ってもう一度お試しいただくか、開発者に問い合わせてください。"
+      }
+    },
+    "backHome": "tomomai に戻る"
+  },
+  "settings": {
+    "developer": {
+      "oauthApps": {
+        "officialLabel": "tomomai 公式アプリ"
+      }
+    }
+  }
+}

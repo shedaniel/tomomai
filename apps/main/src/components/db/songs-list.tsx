@@ -1,19 +1,22 @@
 "use client";
 
+import { useGame } from "@/components/providers/game-provider";
 import { FilterPanel, GenericFilter, getFilterKey } from "@/components/filter-panel";
 import { Button } from "@tomomai/ui";
 import { Input } from "@tomomai/ui";
 import { useInfiniteScroll } from "@/hooks/use-infinite-scroll";
-import { getVersionInfo } from "@/lib/metadata";
+import { getVersion } from "@/lib/games/versions";
 import { trpc } from "@/lib/trpc-client";
 import { cn } from "@/lib/utils";
 import { LayoutGrid, LayoutList, Music, Search } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { usePathname, useRouter } from "@/i18n/navigation";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@tomomai/ui/select-friendly";
 import { applyUniqueSongFilters, createUniqueSongFilterCategories, hashString } from "./songs/filter-utils";
+import { catalogSongFields, useSearch } from "@/lib/search/song-search";
 import { SongCard } from "./songs/song-card";
 import { SongRow } from "./songs/song-row";
 import { GroupMode, UniqueSong, UniqueSongFilter, UniqueSongFilterType } from "./songs/types";
@@ -32,7 +35,18 @@ interface SongsListProps {
  * serialize the whole catalog into the shared layout's RSC segment and
  * leak onto the detail route's ISR payload.
  */
+// The list lives in an ISR layout, where reading search params outside a Suspense boundary fails the render.
+/** Applies the command palette's "show all results" query (`?q=`) to the list. */
+function QueryParamSync({ onQuery }: { onQuery: (query: string) => void }) {
+  const query = useSearchParams().get("q");
+  useEffect(() => {
+    if (query !== null) onQuery(query);
+  }, [query, onQuery]);
+  return null;
+}
+
 export function SongsList(_: SongsListProps = {}) {
+  const game = useGame();
   const t = useTranslations();
   const router = useRouter();
   const pathname = usePathname();
@@ -51,6 +65,10 @@ export function SongsList(_: SongsListProps = {}) {
 
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
+  const applyQueryParam = useCallback((query: string) => {
+    setSearchQuery(query);
+    setDebouncedSearchQuery(query);
+  }, []);
   const [searchBoxFocused, setSearchBoxFocused] = useState(false);
   const [mounted, setMounted] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -76,7 +94,7 @@ export function SongsList(_: SongsListProps = {}) {
   // Catalog is client-fetched via tRPC (1h cache, shared with the detail
   // route). Keeping it out of props is what lets this component live in the
   // shared layout without serializing the catalog into the ISR payload.
-  const { data: allSongs } = trpc.user.getAllUniqueSongs.useQuery(undefined, {
+  const { data: allSongs } = trpc.user.getAllUniqueSongs.useQuery({ game: game.id }, {
     enabled: selectedSlug === null,
     staleTime: 3600000, // 1 hour
     refetchOnWindowFocus: false,
@@ -93,8 +111,8 @@ export function SongsList(_: SongsListProps = {}) {
   }, [allSongs]);
 
   const filterCategories = useMemo(() => {
-    return allSongs ? createUniqueSongFilterCategories(allSongs, tFilter) : null;
-  }, [allSongs, tFilter]);
+    return allSongs ? createUniqueSongFilterCategories(game.id, allSongs, tFilter) : null;
+  }, [allSongs, tFilter, game]);
 
   const handleAddFilter = useCallback((filter: GenericFilter) => {
     setFilters(prev => {
@@ -128,18 +146,18 @@ export function SongsList(_: SongsListProps = {}) {
     return allSongs && flattenedSongs ? applyUniqueSongFilters(allSongs, flattenedSongs, filters, groupMode) : null;
   }, [allSongs, flattenedSongs, filters, groupMode]);
 
+  const searchFields = useMemo(() => catalogSongFields(game.id), [game.id]);
+  const searchHits = useSearch(allFilteredSongs, searchFields, debouncedSearchQuery);
   const filteredSongs = useMemo(() => {
-    if (debouncedSearchQuery.trim()) {
-      const query = debouncedSearchQuery.toLowerCase().trim();
-      return allFilteredSongs?.filter(song =>
-        song.songName.toLowerCase().includes(query) ||
-        song.artist.toLowerCase().includes(query) ||
-        song.genre.toLowerCase().includes(query) ||
-        song.aliases?.some(alias => alias.toLowerCase().includes(query))
-      ) ?? null;
+    if (!searchHits) return allFilteredSongs;
+    const matches = searchHits.map(hit => hit.item);
+    // A chosen grouping or sort keeps its order, so only an unsorted list is ranked by relevance.
+    if (groupMode !== "none" || filters.some(filter => filter.type === "sort")) {
+      const matched = new Set(matches);
+      return allFilteredSongs?.filter(song => matched.has(song)) ?? null;
     }
-    return allFilteredSongs;
-  }, [allFilteredSongs, debouncedSearchQuery]);
+    return matches;
+  }, [allFilteredSongs, searchHits, groupMode, filters]);
 
   const [visibleCount, setVisibleCount] = useState(60);
   const visibleSongs = useMemo(() => {
@@ -174,14 +192,11 @@ export function SongsList(_: SongsListProps = {}) {
         return song.difficulties[0]?.noteDesigner ?? "Unknown";
       case "level_asc":
       case "level_desc": {
-        const level = (song.difficulties[0]?.levelPrecise ?? 0) / 10;
-        const isPlus = level % 1 >= 0.6;
-        const baseLevel = Math.floor(level);
-        return isPlus ? `${baseLevel}+` : `${baseLevel}`;
+        return song.difficulties[0]?.level ?? "—";
       }
       case "version_asc":
       case "version_desc":
-        const version = getVersionInfo(song.addedVersion);
+        const version = getVersion(game.id, song.addedVersion);
         return version?.name ?? `Ver. ${song.addedVersion}`;
       case "genre":
         return song.genre;
@@ -190,7 +205,7 @@ export function SongsList(_: SongsListProps = {}) {
       default:
         return null;
     }
-  }, [groupMode]);
+  }, [groupMode, game]);
 
   const renderGroupHeader = (key: string) => (
     <div className="col-span-full mt-4 pb-2 first:pt-0">
@@ -204,10 +219,13 @@ export function SongsList(_: SongsListProps = {}) {
 
   return (
     <main className="space-y-6 pb-16 pt-3" role="main" data-nosnippet>
+      <Suspense fallback={null}>
+        <QueryParamSync onQuery={applyQueryParam} />
+      </Suspense>
       <header className="space-y-1">
         <h1 className="text-2xl font-semibold tracking-tight">{t("db.songs.heading")}</h1>
         <p className="text-sm text-muted-foreground max-w-3xl leading-relaxed">
-          {t("db.songs.metadata.description")}
+          {t("db.songs.metadata.description", { game: t("db.songs.gameName") })}
         </p>
       </header>
 

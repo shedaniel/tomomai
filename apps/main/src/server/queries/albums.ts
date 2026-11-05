@@ -1,14 +1,17 @@
+import type { CanonicalGameId, Region } from "@/lib/games/ids";
+import { hasCapability } from "@/lib/games/access";
+import { getSupportedRegions } from "@/lib/games/regions";
 import { songInstanceId } from "@/lib/db/song-instance-id";
 import { db } from "@/lib/db";
 import { parentSong, songs, userAlbums } from "@/lib/db/schema-pg";
 import { and, desc, eq, sql } from "drizzle-orm";
-import type { Region } from "@/lib/types";
 
 export async function fetchUserAlbums(
+  game: CanonicalGameId,
   userId: string,
   region: Region,
   limit: number,
-  offset: number
+  offset: number,
 ) {
   const userAlbumsList = await db
     .select({
@@ -17,10 +20,10 @@ export async function fetchUserAlbums(
       songName: parentSong.songName,
       artist: parentSong.artist,
       cover: parentSong.cover,
-      difficulty: parentSong.difficulty,
+      difficultyCode: parentSong.difficulty,
+      typeCode: parentSong.type,
       level: songs.level,
       levelPrecise: songs.levelPrecise,
-      type: parentSong.type,
       takenAt: userAlbums.takenAt,
       imageKey: userAlbums.imageKey,
       imageSize: userAlbums.imageSize,
@@ -30,12 +33,7 @@ export async function fetchUserAlbums(
     .from(userAlbums)
     .innerJoin(songs, eq(userAlbums.songId, songs.id))
     .innerJoin(parentSong, eq(songs.parentId, parentSong.id))
-    .where(
-      and(
-        eq(userAlbums.userId, userId),
-        eq(songs.region, region)
-      )
-    )
+    .where(and(eq(userAlbums.game, game), eq(userAlbums.userId, userId), eq(songs.region, region)))
     .orderBy(desc(userAlbums.takenAt))
     .limit(limit + 1)
     .offset(offset);
@@ -50,10 +48,10 @@ export async function fetchUserAlbums(
       songName: album.songName,
       artist: album.artist,
       cover: album.cover,
-      difficulty: album.difficulty,
+      difficultyCode: album.difficultyCode,
+      typeCode: album.typeCode,
       level: album.level,
       levelPrecise: album.levelPrecise,
-      type: album.type,
       takenAt: album.takenAt.toISOString(),
       imageKey: album.imageKey,
       imageSize: album.imageSize,
@@ -64,41 +62,23 @@ export async function fetchUserAlbums(
   };
 }
 
-export async function fetchAlbumStorageUsage(userId: string) {
-  const [storageResult, intlStorageResult, jpStorageResult] = await Promise.all([
-    db
-      .select({
-        totalSize: sql<number>`COALESCE(SUM(${userAlbums.imageSize}), 0)`,
-      })
-      .from(userAlbums)
-      .where(eq(userAlbums.userId, userId)),
-    db
-      .select({
-        totalSize: sql<number>`COALESCE(SUM(${userAlbums.imageSize}), 0)`,
-      })
-      .from(userAlbums)
-      .innerJoin(songs, eq(userAlbums.songId, songs.id))
-      .innerJoin(parentSong, eq(songs.parentId, parentSong.id))
-      .where(and(
-        eq(userAlbums.userId, userId),
-        eq(songs.region, 'intl')
-      )),
-    db
-      .select({
-        totalSize: sql<number>`COALESCE(SUM(${userAlbums.imageSize}), 0)`,
-      })
-      .from(userAlbums)
-      .innerJoin(songs, eq(userAlbums.songId, songs.id))
-      .innerJoin(parentSong, eq(songs.parentId, parentSong.id))
-      .where(and(
-        eq(userAlbums.userId, userId),
-        eq(songs.region, 'jp')
-      )),
-  ]);
+/** Album storage used across the game, and per enabled region that offers albums. */
+export async function fetchAlbumStorageUsage(game: CanonicalGameId, userId: string) {
+  const usage = await db
+    .select({
+      region: songs.region,
+      size: sql<number>`COALESCE(SUM(${userAlbums.imageSize}), 0)`.mapWith(Number),
+    })
+    .from(userAlbums)
+    .innerJoin(songs, eq(userAlbums.songId, songs.id))
+    .where(and(eq(userAlbums.game, game), eq(userAlbums.userId, userId)))
+    .groupBy(songs.region);
 
+  const sizeOf = (region: Region) => usage.find(row => row.region === region)?.size ?? 0;
   return {
-    totalUsed: Number(storageResult[0]?.totalSize || 0),
-    intlUsed: Number(intlStorageResult[0]?.totalSize || 0),
-    jpUsed: Number(jpStorageResult[0]?.totalSize || 0),
+    totalUsed: usage.reduce((total, row) => total + row.size, 0),
+    byRegion: getSupportedRegions(game)
+      .filter(region => hasCapability(game, "albums", region))
+      .map(region => ({ region, used: sizeOf(region) })),
   };
 }

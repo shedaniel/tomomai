@@ -1,7 +1,7 @@
 export const API_SCOPES = {
   ready: {
     name: "Ready",
-    description: "Basic access. Grants GET /api/v1/ok. Included by default.",
+    description: "Basic access. Included by default.",
     destructive: false,
     sensitive: false,
     default: true,
@@ -10,7 +10,7 @@ export const API_SCOPES = {
   // ── User ──────────────────────────────────────────────────────────────────
   "user:metadata:read": {
     name: "User Metadata (Read)",
-    description: "Read your account ID, username, profile picture, region, profile visibility, and role. Grants GET /api/v1/me.",
+    description: "Read your account ID, username, profile picture, region, profile visibility, and role.",
     destructive: false,
     sensitive: false,
     default: false,
@@ -19,7 +19,7 @@ export const API_SCOPES = {
   // ── Snapshot: latest ──────────────────────────────────────────────────────
   "snapshot:latest:metadata:read": {
     name: "Latest Snapshot Metadata (Read)",
-    description: "Read metadata (rating, display name, play counts, etc.) for your latest snapshot. Grants GET /api/v1/snapshots/latest.",
+    description: "Read metadata (rating, display name, play counts, etc.) for your latest snapshot.",
     destructive: false,
     sensitive: false,
     default: false,
@@ -47,7 +47,7 @@ export const API_SCOPES = {
   },
   "snapshot:latest:icon:read": {
     name: "Latest Snapshot Icon (Read)",
-    description: "Read your maimai icon URL from your latest snapshot. Sensitive, as the icon may be a photo of your face taken with the in-game camera.",
+    description: "Read your in-game icon URL from your latest snapshot. Sensitive, as the icon may be a photo of your face taken with the in-game camera.",
     destructive: false,
     sensitive: true,
     default: false,
@@ -56,7 +56,7 @@ export const API_SCOPES = {
   // ── Snapshot: all ─────────────────────────────────────────────────────────
   "snapshot:all:metadata:read": {
     name: "All Snapshots Metadata (Read)",
-    description: "List all your snapshots and read their metadata. Grants GET /api/v1/snapshots and GET /api/v1/snapshots/:id.",
+    description: "List all your snapshots and read their metadata.",
     destructive: false,
     sensitive: false,
     default: false,
@@ -84,7 +84,7 @@ export const API_SCOPES = {
   },
   "snapshot:all:icon:read": {
     name: "All Snapshots Icon (Read)",
-    description: "Read your maimai icon URL from any snapshot. Sensitive, as the icon may be a photo of your face taken with the in-game camera.",
+    description: "Read your in-game icon URL from any snapshot. Sensitive, as the icon may be a photo of your face taken with the in-game camera.",
     destructive: false,
     sensitive: true,
     default: false,
@@ -93,7 +93,7 @@ export const API_SCOPES = {
   // ── Recents ───────────────────────────────────────────────────────────────
   "recent:read": {
     name: "Recent Plays (Read)",
-    description: "Read your recent play history including song info, achievement, and combo/sync status. Grants GET /api/v1/recents.",
+    description: "Read your recent play history, including song info, scores and statuses.",
     destructive: false,
     sensitive: false,
     default: false,
@@ -109,7 +109,7 @@ export const API_SCOPES = {
   // ── Stats ─────────────────────────────────────────────────────────────────
   "stats:read": {
     name: "Stats (Read)",
-    description: "Read your grade/FC/FS distribution statistics. Grants GET /api/v1/stats.",
+    description: "Read your grade/FC/FS distribution statistics.",
     destructive: false,
     sensitive: false,
     default: false,
@@ -118,14 +118,14 @@ export const API_SCOPES = {
   // ── Albums ────────────────────────────────────────────────────────────────
   "album:read": {
     name: "Albums (Read)",
-    description: "Read your arcade photo album entries (metadata only, no image URLs). Grants GET /api/v1/albums.",
+    description: "Read your arcade photo album entries (metadata only, no image URLs).",
     destructive: false,
     sensitive: false,
     default: false,
   },
   "album:images:read": {
     name: "Album Images (Read)",
-    description: "Adds resolved image URLs to album responses. Sensitive, as photos may contain images of people.",
+    description: "Adds resolved image URLs to album responses. This is sensitive as photos may contain images of people.",
     destructive: false,
     sensitive: true,
     default: false,
@@ -134,7 +134,7 @@ export const API_SCOPES = {
   // ── Plates ────────────────────────────────────────────────────────────────
   "plate:read": {
     name: "Plates (Read)",
-    description: "Read your plate completion data (which songs still need to be cleared / FC'd / AP'd for each plate). Grants GET /api/v1/plates.",
+    description: "Read your plate completion data (which songs still need to be cleared / FC'd / AP'd for each plate).",
     destructive: false,
     sensitive: false,
     default: false,
@@ -143,7 +143,7 @@ export const API_SCOPES = {
   // ── User: settings ────────────────────────────────────────────────────────
   "user:settings:read": {
     name: "User Settings (Read)",
-    description: "Read your privacy and profile-display settings (publish profile, show scores, show plates, etc.). Grants GET /api/v1/me/settings.",
+    description: "Read your privacy and profile-display settings (publish profile, show scores, show plates, etc.).",
     destructive: false,
     sensitive: false,
     default: false,
@@ -152,7 +152,7 @@ export const API_SCOPES = {
   // ── Snapshot: destructive ─────────────────────────────────────────────────
   "snapshot:all:delete": {
     name: "Snapshots (Delete)",
-    description: "Delete any of your snapshots. Grants DELETE /api/v1/snapshots/:id. Destructive, so it must be requested explicitly and is never implied by encompassing scopes.",
+    description: "Delete any of your snapshots. This is destructive, so it must be requested explicitly and is never implied by encompassing scopes.",
     destructive: true,
     sensitive: true,
     default: false,
@@ -177,21 +177,21 @@ export const API_SCOPES = {
   // ── Fetch control ─────────────────────────────────────────────────────────
   "fetch:read": {
     name: "Fetch Status (Read)",
-    description: "Read the status of your in-progress or most-recent maimai data fetch. Grants GET /api/v1/fetch/status.",
+    description: "Read the status of your in-progress or most-recent game data fetch.",
     destructive: false,
     sensitive: false,
     default: false,
   },
   "fetch:start": {
     name: "Start Fetch",
-    description: "Trigger a new maimai data fetch using your stored upstream token. Grants POST /api/v1/fetch. Destructive, as it consumes upstream API budget and writes a new snapshot.",
+    description: "Trigger a new game data fetch using your stored upstream token. This is destructive as it consumes upstream API budget and writes a new snapshot.",
     destructive: true,
     sensitive: false,
     default: false,
   },
   "fetch:delete": {
     name: "Fetch Token (Delete)",
-    description: "Delete your stored upstream maimai authentication token. Grants DELETE /api/v1/fetch/token. Destructive and sensitive, as it breaks any in-app and API-driven fetch flow until you re-authenticate.",
+    description: "Delete your stored upstream authentication token. This is destructive and sensitive as in-app and API-driven fetches stop until you re-authenticate.",
     destructive: true,
     sensitive: true,
     default: false,

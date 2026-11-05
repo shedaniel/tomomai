@@ -1,33 +1,32 @@
 import { db } from "@/lib/db";
 import { parentSong, songs } from "@/lib/db/schema-pg";
 import { songInstanceId } from "@/lib/db/song-instance-id";
-import { parentPublicIdOf } from "@/lib/catalog/song-instance-id";
-import type { VersionId } from "@/lib/metadata";
-import { addRatingsAndSort } from "@/lib/rating-calculator";
-import { recommendationPeers, type RecommendationPeers } from "@/lib/recommendation-potential";
-import { logger } from "@/lib/logger";
-import type { Region, SongBase, SongWithScore } from "@/lib/types";
-import { getChartPercentiles, type ChartPercentileInput } from "@/server/queries/percentile";
+import { hasCapability } from "@/lib/games/access";
+import type { Region } from "@/lib/games/ids";
+import type { GameSnapshotData } from "@/lib/games/player-view";
 import {
-  ACCURACY_VALUES,
   generateRecommendations,
   generateUnplayedRecommendations,
   minUsefulLevelPrecise,
+  ratedDifficultyCodes,
   unplayedRatingFloors,
+  type RecommendationChart,
   type RecommendationData,
+  type RecommendationPeers,
   type UnplayedRecommendationData,
-} from "@/server/queries/recommendations";
-import { and, eq, gte, inArray, ne } from "drizzle-orm";
+} from "@/lib/games/recommendations";
+import { logger } from "@/lib/logger";
+import { GAME_SERVER_MODULES } from "@/server/services/games/registry";
+import { parentPublicIdOf } from "@tomomai/games/song-ids";
+import { and, eq, gte, inArray } from "drizzle-orm";
 
 const MAX_PLAYED_PEER_CHARTS = 2000;
 const MAX_UNPLAYED_PEER_CHARTS = 1500;
 const MAX_UNPLAYED_RESULTS = 500;
 
 export interface BuildRecommendationsInput {
-  songs: SongWithScore[];
-  gameVersion: number;
+  data: GameSnapshotData;
   region: Region;
-  rating: number;
   usePeers: boolean;
   includeUnplayed: boolean;
 }
@@ -38,8 +37,9 @@ export interface RecommendationsResult {
   tryNew: UnplayedRecommendationData[] | null;
 }
 
-async function fetchUnplayedCandidates(input: BuildRecommendationsInput, floor: number) {
-  const played = new Set(input.songs.map(song => parentPublicIdOf(song.songId)));
+async function fetchUnplayedCandidates({ data, region }: BuildRecommendationsInput, floor: number) {
+  const { game, gameVersion } = data.snapshot;
+  const played = new Set(data.songs.map(song => parentPublicIdOf(song.songId)));
   const rows = await db
     .select({
       songId: songInstanceId,
@@ -48,86 +48,71 @@ async function fetchUnplayedCandidates(input: BuildRecommendationsInput, floor: 
       songName: parentSong.songName,
       artist: parentSong.artist,
       cover: parentSong.cover,
-      difficulty: parentSong.difficulty,
+      genre: parentSong.genre,
+      difficultyCode: parentSong.difficulty,
+      typeCode: parentSong.type,
       level: songs.level,
       levelPrecise: songs.levelPrecise,
-      type: parentSong.type,
-      genre: parentSong.genre,
       addedVersion: songs.addedVersion,
     })
     .from(songs)
     .innerJoin(parentSong, eq(songs.parentId, parentSong.id))
     .where(and(
-      eq(songs.region, input.region),
-      eq(songs.gameVersion, input.gameVersion),
-      ne(parentSong.difficulty, "utage"),
-      gte(songs.levelPrecise, minUsefulLevelPrecise(floor)),
+      eq(songs.game, game),
+      eq(songs.region, region),
+      eq(songs.gameVersion, gameVersion),
+      inArray(parentSong.difficulty, ratedDifficultyCodes(game)),
+      gte(songs.levelPrecise, minUsefulLevelPrecise(game, gameVersion, floor)),
     ));
 
-  const candidates: SongBase[] = [];
+  const candidates: RecommendationChart[] = [];
   const parentIds = new Map<string, bigint>();
-  for (const { parentPublicId, parentId, ...song } of rows) {
+  for (const { parentPublicId, parentId, ...chart } of rows) {
     if (played.has(parentPublicId)) continue;
-    candidates.push({ ...song, addedVersion: song.addedVersion as VersionId });
-    parentIds.set(song.songId, parentId);
+    candidates.push(chart);
+    parentIds.set(chart.songId, parentId);
   }
   return { candidates, parentIds };
 }
 
-async function fetchPeers(publicSongIds: string[], known: Map<string, bigint>, rating: number): Promise<Record<string, RecommendationPeers>> {
-  const unknownParents = [...new Set(publicSongIds.filter(id => !known.has(id)).map(parentPublicIdOf))];
-  const parentIds = new Map<string, bigint>();
-  if (unknownParents.length) {
-    const rows = await db.select({ id: parentSong.id, publicId: parentSong.publicId })
-      .from(parentSong).where(inArray(parentSong.publicId, unknownParents));
-    for (const row of rows) parentIds.set(row.publicId, row.id);
+/** Peers come from the game's percentile service while it offers percentiles in the region. */
+async function fetchPeers(input: BuildRecommendationsInput, publicSongIds: string[], knownParentIds: ReadonlyMap<string, bigint>) {
+  const { game, rating, gameVersion } = input.data.snapshot;
+  const { recommendationPeers } = GAME_SERVER_MODULES[game];
+  if (!input.usePeers || rating <= 0 || !recommendationPeers || !hasCapability(game, "percentiles", input.region)) return {};
+  try {
+    return await recommendationPeers(publicSongIds, rating, knownParentIds);
+  } catch (err) {
+    logger.warn({ err, region: input.region, version: gameVersion }, "recommendation peers unavailable, ranking without them");
+    return {};
   }
-
-  const inputs: ChartPercentileInput[] = publicSongIds.flatMap(publicSongId => {
-    const parentId = known.get(publicSongId) ?? parentIds.get(parentPublicIdOf(publicSongId));
-    return parentId == null ? [] : [{ publicSongId, parentId, achievement: 0 }];
-  });
-  const percentiles = await getChartPercentiles(inputs, rating, true);
-
-  const result: Record<string, RecommendationPeers> = {};
-  for (const [id, data] of percentiles) {
-    const peers = recommendationPeers(data, ACCURACY_VALUES);
-    if (peers != null) result[id] = peers;
-  }
-  return result;
 }
 
+/** Both recommendation lists, ranked with nearby-Rating peers when the game has them, so a client renders them once. */
 export async function buildRecommendations(input: BuildRecommendationsInput): Promise<RecommendationsResult> {
-  const songsWithRating = addRatingsAndSort(input.songs, input.gameVersion);
-  const base = generateRecommendations(songsWithRating, input.gameVersion);
+  const { data } = input;
+  const base = generateRecommendations(data);
 
   let candidateParents = new Map<string, bigint>();
   let baseUnplayed: UnplayedRecommendationData[] = [];
   if (input.includeUnplayed) {
-    const floors = unplayedRatingFloors(songsWithRating, input.gameVersion);
+    const floors = unplayedRatingFloors(data);
     const { candidates, parentIds } = await fetchUnplayedCandidates(input, Math.min(floors.new, floors.old));
     candidateParents = parentIds;
-    baseUnplayed = generateUnplayedRecommendations(candidates, songsWithRating, input.gameVersion)
-      .slice(0, MAX_UNPLAYED_PEER_CHARTS);
+    baseUnplayed = generateUnplayedRecommendations(data, candidates).slice(0, MAX_UNPLAYED_PEER_CHARTS);
   }
 
-  let peers: Record<string, RecommendationPeers> = {};
-  if (input.usePeers && input.rating > 0) {
-    const playedIds = [...new Set(base.map(rec => rec.song.songId))].slice(0, MAX_PLAYED_PEER_CHARTS);
-    try {
-      peers = await fetchPeers([...playedIds, ...baseUnplayed.map(rec => rec.song.songId)], candidateParents, input.rating);
-    } catch (err) {
-      logger.warn({ err, region: input.region, version: input.gameVersion }, "recommendation peers unavailable, ranking without them");
-    }
-  }
+  const playedIds = [...new Set(base.map(rec => rec.song.songId))].slice(0, MAX_PLAYED_PEER_CHARTS);
+  const peers: Record<string, RecommendationPeers> = await fetchPeers(
+    input,
+    [...playedIds, ...baseUnplayed.map(rec => rec.song.songId)],
+    candidateParents,
+  );
 
   const hasPeers = Object.keys(peers).length > 0;
-  const improve = hasPeers ? generateRecommendations(songsWithRating, input.gameVersion, peers) : base;
+  const improve = hasPeers ? generateRecommendations(data, peers) : base;
   const tryNew = input.includeUnplayed
-    ? (hasPeers
-      ? generateUnplayedRecommendations(baseUnplayed.map(rec => rec.song), songsWithRating, input.gameVersion, peers)
-      : baseUnplayed
-    ).slice(0, MAX_UNPLAYED_RESULTS)
+    ? (hasPeers ? generateUnplayedRecommendations(data, baseUnplayed.map(rec => rec.song), peers) : baseUnplayed).slice(0, MAX_UNPLAYED_RESULTS)
     : null;
 
   return { improve, tryNew };

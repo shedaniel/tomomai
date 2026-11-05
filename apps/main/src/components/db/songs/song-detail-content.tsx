@@ -5,30 +5,43 @@ import {
   ResponsiveDialogContent,
   ResponsiveDialogTrigger,
 } from "@tomomai/ui";
-import { DIFFICULTY_COLORS, getAchievementRate } from "@/lib/difficulty";
-import { getVersionInfo } from "@/lib/metadata";
-import { calculateSongRating } from "@/lib/rating-calculator";
+import { useGame, usePresentation } from "@/components/providers/game-provider";
+import { codeOf } from "@/lib/games/codes";
+import { formatEstimated, formatGameScore, formatGameScoreDelta, formatGameRating, getGameDifficulty, getGameScoreGrade, getGameStatusBadges } from "@/lib/games/presentation";
+import { formatRecommendationTarget } from "@/lib/games/recommendations";
+import { nextRatingTarget, ratingBucketOf } from "@/lib/games/rating-standing";
+import { GAME_UI } from "@/components/games/registry";
+import { SongInsightsContext, scoreMonthAgo, useSongInsights, type SongInsights } from "./song-insights";
+import { ConstantHistoryChart } from "./constant-history-chart";
+import { RelatedSongs } from "./related-songs";
+import { SongPhotos, SongRecentPlays } from "./song-activity";
+import { isGameCnExclusive, supportsGameFeature } from "@/lib/games/frontend";
+import { getGame } from "@/lib/games/registry";
+import { getVersion } from "@/lib/games/versions";
 import { trpc } from "@/lib/trpc-client";
 import { useSession } from "@/lib/auth-client";
-import { Difficulty, Region } from "@/lib/types";
-import { cn, getTypeBadgeUrl } from "@/lib/utils";
-import { Activity, Calendar, ChevronRight, Globe, Loader2, Music, Pencil, Share } from "lucide-react";
+import type { Region } from "@/lib/games/ids";
+import { cn, safeDecodeURIComponent } from "@/lib/utils";
+import { Activity, Calendar, ChevronRight, Database, Globe, Link2, Loader2, Music, Pencil, PlayCircle, Share } from "lucide-react";
 
 import { CoverImage } from "@/components/cover-image";
-import { useEffect, useMemo, useRef } from "react";
-import { SongDetailChart, SongDetailHistoricalChart, SongDetails, UserScore } from "./types";
+import { ChartLevel } from "@/components/games/chart-level";
+import { ChartTypeBadge } from "@/components/games/chart-type-badge";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Tabs, TabsContent, TabsContents, TabsList, TabsTrigger } from "@/components/animate-ui/components/radix/tabs";
+import type { RatingStanding } from "@/lib/games/rating-standing";
+import { ChartTypeKey, SongDetailChart, SongDetailHistoricalChart, SongDetails, SongExtendedIdentified, UserScore } from "./types";
 
 import { Button } from "@tomomai/ui";
 import { Separator } from "@tomomai/ui";
 import { resolveBaseUrl } from "@/lib/base-url";
 import { useTranslations } from "next-intl";
-import { Link } from "@/i18n/navigation"
+import { Link, usePathname } from "@/i18n/navigation";
+import { useCommandPaletteActions } from "@/components/command-palette/command-palette-provider";
+import type { PaletteItem } from "@/components/command-palette/types";
 import { toast } from "sonner";
 import { SongChartDialogContent } from "./song-detail-dialog";
-import { renderLevelPrecise } from "@/lib/name-utils";
-import { isCNExclusive } from "@/lib/enabled-regions";
 
-type SongExtendedIdentified = SongDetailChart & { region: Region; gameVersion: number };
 
 function isSongDetailChart(
   chart: SongDetailChart | SongDetailHistoricalChart,
@@ -36,21 +49,19 @@ function isSongDetailChart(
   return "level" in chart;
 }
 
-function getRate(achievement: number, version: number, fc: string) {
-  if (version >= 12 && (fc === "ap" || fc === "ap+")) return "SSS+ AP";
-  return getAchievementRate(achievement);
-}
-
 interface SongDetailContentProps {
   songName: string;
   artist?: string;
   slug: string;
-  type: "std" | "dx";
+  type: ChartTypeKey;
+  parentIds?: string[];
   initialData?: SongDetails | null;
+  /** Shown away from the database, so the song can be opened there. */
+  showDatabaseLink?: boolean;
 }
 
-export function getChartsByDifficulty(regions: SongDetails['regions']): Map<Difficulty, SongExtendedIdentified[]> {
-  const record = new Map<Difficulty, SongExtendedIdentified[]>();
+export function getChartsByDifficulty(regions: SongDetails['regions']): Map<string, SongExtendedIdentified[]> {
+  const record = new Map<string, SongExtendedIdentified[]>();
   for (const region of (regions ?? [])) {
     const latestGameVersion = Math.max(...region.versions.map(v => v.gameVersion));
     const latestVersion = region.versions.find(v => v.gameVersion === latestGameVersion)!;
@@ -75,29 +86,9 @@ export function getChartScores(charts: SongExtendedIdentified[], userScores: Son
   }, {} as Record<Region, UserScore>);
 }
 
-function SongBadges({ fc, fs }: { fc: string; fs: string }) {
-  return (
-    <div className="flex gap-1">
-      <span className={cn(
-        "px-1 rounded-[2px] text-[9px] font-bold text-white uppercase flex items-center",
-        fc === "ap+" && "bg-gradient-to-r from-orange-400 to-pink-500",
-        fc === "ap" && "bg-pink-500",
-        fc === "fc+" && "bg-gradient-to-r from-emerald-400 to-teal-500",
-        fc === "fc" && "bg-emerald-500",
-        fc === "none" && "hidden",
-      )}>{fc}</span>
-
-      <span className={cn(
-        "px-1 rounded-[2px] text-[9px] font-bold text-white uppercase flex items-center",
-        fs === "fdx+" && "bg-gradient-to-r from-orange-400 to-amber-500",
-        fs === "fdx" && "bg-orange-500",
-        fs === "fs+" && "bg-gradient-to-r from-blue-400 to-indigo-500",
-        fs === "fs" && "bg-blue-500",
-        fs === "sync" && "bg-slate-500",
-        fs === "none" && "hidden",
-      )}>{fs}</span>
-    </div>
-  )
+function SongBadges({ score }: { score: UserScore }) {
+  const game = useGame();
+  return <div className="flex flex-wrap gap-1">{getGameStatusBadges(game.id, score).map(badge => <span key={badge.label} className={cn("px-1 rounded-[2px] text-[9px] font-bold text-white uppercase flex items-center", badge.className)}>{badge.label}</span>)}</div>;
 }
 
 function ScoreGrid({
@@ -108,6 +99,10 @@ function ScoreGrid({
   scores: Record<Region, UserScore>,
 }) {
   const t = useTranslations();
+  const game = useGame();
+  const { scoreLabel } = usePresentation();
+  const insights = useSongInsights();
+  const { ChartBadge } = GAME_UI[game.id];
 
   return (
     <div className={cn(
@@ -116,29 +111,48 @@ function ScoreGrid({
     )}>
       {Object.entries(scores).map(([region, score]) => {
         const chart = charts.find(c => c.region === region)!;
-        const rating = score ? calculateSongRating({
-          achievement: score.achievement,
-          fc: score.fc as any,
+        const rating = score ? getGame(game.id).rating.chartRating({
+          scoreValue: score.scoreValue,
           levelPrecise: chart.levelPrecise,
-          addedVersion: chart.addedVersion,
-          difficulty: chart.difficulty,
-        }, chart.gameVersion) : 0;
+          difficultyCode: codeOf(game.id, "difficulty", chart.difficulty),
+          comboStatus: score.comboStatus,
+        }, chart.gameVersion) : null;
 
         const label = t(`regions.${region}`);
+        const difficultyCode = codeOf(game.id, "difficulty", chart.difficulty);
+        const standing = insights?.standings[region as Region];
+        const placement = standing?.charts[chart.difficulty];
+        const next = standing && score ? nextRatingTarget(game.id, standing, {
+          bucket: placement?.bucket ?? ratingBucketOf(game.id, chart.addedVersion, standing.gameVersion),
+          index: placement?.index ?? null,
+          levelPrecise: chart.levelPrecise,
+          difficultyCode,
+        }, score) : null;
+        const monthAgo = score ? scoreMonthAgo(insights?.history[region as Region]?.[chart.difficulty]) : null;
 
         return (
           <div key={region} className="contents">
             <div className="flex flex-col min-w-0">
               <div className="text-[10px] text-muted-foreground font-semibold uppercase mb-0.5 truncate">
-                {`${label} ${t('db.songs.detail.achievement')}`}
+                {`${label} ${t(`db.songs.detail.${scoreLabel}`)}`}
               </div>
               <div className="flex items-start gap-y-0.5 flex-col">
                 {score ? (
                   <>
                     <span className="text-sm font-semibold tabular-nums truncate">
-                      {(score.achievement / 10000).toFixed(4)}%
+                      {formatGameScore(game.id, score.scoreValue)}
                     </span>
-                    <SongBadges fc={score.fc} fs={score.fs} />
+                    <div className="flex flex-wrap items-center gap-1">
+                      <SongBadges score={score} />
+                      {ChartBadge && insights && (
+                        <ChartBadge chart={chart} score={score} playerRating={standing?.playerRating ?? null} regionCharts={insights.regionCharts[region as Region] ?? []} />
+                      )}
+                    </div>
+                    {monthAgo && (
+                      <span className="text-[10px] tabular-nums text-emerald-600 dark:text-emerald-400">
+                        {t("db.songs.detail.history.sinceMonth", { delta: formatGameScoreDelta(game.id, monthAgo.scoreValue, score.scoreValue) })}
+                      </span>
+                    )}
                   </>
                 ) : (
                   <span className="text-sm text-muted-foreground">-</span>
@@ -154,16 +168,21 @@ function ScoreGrid({
                 {score ? (
                   <>
                     <span className="text-sm font-bold tabular-nums text-primary">
-                      {Math.floor(rating)}
+                      {formatEstimated(formatGameRating(game.id, rating), chart.levelPreciseEstimated)}
                     </span>
                     <span className="text-xs text-muted-foreground font-medium">
-                      ({getRate(score.achievement, chart.gameVersion, score.fc)})
+                      ({getGameScoreGrade(game.id, score.scoreValue, chart.gameVersion, score.comboStatus)})
                     </span>
                   </>
                 ) : (
                   <span className="text-sm text-muted-foreground">-</span>
                 )}
               </div>
+              {next && (
+                <span className="text-[10px] text-muted-foreground">
+                  {t("db.songs.detail.next", { target: formatRecommendationTarget(game.id, next.target), gain: formatGameRating(game.id, next.gain) })}
+                </span>
+              )}
             </div>
           </div>
         );
@@ -172,17 +191,20 @@ function ScoreGrid({
   );
 }
 
-export function SongChartRow({ difficulty, charts, index, data, hasTouch }: {
-  difficulty: Difficulty;
+export function SongChartRow({ difficulty, charts, index, data, hasNoteCounts, hasTouch, standings }: {
+  difficulty: string;
   charts: SongExtendedIdentified[];
   index: number;
   data: SongDetails;
+  hasNoteCounts: boolean;
   hasTouch: boolean;
+  standings?: Partial<Record<Region, RatingStanding>>;
 }) {
   const t = useTranslations();
+  const game = useGame();
   const latestChart: SongExtendedIdentified = charts.find(c => c.gameVersion === Math.max(...charts.map(c => c.gameVersion)))!;
 
-  const colors = DIFFICULTY_COLORS[difficulty] || { bg: "bg-gray-500", text: "text-gray-600", border: "border-gray-500" };
+  const difficultyPresentation = getGameDifficulty(game.id, codeOf(game.id, "difficulty", difficulty));
   const hasNoteData = latestChart.tapCount !== null;
   const totalNotes = hasNoteData
     ? (latestChart.tapCount ?? 0) + (latestChart.holdCount ?? 0) + (latestChart.slideCount ?? 0) + (latestChart.touchCount ?? 0) + (latestChart.breakCount ?? 0)
@@ -199,15 +221,15 @@ export function SongChartRow({ difficulty, charts, index, data, hasTouch }: {
         <div className="contents text-sm group *:group-hover:bg-accent *:transition-colors *:duration-200">
           {/* Difficulty */}
           <div className={cn("py-2.5 px-3 flex items-center gap-2", dataBorderClass)}>
-            <span className={cn("font-bold", colors.text)}>
-              {t(`common.difficulties.${difficulty}`)}
+            <span className={cn("font-bold", difficultyPresentation.classes.text)}>
+              {difficultyPresentation.label}
             </span>
           </div>
           {/* Level */}
           <div className={cn("py-2.5 px-3 flex items-baseline justify-center", dataBorderClass)}>
-            <span className="text-lg font-bold tabular-nums">{latestChart.level}</span>
-            <span className="text-xs">.{latestChart.difficulty === "utage" ? '?' : latestChart.levelPrecise % 10}</span>
+            <ChartLevel chart={latestChart} variant="split" />
           </div>
+          {hasNoteCounts && <>
           {/* Notes */}
           <div className={cn("py-2.5 px-3 flex items-center justify-center tabular-nums", dataBorderClass)}>
             {hasNoteData ? totalNotes : "-"}
@@ -232,6 +254,7 @@ export function SongChartRow({ difficulty, charts, index, data, hasTouch }: {
           <div className={cn("py-2.5 px-3 flex items-center justify-center tabular-nums", dataBorderClass)}>
             {hasNoteData ? latestChart.breakCount : "-"}
           </div>
+          </>}
           {/* ChevronRight */}
           <div className={cn("pl-1 pr-3 flex items-center justify-center", dataBorderClass,
             latestChart.noteDesigner && "row-span-2"
@@ -257,15 +280,45 @@ export function SongChartRow({ difficulty, charts, index, data, hasTouch }: {
           )}
         </div>
       </ResponsiveDialogTrigger>
-      <ResponsiveDialogContent className="grid w-full gap-4">
-        <SongChartDialogContent charts={charts} scores={chartScores} />
+      <ResponsiveDialogContent className="grid w-full gap-4 lg:max-w-fit">
+        <SongChartDialogContent charts={charts} scores={chartScores} standings={standings} />
       </ResponsiveDialogContent>
     </ResponsiveDialog>
   );
 }
 
-export function SongDetailContent({ songName, artist, slug, type, initialData }: SongDetailContentProps) {
+function SongAvailability({ regions, userScores }: { regions: SongDetails["regions"]; userScores: SongDetails["userScores"] }) {
   const t = useTranslations();
+  const [region, setRegion] = useState(() => regions.find(r => userScores?.[r.region])?.region ?? regions[0]?.region);
+  if (regions.length === 0) return null;
+  const single = regions.length === 1;
+
+  return (
+    <div className="space-y-3">
+      <h2 className="text-sm font-semibold flex items-center gap-2">
+        <Globe className="w-4 h-4" />
+        {t('db.songs.detail.availability')}
+        {single && <span className="font-normal text-muted-foreground">· {t(`regions.${regions[0].region}`)}</span>}
+      </h2>
+      <Tabs value={region} onValueChange={value => setRegion(value as Region)}>
+        <TabsList className={cn("grid w-full", { 2: "grid-cols-2", 3: "grid-cols-3" }[regions.length], single && "hidden")}>
+          {regions.map(r => <TabsTrigger key={r.region} value={r.region}>{t(`regions.${r.region}`)}</TabsTrigger>)}
+        </TabsList>
+        <TabsContents>
+          {regions.map(r => (
+            <TabsContent key={r.region} value={r.region} className="pt-2">
+              <ConstantHistoryChart versions={r.versions} label={t('db.songs.detail.constants')} />
+            </TabsContent>
+          ))}
+        </TabsContents>
+      </Tabs>
+    </div>
+  );
+}
+
+export function SongDetailContent({ songName, artist, slug, type, parentIds, initialData, showDatabaseLink }: SongDetailContentProps) {
+  const t = useTranslations();
+  const game = useGame();
   const hasInitialData = !!initialData;
   const { data: session } = useSession();
   const viewerId = session?.user.id ?? null;
@@ -277,19 +330,32 @@ export function SongDetailContent({ songName, artist, slug, type, initialData }:
     previousViewerId.current = viewerId;
     if (previous === undefined || previous === null || previous === viewerId) return;
     void utils.user.getSongScores.reset();
+    void utils.user.getSongRatingStanding.reset();
+    void utils.user.getSongActivity.reset();
   }, [utils, viewerId]);
   const {
     data: fetchedData,
     isLoading,
     error,
   } = trpc.user.getSongDetails.useQuery(
-    { songName, artist: artist ?? initialData?.artist, type },
+    { game: game.id, songName, artist: artist ?? initialData?.artist, type, parentIds: parentIds ?? initialData?.parentIds },
     { enabled: !hasInitialData }
   );
   const { data: scoreData } = trpc.user.getSongScores.useQuery(
-    { songName, artist: artist ?? initialData?.artist, type },
-    { enabled: hasInitialData && viewerId !== null }
+    { game: game.id, songName, artist: artist ?? initialData?.artist, type, parentIds: parentIds ?? initialData?.parentIds },
+    { enabled: hasInitialData && viewerId !== null && supportsGameFeature(game, "scores") }
   );
+  const { data: standingsData } = trpc.user.getSongRatingStanding.useQuery(
+    { game: game.id, songName, artist: artist ?? initialData?.artist ?? fetchedData?.artist, type, parentIds: parentIds ?? initialData?.parentIds },
+    { enabled: viewerId !== null && supportsGameFeature(game, "rating"), staleTime: 60000, retry: false },
+  );
+  // A disabled query still returns its cached data, so a signed-out viewer must not see the last viewer's.
+  const standings = viewerId !== null ? standingsData : undefined;
+  const { data: activityData } = trpc.user.getSongActivity.useQuery(
+    { game: game.id, songName, artist: artist ?? initialData?.artist ?? fetchedData?.artist, type, parentIds: parentIds ?? initialData?.parentIds },
+    { enabled: viewerId !== null && supportsGameFeature(game, "scores"), staleTime: 60000, retry: false },
+  );
+  const activity = viewerId !== null ? activityData : undefined;
   const data = useMemo(() => {
     if (!initialData) return fetchedData;
     return {
@@ -297,17 +363,25 @@ export function SongDetailContent({ songName, artist, slug, type, initialData }:
       userScores: scoreData?.viewerId === viewerId ? scoreData.userScores : undefined,
     };
   }, [fetchedData, initialData, scoreData, viewerId]);
-  const difficultyOrder = ["basic", "advanced", "expert", "master", "remaster", "utage"];
 
   // Get the latest version's charts for display (prefer intl, then jp)
-  const chartsByDifficulty: Map<Difficulty, SongExtendedIdentified[]> = useMemo(() => {
+  const chartsByDifficulty: Map<string, SongExtendedIdentified[]> = useMemo(() => {
     return getChartsByDifficulty(data?.regions ?? []);
   }, [data?.regions]);
 
   const allCharts = useMemo(() => {
     return Array.from(chartsByDifficulty.values()).flat();
   }, [chartsByDifficulty]);
+  const hasNoteCounts = supportsGameFeature(game, "note-counts");
   const hasTouch = allCharts.some(chart => chart.touchCount !== null);
+
+  const insights = useMemo((): SongInsights => {
+    const regionCharts: SongInsights["regionCharts"] = {};
+    for (const chart of allCharts) {
+      (regionCharts[chart.region] ??= []).push({ chart, score: data?.userScores?.[chart.region]?.[chart.difficulty] });
+    }
+    return { standings: standings ?? {}, history: activity?.history ?? {}, regionCharts };
+  }, [allCharts, data?.userScores, standings, activity?.history]);
 
   // Pre-compute SEO summary inputs (visible prose paragraph below the header).
   const summary = useMemo(() => {
@@ -322,21 +396,47 @@ export function SongDetailContent({ songName, artist, slug, type, initialData }:
       maxLevel: fmtLevel(maxLevel),
       chartCount: chartsByDifficulty.size,
       bpmFragment: data.bpm ? t('db.songs.detail.summaryBpmFragment', { bpm: data.bpm }) : '',
-      versionName: getVersionInfo(data.addedVersion)?.name ?? `Ver. ${data.addedVersion}`,
-      // TODO: add "utage" to SongType
-      chartType: (data.type as string) === 'utage' ? '宴会場' : data.type === 'dx' ? 'DX' : 'Standard',
+      versionName: getVersion(game.id, data.addedVersion)?.name ?? `Ver. ${data.addedVersion}`,
+      chartLabel: t('db.songs.chartLabel', { type: data.type }),
     };
-  }, [data, allCharts, chartsByDifficulty, t]);
+  }, [data, allCharts, chartsByDifficulty, t, game]);
 
   const videoSearchURL = useMemo(() => {
     if (!data) return null;
-    const searchQuery = encodeURIComponent(`maimai ${data.songName} ${data.artist}`);
-    if (isCNExclusive()) {
+    const searchQuery = encodeURIComponent(`${game.brand.displayName} ${data.songName} ${data.artist}`);
+    if (isGameCnExclusive(game)) {
       return `https://search.bilibili.com/all?keyword=${searchQuery}`;
     } else {
       return `https://www.youtube.com/results?search_query=${searchQuery}`;
     }
-  }, [data]);
+  }, [data, game]);
+
+  // The drawer keeps the last song mounted while it closes, so its actions follow the URL rather than the mount.
+  const tPalette = useTranslations("commandPalette");
+  const pathname = usePathname();
+  const onSongPage = safeDecodeURIComponent(pathname ?? "") === `/db/songs/${slug}`;
+  const paletteActions = useMemo<PaletteItem[]>(() => !data || !onSongPage ? [] : [
+    {
+      id: "song:copy-link",
+      group: "actions",
+      title: tPalette("actions.copySongLink", { song: data.songName }),
+      icon: Link2,
+      keywords: ["share", "link", "url", data.songName],
+      perform: () => {
+        void navigator.clipboard.writeText(`${resolveBaseUrl()}/db/songs/${slug}`)
+          .then(() => toast.success(tPalette("actions.copiedSongLink")), () => undefined);
+      },
+    },
+    ...(videoSearchURL ? [{
+      id: "song:video",
+      group: "actions" as const,
+      title: tPalette("actions.searchVideo", { song: data.songName }),
+      icon: PlayCircle,
+      keywords: ["video", "youtube", "bilibili", "chart", data.songName],
+      perform: () => void window.open(videoSearchURL, "_blank", "noopener,noreferrer"),
+    }] : []),
+  ], [data, onSongPage, slug, videoSearchURL, tPalette]);
+  useCommandPaletteActions("song-detail", paletteActions);
 
   if (!data) {
     if (isLoading) {
@@ -356,9 +456,10 @@ export function SongDetailContent({ songName, artist, slug, type, initialData }:
     return null;
   }
 
-  const addedVersionInfo = getVersionInfo(data.addedVersion);
+  const addedVersionInfo = getVersion(game.id, data.addedVersion);
 
   return (
+    <SongInsightsContext.Provider value={insights}>
     <div className="space-y-6">
       {/* Cover and basic info */}
       <div className="flex gap-4">
@@ -375,13 +476,7 @@ export function SongDetailContent({ songName, artist, slug, type, initialData }:
           <h1 className="text-xl max-md:text-md font-bold truncate">{data.songName}</h1>
           <p className="text-muted-foreground max-md:text-sm truncate">{data.artist}</p>
           <div className="flex items-center gap-2 mt-2">
-            <img
-              src={getTypeBadgeUrl(data.type)}
-              alt={data.type.toUpperCase()}
-              width={64}
-              height={20}
-              className="drop-shadow-sm"
-            />
+            <ChartTypeBadge typeCode={codeOf(game.id, "chartType", data.type)} size="lg" />
             <span className="text-xs text-muted-foreground truncate">{data.genre}</span>
           </div>
         </div>
@@ -393,7 +488,7 @@ export function SongDetailContent({ songName, artist, slug, type, initialData }:
             songName: data.songName,
             artist: data.artist,
             genre: data.genre,
-            chartType: summary.chartType,
+            chartLabel: summary.chartLabel,
             versionName: summary.versionName,
             minLevel: summary.minLevel,
             maxLevel: summary.maxLevel,
@@ -421,8 +516,16 @@ export function SongDetailContent({ songName, artist, slug, type, initialData }:
         </div>
 
         {/* Buttons or Links */}
-        <div className="flex gap-2">
-          <Link href={`/db/songs/${slug}`} onClick={async (e) => {
+        <div className="flex flex-wrap gap-2">
+          {showDatabaseLink && (
+            <Button asChild className="rounded-full">
+              <Link href={`/db/songs/${encodeURIComponent(slug)}`} prefetch={false}>
+                <Database className="w-4 h-4" />
+                {t('db.songs.detail.openInDatabase', { brand: game.brand.productName })}
+              </Link>
+            </Button>
+          )}
+          <Link href={`/db/songs/${slug}`} prefetch={false} onClick={async (e) => {
             const baseUrl = resolveBaseUrl();
             navigator.clipboard.writeText(`${baseUrl}/db/songs/${slug}`);
             e.preventDefault();
@@ -435,7 +538,7 @@ export function SongDetailContent({ songName, artist, slug, type, initialData }:
           </Link>
           <Link href={videoSearchURL ?? ""} target="_blank" aria-label={t('db.songs.detail.youtube')}>
             <Button variant="outline" className="bg-background">
-              {isCNExclusive() ? (<>
+              {isGameCnExclusive(game) ? (<>
                 <svg role="img" className="w-4 h-4" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="currentColor">
                   <g>
                     <path fill="none" d="M0 0h24v24H0z" />
@@ -463,17 +566,19 @@ export function SongDetailContent({ songName, artist, slug, type, initialData }:
 
           <div className={
             cn("border rounded-md overflow-x-auto grid",
-              hasTouch ? "grid-cols-[minmax(100px,1fr)_auto_1fr_1fr_1fr_1fr_1fr_1fr_auto]" : "grid-cols-[minmax(100px,1fr)_auto_1fr_1fr_1fr_1fr_1fr_auto]")}>
+              !hasNoteCounts ? "grid-cols-[minmax(100px,1fr)_auto_auto]" : hasTouch ? "grid-cols-[minmax(100px,1fr)_auto_1fr_1fr_1fr_1fr_1fr_1fr_auto]" : "grid-cols-[minmax(100px,1fr)_auto_1fr_1fr_1fr_1fr_1fr_auto]")}>
             {/* Header Row */}
             <div className="contents text-xs bg-accent/50 font-medium text-muted-foreground">
               <div className="py-2 px-3 border-b">{t('db.common.difficulty')}</div>
               <div className="py-2 px-3 text-center border-b">{t('db.common.level')}</div>
+              {hasNoteCounts && <>
               <div className="py-2 px-3 text-center border-b">{t('db.common.notes')}</div>
               <div className="py-2 px-3 text-center border-b">Tap</div>
               <div className="py-2 px-3 text-center border-b">Hold</div>
               <div className="py-2 px-3 text-center border-b">Slide</div>
               {hasTouch && <div className="py-2 px-3 text-center border-b">Touch</div>}
               <div className="py-2 px-3 text-center border-b">Break</div>
+              </>}
               <div className="py-2 border-b"></div>
             </div>
 
@@ -485,76 +590,22 @@ export function SongDetailContent({ songName, artist, slug, type, initialData }:
                 charts={charts}
                 index={index}
                 data={data}
+                hasNoteCounts={hasNoteCounts}
                 hasTouch={hasTouch}
+                standings={standings}
               />
             ))}
           </div>
         </div>
       )}
 
-      {/* Availability by region */}
-      <div className="space-y-4">
-        <h2 className="text-sm font-semibold flex items-center gap-2">
-          <Globe className="w-4 h-4" />
-          {t('db.songs.detail.availability')}
-        </h2>
+      {activity && <SongRecentPlays plays={activity.recentPlays} showRegion={data.regions.length > 1} />}
+      {activity && <SongPhotos photos={activity.albums} />}
 
-        {data.regions.map(({ region, versions }) => (
-          <div key={region} className="space-y-2">
-            <div className="flex items-center gap-2">
-              <h3 className="text-sm font-medium">
-                {t(`regions.${region}`)}
-              </h3>
-            </div>
+      <SongAvailability regions={data.regions} userScores={data.userScores} />
 
-            <div className="space-y-3 pl-4 border-l-2 border-muted">
-              {versions.map(({ gameVersion, charts }) => {
-                const versionInfo = getVersionInfo(gameVersion);
-
-                // Group charts by difficulty to show level changes
-                const byDifficulty = new Map<Difficulty, (SongDetailChart | SongDetailHistoricalChart)[]>();
-                charts.forEach(chart => {
-                  if (!byDifficulty.has(chart.difficulty)) {
-                    byDifficulty.set(chart.difficulty, []);
-                  }
-                  byDifficulty.get(chart.difficulty)!.push(chart);
-                });
-
-                // Sort by difficulty order
-                const sortedDifficulties = Array.from(byDifficulty.entries()).sort((a, b) =>
-                  difficultyOrder.indexOf(a[0]) - difficultyOrder.indexOf(b[0])
-                );
-
-                return (
-                  <div key={gameVersion} className="space-y-1">
-                    <div className="flex items-center gap-2 text-xs">
-                      <Calendar className="w-3 h-3 text-muted-foreground" />
-                      <span className="font-medium">{versionInfo?.name ?? `v${gameVersion}`}</span>
-                    </div>
-                    <div className="flex flex-wrap gap-1.5 pl-5">
-                      {sortedDifficulties.map(([difficulty, diffCharts]) => {
-                        const chart = diffCharts[0];
-                        const colors = DIFFICULTY_COLORS[difficulty] || { bg: "bg-gray-500", text: "text-gray-600", border: "border-gray-500" };
-                        return (
-                          <div
-                            key={difficulty}
-                            className={cn(
-                              "px-2 py-0.5 rounded text-xs font-medium text-white",
-                              colors.bg
-                            )}
-                          >
-                            {t(`common.difficulties.${difficulty}`)} {renderLevelPrecise(chart.levelPrecise, difficulty)}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        ))}
-      </div>
+      <RelatedSongs songName={data.songName} artist={data.artist} type={data.type} charts={allCharts} inPlace={!!showDatabaseLink} />
     </div>
+    </SongInsightsContext.Provider>
   );
 }

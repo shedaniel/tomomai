@@ -1,6 +1,6 @@
 /**
- * Copies the chart percentile bands from production into a local database, so
- * score percentiles and peer-aware recommendations work without local players.
+ * Copies maimai's chart percentile bands from production into a local database,
+ * so score percentiles and peer-aware recommendations work without local players.
  *
  *   pnpm db:seed:percentiles
  *
@@ -50,9 +50,9 @@ async function main() {
 
   try {
     const localParents = new Map(
-      (await local`SELECT id, "publicId" FROM parent_song`).map((row) => [row.publicId, row.id]),
+      (await local`SELECT id, "publicId" FROM parent_song WHERE game = 'maimai'`).map((row) => [row.publicId, row.id]),
     );
-    if (localParents.size === 0) throw new Error("No local parent_song rows, run `pnpm db:seed` first");
+    if (localParents.size === 0) throw new Error("No local maimai parent_song rows, run `pnpm db:seed` first");
 
     await dropLocal();
     await local.unsafe(`

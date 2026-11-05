@@ -4,6 +4,7 @@ import { getServerSession } from "@/lib/auth-server";
 import { resolveBaseUrlFromHeaders } from "@/lib/base-url";
 import { logger } from "@/lib/logger";
 import { withRequestLogContext } from "@/lib/request-logger";
+import { requireFrontendGame } from "@/lib/games/current";
 
 const AUTHORIZE_URL = "https://maimai.lxns.net/oauth/authorize";
 const SCOPES = ["read_player", "read_user_profile"];
@@ -11,6 +12,7 @@ const STATE_COOKIE = "lxns_oauth_state";
 const STATE_TTL_SECONDS = 600;
 
 export const GET = withRequestLogContext("oauth/lxns/start", async (req: NextRequest) => {
+  requireFrontendGame("maimai");
   const clientId = process.env.LXNS_CLIENT_ID;
   const clientSecret = process.env.LXNS_CLIENT_SECRET;
   if (!clientId || !clientSecret) {

@@ -2,7 +2,7 @@
 # root .dockerignore, Docker ships the entire monorepo as build context — this
 # repo is ~1GB of junk (.git, apps/guess, apps/main's node_modules/public) that
 # none of the COPY instructions reach. Keep only what the Dockerfile references:
-# root manifests, apps/render, and the shared packages/{i18n,utils}.
+# root manifests, apps/render, and the shared packages/{render-token,games}.
 
 # VCS — never needed in any image.
 .git
@@ -40,6 +40,9 @@ LICENSE
 .github
 .vscode
 .idea
+
+# Tests never run in the image.
+**/*.test.ts
 
 # Misc generated/tooling files.
 pnpm-debug.log*

@@ -3,6 +3,7 @@
 import { Header } from "@/components/header";
 import { Button } from "@tomomai/ui";
 import { Separator } from "@tomomai/ui";
+import type { CatalogSectionId } from "@/lib/games/types";
 import { User } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { Info } from "lucide-react";
@@ -16,7 +17,7 @@ function TypeSelector({
   types,
 }: {
   currentType: string;
-  types: readonly string[];
+  types: readonly CatalogSectionId[];
 }) {
   const t = useTranslations();
 
@@ -70,7 +71,7 @@ export function DbLayoutClient({
 }: {
   user: User | null;
   children: ReactNode;
-  types: readonly string[];
+  types: readonly CatalogSectionId[];
   customThemesEnabled?: boolean;
 }) {
   const segments = useSelectedLayoutSegments();

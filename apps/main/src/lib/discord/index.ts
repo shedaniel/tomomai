@@ -31,5 +31,5 @@ export { generateAndSendProfileImage, generateAndSendCreditImage, generateAndSen
 export type { ImageGenerationOptions, CreditImageOptions, DailyPlaysImageOptions } from './image-utils';
 
 // Region helpers
-export { regionDisplayName, resolveRegion, getProfileSummary, formatProfileSummaryContent } from './region';
+export { resolveRegion, getProfileSummary, formatProfileSummaryContent } from './region';
 export type { ProfileSummary } from './region';

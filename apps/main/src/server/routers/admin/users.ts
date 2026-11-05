@@ -7,6 +7,8 @@ import { user, userTokens } from '@/lib/db/schema-pg';
 import { eq, desc, count, sql } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
 import { decryptToken } from '@/lib/token-crypto';
+import { getCurrentGame } from '@/lib/games/current';
+import { gamePreference } from '@/server/queries/game-preferences';
 
 export const usersRouter = router({
   resetFetchAlbums: adminProcedure
@@ -88,7 +90,7 @@ export const usersRouter = router({
           banned: user.banned,
           banReason: user.banReason,
           banExpires: user.banExpires,
-          region: user.region,
+          region: gamePreference(getCurrentGame().id, 'region'),
           publishProfile: user.publishProfile,
           fetchUseAlbums: user.fetchUseAlbums,
         })

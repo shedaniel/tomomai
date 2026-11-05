@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import type { Region } from '@/lib/types';
 import { renderRedirectUrl } from '@/lib/render-token';
-import { buildExportImageMessage } from '@/lib/render-data';
-import { getEnabledRegions } from '@/lib/enabled-regions';
+import { resolveGameContext } from '@/lib/games/access';
+import { getCurrentGame } from '@/lib/games/current';
+import { GameError, gameErrorResponse } from '@/lib/games/errors';
+import { regionSchema } from '@/lib/games/schema';
+import { GAME_SERVER_MODULES } from '@/server/services/games/registry';
 import { z } from 'zod';
 
 export const dynamic = "force-dynamic";
@@ -10,19 +12,19 @@ export const dynamic = "force-dynamic";
 const searchParams = z.object({
   snapshotId: z.string().min(1),
   username: z.string().optional(),
-  region: z.enum(getEnabledRegions()).optional(),
+  region: regionSchema.optional(),
 });
 
 /**
- * Auth/capability boundary for the export-image render. Access is possession
- * of the unguessable snapshot publicId (unchanged from the pre-token era).
+ * Auth/capability boundary for the served game's rating image. Access is possession of the
+ * unguessable snapshot publicId (unchanged from the pre-token era).
  *
- * Now does the full data prep here (DB → RenderMessage) and mints a signed
- * token carrying the B50 scores + header metadata. The 302 carries the token;
- * apps/render verifies + renders with zero DB access. Catalog fields (song
- * names, covers, levels) are joined from /api/v1/songs on the render side.
+ * The game's image builder does the data prep (DB → RenderMessage) and the 302 carries the signed
+ * token. apps/render verifies + renders with zero DB access, joining catalog fields from
+ * /api/v1/games/{game}/songs.
  */
 export async function GET(request: NextRequest) {
+  const game = getCurrentGame().id;
   const parsed = searchParams.safeParse(Object.fromEntries(request.nextUrl.searchParams));
   if (!parsed.success) {
     return NextResponse.json(
@@ -31,11 +33,17 @@ export async function GET(request: NextRequest) {
     );
   }
   const { snapshotId, username, region } = parsed.data;
+  try {
+    resolveGameContext(game, { region, capability: "image-export" });
+  } catch (error) {
+    if (error instanceof GameError) return gameErrorResponse(error);
+    throw error;
+  }
 
-  const result = await buildExportImageMessage({
+  const result = await GAME_SERVER_MODULES[game].images.exportImage({
     snapshotId,
     username,
-    region: region as Region | undefined,
+    region,
     scale: 2,
   });
   if (!result.ok) {

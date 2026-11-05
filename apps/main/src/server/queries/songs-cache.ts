@@ -1,5 +1,5 @@
-import { queryAllUniqueSongs, querySongDetails } from "@/server/queries/songs";
-import { SongType } from "@/lib/types";
+import { queryAllUniqueSongs } from "@/server/queries/songs";
+import type { CanonicalGameId } from "@/lib/games/ids";
 import { cache } from "react";
 
 /**
@@ -15,12 +15,6 @@ import { cache } from "react";
  * Cross-request caching is handled inside the tRPC procedures (unstable_cache
  * + an in-process slug cache in lib/song-slug.ts).
  */
-export const getAllUniqueSongsCached = cache(async () => {
-  return queryAllUniqueSongs();
+export const getAllUniqueSongsCached = cache(async (game: CanonicalGameId) => {
+  return queryAllUniqueSongs(game);
 });
-
-export const getSongDetailsCached = cache(
-  async (songName: string, type: SongType, userId?: string | null, artist?: string) => {
-    return querySongDetails(songName, type, userId, artist);
-  }
-);

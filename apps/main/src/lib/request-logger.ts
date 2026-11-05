@@ -1,7 +1,9 @@
-import { flushLogger, LOG_CONTEXT_STORE } from "@/lib/logger";
+import { flushLogger, LOG_CONTEXT_STORE, logger } from "@/lib/logger";
 import { nanoid } from "nanoid";
+import { headers } from "next/headers";
 import { after, type NextRequest } from "next/server";
 import { AsyncLocalStorage } from "node:async_hooks";
+import type { Logger } from "pino";
 
 export type LogContext = Record<string, unknown>;
 
@@ -19,8 +21,16 @@ const contextStorage = (globalStore[LOG_CONTEXT_STORE] ??= new AsyncLocalStorage
  * Falls back to a fresh `nanoid(10)` when there's no middleware (e.g. tests,
  * or routes excluded from the middleware matcher).
  */
-export function getRequestId(request: NextRequest): string {
+export function getRequestId(request: Pick<NextRequest, "headers">): string {
   return request.headers.get("x-request-id") ?? nanoid(10);
+}
+
+/**
+ * The per-request logger for a page or server component, which reads the
+ * request's headers instead of receiving a NextRequest.
+ */
+export async function pageLogger(route: string): Promise<Logger> {
+  return logger.child({ route, requestId: getRequestId({ headers: await headers() }) });
 }
 
 // Ship buffered logs once the response is out, without delaying it. Outside a

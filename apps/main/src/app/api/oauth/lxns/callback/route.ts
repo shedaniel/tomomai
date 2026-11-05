@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "@/lib/auth-server";
 import { resolveBaseUrlFromHeaders } from "@/lib/base-url";
-import { exchangeLxnsCode, saveLxnsToken } from "@/server/services/maimai-login";
+import { exchangeLxnsCode } from "@/server/services/games/maimai/login";
+import { saveToken } from "@/server/services/games/tokens";
 import { logger } from "@/lib/logger";
 import { withRequestLogContext } from "@/lib/request-logger";
+import { requireFrontendGame } from "@/lib/games/current";
 
 const STATE_COOKIE = "lxns_oauth_state";
 
@@ -18,6 +20,7 @@ function html(body: { ok: boolean; error?: string }): NextResponse {
 }
 
 export const GET = withRequestLogContext("oauth/lxns/callback", async (req: NextRequest) => {
+  requireFrontendGame("maimai");
   const clientId = process.env.LXNS_CLIENT_ID;
   const clientSecret = process.env.LXNS_CLIENT_SECRET;
   if (!clientId || !clientSecret) {
@@ -68,14 +71,14 @@ export const GET = withRequestLogContext("oauth/lxns/callback", async (req: Next
     process.env.LXNS_REDIRECT_URI || `${baseUrl}/api/oauth/lxns/callback`;
 
   const result = await exchangeLxnsCode(code, redirectUri);
-  if (!result.isValid || !result.token) {
+  if (!result.ok) {
     logger.warn({ userId: session.user.id }, `lxns code exchange failed: ${result.error}`);
-    const res = html({ ok: false, error: result.error ?? "exchange_failed" });
+    const res = html({ ok: false, error: result.error });
     res.cookies.delete(STATE_COOKIE);
     return res;
   }
 
-  await saveLxnsToken(session.user.id, result.token);
+  await saveToken("maimai", session.user.id, "cn", result.token);
   logger.info({ userId: session.user.id }, "callback: token persisted");
 
   const res = html({ ok: true });

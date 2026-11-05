@@ -1,6 +1,5 @@
 import { describe, it, expect } from "vitest";
 import { extractAsMarkdown, discoverLinks } from "./route";
-import { logger } from "@/lib/logger";
 
 const BASE_URL = "https://gamerch.com/maimai/910515";
 

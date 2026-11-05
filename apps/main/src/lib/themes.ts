@@ -10,7 +10,7 @@ export interface Theme {
   name: string;
 }
 
-export const themes: Theme[] = [
+const THEME_LIST = [
   // Simple
   { id: "simple", hue: 0, contrast: 0.0, darkness: 1.0, dark: false, group: "simple", name: "Simple" },
   { id: "dark-simple", hue: 0, contrast: 0.0, darkness: 1.0, dark: true, group: "simple", name: "Dark Simple" },
@@ -60,9 +60,10 @@ export const themes: Theme[] = [
   { id: "light-pink", hue: 0, contrast: 1.3, darkness: 0.1, dark: false, group: "pink", name: "Light Pink" },
   { id: "dark-pink", hue: 0, contrast: 0.9, darkness: 0.7, dark: true, group: "pink", name: "Dark Pink" },
   { id: "gray-pink", hue: 0, contrast: 0.9, darkness: 0.7, lightness: 2.5, saturation: 0.7, dark: true, group: "pink", name: "Gray Pink" },
-];
+] as const satisfies readonly Theme[];
 
-export const DEFAULT_THEME_ID = "gray-pink";
+export const themes: readonly Theme[] = THEME_LIST;
+export type ThemeId = (typeof THEME_LIST)[number]["id"];
 export const THEME_STORAGE_KEY = "tomomai-theme";
 export const CUSTOM_THEME_PREFIX = "custom:";
 
@@ -99,9 +100,8 @@ export function getThemeById(id: string): Theme | undefined {
   return themes.find((theme) => theme.id === id);
 }
 
-export function getThemeOrDefault(id: string | null | undefined): Theme {
-  if (!id) return themes.find((t) => t.id === DEFAULT_THEME_ID)!;
-  return getThemeById(id) ?? themes.find((t) => t.id === DEFAULT_THEME_ID)!;
+export function getThemeOrDefault(id: string | null | undefined, defaultId: ThemeId): Theme {
+  return (id && getThemeById(id)) || themes.find((theme) => theme.id === defaultId)!;
 }
 
 export function getSavedThemeId(): string | null {
@@ -182,11 +182,11 @@ export function applyTheme(theme: Theme): void {
   }
 }
 
-export function initializeTheme(): void {
+export function initializeTheme(defaultId: ThemeId): void {
   const savedId = getSavedThemeId();
   if (savedId) {
     saveThemeId(savedId);
   }
-  const theme = getThemeOrDefault(savedId);
+  const theme = getThemeOrDefault(savedId, defaultId);
   applyTheme(theme);
 }

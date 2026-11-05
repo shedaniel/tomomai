@@ -95,7 +95,7 @@ else
 
 GUESS_DAILY_SECRET=$(secret 32)
 TOMOMAI_API_URL=http://localhost:3000
-NEXT_PUBLIC_SITE_URL=http://localhost:3001
+NEXT_PUBLIC_SITE_URL=http://localhost:3002
 
 # Separate \`guess\` database in the compose Postgres, created by \`make migrate\`.
 POSTGRES_URL=$guess_db_url
@@ -103,7 +103,7 @@ REDIS_URL=redis://localhost:${REDIS_PORT:-6379}
 
 # Optional "Sign in with tomomai": create an OAuth app at
 # http://localhost:3000/settings/developer with the Account info scope and
-# http://localhost:3001/api/auth/callback as its redirect URI.
+# http://localhost:3002/api/auth/callback as its redirect URI.
 TOMOMAI_OAUTH_CLIENT_ID=
 TOMOMAI_OAUTH_CLIENT_SECRET=
 EOF

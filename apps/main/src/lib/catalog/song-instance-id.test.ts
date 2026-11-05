@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatSongInstanceId, parseSongId } from "./song-instance-id";
+import { formatSongInstanceId } from "@tomomai/games/song-ids";
 import { decodeMessage, encodeMessage, mintRenderToken, verifyRenderToken, type RenderMessage } from "@tomomai/render-token";
 
 const header = {
@@ -9,33 +9,16 @@ const header = {
 };
 const chart = { songId: "Ab3xK9pQ:j14", achievement: 1005000, fc: "ap+" as const, fs: "fdx+" as const };
 
-describe("song instance identifiers", () => {
-  it("round-trips each region and signed historical versions", () => {
-    for (const region of ["jp", "intl", "cn"] as const) {
-      for (const gameVersion of [-32768, -1, 0, 14, 32767]) {
-        expect(parseSongId(formatSongInstanceId("Ab3xK9pQ", region, gameVersion))).toEqual({
-          kind: "instance", parentPublicId: "Ab3xK9pQ", region, gameVersion,
-        });
-      }
-    }
-    expect(parseSongId("Ab3xK9pQ")).toEqual({ kind: "parent", parentPublicId: "Ab3xK9pQ" });
-  });
-
-  it.each(["", "123456789", "bad/id!!", "Ab3xK9pQ:", "Ab3xK9pQ:x1", "Ab3xK9pQ:j01", "Ab3xK9pQ:j-0", "Ab3xK9pQ:j32768", "Ab3xK9pQ:j-32769", "Ab3xK9pQ:j1:2"])("rejects malformed ID %s", id => {
-    expect(parseSongId(id)).toBeNull();
-  });
-});
-
-describe("render token v2", () => {
+describe("render token v3", () => {
   const messages: RenderMessage[] = [
-    { route: "export-image", header, payload: { visitableProfileAt: "player", charts: [chart, { ...chart, songId: "Ab3xK9pQ:j-1" }] } },
-    { route: "daily-plays", header, payload: { day: "2026-09-11", plays: [chart] } },
-    { route: "last-credit", header, payload: { playedAt: 1800000000, tracks: [{ ...chart, dxScore: 500, maxDxScore: 600, details: null }] } },
+    { game: "maimai", route: "export-image", header, payload: { visitableProfileAt: "player", charts: [chart, { ...chart, songId: "Ab3xK9pQ:j-1" }] } },
+    { game: "maimai", route: "daily-plays", header, payload: { day: "2026-09-11", plays: [chart] } },
+    { game: "maimai", route: "last-credit", header, payload: { playedAt: 1800000000, tracks: [{ ...chart, dxScore: 500, maxDxScore: 600, details: null }] } },
   ];
 
   it.each(messages)("round-trips $route and verifies its signature", message => {
     const bytes = encodeMessage(message);
-    expect(bytes[0]).toBe(2);
+    expect(bytes[0]).toBe(3);
     expect(decodeMessage(bytes)).toEqual(message);
     const token = mintRenderToken(message, "test-secret");
     expect(verifyRenderToken(token, "test-secret")).toEqual({ ok: true, message });
@@ -44,15 +27,15 @@ describe("render token v2", () => {
 
   it("rejects old wire versions and noncanonical song identifiers", () => {
     const bytes = encodeMessage(messages[0]);
-    bytes[0] = 1;
+    bytes[0] = 2;
     expect(() => decodeMessage(bytes)).toThrow("unsupported version");
     for (const songId of ["a".repeat(21), "Ab3xK9pQ", "Ab3xK9pQ:j01", "Ab3xK9pQ:j32768"]) {
-      expect(() => encodeMessage({ route: "daily-plays", header, payload: { day: "2026-09-11", plays: [{ ...chart, songId }] } })).toThrow("invalid song instance id");
+      expect(() => encodeMessage({ game: "maimai", route: "daily-plays", header, payload: { day: "2026-09-11", plays: [{ ...chart, songId }] } })).toThrow("invalid song instance id");
     }
   });
 
   it("uses the same 15-byte chart width across regions and signed version bounds", () => {
-    const empty: RenderMessage = { route: "daily-plays", header, payload: { day: "2026-09-11", plays: [] } };
+    const empty = { game: "maimai", route: "daily-plays", header, payload: { day: "2026-09-11", plays: [] } } satisfies RenderMessage;
     const baseLength = encodeMessage(empty).length;
     for (const region of ["jp", "intl", "cn"] as const) {
       for (const version of [-32768, -1, 0, 14, 32767]) {
@@ -74,11 +57,11 @@ describe("render token v2", () => {
   });
 
   it("rejects corrupt fixed-width IDs and truncated chart records", () => {
-    const empty: RenderMessage = { route: "daily-plays", header, payload: { day: "2026-09-11", plays: [] } };
+    const empty = { game: "maimai", route: "daily-plays", header, payload: { day: "2026-09-11", plays: [] } } satisfies RenderMessage;
     const offset = encodeMessage(empty).length;
     const bytes = encodeMessage({ ...empty, payload: { ...empty.payload, plays: [chart] } });
     const badRegion = bytes.slice();
-    badRegion[8] = 3;
+    badRegion[9] = 3;
     expect(() => decodeMessage(badRegion)).toThrow("enum index out of range");
     const badParent = bytes.slice();
     badParent[offset] = 47;

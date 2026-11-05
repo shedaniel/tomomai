@@ -5,44 +5,38 @@ import { protectedProcedure, router } from '@/lib/trpc';
 import { TRPCError } from '@trpc/server';
 import { and, eq } from 'drizzle-orm';
 import { z } from 'zod';
-import { getEnabledRegions } from '@/lib/enabled-regions';
 import { fetchUserAlbums, fetchAlbumStorageUsage } from '@/server/queries/albums';
-import { MAX_STORAGE_BYTES } from '@/lib/maimai/albums/persist';
-
-const regionSchema = z.enum(getEnabledRegions());
+import { MAX_STORAGE_BYTES } from '@/server/services/games/maimai/scores/albums/persist';
+import { gameOnlyProcedure, gameProcedure } from '../game-procedures';
 
 export const albumsRouter = router({
-  getUserAlbums: protectedProcedure
+  getUserAlbums: gameProcedure(protectedProcedure, "albums")
     .input(z.object({
-      region: regionSchema,
       limit: z.number().min(1).max(100).default(20),
       offset: z.number().min(0).default(0),
     }))
     .query(async ({ ctx, input }) => {
+      const { game, region } = ctx;
       const userId = ctx.session.user.id;
-      const { region, limit, offset } = input;
+      const { limit, offset } = input;
 
-      const { albums, hasMore } = await fetchUserAlbums(userId, region, limit, offset);
-      const storage = await fetchAlbumStorageUsage(userId);
-
-      const storageLimit = MAX_STORAGE_BYTES;
+      const [{ albums, hasMore }, storage] = await Promise.all([
+        fetchUserAlbums(game, userId, region, limit, offset),
+        fetchAlbumStorageUsage(game, userId),
+      ]);
 
       return {
         albums,
         hasMore,
         storage: {
           used: storage.totalUsed,
-          intlUsed: storage.intlUsed,
-          jpUsed: storage.jpUsed,
-          limit: storageLimit,
-          percentage: (storage.totalUsed / storageLimit) * 100,
-          intlPercentage: (storage.intlUsed / storageLimit) * 100,
-          jpPercentage: (storage.jpUsed / storageLimit) * 100,
+          limit: MAX_STORAGE_BYTES,
+          regions: storage.byRegion,
         },
       };
     }),
 
-  deleteAlbum: protectedProcedure
+  deleteAlbum: gameOnlyProcedure(protectedProcedure, "albums")
     .input(z.object({
       albumId: z.string(),
     }))
@@ -50,12 +44,11 @@ export const albumsRouter = router({
       const album = await db
         .select({ id: userAlbums.id, imageKey: userAlbums.imageKey })
         .from(userAlbums)
-        .where(
-          and(
-            eq(userAlbums.id, BigInt(input.albumId)),
-            eq(userAlbums.userId, ctx.session.user.id)
-          )
-        )
+        .where(and(
+          eq(userAlbums.id, BigInt(input.albumId)),
+          eq(userAlbums.game, ctx.game),
+          eq(userAlbums.userId, ctx.session.user.id),
+        ))
         .limit(1);
 
       if (album.length === 0) {

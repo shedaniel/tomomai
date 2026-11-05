@@ -42,8 +42,8 @@ const trustedFromEnv = (process.env.TRUSTED_ORIGINS ?? "")
 export const CORS_CONFIG = {
   allowedOrigins: [
     'https://maimai-charts.vercel.app',
-    'https://localhost:3000',
     'http://localhost:3000',
+    'http://localhost:3001',
     process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
     'https://lng-tgk-aime-gw.am-all.net', // Maimai official site for login
     ...trustedFromEnv,

@@ -1,8 +1,12 @@
+import { useGame } from "@/components/providers/game-provider";
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { trpc, trpcClient } from "@/lib/trpc-client";
 import { toast } from "sonner";
-import { Region, FetchSession } from "@/lib/types";
-import { isTokenError, isAlbumSettingsError, isCnCookiesSingleUseError } from "@/lib/token-errors";
+import { FetchSession } from "@/lib/types";
+import type { Region } from "@/lib/games/ids";
+import { isTokenError } from "@/lib/token-errors";
+import { parseFetchErrorCode } from "@/lib/games/fetch-error-codes";
+import { getGameDifficulty } from "@/lib/games/presentation";
 import { parseStatusStates } from "@/lib/fetch-states";
 import { FetchToastState } from "@/components/fetch-toast";
 
@@ -11,6 +15,7 @@ const FETCH_STATUS_INTERVAL_MS = 2000;
 const HIDDEN_TAB_RECHECK_INTERVAL_MS = 5000;
 
 export function useFetchSession(onFetchComplete?: () => void, onTokenError?: () => void, onUseAlbumError?: () => void, onCnCookiesExpired?: () => void) {
+  const game = useGame().id;
   const [currentSession, setCurrentSession] = useState<FetchSession | null>(null);
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [lastFetchTime, setLastFetchTime] = useState<Date | null>(null);
@@ -25,7 +30,7 @@ export function useFetchSession(onFetchComplete?: () => void, onTokenError?: () 
 
   // Poll for new fetch sessions (lightweight query)
   const { data: latestSessionData } = trpc.user.getLatestFetchSessionId.useQuery(
-    { region: sessionPollingRegion! },
+    { game, region: sessionPollingRegion! },
     {
       enabled: sessionPollingEnabled && sessionPollingRegion !== null,
       refetchInterval: SESSION_DETECTION_INTERVAL_MS,
@@ -67,13 +72,14 @@ export function useFetchSession(onFetchComplete?: () => void, onTokenError?: () 
       }
 
       try {
-        const result = await trpcClient.user.getFetchStatus.query({ region });
+        const result = await trpcClient.user.getFetchStatus.query({ game, region });
 
         if (generation !== fetchPollingGenerationRef.current) return;
 
         if (result && result.id === sessionId) {
           const updatedSession: FetchSession = {
             id: result.id,
+            region,
             status: result.status,
             startedAt: result.startedAt,
             completedAt: result.completedAt || undefined,
@@ -87,7 +93,7 @@ export function useFetchSession(onFetchComplete?: () => void, onTokenError?: () 
             stopPolling();
             if (result.notFoundScores && result.notFoundScores.length > 0) {
               toast.warning(`${result.notFoundScores.length} songs not found in database`, {
-                description: result.notFoundScores.map(score => `${score.songName} (${score.difficulty})`).join(", "),
+                description: result.notFoundScores.map(score => `${score.songName} (${getGameDifficulty(game, score.difficulty).label})`).join(", "),
               });
             }
             onFetchComplete?.();
@@ -101,9 +107,6 @@ export function useFetchSession(onFetchComplete?: () => void, onTokenError?: () 
 
             if (isTokenError(errorMessage)) {
               onTokenError?.();
-            }
-            if (isAlbumSettingsError(errorMessage)) {
-              onUseAlbumError?.();
             }
             return;
           }
@@ -129,7 +132,7 @@ export function useFetchSession(onFetchComplete?: () => void, onTokenError?: () 
     };
 
     void poll();
-  }, [onFetchComplete, onTokenError, onUseAlbumError]);
+  }, [game, onFetchComplete, onTokenError]);
 
   // Detect new sessions
   useEffect(() => {
@@ -162,6 +165,7 @@ export function useFetchSession(onFetchComplete?: () => void, onTokenError?: () 
       if (sessionPollingRegion) {
         const session: FetchSession = {
           id: currentSessionId,
+          region: sessionPollingRegion,
           status: "pending",
           startedAt: new Date(latestSessionData.startedAt),
         };
@@ -185,6 +189,7 @@ export function useFetchSession(onFetchComplete?: () => void, onTokenError?: () 
     onSuccess: (data, variables) => {
       const session: FetchSession = {
         id: data.sessionId,
+        region: variables.region,
         status: "pending",
         startedAt: new Date(),
       };
@@ -196,13 +201,12 @@ export function useFetchSession(onFetchComplete?: () => void, onTokenError?: () 
       pollFetchStatus(data.sessionId, variables.region);
     },
     onError: (error) => {
-      if (isAlbumSettingsError(error.message) && !!onUseAlbumError) {
-        onUseAlbumError?.();
+      const code = parseFetchErrorCode(error.message);
+      if (code === "NO_USE_ALBUMS_SETTINGS" && onUseAlbumError) {
+        onUseAlbumError();
         return;
       }
-      if (isCnCookiesSingleUseError(error.message) && !!onCnCookiesExpired) {
-        onCnCookiesExpired();
-      }
+      if (code === "CN_COOKIES_SINGLE_USE") onCnCookiesExpired?.();
       setFetchError(error.message);
     },
   });
@@ -210,9 +214,8 @@ export function useFetchSession(onFetchComplete?: () => void, onTokenError?: () 
   // Start data fetch with optional token (if no token, uses saved token)
   const startDataFetch = async (region: Region, token?: string): Promise<void> => {
     setFetchError(null);
-
     // Let the mutation error bubble up to the caller
-    await startFetchMutation.mutateAsync({ region, token });
+    await startFetchMutation.mutateAsync({ game, region, token });
   };
 
   // Start automatic fetch using saved token
@@ -265,6 +268,7 @@ export function useFetchSession(onFetchComplete?: () => void, onTokenError?: () 
 
     return {
       id: currentSession.id,
+      region: currentSession.region,
       status: currentSession.status,
       statusStates: parseStatusStates(currentSession.statusStates ?? null),
       startedAt: currentSession.startedAt,

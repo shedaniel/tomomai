@@ -23,11 +23,14 @@ export const apiLimiter = new RedisRateLimiter({
   logger,
 });
 
-/** Localized song detail pages share one per-IP bucket across all slugs. */
+/**
+ * Localized song detail pages share one per-IP bucket across all slugs. Every RSC prefetch counts too, so links
+ * to song pages set prefetch={false}; a list of cards in view would otherwise spend the budget in one visit.
+ */
 export const songDetailLimiter = new RedisRateLimiter({
   name: "song-detail",
   windowSeconds: 60,
-  max: 10,
+  max: 20,
   blockSeconds: 10 * 60,
   failClosed: false,
   logger,
@@ -48,6 +51,15 @@ export const profileReportLimiter = new RedisRateLimiter({
   windowSeconds: 86400,
   max: 5,
   failClosed: true,
+  logger,
+});
+
+/** Player search in the command palette, per IP: generous for typing, tight enough to stop enumeration. */
+export const playerSearchLimiter = new RedisRateLimiter({
+  name: "player-search",
+  windowSeconds: 60,
+  max: 60,
+  failClosed: false,
   logger,
 });
 

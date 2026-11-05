@@ -1,5 +1,3 @@
-import * as React from 'react';
-
 import {
   Popover as PopoverPrimitive,
   PopoverTrigger as PopoverTriggerPrimitive,

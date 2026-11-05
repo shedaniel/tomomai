@@ -1,7 +1,8 @@
 import { getRequestConfig } from 'next-intl/server';
 import { hasLocale } from 'next-intl';
+import { getCurrentGame } from '@/lib/games/current';
+import { loadMessages } from './messages';
 import { routing } from './routing';
-import { deepMerge } from '@/lib/utils';
 
 export default getRequestConfig(async ({ requestLocale }) => {
   // `requestLocale` is populated from the `[locale]` segment by next-intl's
@@ -13,13 +14,8 @@ export default getRequestConfig(async ({ requestLocale }) => {
     ? requested
     : routing.defaultLocale;
 
-  const messages = deepMerge(
-    (await import(`../../messages/en.json`)).default,
-    (await import(`../../messages/${locale}.json`)).default,
-  );
-
   return {
     locale,
-    messages,
+    messages: await loadMessages(getCurrentGame().id, locale),
   };
 });

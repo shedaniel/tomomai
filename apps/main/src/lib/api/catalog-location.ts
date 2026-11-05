@@ -1,14 +1,23 @@
-import { getAvailableVersions } from "@/lib/metadata";
-import type { Region } from "@/lib/types";
+import { getRegionalVersion } from "@/lib/games/versions";
+import type { CanonicalGameId, Region } from "@/lib/games/ids";
 
-export const CATALOG_R2_PREFIX = "api/v1/catalog-parent-v1";
+/** Bump when the published catalog JSON changes shape, so no CDN copy of the old shape is served under the new contract. */
+const CATALOG_FORMAT_VERSION = 2;
 
-export function isCatalogVersion(region: Region, gameVersion: number): boolean {
-  return getAvailableVersions(region).some((version) => version.id === gameVersion);
+function catalogPrefix(game: CanonicalGameId): string {
+  return `catalog/v${CATALOG_FORMAT_VERSION}/${game}`;
 }
 
-export function songCatalogKey(region: Region, gameVersion: number): string {
-  return `${CATALOG_R2_PREFIX}/songs/${region}/${gameVersion}`;
+export function isCatalogVersion(game: CanonicalGameId, region: Region, gameVersion: number): boolean {
+  return getRegionalVersion(game, region, gameVersion) !== null;
+}
+
+export function parentCatalogKey(game: CanonicalGameId): string {
+  return `${catalogPrefix(game)}/parents`;
+}
+
+export function songCatalogKey(game: CanonicalGameId, region: Region, gameVersion: number): string {
+  return `${catalogPrefix(game)}/songs/${region}/${gameVersion}`;
 }
 
 export function catalogUrl(key: string): string {

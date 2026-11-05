@@ -1,13 +1,22 @@
 "use client";
 
-import { useState } from "react";
+import { createContext, useContext, useState } from "react";
 import { Input } from "@tomomai/ui";
 import { Checkbox } from "@/components/animate-ui/components/radix/checkbox";
 import { API_SCOPES, SCOPE_EXPANSIONS, SCOPE_IMPLIES, type ScopeKey } from "@/lib/api/scopes";
 import type { TreeNode } from "@/lib/api/scope-tree";
 import { toast } from "sonner";
 import { Copy, Check, AlertTriangle, ChevronRight, ChevronDown } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useFormatter, useTranslations } from "next-intl";
+
+// ── Scope routes ──────────────────────────────────────────────────────────────
+
+/** "METHOD /path" of each route a scope grants, from the API route specs. */
+export type ScopeRoutes = Partial<Record<ScopeKey, readonly string[]>>;
+
+const ScopeRoutesContext = createContext<ScopeRoutes>({});
+
+export const ScopeRoutesProvider = ScopeRoutesContext.Provider;
 
 // ── Tree types & helpers ──────────────────────────────────────────────────────
 
@@ -121,6 +130,9 @@ export function ScopeTreeNode({
   badges,
 }: ScopeTreeNodeProps) {
   const def = API_SCOPES[node.key];
+  const routes = useContext(ScopeRoutesContext)[node.key];
+  const t = useTranslations("settings.developer");
+  const format = useFormatter();
   const hasChildren = !!node.children?.length;
   const isExpanded = expanded.has(node.key);
   const isSelected = selected.has(node.key);
@@ -195,7 +207,10 @@ export function ScopeTreeNode({
             )}
           </div>
           <code className="text-[10px] font-mono text-muted-foreground/50 leading-none block mt-0.5">{node.key}</code>
-          <p className="text-xs text-muted-foreground leading-snug mt-0.5">{scopeDescription(node.key)}</p>
+          <p className="text-xs text-muted-foreground leading-snug mt-0.5">
+            {scopeDescription(node.key)}
+            {routes?.length ? ` ${t("scopeRoutes", { routes: format.list(routes) })}` : null}
+          </p>
         </label>
       </div>
 

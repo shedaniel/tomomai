@@ -1,7 +1,9 @@
 import { CheckCircle2, AlertTriangle, Wifi } from "lucide-react";
+import { getCurrentGame } from "@/lib/games/current";
+import { brandTitle } from "@/lib/games/frontend";
 
 export const metadata = {
-  title: "代理授权结果 - tomomai ともマイ",
+  title: `代理授权结果 - ${brandTitle(getCurrentGame().brand)}`,
 };
 
 interface PageProps {
@@ -11,6 +13,7 @@ interface PageProps {
 export default async function CnProxyResultPage({ searchParams }: PageProps) {
   const params = await searchParams;
   const isDone = params.type === "done";
+  const { productName } = getCurrentGame().brand;
 
   return (
     <div className="flex min-h-dvh items-center justify-center p-6 bg-background text-foreground">
@@ -54,19 +57,19 @@ export default async function CnProxyResultPage({ searchParams }: PageProps) {
           {isDone ? (
             <>
               <p className="text-muted-foreground">
-                我们已经从舞萌 DX 取得登入凭证，正在为您导入数据。请关闭此页面回到 tomomai 查看导入进度。
+                我们已经从舞萌 DX 取得登入凭证，正在为您导入数据。请关闭此页面回到 {productName} 查看导入进度。
               </p>
               <p className="text-muted-foreground">
-                Your data is being imported. You can close this tab and return to tomomai to check the progress.
+                Your data is being imported. You can close this tab and return to {productName} to check the progress.
               </p>
             </>
           ) : (
             <>
               <p className="text-muted-foreground">
-                授权过程中出现错误。可能是链接已过期或网络问题，请关闭此页面回到 tomomai 重新生成授权链接再试一次。
+                授权过程中出现错误。可能是链接已过期或网络问题，请关闭此页面回到 {productName} 重新生成授权链接再试一次。
               </p>
               <p className="text-muted-foreground">
-                Something went wrong during authorization. The link may have expired or the connection dropped. Close this tab, return to tomomai, generate a new link, and try again.
+                Something went wrong during authorization. The link may have expired or the connection dropped. Close this tab, return to {productName}, generate a new link, and try again.
               </p>
             </>
           )}

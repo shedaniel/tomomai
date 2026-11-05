@@ -1,62 +1,14 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { load } from "cheerio";
-import { isServerless } from "@/lib/utils";
 import { logger } from "@/lib/logger";
-import { withRequestLogContext } from "@/lib/request-logger";
+import { adminRoute } from "../admin-route";
+import { isServerless } from "@/lib/utils";
 import path from "path";
 import fs from "fs/promises";
 import { db } from "@/lib/db";
 import { stores } from "@/lib/db/schema-pg";
-import type { Logger } from "pino";
 
-export const GET = withRequestLogContext("admin/fetch", async (request: NextRequest, { requestId }) => {
-  try {
-    // Check for admin token authentication
-    const authHeader = request.headers.get("authorization");
-    const token = authHeader?.replace("Bearer ", "");
-
-    if (!token) {
-      return NextResponse.json(
-        { error: "Missing authorization token" },
-        { status: 401 }
-      );
-    }
-
-    // Validate token against environment variable
-    const adminToken = process.env.ADMIN_UPDATE_TOKEN;
-    if (!adminToken) {
-      logger.error("ADMIN_UPDATE_TOKEN environment variable not set");
-      return NextResponse.json(
-        { error: "Server configuration error" },
-        { status: 500 }
-      );
-    }
-
-    if (token !== adminToken) {
-      logger.warn("Invalid admin token attempt");
-      return NextResponse.json(
-        { error: "Invalid authorization token" },
-        { status: 403 }
-      );
-    }
-
-    return await fetchLocations(requestId);
-  } catch (error) {
-    logger.error({ err: error }, "Error in admin fetch route");
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Internal server error", requestId },
-      { status: 500 }
-    );
-  }
-});
-
-// Only allow GET requests
-export async function POST() {
-  return NextResponse.json(
-    { error: "Method not allowed" },
-    { status: 405 }
-  );
-}
+export const GET = adminRoute("admin/fetch", ({ requestId }) => fetchLocations(requestId));
 
 interface LocationEntry {
   name: string;
@@ -77,13 +29,11 @@ async function fetchLocations(requestId: string) {
     logger.info({ region }, "Admin fetch locations requested");
 
     try {
-      // Determine base URL based on region
       const gm = region === "intl" ? "98" : "96";
       const baseUrl = `https://location.am-all.net/alm/location?gm=${gm}`;
 
       logger.debug({ url: baseUrl }, "Fetching initial page");
 
-      // Fetch the initial page to get the list of countries/prefectures
       const initialResponse = await fetch(baseUrl, {
         headers: {
           "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
@@ -97,18 +47,15 @@ async function fetchLocations(requestId: string) {
       const initialHtml = await initialResponse.text();
       const $ = load(initialHtml);
 
-      // Parse select options based on region
       const locationData: LocationData = {};
       const BATCH_SIZE = 8;
 
       if (region === "intl") {
-        // For intl: find .country > select and parse options
         const countrySelect = $(".country > select[name='ct']");
         const options = countrySelect.find("option");
 
         logger.debug({ count: options.length }, "Found country options");
 
-        // Collect valid options
         const validOptions: Array<{ value: string; text: string }> = [];
         for (let i = 0; i < options.length; i++) {
           const option = options.eq(i);
@@ -127,7 +74,6 @@ async function fetchLocations(requestId: string) {
 
         logger.debug({ count: validOptions.length }, "Processing valid countries in batches");
 
-        // Process in batches
         for (let i = 0; i < validOptions.length; i += BATCH_SIZE) {
           const batch = validOptions.slice(i, i + BATCH_SIZE);
           logger.debug(`Processing batch ${Math.floor(i / BATCH_SIZE) + 1}/${Math.ceil(validOptions.length / BATCH_SIZE)} (${batch.length} countries)`);
@@ -151,7 +97,6 @@ async function fetchLocations(requestId: string) {
 
           const batchResults = await Promise.all(batchPromises);
 
-          // Add results to locationData
           for (const result of batchResults) {
             if (result) {
               locationData[result.text] = result.stores;
@@ -159,13 +104,11 @@ async function fetchLocations(requestId: string) {
           }
         }
       } else {
-        // For jp: find .pref > select and parse options
         const prefSelect = $(".pref > select[name='at']");
         const options = prefSelect.find("option");
 
         logger.debug({ count: options.length }, "Found prefecture options");
 
-        // Collect valid options
         const validOptions: Array<{ value: string; text: string }> = [];
         for (let i = 0; i < options.length; i++) {
           const option = options.eq(i);
@@ -173,7 +116,6 @@ async function fetchLocations(requestId: string) {
           const text = option.text().trim();
           const isDisabled = option.attr("disabled") !== undefined;
 
-          // Skip disabled options
           if (isDisabled || !value) {
             logger.debug(`Skipping disabled/invalid option: ${text}`);
             continue;
@@ -184,7 +126,6 @@ async function fetchLocations(requestId: string) {
 
         logger.debug({ count: validOptions.length }, "Processing valid prefectures in batches");
 
-        // Process in batches
         for (let i = 0; i < validOptions.length; i += BATCH_SIZE) {
           const batch = validOptions.slice(i, i + BATCH_SIZE);
           logger.debug(`Processing batch ${Math.floor(i / BATCH_SIZE) + 1}/${Math.ceil(validOptions.length / BATCH_SIZE)} (${batch.length} prefectures)`);
@@ -208,7 +149,6 @@ async function fetchLocations(requestId: string) {
 
           const batchResults = await Promise.all(batchPromises);
 
-          // Add results to locationData
           for (const result of batchResults) {
             if (result) {
               locationData[result.text] = result.stores;
@@ -222,7 +162,6 @@ async function fetchLocations(requestId: string) {
 
       logger.info({ region, count: Object.keys(locationData).length }, "Fetched locations for region");
 
-      // Save to JSON file if not in serverless environment
       if (!isServerless()) {
         try {
           const storesDir = path.join(process.cwd(), 'public', 'stores');
@@ -235,18 +174,15 @@ async function fetchLocations(requestId: string) {
           logger.debug(`Saved location data to ${filePath}`);
         } catch (error) {
           logger.warn({ err: error }, "Error saving location data to file");
-          // Don't fail the request if file save fails
         }
       } else {
         logger.debug("Skipping file save in serverless environment");
       }
     } catch (error) {
       logger.error({ err: error, region }, "Error fetching locations for region");
-      // Continue to next region even if one fails
     }
   }
 
-  // Update database
   logger.debug("Updating database with fetched stores");
   try {
     let upsertCount = 0;
@@ -261,7 +197,6 @@ async function fetchLocations(requestId: string) {
             ? null
             : { x: store.coords[0], y: store.coords[1] };
 
-          // Upsert store
           await db.insert(stores).values({
             country,
             area,
@@ -301,9 +236,8 @@ async function fetchLocations(requestId: string) {
 async function fetchStoresForLocation(
   gm: string,
   ct: string,
-  at: string | undefined,
+  at: string | undefined
 ): Promise<LocationEntry[]> {
-  // Build URL
   let url = `https://location.am-all.net/alm/location?gm=${gm}&ct=${ct}`;
   if (at) {
     url += `&at=${at}`;
@@ -322,7 +256,6 @@ async function fetchStoresForLocation(
   const html = await response.text();
   const $ = load(html);
 
-  // Parse store list
   const stores: LocationEntry[] = [];
   const storeElements = $(".store_list > li");
 
@@ -330,14 +263,11 @@ async function fetchStoresForLocation(
     try {
       const $store = $(element);
 
-      // Extract name
       const name = $store.find(".store_name").text().trim();
       if (!name) return;
 
-      // Extract address
       const address = $store.find(".store_address").text().trim();
 
-      // Extract coordinates from onclick attribute
       const onclickAttr = $store.find(".store_bt_google_map").attr("onclick");
       if (!onclickAttr) return;
 

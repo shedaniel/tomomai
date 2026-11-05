@@ -6,32 +6,23 @@ import { fetchRouter } from './fetch';
 import { invitesRouter } from './invites';
 import { recentsRouter } from './recents';
 import { dailyPlaysRouter } from './daily-plays';
-import { creditsRouter } from './credits';
 import { statsRouter } from './stats';
-import { platesRouter } from './plates';
 import { albumsRouter } from './albums';
 import { songsRouter } from './songs';
-import { percentileRouter } from './percentile';
 import { recommendationsRouter } from './recommendations';
+import { searchRouter } from './search';
 import { flagsRouter } from './flags';
 import { legalRouter } from './legal';
-import { miscRouter } from './misc';
 
 export const userRouter = router({
   // Snapshots
   getSnapshots: snapshotsRouter.getSnapshots,
-  getRatingHistory: snapshotsRouter.getRatingHistory,
   getSnapshotData: snapshotsRouter.getSnapshotData,
-  getPublicSnapshots: snapshotsRouter.getPublicSnapshots,
-  getPublicSnapshotData: snapshotsRouter.getPublicSnapshotData,
+  getRatingHistory: snapshotsRouter.getRatingHistory,
   deleteSnapshot: snapshotsRouter.deleteSnapshot,
-  exportSnapshotData: snapshotsRouter.exportSnapshotData,
-  getAvailableVersionsForCopy: snapshotsRouter.getAvailableVersionsForCopy,
-  copySnapshotToVersion: snapshotsRouter.copySnapshotToVersion,
 
   // Profile
   getUserData: profileRouter.getUserData,
-  getPublicProfile: profileRouter.getPublicProfile,
   getProfileSettings: profileRouter.getProfileSettings,
   updateProfileDescription: profileRouter.updateProfileDescription,
   submitProfileReport: profileReportsRouter.submitProfileReport,
@@ -45,7 +36,7 @@ export const userRouter = router({
   getLoginOtp: fetchRouter.getLoginOtp,
   startFetch: fetchRouter.startFetch,
   getFetchStatus: fetchRouter.getFetchStatus,
-  getMaimaiStatus: fetchRouter.getMaimaiStatus,
+  getSiteStatus: fetchRouter.getSiteStatus,
   getLatestFetchSessionId: fetchRouter.getLatestFetchSessionId,
   deleteToken: fetchRouter.deleteToken,
 
@@ -64,19 +55,10 @@ export const userRouter = router({
   getDailyPlaysAvailableDays: dailyPlaysRouter.getAvailableDays,
   getPublicDailyPlaysAvailableDays: dailyPlaysRouter.getPublicAvailableDays,
 
-  // Credits
-  getCredits: creditsRouter.getCredits,
-  getPublicCredits: creditsRouter.getPublicCredits,
-  getCredit: creditsRouter.getCredit,
-  getPublicCredit: creditsRouter.getPublicCredit,
 
   // Stats
   getPlayerStats: statsRouter.getPlayerStats,
   getPublicPlayerStats: statsRouter.getPublicPlayerStats,
-
-  // Plates
-  getPlateSongs: platesRouter.getPlateSongs,
-  getPublicPlateSongs: platesRouter.getPublicPlateSongs,
 
   // Albums
   getUserAlbums: albumsRouter.getUserAlbums,
@@ -86,10 +68,13 @@ export const userRouter = router({
   getAllUniqueSongs: songsRouter.getAllUniqueSongs,
   getSongDetails: songsRouter.getSongDetails,
   getSongScores: songsRouter.getSongScores,
+  getSongRatingStanding: songsRouter.getSongRatingStanding,
+  getSongActivity: songsRouter.getSongActivity,
   getSimpleSongDetails: songsRouter.getSimpleSongDetails,
 
-  // Percentile
-  getChartPercentiles: percentileRouter.getChartPercentiles,
+  // Search
+  searchPlayers: searchRouter.searchPlayers,
+  getSearchDocuments: searchRouter.getSearchDocuments,
 
   // Recommendations
   getRecommendations: recommendationsRouter.getRecommendations,
@@ -103,13 +88,4 @@ export const userRouter = router({
   getPolicies: legalRouter.getPolicies,
   getPendingConsents: legalRouter.getPendingConsents,
   acceptPolicies: legalRouter.acceptPolicies,
-
-  // Misc
-  getLxnsOAuthConfigured: miscRouter.getLxnsOAuthConfigured,
-  getCnProxyConfigured: miscRouter.getCnProxyConfigured,
-  getCnProxyAuthLink: miscRouter.getCnProxyAuthLink,
-  getDivingFishConfigured: miscRouter.getDivingFishConfigured,
-  getDivingFishNicknameChallenge: miscRouter.getDivingFishNicknameChallenge,
-  verifyDivingFishImportToken: miscRouter.verifyDivingFishImportToken,
-  verifyDivingFishNickname: miscRouter.verifyDivingFishNickname,
 });

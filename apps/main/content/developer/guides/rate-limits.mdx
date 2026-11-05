@@ -1,6 +1,6 @@
 ---
 title: Rate limits and quotas
-description: How tomomai meters API traffic, with a per-key burst limit, a per-user umbrella and a monthly quota.
+description: How tomomai meters API traffic with a per-key burst, a per-user umbrella and a monthly quota.
 order: 5
 ---
 
@@ -13,7 +13,7 @@ Each layer protects against a different failure mode:
 | **Per-user umbrella burst** | Cost-units per rolling 60s window, per user | Closes the multi-key bypass: 50 keys does **not** equal 50× the budget. Sums across every API key and OAuth token you own. |
 | **Monthly quota** | Cost-units per calendar month, per user | Long-term fairness. Resets at the first of next month, 00:00 UTC. |
 
-<Callout type="warning" title="Tier I: defaults, subject to change">
+<Callout type="warning" title="Tier I defaults, subject to change">
 Every account today is on **Tier I**. These numbers are the current defaults
 and **may change** as we observe real-world traffic and roll out tier
 upgrades for heavier workloads. Don't hard-code them. Read the response
@@ -29,7 +29,7 @@ headers below instead.
 ## Cost units
 
 Different endpoints consume different amounts of budget. Cheap reads cost
-**1 unit**; standard reads cost **2 units**; mutations and external-service
+**1 unit**, standard reads cost **2 units**, and mutations and external-service
 calls cost more. The exact cost of each endpoint is shown on its reference
 page.
 
@@ -39,16 +39,16 @@ A few rules of thumb:
 - Standard data reads (snapshots, recents, stats, albums, plates, settings)
   cost 2.
 - Snapshot deletion costs 10.
-- Triggering a fresh fetch from upstream (`POST /api/v1/fetch`) costs 40,
+- Triggering a fresh fetch from upstream (`POST /api/v1/games/{game}/fetch`) costs 40,
   because it kicks off a polling job against an external service.
 
-Public endpoints (`/api/v1/songs*`) do not consume tier budget. They're
-served under the global IP limit instead.
+Public endpoints (the song catalog and `/api/v1/games/{game}/codes`) do not
+consume tier budget. They are served under the global IP limit instead.
 
 ## Response headers
 
-Every `/api/v1/*` response, `200` or `429`, carries these headers so you
-can self-throttle without ever seeing a `429`:
+Every authenticated `/api/v1` response, `200` or `429`, carries these headers
+so you can self-throttle without ever seeing a `429`:
 
 | Header | Meaning |
 |---|---|
@@ -68,10 +68,10 @@ exceeded`, `Per-user rate limit exceeded`, or `Monthly quota exceeded`).
 
 ## Polling guidance
 
-If you're polling `GET /api/v1/fetch/status` (cost 2) after kicking off a
+If you're polling `GET /api/v1/games/{game}/fetch/status` (cost 2) after kicking off a
 fetch, keep the interval at **2 seconds or more**. A 1-second cadence works
 out to 120 cost-units per minute, which can exceed the per-key burst budget
-on Tier I; 2 seconds (60/min) sits comfortably under.
+on Tier I. 2 seconds (60/min) sits comfortably under.
 
 ## OAuth and per-user quotas
 

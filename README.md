@@ -1,13 +1,13 @@
 # tomomai ともマイ
 
-A modern web application for tracking and analyzing your maimai DX scores with friends. Built with Next.js 16, TypeScript, and Tailwind CSS.
+A modern web application for tracking and analyzing your maimai DX and CHUNITHM scores with friends. Built with Next.js 16, TypeScript, and Tailwind CSS.
 
 ## Repository Layout
 
 | Path | Package | What it is |
 |---|---|---|
-| `apps/main` | `@tomomai/site` | The main site, API and Discord bot (port 3000) |
-| `apps/guess` | `@tomomai/guess` | The guesser / heardle minigames (port 3001) |
+| `apps/main` | `@tomomai/site` | The main site, API and Discord bot. Each deployment serves one game (maimai DX on port 3000, CHUNITHM on 3001) |
+| `apps/guess` | `@tomomai/guess` | The guesser / heardle minigames (port 3002) |
 | `apps/render` | `@tomomai/render` | Standalone image-render service (port 8080) |
 | `packages/*` | `@tomomai/*` | Shared UI, i18n, security, utils and render-token code |
 
@@ -17,7 +17,7 @@ The local stack runs Postgres, Redis and [RustFS](https://github.com/rustfs/rust
 
 ### Prerequisites
 
-- Node.js 22 and pnpm (`corepack enable` picks up the pinned version)
+- Node.js 22.18 or later and pnpm (`corepack enable` picks up the pinned version). The ESLint config and the Discord command script import TypeScript files through Node's built-in type stripping.
 - Docker with Compose v2
 - `make` and `openssl`
 
@@ -28,17 +28,17 @@ git clone https://github.com/shedaniel/tomomai.git
 cd tomomai
 pnpm install
 make setup
-pnpm dev
+pnpm dev:mai
 ```
 
-Visit [http://localhost:3000](http://localhost:3000) and use **Continue as anonymous user** in the sign-in dialog. This dev-only sign-in needs no Discord or X credentials.
+Visit [http://localhost:3000](http://localhost:3000) and use **Continue as anonymous user** in the sign-in dialog. This dev-only sign-in needs no Discord or X credentials. `pnpm dev:chu` serves CHUNITHM on port 3001, and [SETUP.md](SETUP.md#running-locally) explains running both.
 
 `make setup` does the following:
 
 1. Writes `.env.local` (with generated secrets), symlinks it to `apps/main/.env.local`, and creates `apps/render/.env.local` and `apps/guess/.env.local`. Existing env files are never overwritten.
 2. Starts Postgres, Redis and RustFS, and creates a public-read `tomomai` bucket.
 3. Applies migrations to the `tomomai` (main) and `guess` databases.
-4. Seeds the song catalogue from [tomomai.lol](https://www.tomomai.lol) and mirrors the catalogue JSON into the local bucket.
+4. Seeds each game's song catalogue from its public site ([tomomai.lol](https://www.tomomai.lol) for maimai DX) and mirrors the catalogue JSON into the local bucket.
 
 ### Make Targets
 
@@ -58,8 +58,9 @@ Visit [http://localhost:3000](http://localhost:3000) and use **Continue as anony
 
 | Service | Default port | Override |
 |---|---|---|
-| `apps/main` (`pnpm dev`) | 3000 | — |
-| `apps/guess` (`pnpm guess:dev`) | 3001 | — |
+| `apps/main`, maimai DX (`pnpm dev:mai`) | 3000 | — |
+| `apps/main`, CHUNITHM (`pnpm dev:chu`) | 3001 | — |
+| `apps/guess` (`pnpm guess:dev`) | 3002 | — |
 | `apps/render` (`pnpm render:dev`) | 8080 | `PORT` in `apps/render/.env.local` |
 | Postgres | 5432 | `POSTGRES_PORT` |
 | Redis | 6379 | `REDIS_PORT` |
@@ -72,31 +73,33 @@ Postgres credentials are `tomomai` / `tomomai`. RustFS credentials are `tomomai`
 
 ### Running the Other Apps
 
-- **Render service**: run `pnpm render:dev` to serve profile exports, last-credit and daily-plays images. `make setup` gives it the same `RENDER_TOKEN_SECRET` as `apps/main` and points it at your local `apps/main` for the song catalogue, so keep `pnpm dev` running.
-- **Guesser**: run `pnpm guess:dev`. It reads the song catalogue from your local `apps/main`, so keep `pnpm dev` running. To test "Sign in with tomomai", create an OAuth app at [http://localhost:3000/settings/developer](http://localhost:3000/settings/developer) and fill in `TOMOMAI_OAUTH_CLIENT_ID` and `TOMOMAI_OAUTH_CLIENT_SECRET` in `apps/guess/.env.local`.
+- **Render service**: run `pnpm render:dev` to serve profile exports, last-credit and daily-plays images. `make setup` gives it the same `RENDER_TOKEN_SECRET` as `apps/main` and points it at your local `apps/main` for the song catalogue, so keep `pnpm dev:mai` running.
+- **Guesser**: run `pnpm guess:dev`. It reads the song catalogue from your local `apps/main`, so keep `pnpm dev:mai` running. To test "Sign in with tomomai", create an OAuth app at [http://localhost:3000/settings/developer](http://localhost:3000/settings/developer) and fill in `TOMOMAI_OAUTH_CLIENT_ID` and `TOMOMAI_OAUTH_CLIENT_SECRET` in `apps/guess/.env.local`.
 - **Real OAuth / Discord bot**: fill in the Discord or X credentials in `.env.local`. See [SETUP.md](SETUP.md#discord) for how to create them.
 
 ### Scripts
 
 ```bash
-pnpm dev                  # Main site with Turbopack
+pnpm dev:mai              # maimai DX site with Turbopack
+pnpm dev:chu              # CHUNITHM site with Turbopack
 pnpm guess:dev            # Guesser
 pnpm render:dev           # Render service
 pnpm build                # Production build of the main site
 pnpm lint                 # ESLint across the workspace
 pnpm typecheck            # tsc across the workspace
-pnpm test                 # Vitest (main site)
+pnpm test                 # Every package's tests
 
 pnpm db:generate          # Generate a migration from apps/main/src/lib/db/schema-pg.ts
 pnpm db:studio            # Open Drizzle Studio
 pnpm tunnel               # Expose localhost:3000 via a Cloudflare tunnel
+pnpm --filter @tomomai/site discord:register  # Register the Discord bot commands
 ```
 
 To change the database schema, edit the schema file and run `db:generate`, then `make migrate` to apply it locally. The guess app's schema is `apps/guess/src/lib/db/schema.ts`; generate its migrations with `pnpm --filter @tomomai/guess db:generate`.
 
 ### Contributing
 
-Commit messages and PR titles follow [docs/COMMIT_CONVENTION.md](docs/COMMIT_CONVENTION.md). Logging follows [docs/LOGGING.md](docs/LOGGING.md).
+Commit messages and PR titles follow [docs/COMMIT_CONVENTION.md](docs/COMMIT_CONVENTION.md). Logging follows [docs/LOGGING.md](docs/LOGGING.md). [docs/MULTI_GAME.md](docs/MULTI_GAME.md) describes how the games share the app.
 
 ## Deployment
 
@@ -104,7 +107,7 @@ Production runs as separate deployments:
 
 | Component | Host | Needs |
 |---|---|---|
-| `apps/main` | Vercel | Postgres, Redis, Cloudflare R2, Vercel Edge Config, Discord application |
+| `apps/main` | Vercel (one project per game, chosen by `FRONTEND_GAME`) | Postgres, Redis, Cloudflare R2, Vercel Edge Config, Discord application |
 | `apps/guess` | Vercel (separate project per variant) | Optional Postgres (its own database) and Redis |
 | `apps/render` | Any long-lived Docker host (Fly, Railway, Cloud Run, Hetzner, ...) | A `RENDER_TOKEN_SECRET` shared with `apps/main` |
 
@@ -116,6 +119,6 @@ This project is licensed under the GNU Affero General Public License v3.0 - see 
 
 ## Acknowledgments
 
-- **SEGA** for creating maimai DX
+- **SEGA** for creating maimai DX and CHUNITHM
 - **[dxrating](https://github.com/gekichumai/dxrating)** for providing internal level data
 - **[otoge-db](https://github.com/zvuc/otoge-db)** for providing level data

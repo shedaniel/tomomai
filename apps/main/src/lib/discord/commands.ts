@@ -6,7 +6,7 @@ import { handleRecommendCommand } from './commands/recommend';
 import { handleAlbumPreferenceSelection } from './commands/album-preference';
 import { handleDailyCommand, handleDailyAutocomplete } from './commands/daily';
 import { createUnknownCommandResponse, DiscordResponse } from './responses';
-import type { Region } from '@/lib/types';
+import type { Region } from '@/lib/games/ids';
 import type { StaleCommand } from './staleness';
 import { handleStalenessChoice } from './commands/staleness';
 

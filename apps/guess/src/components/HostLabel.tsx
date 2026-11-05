@@ -12,7 +12,7 @@ function slug(dateKey: string): string {
 
 /**
  * Small client-side label showing `<host>/<dateSlug>` — e.g.
- * `guesser.tomomai.lol/20260521` or `localhost:3001/debug34`. The text is a
+ * `guesser.tomomai.lol/20260521` or `localhost:3002/debug34`. The text is a
  * link to that same URL (so the share URL and on-screen label match).
  */
 export function HostLabel({ dateKey }: Props) {

@@ -7,13 +7,13 @@ const AGENT = new Agent({
 });
 
 // A single keep-alive connection, so every request lands on the same upstream backend.
-export function createPinnedAgent(): Agent {
+export function createPinnedAgent({ verifyTls = false }: { verifyTls?: boolean } = {}): Agent {
   return new Agent({
     connections: 1,
     keepAliveTimeout: 60_000,
     keepAliveMaxTimeout: 60_000,
     connect: {
-      rejectUnauthorized: false
+      rejectUnauthorized: verifyTls
     }
   });
 }
