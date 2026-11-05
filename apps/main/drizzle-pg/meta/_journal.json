@@ -134,6 +134,13 @@
       "when": 1791272965915,
       "tag": "0018_public_wilson_fisk",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1793798257270,
+      "tag": "0019_useful_the_enforcers",
+      "breakpoints": true
     }
   ]
 }
