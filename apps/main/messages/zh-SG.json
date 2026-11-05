@@ -536,6 +536,9 @@
       },
       "oauthApps": {
         "officialDescription": "同意页面会显示官方标识，取代第三方应用的提醒。仅管理员可设置。",
+        "nativeLabel": "Native app",
+        "nativeDescription": "A mobile app that holds no secret and signs in with PKCE alone. It is always official and can only return to the app link on an allowed host. Only admins can create one.",
+        "nativeBadge": "Native",
         "officialBadge": "官方",
         "label": "OAuth 应用程式",
         "description": "注册可透过 OAuth 2.1 + PKCE 代表用户请求存取的应用程式。",
@@ -571,7 +574,8 @@
           "secretLabel": "Client Secret",
           "copyAriaLabel": "复制值",
           "saveWarning": "请储存此密钥。关闭此对话框后将不会再显示。",
-          "done": "完成"
+          "done": "完成",
+          "nativeCreatedNote": "This app has no client secret. It signs in with PKCE only."
         },
         "rotateDialog": {
           "title": "轮换客户端密钥？",
@@ -1693,6 +1697,11 @@
     "scrollToEnd": "滚动到底部",
     "scrollHint": "滚动查看所有权限",
     "groupCount": "{count} 项权限"
+  },
+  "oauthAppCallback": {
+    "title": "Return to the app",
+    "body": "If the app did not open, switch back to it and try signing in again. If it is not installed yet, install it first.",
+    "home": "Back to the website"
   },
   "commandPalette": {
     "title": "搜索",

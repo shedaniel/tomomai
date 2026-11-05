@@ -212,6 +212,11 @@
     "scrollHint": "スクロールしてすべての権限を確認",
     "groupCount": "{count} 件の権限"
   },
+  "oauthAppCallback": {
+    "title": "Return to the app",
+    "body": "If the app did not open, switch back to it and try signing in again. If it is not installed yet, install it first.",
+    "home": "Back to the website"
+  },
   "consent": {
     "description": "アカウント作成にあたり、以下の規約およびポリシーをご確認の上、同意をお願いいたします。",
     "tldr": {
@@ -584,6 +589,9 @@
       },
       "oauthApps": {
         "officialDescription": "同意画面に、第三者アプリの注意書きの代わりに公式バッジを表示します。管理者のみ設定できます。",
+        "nativeLabel": "Native app",
+        "nativeDescription": "A mobile app that holds no secret and signs in with PKCE alone. It is always official and can only return to the app link on an allowed host. Only admins can create one.",
+        "nativeBadge": "Native",
         "officialBadge": "公式",
         "errors": {
           "limitReached": "OAuth アプリは最大 {max} 個まで作成できます。新しく作成するには既存のアプリを削除してください。",
@@ -623,7 +631,8 @@
           "secretLabel": "クライアントシークレット",
           "copyAriaLabel": "値をコピー",
           "saveWarning": "このシークレットを保存してください。ダイアログを閉じると再表示されません。",
-          "done": "完了"
+          "done": "完了",
+          "nativeCreatedNote": "This app has no client secret. It signs in with PKCE only."
         },
         "rotateDialog": {
           "title": "クライアントシークレットを再生成しますか？",
