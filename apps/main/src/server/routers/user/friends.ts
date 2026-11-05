@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { TRPCError } from "@trpc/server";
 import { db } from "@/lib/db";
 import { user } from "@/lib/db/schema-pg";
 import { protectedProcedure, router } from "@/lib/trpc";
@@ -65,10 +66,12 @@ export const friendsRouter = router({
       return { success: true };
     }),
 
-  hideFriend: protectedProcedure
+  hideFriend: gameOnlyProcedure(protectedProcedure, "friends")
     .input(z.object({ userId: z.string().min(1) }))
     .mutation(async ({ ctx, input }) => {
-      await hideFriend(ctx.session.user.id, input.userId);
+      if (!await hideFriend(ctx.game, ctx.session.user.id, input.userId)) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Not a friend" });
+      }
       return { success: true };
     }),
 

@@ -168,7 +168,7 @@ function FriendsBody() {
               disabled={hide.isPending}
               onClick={event => {
                 event.preventDefault();
-                if (hideTarget) hide.mutate({ userId: hideTarget.userId });
+                if (hideTarget) hide.mutate({ game: game.id, userId: hideTarget.userId });
               }}
             >
               {t("hide")}

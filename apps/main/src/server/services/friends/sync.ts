@@ -5,6 +5,7 @@ import { logger } from "@/lib/logger";
 import { friendHides, playerFriends, playerIdentities, user } from "@/lib/db/schema-pg";
 import type { CanonicalGameId, Region } from "@/lib/games/ids";
 import { hashFriendCode } from "./codes";
+import { areFriends } from "./queries";
 
 const RESYNC_MS = 20 * 60 * 60 * 1000;
 
@@ -79,9 +80,11 @@ export async function setFriendsEnabled(userId: string, enabled: boolean): Promi
   });
 }
 
-export async function hideFriend(userId: string, hiddenUserId: string): Promise<void> {
-  if (userId === hiddenUserId) return;
+/** Hides a matched friend in the game, or answers false for anyone else, so a user ID alone reveals nobody. */
+export async function hideFriend(game: CanonicalGameId, userId: string, hiddenUserId: string): Promise<boolean> {
+  if (!await areFriends(game, userId, hiddenUserId)) return false;
   await db.insert(friendHides).values({ userId, hiddenUserId }).onConflictDoNothing();
+  return true;
 }
 
 export async function unhideFriends(userId: string, hiddenUserIds: string[]): Promise<void> {
