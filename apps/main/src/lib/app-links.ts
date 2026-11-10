@@ -44,3 +44,32 @@ export function appLinkResponse(body: unknown): Response {
   if (body === null) return new Response(null, { status: 404 });
   return Response.json(body, { headers: { "Cache-Control": "public, max-age=3600" } });
 }
+
+export type AppStore = "appStore" | "playStore";
+
+function httpsUrl(value: string | undefined): string | null {
+  try {
+    const url = new URL(value?.trim() ?? "");
+    return url.protocol === "https:" ? url.href : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Store listings from `APP_STORE_URL` and `PLAY_STORE_URL`. A phone sees only its own platform's store,
+ * anything else sees every configured one. Empty while no listing is configured.
+ */
+export function appStoreLinks(userAgent: string, env: AppLinkEnv = process.env): { store: AppStore; url: string }[] {
+  const links = [
+    { store: "appStore" as const, url: httpsUrl(env.APP_STORE_URL) },
+    { store: "playStore" as const, url: httpsUrl(env.PLAY_STORE_URL) },
+  ].filter((link): link is { store: AppStore; url: string } => link.url !== null);
+  const platform: AppStore | null = /iPhone|iPad|iPod/.test(userAgent)
+    ? "appStore"
+    : /Android/.test(userAgent)
+      ? "playStore"
+      : null;
+  const own = links.filter((link) => link.store === platform);
+  return own.length > 0 ? own : links;
+}

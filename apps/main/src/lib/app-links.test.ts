@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { androidAssetLinks, appLinkResponse, appleAppSiteAssociation } from "./app-links";
+import { androidAssetLinks, appLinkResponse, appStoreLinks, appleAppSiteAssociation } from "./app-links";
 
 const FINGERPRINT = Array.from({ length: 32 }, (_, i) => i.toString(16).padStart(2, "0").toUpperCase()).join(":");
 
@@ -57,5 +57,29 @@ describe("appLinkResponse", () => {
     expect(response.headers.get("content-type")).toContain("application/json");
     expect(response.headers.get("cache-control")).toContain("max-age=3600");
     expect(await response.json()).toEqual({ ok: true });
+  });
+});
+
+describe("appStoreLinks", () => {
+  const STORES = { APP_STORE_URL: "https://apps.apple.com/app/id1", PLAY_STORE_URL: "https://play.google.com/store/apps/details?id=lol.tomomai.app" };
+  const IPHONE = "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X)";
+  const ANDROID = "Mozilla/5.0 (Linux; Android 15; Pixel 9)";
+  const DESKTOP = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)";
+
+  it.each([
+    ["an iPhone", IPHONE, ["appStore"]],
+    ["an Android phone", ANDROID, ["playStore"]],
+    ["a desktop", DESKTOP, ["appStore", "playStore"]],
+  ])("offers %s its own store", (_name, userAgent, stores) => {
+    expect(appStoreLinks(userAgent, STORES).map((link) => link.store)).toEqual(stores);
+  });
+
+  it("falls back to every listing when the phone's own store is not configured", () => {
+    expect(appStoreLinks(ANDROID, { APP_STORE_URL: STORES.APP_STORE_URL }).map((link) => link.store)).toEqual(["appStore"]);
+  });
+
+  it("offers nothing until a valid https listing is configured", () => {
+    expect(appStoreLinks(IPHONE, {})).toEqual([]);
+    expect(appStoreLinks(IPHONE, { APP_STORE_URL: "http://apps.apple.com/app/id1", PLAY_STORE_URL: "not a url" })).toEqual([]);
   });
 });

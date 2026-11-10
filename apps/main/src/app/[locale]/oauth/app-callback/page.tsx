@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import { getTranslations } from "next-intl/server";
 import { Smartphone } from "lucide-react";
 import { Button } from "@tomomai/ui";
 import { Link } from "@/i18n/navigation";
+import { appStoreLinks } from "@/lib/app-links";
 
 export const metadata: Metadata = {
   referrer: "no-referrer",
@@ -15,6 +17,7 @@ export const metadata: Metadata = {
  */
 export default async function AppCallbackPage() {
   const t = await getTranslations("oauthAppCallback");
+  const stores = appStoreLinks((await headers()).get("user-agent") ?? "");
 
   return (
     <main className="flex min-h-dvh items-center justify-center p-6">
@@ -26,7 +29,19 @@ export default async function AppCallbackPage() {
           <h1 className="text-xl font-semibold tracking-tight">{t("title")}</h1>
           <p className="text-sm text-muted-foreground">{t("body")}</p>
         </div>
-        <Button asChild variant="outline">
+        {stores.length > 0 && (
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground">{t("getApp")}</p>
+            <div className="flex flex-wrap justify-center gap-2">
+              {stores.map(({ store, url }) => (
+                <Button key={store} asChild>
+                  <a href={url} rel="noreferrer">{t(store)}</a>
+                </Button>
+              ))}
+            </div>
+          </div>
+        )}
+        <Button asChild variant={stores.length > 0 ? "ghost" : "outline"}>
           <Link href="/">{t("home")}</Link>
         </Button>
       </div>

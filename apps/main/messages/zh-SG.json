@@ -1699,8 +1699,11 @@
     "groupCount": "{count} 项权限"
   },
   "oauthAppCallback": {
-    "title": "Return to the app",
-    "body": "If the app did not open, switch back to it and try signing in again. If it is not installed yet, install it first.",
+    "title": "Sign-in didn't reach the app",
+    "body": "Go back to the app and sign in again.",
+    "getApp": "Don't have the app yet?",
+    "appStore": "Download on the App Store",
+    "playStore": "Get it on Google Play",
     "home": "Back to the website"
   },
   "commandPalette": {
