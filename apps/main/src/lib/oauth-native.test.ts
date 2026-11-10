@@ -52,6 +52,7 @@ describe("isNativeRedirectUrl", () => {
     ["fragment", "https://tomomai.lol/oauth/app-callback#x"],
     ["userinfo", "https://user:pass@tomomai.lol/oauth/app-callback"],
     ["other port", "https://tomomai.lol:8443/oauth/app-callback"],
+    ["non-canonical spelling", "https://TOMOMAI.LOL:443/oauth/./app-callback"],
     ["not a string", 42],
   ])("rejects %s", (_name, value) => {
     expect(isNativeRedirectUrl(value, HOSTS)).toBe(false);

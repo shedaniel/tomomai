@@ -38,6 +38,7 @@ export function isNativeRedirectUrl(value: unknown, hosts: readonly string[]): v
     return false;
   }
   return (
+    url.href === value &&
     url.protocol === "https:" &&
     url.username === "" &&
     url.password === "" &&

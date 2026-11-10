@@ -491,6 +491,10 @@ export const auth = betterAuth({
   ],
   hooks: {
     before: createAuthMiddleware(async (ctx) => {
+      // Unused, and it would bypass the client guards below: it accepts skip_consent, metadata and any redirect.
+      if (ctx.path === "/admin/oauth2/update-client") {
+        throw new APIError("NOT_FOUND", { message: "Not Found" });
+      }
       // Internal scopes (e.g. `snapshot:submit`) never belong to an OAuth client, admin-registered
       // or not. OAUTH_SCOPES already keeps them out of the provider; this rejects them again on the
       // client and consent routes in case a client was stored with one. Sentinel-style message so

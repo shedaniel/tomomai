@@ -4,7 +4,6 @@ import { Smartphone } from "lucide-react";
 import { Button } from "@tomomai/ui";
 import { Link } from "@/i18n/navigation";
 
-// The address carries a one-time code, so the page must never read it or hand it on to anything else.
 export const metadata: Metadata = {
   referrer: "no-referrer",
   robots: { index: false, follow: false },

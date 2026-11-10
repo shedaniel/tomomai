@@ -221,7 +221,7 @@ export const developerRouter = router({
           tos_uri: input.tos,
           token_endpoint_auth_method: "none",
           type: "native",
-          grant_types: ["authorization_code"],
+          grant_types: ["authorization_code", "refresh_token"],
           response_types: ["code"],
           metadata: { official: true },
         },
@@ -235,7 +235,7 @@ export const developerRouter = router({
       } catch (err) {
         await auth.api.deleteOAuthClient({ body: { client_id: clientId }, headers: ctx.req.headers }).catch((compensationErr) => {
           logger.error(
-            { clientId, userId: ctx.session.user.id, originalErr: err, compensationErr },
+            { err: compensationErr, userId: ctx.session.user.id },
             "Failed to delete orphan native OAuth client after userId patch failure",
           );
         });
@@ -342,6 +342,9 @@ export const developerRouter = router({
         .from(oauthClient)
         .where(and(eq(oauthClient.clientId, input.clientId), eq(oauthClient.userId, ctx.session.user.id)));
       if (!app) throw new TRPCError({ code: "FORBIDDEN", message: "App not found" });
+      if (app.public && input.official === false) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Native apps are always official" });
+      }
       if (app.public && input.redirectUris) {
         const violation = nativeRedirectViolation(input.redirectUris, nativeRedirectHosts());
         if (violation) throw new TRPCError({ code: "BAD_REQUEST", message: violation });

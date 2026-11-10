@@ -556,7 +556,7 @@ function EditOAuthAppDialog({
       policy: form.policyInput || null,
       tos: form.tosInput || null,
       scopes: Array.from(form.selectedScopes) as [ScopeKey, ...ScopeKey[]],
-      official: isAdmin ? form.official : undefined,
+      official: isAdmin && !app.native ? form.official : undefined,
     });
   }
 
@@ -620,7 +620,7 @@ function EditOAuthAppDialog({
             />
           </div>
 
-          {isAdmin && (
+          {isAdmin && !app.native && (
             <div className="border-t pt-4">
               <OfficialAppField checked={form.official} onChange={form.setOfficial} />
             </div>

@@ -165,12 +165,14 @@ describe("refresh token rotation for a public client", () => {
     expect(replay.body.error).toBe("invalid_grant");
   });
 
-  it("revokes the user's other refresh tokens for the client once an old one is replayed", async () => {
+  it("revokes the user's refresh tokens from every sign-in to the client once an old one is replayed", async () => {
+    const otherDevice = await freshTokens();
     const first = await freshTokens();
     const rotated = await refresh(first.refresh_token!);
     expect(rotated.status).toBe(200);
 
     expect((await refresh(first.refresh_token!)).status).toBe(400);
     expect((await refresh(rotated.body.refresh_token!)).status).toBe(400);
+    expect((await refresh(otherDevice.refresh_token!)).status).toBe(400);
   });
 });

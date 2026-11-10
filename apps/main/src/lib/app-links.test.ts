@@ -14,6 +14,7 @@ describe("appleAppSiteAssociation", () => {
           },
         ],
       },
+      webcredentials: { apps: ["ABCDE12345.lol.tomomai.app", "ABCDE12345.lol.tomomai.app.dev"] },
     });
   });
 

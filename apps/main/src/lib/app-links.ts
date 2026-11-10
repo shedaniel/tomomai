@@ -18,7 +18,11 @@ function list(value: string | undefined): string[] {
 export function appleAppSiteAssociation(env: AppLinkEnv = process.env) {
   const appIDs = list(env.APPLE_APP_IDS).filter((id) => APPLE_APP_ID.test(id));
   if (appIDs.length === 0) return null;
-  return { applinks: { details: [{ appIDs, components: [{ "/": NATIVE_CALLBACK_PATH }] }] } };
+  return {
+    applinks: { details: [{ appIDs, components: [{ "/": NATIVE_CALLBACK_PATH }] }] },
+    // ASWebAuthenticationSession only accepts an https callback on a domain listed under webcredentials.
+    webcredentials: { apps: appIDs },
+  };
 }
 
 /** The file Android fetches to verify the app owns the callback link. Null while no app is configured. */
