@@ -1,3 +1,4 @@
+import { UAParser } from "ua-parser-js";
 import { NATIVE_CALLBACK_PATH } from "@/lib/oauth-native";
 
 /**
@@ -65,11 +66,8 @@ export function appStoreLinks(userAgent: string, env: AppLinkEnv = process.env):
     { store: "appStore" as const, url: httpsUrl(env.APP_STORE_URL) },
     { store: "playStore" as const, url: httpsUrl(env.PLAY_STORE_URL) },
   ].filter((link): link is { store: AppStore; url: string } => link.url !== null);
-  const platform: AppStore | null = /iPhone|iPad|iPod/.test(userAgent)
-    ? "appStore"
-    : /Android/.test(userAgent)
-      ? "playStore"
-      : null;
+  const os = UAParser(userAgent).os.name;
+  const platform: AppStore | null = os === "iOS" ? "appStore" : os === "Android" ? "playStore" : null;
   const own = links.filter((link) => link.store === platform);
   return own.length > 0 ? own : links;
 }
