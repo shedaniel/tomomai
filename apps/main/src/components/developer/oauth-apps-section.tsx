@@ -33,7 +33,7 @@ import { useRouter } from "@/i18n/navigation";
 import { MAX_OAUTH_APPS_PER_USER, OAUTH_APP_LIMIT_REACHED, OAUTH_APP_NAME_RESERVED } from "@/lib/developer-limits";
 import { SettingsField } from "@/components/settings/primitives";
 import { toast } from "sonner";
-import { Plus, Trash2, Globe, Loader2, RefreshCw, AlertTriangle, X, AppWindow, Pencil, BadgeCheck } from "lucide-react";
+import { Plus, Trash2, Globe, Loader2, RefreshCw, AlertTriangle, X, AppWindow, Pencil, BadgeCheck, Smartphone } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import {
@@ -59,6 +59,7 @@ type OAuthApp = {
   tos: string | null;
   redirectUris: string[] | null;
   official: boolean;
+  native: boolean;
   scopes: string[] | null;
   createdAt: Date | null;
   updatedAt: Date | null;
@@ -85,6 +86,7 @@ function useOAuthAppForm(initial: OAuthAppFormInit) {
   const [tosInput, setTosInput] = useState(initial.tos ?? "");
   const [redirectUris, setRedirectUris] = useState<string[]>(initial.redirectUris ?? []);
   const [official, setOfficial] = useState(initial.official ?? false);
+  const [native, setNative] = useState(false);
   const [redirectInput, setRedirectInput] = useState("");
   const [selectedScopes, setSelectedScopes] = useState<Set<ScopeKey>>(
     initial.scopes
@@ -134,6 +136,7 @@ function useOAuthAppForm(initial: OAuthAppFormInit) {
     setTosInput(initial.tos ?? "");
     setRedirectUris(initial.redirectUris ?? []);
     setOfficial(initial.official ?? false);
+    setNative(false);
     setRedirectInput("");
     setSelectedScopes(
       initial.scopes
@@ -153,6 +156,7 @@ function useOAuthAppForm(initial: OAuthAppFormInit) {
     tosInput, setTosInput,
     redirectUris,
     official, setOfficial,
+    native, setNative,
     redirectInput, setRedirectInput,
     selectedScopes,
     implied,
@@ -183,6 +187,23 @@ function OfficialAppField({ checked, onChange }: { checked: boolean; onChange: (
           {t("officialLabel")}
         </span>
         <span className="block text-xs text-muted-foreground">{t("officialDescription")}</span>
+      </span>
+      <Switch checked={checked} onCheckedChange={onChange} />
+    </label>
+  );
+}
+
+/** Admin-only: a mobile app that holds no secret. It is always official and redirects only to the app link. */
+function NativeAppField({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) {
+  const t = useTranslations("settings.developer.oauthApps");
+  return (
+    <label className="flex cursor-pointer items-start justify-between gap-4 rounded-lg border border-border px-3 py-2.5">
+      <span className="space-y-0.5">
+        <span className="flex items-center gap-1.5 text-sm font-medium">
+          <Smartphone className="h-4 w-4 text-primary" aria-hidden />
+          {t("nativeLabel")}
+        </span>
+        <span className="block text-xs text-muted-foreground">{t("nativeDescription")}</span>
       </span>
       <Switch checked={checked} onCheckedChange={onChange} />
     </label>
@@ -300,7 +321,7 @@ function CreateOAuthAppDialog({
   const tc = useTranslations("common");
   const form = useOAuthAppForm(CREATE_INITIAL);
   const isAdmin = useIsAdmin();
-  const [createdApp, setCreatedApp] = useState<{ clientId: string; secret: string } | null>(null);
+  const [createdApp, setCreatedApp] = useState<{ clientId: string; secret: string | null } | null>(null);
 
   const createMutation = trpc.developer.createOAuthApp.useMutation({
     ...useReauthGuard({
@@ -318,10 +339,35 @@ function CreateOAuthAppDialog({
     },
   });
 
+  const createNativeMutation = trpc.developer.createNativeOAuthApp.useMutation({
+    ...useReauthGuard({
+      callbackURL: "/settings/developer?open=new-app",
+      reauthMessage: t("reauthRequired"),
+      fallback: t("oauthApps.createDialog.createError"),
+      errorMessages: {
+        [OAUTH_APP_NAME_RESERVED]: t("oauthApps.errors.nameReserved"),
+      },
+    }),
+    onSuccess: (data) => {
+      setCreatedApp({ clientId: data.client_id, secret: null });
+      onCreated();
+    },
+  });
+  const isCreating = createMutation.isPending || createNativeMutation.isPending;
+
   function handleCreate() {
     if (!form.name.trim()) { toast.error("App name is required."); return; }
     if (form.redirectUris.length === 0) { toast.error("At least one redirect URI is required."); return; }
     if (form.selectedScopes.size === 0) { toast.error("Select at least one scope."); return; }
+    if (isAdmin && form.native) {
+      createNativeMutation.mutate({
+        name: form.name.trim(),
+        redirectUris: form.redirectUris,
+        scopes: Array.from(form.selectedScopes) as [ScopeKey, ...ScopeKey[]],
+        uri: form.uriInput || undefined,
+      });
+      return;
+    }
     createMutation.mutate({
       name: form.name.trim(),
       redirectUris: form.redirectUris,
@@ -350,18 +396,26 @@ function CreateOAuthAppDialog({
           <>
             <ResponsiveDialogHeader>
               <ResponsiveDialogTitle>{t("oauthApps.createDialog.createdTitle")}</ResponsiveDialogTitle>
-              <ResponsiveDialogDescription>{t("oauthApps.createDialog.createdDescription")}</ResponsiveDialogDescription>
+              {createdApp.secret !== null && (
+                <ResponsiveDialogDescription>{t("oauthApps.createDialog.createdDescription")}</ResponsiveDialogDescription>
+              )}
             </ResponsiveDialogHeader>
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label className="text-xs text-muted-foreground">{t("oauthApps.createDialog.clientIdLabel")}</Label>
                 <CopyableInput value={createdApp.clientId} ariaLabel={t("oauthApps.createDialog.copyAriaLabel")} />
               </div>
-              <div className="space-y-2">
-                <Label className="text-xs text-muted-foreground">{t("oauthApps.createDialog.secretLabel")}</Label>
-                <CopyableInput value={createdApp.secret} ariaLabel={t("oauthApps.createDialog.copyAriaLabel")} />
-              </div>
-              <SaveWarning message={t("oauthApps.createDialog.saveWarning")} />
+              {createdApp.secret !== null ? (
+                <>
+                  <div className="space-y-2">
+                    <Label className="text-xs text-muted-foreground">{t("oauthApps.createDialog.secretLabel")}</Label>
+                    <CopyableInput value={createdApp.secret} ariaLabel={t("oauthApps.createDialog.copyAriaLabel")} />
+                  </div>
+                  <SaveWarning message={t("oauthApps.createDialog.saveWarning")} />
+                </>
+              ) : (
+                <p className="text-xs text-muted-foreground">{t("oauthApps.createDialog.nativeCreatedNote")}</p>
+              )}
               <div className="flex justify-end">
                 <Button onClick={handleClose}>{t("oauthApps.createDialog.done")}</Button>
               </div>
@@ -386,7 +440,8 @@ function CreateOAuthAppDialog({
                 <p className="text-xs text-muted-foreground">{t("oauthApps.createDialog.nameDescription")}</p>
               </div>
 
-              {isAdmin && <OfficialAppField checked={form.official} onChange={form.setOfficial} />}
+              {isAdmin && !form.native && <OfficialAppField checked={form.official} onChange={form.setOfficial} />}
+              {isAdmin && <NativeAppField checked={form.native} onChange={form.setNative} />}
 
               <div className="space-y-2">
                 <Label htmlFor="oauth-uri">{t("oauthApps.createDialog.uriLabel")}</Label>
@@ -428,11 +483,11 @@ function CreateOAuthAppDialog({
 
             </div>
             <ResponsiveDialogFooter>
-              <Button variant="outline" onClick={handleClose} disabled={createMutation.isPending}>
+              <Button variant="outline" onClick={handleClose} disabled={isCreating}>
                 {tc("cancel")}
               </Button>
-              <Button onClick={handleCreate} disabled={createMutation.isPending}>
-                {createMutation.isPending ? (
+              <Button onClick={handleCreate} disabled={isCreating}>
+                {isCreating ? (
                   <>
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                     {t("oauthApps.createDialog.creating")}
@@ -501,7 +556,7 @@ function EditOAuthAppDialog({
       policy: form.policyInput || null,
       tos: form.tosInput || null,
       scopes: Array.from(form.selectedScopes) as [ScopeKey, ...ScopeKey[]],
-      official: isAdmin ? form.official : undefined,
+      official: isAdmin && !app.native ? form.official : undefined,
     });
   }
 
@@ -565,7 +620,7 @@ function EditOAuthAppDialog({
             />
           </div>
 
-          {isAdmin && (
+          {isAdmin && !app.native && (
             <div className="border-t pt-4">
               <OfficialAppField checked={form.official} onChange={form.setOfficial} />
             </div>
@@ -742,6 +797,12 @@ export function OAuthAppsSection() {
                       {t("oauthApps.officialBadge")}
                     </Badge>
                   )}
+                  {app.native && (
+                    <Badge variant="secondary" className="gap-1">
+                      <Smartphone className="h-3 w-3" aria-hidden />
+                      {t("oauthApps.nativeBadge")}
+                    </Badge>
+                  )}
                 </span>
                 <p className="font-mono text-xs bg-muted text-muted-foreground px-1.5 py-0.5 rounded-sm border border-border w-fit truncate max-w-xs">
                   {app.clientId}
@@ -783,12 +844,14 @@ export function OAuthAppsSection() {
                 >
                   <Pencil className="h-4 w-4" />
                 </Button>
-                <Button
-                  variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground"
-                  onClick={() => setRotateId(app.clientId)} aria-label={t("oauthApps.rotateAriaLabel")}
-                >
-                  <RefreshCw className="h-4 w-4" />
-                </Button>
+                {!app.native && (
+                  <Button
+                    variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                    onClick={() => setRotateId(app.clientId)} aria-label={t("oauthApps.rotateAriaLabel")}
+                  >
+                    <RefreshCw className="h-4 w-4" />
+                  </Button>
+                )}
                 <Button
                   variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive"
                   onClick={() => setDeleteId(app.clientId)} aria-label={t("oauthApps.deleteAriaLabel")}

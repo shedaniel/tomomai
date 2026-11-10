@@ -45,9 +45,11 @@ After creation you receive:
 
 Every app is a confidential client: the token endpoint always requires the
 `client_secret`, sent either in the form body or as HTTP Basic auth. Public
-(PKCE-only) clients and dynamic client registration are not supported, so an
-app that can't keep a secret (mobile, SPA, userscript) should exchange the
-code through a small backend you control.
+(PKCE-only) clients and dynamic client registration are not available to
+third-party apps, so an app that can't keep a secret (mobile, SPA, userscript)
+should exchange the code through a small backend you control. tomomai's own
+mobile app is the one exception. It is an official native client that an admin
+registers, and it can only redirect to tomomai's own app link.
 
 ## 2. Authorization request
 
@@ -138,7 +140,9 @@ grant_type=refresh_token
 ```
 
 Refresh tokens **rotate** on every use. Store the new one and discard the
-old one, since reusing an old refresh token revokes every token issued from it.
+old one, since reusing an old refresh token revokes every refresh token and
+opaque access token the user has issued to your app, on all of their devices.
+JWT access tokens stay valid until they expire.
 Refresh tokens are valid for 30 days and access tokens for 1 hour.
 
 ## Token formats

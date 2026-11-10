@@ -212,6 +212,14 @@
     "scrollHint": "Scroll to review all permissions",
     "groupCount": "{count, plural, one {# permission} other {# permissions}}"
   },
+  "oauthAppCallback": {
+    "title": "Sign-in didn't reach the app",
+    "body": "Go back to the app and sign in again.",
+    "getApp": "Don't have the app yet?",
+    "appStore": "Download on the App Store",
+    "playStore": "Get it on Google Play",
+    "home": "Back to the website"
+  },
   "consent": {
     "description": "Before creating your account, please review and agree to our policies",
     "tldr": {
@@ -584,6 +592,9 @@
       },
       "oauthApps": {
         "officialDescription": "The consent screen shows an official badge instead of the third-party warning. Only admins can set this.",
+        "nativeLabel": "Native app",
+        "nativeDescription": "A mobile app that holds no secret and signs in with PKCE alone. It is always official and can only return to the app link on an allowed host. Only admins can create one.",
+        "nativeBadge": "Native",
         "officialBadge": "Official",
         "errors": {
           "limitReached": "You can have up to {max} OAuth apps. Delete one to create another.",
@@ -623,7 +634,8 @@
           "secretLabel": "Client Secret",
           "copyAriaLabel": "Copy value",
           "saveWarning": "Save this secret now. It won't be shown again after you close this dialog.",
-          "done": "Done"
+          "done": "Done",
+          "nativeCreatedNote": "This app has no client secret. It signs in with PKCE only."
         },
         "rotateDialog": {
           "title": "Rotate Client Secret?",

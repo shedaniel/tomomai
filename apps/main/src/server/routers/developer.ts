@@ -18,6 +18,7 @@ function assertInternalScopesAllowed(scopes: readonly ScopeKey[], userRole: stri
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { isOfficialClient, officialMetadata } from "@/lib/oauth-official";
+import { nativeRedirectHosts, nativeRedirectViolation } from "@/lib/oauth-native";
 import { apikey, oauthClient, oauthConsent, oauthRefreshToken, oauthAccessToken } from "@/lib/db/schema-pg";
 import { and, count, eq } from "drizzle-orm";
 import {
@@ -172,12 +173,75 @@ export const developerRouter = router({
           policy: oauthClient.policy,
           tos: oauthClient.tos,
           metadata: oauthClient.metadata,
+          public: oauthClient.public,
           createdAt: oauthClient.createdAt,
           updatedAt: oauthClient.updatedAt,
         })
         .from(oauthClient)
         .where(eq(oauthClient.userId, ctx.session.user.id));
-      return apps.map(({ metadata, ...app }) => ({ ...app, official: isOfficialClient(metadata) }));
+      return apps.map(({ metadata, public: isPublic, ...app }) => ({
+        ...app,
+        official: isOfficialClient(metadata),
+        native: isPublic === true,
+      }));
+    }),
+
+  /**
+   * Registers the first-party mobile app. A native client holds no secret and relies on PKCE, so only
+   * admins can create one, it is always official, and it redirects only to the app's own callback.
+   */
+  createNativeOAuthApp: protectedProcedure
+    .input(
+      z.object({
+        name: z.string().min(1).max(64),
+        redirectUris: z.array(httpsRedirectUrl).min(1).max(4),
+        scopes: z.array(oauthScopeKey).min(1),
+        uri: safeWebUrl.optional(),
+        icon: httpsWebUrl.optional(),
+        policy: safeWebUrl.optional(),
+        tos: safeWebUrl.optional(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      requireFreshSession(ctx.session);
+      if (ctx.session.user.role !== "admin") {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Only admins can create native apps" });
+      }
+      const violation = nativeRedirectViolation(input.redirectUris, nativeRedirectHosts());
+      if (violation) throw new TRPCError({ code: "BAD_REQUEST", message: violation });
+
+      const result = await auth.api.adminCreateOAuthClient({
+        body: {
+          client_name: input.name,
+          redirect_uris: input.redirectUris,
+          scope: oauthClientScope(input.scopes),
+          client_uri: input.uri,
+          logo_uri: input.icon,
+          policy_uri: input.policy,
+          tos_uri: input.tos,
+          token_endpoint_auth_method: "none",
+          type: "native",
+          grant_types: ["authorization_code", "refresh_token"],
+          response_types: ["code"],
+          metadata: { official: true },
+        },
+        headers: ctx.req.headers,
+      });
+      if (!result) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to create native OAuth application" });
+
+      const clientId = (result as { client_id: string }).client_id;
+      try {
+        await db.update(oauthClient).set({ userId: ctx.session.user.id }).where(eq(oauthClient.clientId, clientId));
+      } catch (err) {
+        await auth.api.deleteOAuthClient({ body: { client_id: clientId }, headers: ctx.req.headers }).catch((compensationErr) => {
+          logger.error(
+            { err: compensationErr, userId: ctx.session.user.id },
+            "Failed to delete orphan native OAuth client after userId patch failure",
+          );
+        });
+        throw err;
+      }
+      return { client_id: clientId };
     }),
 
   createOAuthApp: protectedProcedure
@@ -274,10 +338,17 @@ export const developerRouter = router({
       if (input.name !== undefined) assertAppNameAllowed(input.name, ctx.session.user.role);
       // Verify ownership
       const [app] = await db
-        .select({ id: oauthClient.id })
+        .select({ id: oauthClient.id, public: oauthClient.public })
         .from(oauthClient)
         .where(and(eq(oauthClient.clientId, input.clientId), eq(oauthClient.userId, ctx.session.user.id)));
       if (!app) throw new TRPCError({ code: "FORBIDDEN", message: "App not found" });
+      if (app.public && input.official === false) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Native apps are always official" });
+      }
+      if (app.public && input.redirectUris) {
+        const violation = nativeRedirectViolation(input.redirectUris, nativeRedirectHosts());
+        if (violation) throw new TRPCError({ code: "BAD_REQUEST", message: violation });
+      }
 
       const result = await auth.api.updateOAuthClient({
         body: {
@@ -326,10 +397,11 @@ export const developerRouter = router({
     .mutation(async ({ ctx, input }) => {
       requireFreshSession(ctx.session);
       const [app] = await db
-        .select({ id: oauthClient.id })
+        .select({ id: oauthClient.id, public: oauthClient.public })
         .from(oauthClient)
         .where(and(eq(oauthClient.clientId, input.clientId), eq(oauthClient.userId, ctx.session.user.id)));
       if (!app) throw new TRPCError({ code: "FORBIDDEN", message: "App not found" });
+      if (app.public) throw new TRPCError({ code: "BAD_REQUEST", message: "A native app has no secret to rotate" });
 
       const result = await auth.api.rotateClientSecret({
         body: { client_id: input.clientId },

@@ -212,6 +212,14 @@
     "scrollHint": "捲動查看所有權限",
     "groupCount": "{count} 項權限"
   },
+  "oauthAppCallback": {
+    "title": "Sign-in didn't reach the app",
+    "body": "Go back to the app and sign in again.",
+    "getApp": "Don't have the app yet?",
+    "appStore": "Download on the App Store",
+    "playStore": "Get it on Google Play",
+    "home": "Back to the website"
+  },
   "consent": {
     "description": "在建立帳戶前，請先閱讀並同意我們的政策。",
     "tldr": {
@@ -584,6 +592,9 @@
       },
       "oauthApps": {
         "officialDescription": "同意畫面會顯示官方標章，取代第三方應用程式的提醒。只有管理員可以設定。",
+        "nativeLabel": "Native app",
+        "nativeDescription": "A mobile app that holds no secret and signs in with PKCE alone. It is always official and can only return to the app link on an allowed host. Only admins can create one.",
+        "nativeBadge": "Native",
         "officialBadge": "官方",
         "errors": {
           "limitReached": "最多可建立 {max} 個 OAuth 應用程式。請先刪除一個再建立新的。",
@@ -623,7 +634,8 @@
           "secretLabel": "Client Secret",
           "copyAriaLabel": "複製值",
           "saveWarning": "請儲存此密鑰，關閉此對話框後將不會再次顯示。",
-          "done": "完成"
+          "done": "完成",
+          "nativeCreatedNote": "This app has no client secret. It signs in with PKCE only."
         },
         "rotateDialog": {
           "title": "輪換用戶端密鑰？",

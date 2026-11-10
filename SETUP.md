@@ -288,6 +288,12 @@ that service.
 | `NEXT_PUBLIC_ENABLED_MAIMAI_REGIONS` | No | Comma-separated maimai regions (`intl,jp` by default). An empty value disables maimai player features, and its catalog stays readable. A value that names no maimai region is logged as an error and disables them too |
 | `NEXT_PUBLIC_ENABLED_CHUNITHM_REGIONS` | No | Comma-separated CHUNITHM regions (`intl,jp` by default). An empty value disables CHUNITHM player features, and its catalog stays readable. A value that names no CHUNITHM region is logged as an error and disables them too |
 | `NEXT_PUBLIC_ENABLED_REGIONS` | No | Legacy maimai fallback when `NEXT_PUBLIC_ENABLED_MAIMAI_REGIONS` is unset. An empty value counts as unset |
+| `NATIVE_APP_REDIRECT_HOSTS` | No | Comma-separated hosts a native OAuth client may redirect to, at `/oauth/app-callback`. Defaults to the deployment's own host |
+| `APPLE_APP_IDS` | No | Comma-separated Apple app IDs (`<team id>.<bundle id>`) served in `/.well-known/apple-app-site-association`. The file answers 404 while this is unset |
+| `ANDROID_APP_PACKAGE` | No | Android package served in `/.well-known/assetlinks.json`, together with `ANDROID_APP_SHA256_FINGERPRINTS`. The file answers 404 while either is unset |
+| `ANDROID_APP_SHA256_FINGERPRINTS` | No | Comma-separated SHA-256 signing certificate fingerprints of the Android app, as colon-separated hex bytes |
+| `APP_STORE_URL` | No | https App Store listing offered on `/oauth/app-callback`, to iPhone and desktop visitors. Hidden while unset |
+| `PLAY_STORE_URL` | No | https Google Play listing offered on `/oauth/app-callback`, to Android and desktop visitors. Hidden while unset |
 | `DEMO_FETCH` | No | Set to `true` to use demo data for fetching |
 | `TRUSTED_ORIGINS` | No | Comma-separated list of additional origins (e.g. `https://tomomai.lol,https://cn.tomomai.lol`). Read by Better Auth (`trustedOrigins`) and the CORS allowlist. Required when fronting the app with the [`cn/` reverse proxy](#cn-reverse-proxy-hk-cn2) so the proxy hostname is accepted for OAuth callbacks and CORS. |
 | `AUTH_COOKIE_DOMAIN` | No | Cookie domain for cross-subdomain Better Auth sessions (e.g. `.tomomai.lol`). Set this when serving the same app under multiple hostnames (apex + `cn.` proxy) so a session set on one is valid on the other. Omit for single-hostname deployments. |

@@ -19,6 +19,12 @@ import { consumeAltchaPayload } from "@/lib/altcha";
 import { clientIpFromHeaders, passkeyRegisterLimiter } from "@/lib/security/redis-rate-limit";
 import { isSessionFresh } from "@/lib/security/fresh-session";
 import { isSafeRedirectUrl, isSafeWebUrl, isHttpsUrl } from "@/lib/security/oauth-url";
+import {
+  confidentialClientViolation,
+  nativeClientViolation,
+  nativeRedirectHosts,
+  nativeRedirectViolation,
+} from "@/lib/oauth-native";
 import { mirrorRemoteAvatarToR2, isR2AvatarUrl } from "@/lib/r2";
 import { useApiKeyCreation, useOauthAppCreation } from "@/lib/flags";
 import { getCurrentLegalVersions } from "@/lib/legal";
@@ -127,6 +133,7 @@ async function refreshAvatarIfMissing(userId: string): Promise<void> {
 // check so a stolen cookie alone cannot escalate without re-authentication.
 const FRESH_REQUIRED_PATHS = new Set<string>([
   "/oauth2/create-client",
+  "/admin/oauth2/create-client",
   "/oauth2/update-client",
   "/oauth2/client/rotate-secret",
   "/oauth2/delete-client",
@@ -166,6 +173,7 @@ const POLICY_REQUIRED_PATHS: Record<string, { tos: string; privacy: string }> = 
 // off, no client can be created, rotated or destroyed through tRPC or BA HTTP.
 const OAUTH_APP_BA_PATHS = new Set<string>([
   "/oauth2/create-client",
+  "/admin/oauth2/create-client",
   "/oauth2/update-client",
   "/oauth2/client/rotate-secret",
   "/oauth2/delete-client",
@@ -483,6 +491,10 @@ export const auth = betterAuth({
   ],
   hooks: {
     before: createAuthMiddleware(async (ctx) => {
+      // Unused, and it would bypass the client guards below: it accepts skip_consent, metadata and any redirect.
+      if (ctx.path === "/admin/oauth2/update-client") {
+        throw new APIError("NOT_FOUND", { message: "Not Found" });
+      }
       // Internal scopes (e.g. `snapshot:submit`) never belong to an OAuth client, admin-registered
       // or not. OAUTH_SCOPES already keeps them out of the provider; this rejects them again on the
       // client and consent routes in case a client was stored with one. Sentinel-style message so
@@ -544,7 +556,9 @@ export const auth = betterAuth({
       // stricter refinements, but those are bypassable by calling these BA
       // endpoints directly with a session cookie. Re-enforce here.
       if (
-        (ctx.path === "/oauth2/create-client" || ctx.path === "/oauth2/update-client") &&
+        (ctx.path === "/oauth2/create-client" ||
+          ctx.path === "/oauth2/update-client" ||
+          ctx.path === "/admin/oauth2/create-client") &&
         ctx.body &&
         typeof ctx.body === "object"
       ) {
@@ -552,6 +566,36 @@ export const auth = betterAuth({
         const target = ctx.path === "/oauth2/update-client"
           ? ((body.update as Record<string, unknown>) ?? {})
           : body;
+
+        // Public clients exist only as admin-registered native clients. The routes a user can reach
+        // register confidential web clients, whatever auth method or type the body asks for.
+        if (ctx.path === "/admin/oauth2/create-client") {
+          const session = await getSessionFromCtx(ctx);
+          if ((session?.user as { role?: string | null } | undefined)?.role !== "admin") {
+            throw new APIError("FORBIDDEN", { message: "Only admins can register native clients" });
+          }
+          const violation = nativeClientViolation(target, nativeRedirectHosts());
+          if (violation) throw new APIError("BAD_REQUEST", { message: violation });
+        } else if (ctx.path === "/oauth2/update-client") {
+          const existing = typeof body.client_id === "string"
+            ? (await db
+                .select({ public: schema.oauthClient.public })
+                .from(schema.oauthClient)
+                .where(eq(schema.oauthClient.clientId, body.client_id))
+                .limit(1))[0]
+            : undefined;
+          const violation = existing?.public
+            ? (target.type !== undefined && target.type !== "native"
+                ? "A native client cannot change its type"
+                : target.redirect_uris !== undefined
+                  ? nativeRedirectViolation(target.redirect_uris, nativeRedirectHosts())
+                  : null)
+            : confidentialClientViolation(target);
+          if (violation) throw new APIError("BAD_REQUEST", { message: violation });
+        } else {
+          const violation = confidentialClientViolation(target);
+          if (violation) throw new APIError("BAD_REQUEST", { message: violation });
+        }
 
         const redirects = target.redirect_uris;
         if (Array.isArray(redirects)) {
