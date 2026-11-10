@@ -341,7 +341,7 @@ A vertical slice on this branch, iOS first and Android second, before committing
 
 ## Server changes
 
-The app is the second user of the API and OAuth code. These are changes to the server, each a documented improvement that benefits other integrators. Items 1 to 5 unblock and secure login and are implemented on `feat/native-oauth-client`. Items 6 to 9 make the app cheaper and simpler to run and are not implemented yet.
+The app is the second user of the API and OAuth code. These are changes to the server, each a documented improvement that benefits other integrators. Items 1 to 5 unblock and secure login and are implemented on `feat/native-oauth-client`. Items 6 to 9 make the app cheaper and simpler to run and are not implemented yet. Item 10 extends public clients past the app.
 
 1. **Official native OAuth client (implemented).**
    - A separate admin-only `createNativeOAuthApp` procedure in the developer router creates the client through Better Auth's server-only `adminCreateOAuthClient`, with `type: "native"`, `token_endpoint_auth_method: "none"`, `metadata.official: true` and no secret. The user-facing `createOAuthApp` is unchanged and still creates confidential clients only.
@@ -357,6 +357,17 @@ The app is the second user of the API and OAuth code. These are changes to the s
 7. **Stable auth error codes.** Today a missing token is a 401 `Missing API key`, while an expired, revoked or wrong token is a 403 `Invalid or expired token` with no code. The app cannot tell an expired access token (refresh) from a revoked one (sign in again). Return 401 with `WWW-Authenticate: Bearer error="invalid_token"` for expired or revoked tokens, keep 403 for a missing scope, and give each case and quota exhaustion a stable `code`.
 8. **Conditional requests.** ETag or `Last-Modified` on snapshots and recents, so a refresh costs less when nothing changed. First verify whether a 304 consumes rate limit budget.
 9. **Region choices for every game from one host.** `region` in `/api/v1/me` and `profileMainRegion` in `/api/v1/me/settings` answer the choice for the game of the site that receives the request (see the changelog guide). An app that talks only to `tomomai.lol` therefore cannot read the user's CHUNITHM choices. Return the choice per game, or accept a `game` parameter.
+10. **Public clients beyond the app.** Today "native" bundles three things: a public client (PKCE, no secret), forced official, and the app link redirect. Only the first is useful outside the app. A second first-party userscript, not marked official, should ship only its `client_id` and need no server of ours. Split it in steps:
+    - Split the native switch into a public client switch and the existing Official switch.
+    - Give public clients a redirect kind: the app link (today's rule), or an exact https URL on any host. With PKCE, a code that reaches a host the client does not control is useless without the verifier, so the host itself needs no allowlist.
+    - Keep public clients admin-only at first. That covers the app and the userscript.
+    - Later, open public clients to third parties with the same https rule plus loopback redirects (`http://127.0.0.1:<port>/...`, RFC 8252) for desktop and CLI tools. Check whether Better Auth matches loopback on any port first. Never allow custom schemes: any app can claim one, so an attacker can start a flow with a real app's `client_id` and their own PKCE pair and receive the code. The device authorization grant (RFC 8628) is the alternative for CLIs.
+    - Third-party public clients always show the third-party warning, never skip consent, and stay under the per-user limit and the kill switch.
+
+    Notes for the userscript:
+    - Its callback can be its own page on `tomomai.lol` (which must keep the query, unlike `/oauth/app-callback`, and load no analytics or third-party scripts), or a URL on the official site where the userscript already runs, read by the userscript itself. The second needs nothing from us.
+    - The current userscript already runs PKCE and sends the code to `/api/userscript/token`, which only adds `USERSCRIPT_CLIENT_SECRET`. Anyone holding a code and verifier can call it, so it is a public client in practice. Moving it to a real public client lets that route go.
+    - `snapshot:submit` is internal and refused for every OAuth client. A userscript that submits snapshots needs its own design.
 
 Later, and only if needed:
 
@@ -420,5 +431,5 @@ The app handles each of these as its own state, and never erases cached data bec
 5. **Token source for the design system.** Generated from `packages/ui` or hand-maintained.
 6. **Minimum OS versions.** The iOS floor (17.4 gives https callbacks in `ASWebAuthenticationSession`) and the Android API level.
 7. **Widgets and Live Activities.** Native on both platforms and outside the shared layer. Decide whether they are in the first year.
-8. **Native clients for third parties.** Whether and when to open them to approved developers. It needs a redirect rule redesign first, so it is not part of this plan.
+8. **Public clients for third parties.** Whether and when to open them. The redirect rules are sketched in [Server changes](#server-changes) item 10. It waits until someone asks or a known tool needs it.
 9. **CHUNITHM fetch through the maimai deployment.** Only catalog writes are pinned to a game's own deployment, so starting a CHUNITHM fetch on `tomomai.lol` should work, but nobody has verified it end to end, including site rate limit locks and the stored token.
