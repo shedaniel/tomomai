@@ -5,10 +5,8 @@ import { resolveBaseUrlFromHeaders } from "@/lib/base-url";
 import { useUserscriptFetch } from "@/lib/flags";
 import { requireFrontendGame } from "@/lib/games/current";
 
-const BUNDLE_PATH = path.join(
-  process.cwd(),
-  "packages/userscript/dist/@tomomai/userscript.user.js"
-);
+// The server runs from apps/main, like outputFileTracingRoot in next.config.ts assumes.
+const BUNDLE_PATH = path.join(process.cwd(), "../../packages/userscript/dist/@tomomai/userscript.user.js");
 
 const PLACEHOLDER = "__TOMOMAI_API_BASE__";
 const CLIENT_ID_PLACEHOLDER = "__TOMOMAI_USERSCRIPT_CLIENT_ID__";
