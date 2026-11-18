@@ -10,7 +10,7 @@
     "prebuild": "pnpm run copy:altcha-worker",
     "dev": "next dev --turbopack | pino-pretty -L info",
     "debug": "LOG_LEVEL=\"debug\" next dev --turbopack | pino-pretty",
-    "build": "next build",
+    "build": "pnpm --filter @tomomai/userscript build && next build",
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",

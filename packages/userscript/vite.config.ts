@@ -11,14 +11,20 @@ const MATCH_PLACEHOLDER = "__TOMOMAI_SITE_MATCH__";
 const GAME_PLACEHOLDER = "__TOMOMAI_GAME__";
 const ICON_PLACEHOLDER = "__TOMOMAI_ICON__";
 
-// Userscript managers compare @version numerically to push auto-updates, so it
-// must increase monotonically. Use the HEAD commit datetime directly
-// (YYYY.MMDD.HHMM) — purely date-driven, always monotonic, auto-bumps per build.
+// Userscript managers compare @version numerically to push auto-updates, so it must only grow. It is
+// the HEAD commit's UTC time as YYYY.MMDD.HHMM, or the build's where there is no git history, as on
+// some deploy builders.
 const version = (() => {
   try {
-    return execSync("git show -s --format=%cd --date=format:%Y.%m%d.%H%M HEAD").toString().trim();
+    // In UTC like the fallback, so a builder with git and one without agree.
+    return execSync("git show -s --format=%cd --date=format-local:%Y.%m%d.%H%M HEAD", {
+      env: { ...process.env, TZ: "UTC" },
+      stdio: ["ignore", "pipe", "ignore"],
+    }).toString().trim();
   } catch {
-    return "0.0.0";
+    const now = new Date();
+    const pad = (n: number) => String(n).padStart(2, "0");
+    return `${now.getUTCFullYear()}.${pad(now.getUTCMonth() + 1)}${pad(now.getUTCDate())}.${pad(now.getUTCHours())}${pad(now.getUTCMinutes())}`;
   }
 })();
 
