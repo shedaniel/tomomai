@@ -1,4 +1,5 @@
 import { GM_getValue, GM_setValue, GM_xmlhttpRequest } from "vite-plugin-monkey/dist/client";
+import { ScriptError } from "./locale";
 
 const KEY_ACCESS_TOKEN = "tomomai_access_token";
 const KEY_REFRESH_TOKEN = "tomomai_refresh_token";
@@ -13,9 +14,9 @@ const REDIRECT_URI = `${API_BASE}/userscript/callback`;
 
 type TokenResponse = { access_token: string; refresh_token?: string; expires_in: number };
 
-export class SignInRequired extends Error {
+export class SignInRequired extends ScriptError {
   constructor() {
-    super("Sign in to tomomai first");
+    super("signInExpired");
   }
 }
 
@@ -43,10 +44,10 @@ export function request(method: string, url: string, init: { headers?: Record<st
         resolve({ status: res.status, body });
       },
       onerror() {
-        reject(new Error("Could not reach tomomai"));
+        reject(new ScriptError("unreachable"));
       },
       ontimeout() {
-        reject(new Error("tomomai did not answer in time"));
+        reject(new ScriptError("timeout"));
       },
       timeout: 20_000,
     });
@@ -62,7 +63,7 @@ async function tokenRequest(params: Record<string, string>): Promise<TokenRespon
     return body as TokenResponse;
   }
   if (body.error === "invalid_grant") throw new SignInRequired();
-  throw new Error(String(body.error_description ?? body.error ?? `Sign-in failed (${status})`));
+  throw new ScriptError("signInFailed", { status: String(body.error ?? status) });
 }
 
 function store(tokens: TokenResponse): void {
@@ -125,7 +126,7 @@ export function signIn(): Promise<void> {
   const verifier = randomString(32);
   // Opened before the challenge is ready so the click still counts, then pointed at the sign-in.
   const popup = window.open("about:blank", "tomomai-sign-in", "width=500,height=720");
-  if (!popup) return Promise.reject(new Error("Allow popups for this page, then try again"));
+  if (!popup) return Promise.reject(new ScriptError("popupBlocked"));
 
   return new Promise<void>((resolve, reject) => {
     const apiOrigin = new URL(API_BASE).origin;
@@ -144,7 +145,7 @@ export function signIn(): Promise<void> {
       // The callback closes itself right away, which must not fail the exchange that is now running.
       clearInterval(closedPoll);
       if (typeof data.code !== "string") {
-        finish(new Error(data.error === "access_denied" ? "Sign-in was cancelled" : String(data.error ?? "Sign-in failed")));
+        finish(data.error === "access_denied" ? new ScriptError("signInCancelled") : new ScriptError("signInFailed", { status: String(data.error ?? "error") }));
         return;
       }
       tokenRequest({ grant_type: "authorization_code", code: data.code, code_verifier: verifier, redirect_uri: REDIRECT_URI })
@@ -157,7 +158,7 @@ export function signIn(): Promise<void> {
     window.addEventListener("message", onMessage);
 
     closedPoll = setInterval(() => {
-      if (popup.closed) finish(new Error("The sign-in window was closed"));
+      if (popup.closed) finish(new ScriptError("signInClosed"));
     }, 500);
 
     pkceChallenge(verifier).then(challenge => {

@@ -1,7 +1,9 @@
 import { GM_getValue, GM_info, GM_setValue } from "vite-plugin-monkey/dist/client";
 import logoDark from "./assets/logo-dark.webp?inline";
 import logoLight from "./assets/logo.webp?inline";
-import { SignInRequired, isSignedIn, signIn, signOut } from "./auth";
+import { isSignedIn, signIn, signOut } from "./auth";
+import { LOCALES, LOCALE_NAMES, type Locale } from "./i18n";
+import { ScriptError, chooseLocale, currentLocale, messages, rememberSiteLocale } from "./locale";
 import { readClal, sendClal } from "./sega";
 
 const GATEWAY_HOST = "lng-tgk-aime-gw.am-all.net";
@@ -25,6 +27,8 @@ const ICONS = {
   alert: '<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/>',
   send: '<path d="M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z"/><path d="m21.854 2.147-10.94 10.939"/>',
   spinner: '<path d="M21 12a9 9 0 1 1-6.219-8.56"/>',
+  languages: '<path d="m5 8 6 6"/><path d="m4 14 6-6 2-3"/><path d="M2 5h12"/><path d="M7 2h1"/><path d="m22 22-5-10-5 10"/><path d="M14 18h6"/>',
+  chevron: '<path d="m6 9 6 6 6-6"/>',
 } as const;
 
 type IconName = keyof typeof ICONS;
@@ -40,7 +44,8 @@ const STYLES = `
   width: min(368px, calc(100vw - 32px)); box-sizing: border-box; padding: 20px;
   border: 1px solid var(--border); border-radius: 28px; background: var(--content); color: var(--foreground);
   box-shadow: 0 24px 48px -12px oklch(0.3 0.05 0 / 0.25);
-  font: 14px/1.5 Inter, system-ui, -apple-system, "Segoe UI", "Hiragino Sans", sans-serif;
+  font: 14px/1.5 Inter, system-ui, -apple-system, "Segoe UI", "Hiragino Sans", "PingFang SC", "PingFang TC",
+    "Apple SD Gothic Neo", "Microsoft YaHei", "Microsoft JhengHei", "Malgun Gothic", "Noto Sans CJK JP", sans-serif;
   animation: enter 0.25s ease-out;
 }
 .backdrop {
@@ -54,6 +59,18 @@ const STYLES = `
 .head { display: flex; align-items: center; justify-content: space-between; margin: -4px -6px 16px 0; }
 .logo { height: 32px; width: auto; display: block; }
 .logo.dark { display: none; }
+.tools { display: flex; align-items: center; gap: 2px; }
+.locale { position: relative; display: flex; align-items: center; height: 32px; border-radius: 999px; color: var(--muted-foreground); }
+.locale:hover, .locale:focus-within { background: var(--muted); color: var(--foreground); }
+.locale svg { position: absolute; pointer-events: none; width: 15px; height: 15px; }
+.locale svg:first-child { left: 9px; }
+.locale svg:last-child { right: 8px; width: 13px; height: 13px; }
+.locale select {
+  appearance: none; height: 32px; padding: 0 26px 0 30px; border: 0; border-radius: 999px; background: transparent;
+  color: inherit; font: inherit; font-size: 12px; font-weight: 500; cursor: pointer;
+}
+.locale select:focus-visible { outline: 2px solid var(--primary); outline-offset: 1px; }
+.locale option { color: #18181b; background: #fff; }
 .close { display: grid; place-items: center; width: 32px; height: 32px; padding: 0; border: 0; border-radius: 999px; background: none; color: var(--muted-foreground); cursor: pointer; }
 .close:hover { background: var(--muted); color: var(--foreground); }
 .status { display: flex; gap: 12px; align-items: flex-start; }
@@ -99,7 +116,7 @@ type State =
   | { kind: "signing-in"; clal: string }
   | { kind: "sending"; clal: string }
   | { kind: "sent" }
-  | { kind: "error"; clal: string | null; message: string };
+  | { kind: "error"; clal: string | null; err: unknown };
 
 function element<K extends keyof HTMLElementTagNameMap>(tag: K, props: Partial<HTMLElementTagNameMap[K]> = {}, children: (Node | string)[] = []) {
   const node = Object.assign(document.createElement(tag), props);
@@ -124,7 +141,7 @@ function button(label: string, onclick: () => void, { iconName, outline = false,
 }
 
 function errorMessage(err: unknown): string {
-  if (err instanceof SignInRequired) return "Your tomomai sign-in has expired. Send again to sign in.";
+  if (err instanceof ScriptError) return err.localized();
   return err instanceof Error ? err.message : String(err);
 }
 
@@ -133,11 +150,26 @@ function recent(key: string): boolean {
   return at > 0 && Date.now() - at < RETURN_WINDOW_MS;
 }
 
+function localeSwitcher(onChange: () => void) {
+  const current = currentLocale();
+  const select = document.createElement("select");
+  select.ariaLabel = select.title = messages().language;
+  select.onchange = () => {
+    chooseLocale(select.value as Locale);
+    onChange();
+  };
+  for (const locale of LOCALES) {
+    select.append(new Option(LOCALE_NAMES[locale], locale, false, locale === current));
+  }
+  return element("label", { className: "locale" }, [icon("languages"), select, icon("chevron")]);
+}
+
 /**
  * A card in its own closed shadow root so the SEGA page's styles stay out. Centered over the gateway's
- * Not Found page, which only tomomai sends people to, and in the corner of SEGA's sign-in form.
+ * Not Found page, which only tomomai sends people to, and in the corner of SEGA's sign-in form. It is
+ * drawn again from `content` whenever the player switches language.
  */
-function mountShell(layout: "center" | "corner", onClose?: () => void) {
+function mountShell(layout: "center" | "corner", content: () => (Node | string)[], onClose?: () => void) {
   const host = element("div", { id: "tomomai-root" });
   document.body.append(host);
   const shadow = host.attachShadow({ mode: "closed" });
@@ -145,24 +177,28 @@ function mountShell(layout: "center" | "corner", onClose?: () => void) {
   const panel = element("div", { className: "panel", role: "dialog", ariaLabel: "tomomai" });
   shadow.append(layout === "center" ? element("div", { className: "backdrop" }, [panel]) : panel);
 
-  const head = element("div", { className: "head" }, [
-    element("span", {}, [
-      element("img", { className: "logo light", src: logoLight, alt: "tomomai" }),
-      element("img", { className: "logo dark", src: logoDark, alt: "tomomai" }),
-    ]),
-  ]);
-  const close = element("button", { className: "close", ariaLabel: "Close", title: "Close", onclick: () => {
-    onClose?.();
-    host.remove();
-  } });
-  close.append(icon("close"));
-  head.append(close);
+  function render() {
+    const t = messages();
+    panel.lang = currentLocale();
+    const close = element("button", { className: "close", ariaLabel: t.close, title: t.close, onclick: () => {
+      onClose?.();
+      host.remove();
+    } });
+    close.append(icon("close"));
+    panel.replaceChildren(
+      element("div", { className: "head" }, [
+        element("span", {}, [
+          element("img", { className: "logo light", src: logoLight, alt: "tomomai" }),
+          element("img", { className: "logo dark", src: logoDark, alt: "tomomai" }),
+        ]),
+        element("div", { className: "tools" }, [localeSwitcher(render), close]),
+      ]),
+      ...content(),
+    );
+  }
 
-  return {
-    render(content: (Node | string)[]) {
-      panel.replaceChildren(head, ...content);
-    },
-  };
+  render();
+  return { render };
 }
 
 function status(iconName: IconName, title: string, text: string | null, { error = false } = {}) {
@@ -177,14 +213,13 @@ function status(iconName: IconName, title: string, text: string | null, { error 
 
 /** The panel on the gateway landing page, which says Not Found but carries the clal cookie. */
 function mountPanel() {
-  const shell = mountShell("center");
   const cameBack = recent(KEY_RETURNED);
   GM_setValue(KEY_RETURNED, 0);
 
   let state: State = { kind: "checking" };
   const setState = (next: State) => {
     state = next;
-    render();
+    shell.render();
   };
 
   async function send(clal: string) {
@@ -199,7 +234,7 @@ function mountPanel() {
       await sendClal(clal);
       setState({ kind: "sent" });
     } catch (err) {
-      setState({ kind: "error", clal, message: errorMessage(err) });
+      setState({ kind: "error", clal, err });
     }
   }
 
@@ -212,91 +247,97 @@ function mountPanel() {
     window.close();
     // Managers only let a script close a tab it may close, so say where to go when it stays open.
     setTimeout(() => {
-      label.replaceWith(element("p", { className: "text", textContent: "You can close this tab now." }));
+      label.replaceWith(element("p", { className: "text", textContent: messages().canCloseTab }));
     }, 300);
   }
 
   function body(): (Node | string)[] {
+    const t = messages();
     switch (state.kind) {
       case "checking":
-        return [status("spinner", "Looking for your login cookie", null)];
+        return [status("spinner", t.checking, null)];
       case "signed-out":
         return [
-          status("signIn", "Sign in to maimai DX NET", "You'll come back here afterwards to send your cookie."),
-          element("div", { className: "actions" }, [button("Sign in to maimai DX NET", goSignIn, { iconName: "signIn" })]),
+          status("signIn", t.signedOutTitle, t.signedOutText),
+          element("div", { className: "actions" }, [button(t.signInButton, goSignIn, { iconName: "signIn" })]),
         ];
       case "unreadable":
         return [
-          status("alert", "No login cookie found", "Sign in again with auto login ticked. If it still doesn't work, turn on your userscript manager's cookie setting from the tomomai guide.", { error: true }),
-          element("div", { className: "actions" }, [button("Sign in again", goSignIn, { iconName: "signIn" })]),
+          status("alert", t.unreadableTitle, t.unreadableText, { error: true }),
+          element("div", { className: "actions" }, [button(t.signInAgain, goSignIn, { iconName: "signIn" })]),
         ];
       case "signing-in":
         return [
-          status("spinner", "Sign in to tomomai", "Finish in the tomomai window. Your cookie is sent right after."),
-          element("div", { className: "actions" }, [button("Waiting for sign-in...", () => {}, { iconName: "spinner", disabled: true })]),
+          status("spinner", t.signingInTitle, t.signingInText),
+          element("div", { className: "actions" }, [button(t.signingInButton, () => {}, { iconName: "spinner", disabled: true })]),
         ];
       case "ready":
       case "sending": {
         const { clal } = state;
         const sending = state.kind === "sending";
         return [
-          status("cookie", "Ready to send", isSignedIn() ? null : "A tomomai window opens first to sign you in."),
+          status("cookie", t.readyTitle, isSignedIn() ? null : t.readyPopupNote),
           element("div", { className: "actions" }, [
-            button(sending ? "Sending..." : "Send to tomomai", () => void send(clal), { iconName: sending ? "spinner" : "send", disabled: sending }),
+            button(sending ? t.sending : t.send, () => void send(clal), { iconName: sending ? "spinner" : "send", disabled: sending }),
           ]),
         ];
       }
       case "sent": {
-        const done = button("Close this tab", () => closeTab(done), { outline: true });
+        const done = button(t.closeTab, () => closeTab(done), { outline: true });
         return [
-          status("check", "Sent to tomomai", "Your fetch is starting in the tomomai tab. Stay signed in to maimai DX NET here to keep it working."),
+          status("check", t.sentTitle, t.sentText),
           element("div", { className: "actions" }, [done]),
         ];
       }
       case "error": {
         const { clal } = state;
         return [
-          status("alert", "Couldn't send your cookie", state.message, { error: true }),
-          ...(clal ? [element("div", { className: "actions" }, [button("Try again", () => void send(clal), { iconName: "send" })])] : []),
+          status("alert", t.errorTitle, errorMessage(state.err), { error: true }),
+          ...(clal ? [element("div", { className: "actions" }, [button(t.tryAgain, () => void send(clal), { iconName: "send" })])] : []),
         ];
       }
     }
   }
 
-  function render() {
-    const foot = isSignedIn() && state.kind !== "sending" && state.kind !== "checking" && state.kind !== "signing-in"
+  function content(): (Node | string)[] {
+    const t = messages();
+    const busy = state.kind === "sending" || state.kind === "checking" || state.kind === "signing-in";
+    const foot = isSignedIn() && !busy
       ? [element("div", { className: "foot" }, [
-        element("span", { textContent: "Signed in to tomomai" }),
+        element("span", { textContent: t.signedIn }),
         element("button", {
           className: "link",
-          textContent: "Sign out",
+          textContent: t.signOut,
           onclick: () => {
             signOut();
-            render();
+            shell.render();
           },
         }),
       ])]
       : [];
-    shell.render([...body(), ...foot]);
+    return [...body(), ...foot];
   }
 
-  render();
+  const shell = mountShell("center", content);
   readClal().then(
     clal => setState(clal ? { kind: "ready", clal } : { kind: cameBack ? "unreadable" : "signed-out" }),
-    (err: unknown) => setState({ kind: "error", clal: null, message: errorMessage(err) }),
+    (err: unknown) => setState({ kind: "error", clal: null, err }),
   );
 }
 
 /** On SEGA's sign-in form, only while the player is on their way back to the panel. */
 function mountSignInHint() {
-  // Closing it also stops the trip back, for a player who changed their mind.
-  const shell = mountShell("corner", () => GM_setValue(KEY_RETURN, 0));
-  // clal is SEGA's auto login cookie, so it only exists when that box stays ticked.
-  shell.render([status("signIn", "Sign in to continue", "Keep auto login ticked. You'll come back to the tomomai panel afterwards.")]);
+  // clal is SEGA's auto login cookie, so it only exists when that box stays ticked. Closing the hint also
+  // stops the trip back, for a player who changed their mind.
+  mountShell("corner", () => [status("signIn", messages().hintTitle, messages().hintText)], () => GM_setValue(KEY_RETURN, 0));
 }
 
-/** On tomomai's own pages the script only says it is installed, so the token dialog can skip its setup steps. */
+/**
+ * On tomomai's own pages the script says it is installed, so the token dialog can skip its setup steps,
+ * and notes the site's language for the panel.
+ */
 function announce() {
+  rememberSiteLocale(document.documentElement.lang);
   document.documentElement.setAttribute("data-tomomai-userscript", GM_info.script.version);
   window.dispatchEvent(new Event("tomomai:userscript"));
 }

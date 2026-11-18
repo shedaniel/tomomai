@@ -950,7 +950,7 @@
       },
       "send": {
         "title": "쿠키 보내기",
-        "description": "SEGA 페이지를 열고 패널에서 \"Send to {product}\"를 누르세요.",
+        "description": "SEGA 페이지를 열고 패널에서 \"{button}\"를 누르세요.",
         "gatewayButton": "SEGA 페이지 열기",
         "signOut": "이 브라우저에서 {net} 로그아웃을 하면 이 쿠키가 속한 세션이 종료되어, 다시 보낼 때까지 가져오기가 중단됩니다.",
         "waiting": "쿠키를 기다리는 중...",

@@ -26,6 +26,18 @@ cookie does. After sending, the panel can close its tab (`@grant window.close`).
 The bundle is plain TypeScript with no dependencies and no `@require`, so what players install is what
 this package builds. The panel's logo is inlined from `src/assets`.
 
+## Languages
+
+The panel has its own small bundle in [`src/i18n.ts`](src/i18n.ts): English, Japanese, Korean,
+Simplified and Traditional Chinese. It uses, in order, the language picked in the panel's switcher,
+the language of the tomomai site (noted whenever the script runs on tomomai's pages), and the
+browser's. The site's zh-CN and zh-SG map to Simplified Chinese, and zh-TW and zh-HK to Traditional.
+
+The module has no userscript manager APIs, so the site imports it as `@tomomai/userscript/i18n`. The
+token dialog's picture of the panel and its "press ... in the panel" line use the panel's own strings,
+so they always match. SEGA's sign-in form is English in every language, so the strings quote its auto
+login checkbox by its English label.
+
 ## Signing in to tomomai
 
 The script is an OAuth **public client**: it holds no secret and signs in with PKCE.

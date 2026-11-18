@@ -1225,7 +1225,7 @@
       },
       "send": {
         "title": "傳送 Cookie",
-        "description": "開啟 SEGA 頁面，在面板中點選「Send to {product}」。",
+        "description": "開啟 SEGA 頁面，在面板中點選「{button}」。",
         "gatewayButton": "開啟 SEGA 頁面",
         "signOut": "在此瀏覽器登出 {net} 會結束此 Cookie 所屬的工作階段，在你重新傳送之前將無法同步。",
         "waiting": "正在等待 Cookie…",

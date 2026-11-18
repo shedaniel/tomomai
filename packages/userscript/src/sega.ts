@@ -1,5 +1,6 @@
 import { GM, GM_cookie } from "vite-plugin-monkey/dist/client";
 import { API_BASE, SignInRequired, accessToken, request, signOut } from "./auth";
+import { ScriptError } from "./locale";
 
 const CLAL = /^[A-Za-z0-9]{64}$/;
 
@@ -23,7 +24,7 @@ export async function readClal(): Promise<string | null> {
   } else if (typeof GM_cookie !== "undefined" && typeof GM_cookie?.list === "function") {
     cookies = await listWithCallback(url);
   } else {
-    throw new Error("This userscript manager cannot read cookies");
+    throw new ScriptError("noCookieApi");
   }
   const value = cookies.find(cookie => cookie.name === "clal")?.value;
   return value && CLAL.test(value) ? value : null;
@@ -42,5 +43,5 @@ export async function sendClal(clal: string): Promise<void> {
     signOut();
     throw new SignInRequired();
   }
-  throw new Error(String(body.error ?? `tomomai refused the cookie (${status})`));
+  throw new ScriptError("refused", { status: String(body.code ?? status) });
 }

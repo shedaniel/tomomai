@@ -245,6 +245,9 @@ importers:
       '@tomomai/ui':
         specifier: workspace:*
         version: link:../../packages/ui
+      '@tomomai/userscript':
+        specifier: workspace:*
+        version: link:../../packages/userscript
       '@tomomai/utils':
         specifier: workspace:*
         version: link:../../packages/utils

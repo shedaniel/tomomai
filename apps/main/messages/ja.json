@@ -1225,7 +1225,7 @@
       },
       "send": {
         "title": "クッキーを送信",
-        "description": "SEGA のページを開き、パネルの「Send to {product}」を押してください。",
+        "description": "SEGA のページを開き、パネルの「{button}」を押してください。",
         "gatewayButton": "SEGA のページを開く",
         "signOut": "このブラウザで {net} からログアウトすると、このクッキーのセッションが終了し、再度送信するまでフェッチできなくなります。",
         "waiting": "クッキーを待っています…",

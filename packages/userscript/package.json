@@ -3,6 +3,12 @@
   "version": "0.0.1",
   "private": true,
   "type": "module",
+  "exports": {
+    "./i18n": {
+      "import": "./src/i18n.ts",
+      "types": "./src/i18n.ts"
+    }
+  },
   "scripts": {
     "dev": "vite",
     "build": "vite build",

@@ -115,7 +115,7 @@ const APP_VERSION_MINOR = (() => {
 
 const nextConfig: NextConfig = {
   distDir: getFrontendDistDir(frontendGame, process.env.NODE_ENV === "development"),
-  transpilePackages: ["@tomomai/ui", "@tomomai/i18n", "@tomomai/markdown"],
+  transpilePackages: ["@tomomai/ui", "@tomomai/i18n", "@tomomai/markdown", "@tomomai/userscript"],
   env: { BUILD_STAMP, GIT_SHA, APP_VERSION_MINOR, FRONTEND_GAME: frontendGame },
   // Comma-separated hosts, such as a tailnet name, that may load dev resources like hot reload.
   allowedDevOrigins: process.env.DEV_ALLOWED_ORIGINS?.split(",").map(host => host.trim()).filter(Boolean),

@@ -1,13 +1,21 @@
 import { BrandLogo } from "@/components/brand-logo";
 import { SEGA_AIME_GATEWAY } from "@/lib/games/sites";
+import { MESSAGES, matchLocale, type Messages } from "@tomomai/userscript/i18n";
 import { Cookie, MousePointer2, Send, X } from "lucide-react";
+import { useLocale } from "next-intl";
+
+/** The userscript panel's strings in the language it picks up from the site. */
+export function usePanelMessages(): Messages {
+  return MESSAGES[matchLocale(useLocale()) ?? "en"];
+}
 
 /**
- * A picture of the userscript's panel on the gateway page, so the send step shows what to look for. Its
- * labels stay in English because the panel itself is English. Radii are fixed rather than theme sizes,
- * which are made for full-size cards and look bloated at this scale.
+ * A picture of the userscript's panel on the gateway page, so the send step shows what to look for, with
+ * the panel's own strings. Radii are fixed rather than theme sizes, which are made for full-size cards
+ * and look bloated at this scale.
  */
 export function GatewayPreview() {
+  const panel = usePanelMessages();
   return (
     <div aria-hidden className="overflow-hidden rounded-[12px] border select-none">
       <div className="flex items-center gap-1.5 border-b bg-muted px-3 py-2">
@@ -37,11 +45,11 @@ export function GatewayPreview() {
             <span className="grid h-6 w-6 flex-shrink-0 place-items-center rounded-full bg-muted text-primary">
               <Cookie className="h-3.5 w-3.5" />
             </span>
-            <span className="text-xs font-semibold">Ready to send</span>
+            <span className="text-xs font-semibold">{panel.readyTitle}</span>
           </div>
           <div className="relative mt-3 flex h-7 items-center justify-center gap-1.5 rounded-full bg-primary text-[11px] font-medium text-primary-foreground">
             <Send className="h-3 w-3" />
-            Send to tomomai
+            {panel.send}
             <MousePointer2 className="absolute -bottom-2.5 right-8 h-4 w-4 fill-foreground stroke-background" />
           </div>
         </div>

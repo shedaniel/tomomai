@@ -18,7 +18,7 @@ import { CircleCheck, CircleX, Download, ExternalLink, Info, LoaderCircle, Puzzl
 import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { BROWSER_ICONS } from "./browser-icons";
-import { GatewayPreview } from "./gateway-preview";
+import { GatewayPreview, usePanelMessages } from "./gateway-preview";
 import { USERSCRIPT_GUIDES, type GuideManager } from "./userscript-guides";
 import { useTomomaiUserscript } from "./use-tomomai-userscript";
 import { BROWSERS, MANAGER_ICONS, MANAGER_NAMES, MANAGER_OPTIONS, detectBrowser, type BrowserId, type ManagerId, type ManagerOption } from "./userscript-managers";
@@ -107,6 +107,7 @@ export function SegaUserscriptDialog({ region, isOpen, onOpenChange, onTokenSave
   const [browser, setBrowser] = useState<BrowserId>("other");
   const [manager, setManager] = useState<ManagerId | null>(null);
   const [siteOpened, setSiteOpened] = useState(false);
+  const panel = usePanelMessages();
 
   const usable = usableOptions(browser);
   const incompatible = MANAGER_OPTIONS[browser].filter(option => option.support === "incompatible");
@@ -262,7 +263,7 @@ export function SegaUserscriptDialog({ region, isOpen, onOpenChange, onTokenSave
           </p>
         )}
         <GatewayPreview />
-        <p className="text-sm text-foreground">{t("tokenDialog.userscriptGuide.send.description", { product })}</p>
+        <p className="text-sm text-foreground">{t("tokenDialog.userscriptGuide.send.description", { button: panel.send })}</p>
         <Button asChild className="w-full">
           <a href={SEGA_AIME_GATEWAY.landingUrl} target="_blank" rel="noopener noreferrer" onClick={() => setSiteOpened(true)}>
             <ExternalLink className="h-4 w-4 mr-2" />

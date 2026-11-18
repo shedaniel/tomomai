@@ -1109,7 +1109,7 @@
       },
       "send": {
         "title": "Send your cookie",
-        "description": "Open the SEGA page and press Send to {product} in the panel.",
+        "description": "Open the SEGA page and press {button} in the panel.",
         "gatewayButton": "Open the SEGA page",
         "signOut": "Signing out of {net} in this browser ends the session this cookie belongs to, and fetching stops until you send it again.",
         "waiting": "Waiting for your cookie...",
