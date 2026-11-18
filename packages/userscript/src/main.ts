@@ -57,6 +57,7 @@ const STYLES = `
 .close { display: grid; place-items: center; width: 32px; height: 32px; padding: 0; border: 0; border-radius: 999px; background: none; color: var(--muted-foreground); cursor: pointer; }
 .close:hover { background: var(--muted); color: var(--foreground); }
 .status { display: flex; gap: 12px; align-items: flex-start; }
+.status.solo { align-items: center; }
 .badge { flex: none; display: grid; place-items: center; width: 36px; height: 36px; border-radius: 999px; background: var(--muted); color: var(--primary); }
 .badge.error { color: var(--destructive); }
 .title { margin: 0; font-size: 16px; font-weight: 600; line-height: 1.4; }
@@ -165,7 +166,7 @@ function mountShell(layout: "center" | "corner", onClose?: () => void) {
 }
 
 function status(iconName: IconName, title: string, text: string | null, { error = false } = {}) {
-  return element("div", { className: "status" }, [
+  return element("div", { className: text ? "status" : "status solo" }, [
     element("span", { className: error ? "badge error" : "badge" }, [icon(iconName, iconName === "spinner" ? "spin" : "")]),
     element("div", {}, [
       element("p", { className: "title", textContent: title }),
