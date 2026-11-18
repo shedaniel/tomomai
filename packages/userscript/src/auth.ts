@@ -1,14 +1,16 @@
 import { GM_getValue, GM_setValue, GM_xmlhttpRequest } from "vite-plugin-monkey/dist/client";
 import { ScriptError } from "./locale";
 
-const KEY_ACCESS_TOKEN = "tomomai_access_token";
-const KEY_REFRESH_TOKEN = "tomomai_refresh_token";
-const KEY_EXPIRES_AT = "tomomai_token_expires_at";
-
 const SCOPES = "offline_access fetch:token:write";
 
 // Both are filled in by the route that serves the script, so one build works on every deployment.
 export const API_BASE: string = __API_BASE__;
+
+// Each site signs its own tokens, so a copy installed from another site keeps its sign-in apart.
+const KEY_PREFIX = `tokens:${new URL(API_BASE).host}:`;
+const KEY_ACCESS_TOKEN = `${KEY_PREFIX}access`;
+const KEY_REFRESH_TOKEN = `${KEY_PREFIX}refresh`;
+const KEY_EXPIRES_AT = `${KEY_PREFIX}expiresAt`;
 const CLIENT_ID: string = __USERSCRIPT_CLIENT_ID__;
 const REDIRECT_URI = `${API_BASE}/userscript/callback`;
 

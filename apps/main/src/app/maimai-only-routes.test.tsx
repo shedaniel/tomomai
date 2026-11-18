@@ -8,8 +8,8 @@ vi.mock("@/lib/auth-server", () => ({ getServerSession: vi.fn() }));
 
 type Handler = (request: NextRequest, context: object) => unknown;
 
-// Every handler here serves a maimai-only feature: the last credit render, the China proxy, lxns sign-in, the
-// userscript and the percentile refresh cron, which every deployment registers.
+// Every handler here serves a maimai-only feature: the last credit render, the China proxy, lxns sign-in and
+// the percentile refresh cron, which every deployment registers.
 const ROUTES: Record<string, () => Promise<Handler>> = {
   "GET /api/cron/percentile-bands": async () => (await import("./api/cron/percentile-bands/route")).GET,
   "GET /api/last-credit": async () => (await import("./api/last-credit/route")).GET,
@@ -18,8 +18,6 @@ const ROUTES: Record<string, () => Promise<Handler>> = {
   "GET /cn-proxy/link": async () => (await import("./cn-proxy/link/route")).GET,
   "GET /api/oauth/lxns/start": async () => (await import("./api/oauth/lxns/start/route")).GET,
   "GET /api/oauth/lxns/callback": async () => (await import("./api/oauth/lxns/callback/route")).GET,
-  "GET /userscript.user.js": async () => (await import("./userscript.user.js/route")).GET,
-  "GET /userscript/callback": async () => (await import("./userscript/callback/route")).GET,
   "/{locale}/cn-proxy pages": async () => {
     const { default: CnProxyLayout } = await import("./[locale]/cn-proxy/layout");
     return () => CnProxyLayout({ children: null });

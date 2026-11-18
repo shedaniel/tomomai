@@ -7,6 +7,10 @@
     "./i18n": {
       "import": "./src/i18n.ts",
       "types": "./src/i18n.ts"
+    },
+    "./games": {
+      "import": "./src/games.ts",
+      "types": "./src/games.ts"
     }
   },
   "scripts": {

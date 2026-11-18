@@ -1,5 +1,6 @@
 import { GM_getValue, GM_setValue } from "vite-plugin-monkey/dist/client";
-import { LOCALES, MESSAGES, format, matchLocale, type ErrorKey, type Locale, type Messages } from "./i18n";
+import type { ScriptGame } from "./games";
+import { LOCALES, MESSAGES, format, matchLocale, panelMessages, type ErrorKey, type Locale, type Messages } from "./i18n";
 
 const KEY_CHOSEN = "locale";
 const KEY_SITE = "siteLocale";
@@ -26,8 +27,8 @@ export function rememberSiteLocale(tag: string): void {
   if (locale) GM_setValue(KEY_SITE, locale);
 }
 
-export function messages(): Messages {
-  return MESSAGES[currentLocale()];
+export function messages(game: ScriptGame, host: ScriptGame): Messages {
+  return panelMessages(currentLocale(), game, host.product);
 }
 
 /** An error the panel shows in the player's language. Its message is the English text, for logs. */
@@ -36,7 +37,7 @@ export class ScriptError extends Error {
     super(format(MESSAGES.en.errors[key], vars));
   }
 
-  localized(): string {
-    return format(messages().errors[this.key], this.vars);
+  localized(t: Messages): string {
+    return format(t.errors[this.key], this.vars);
   }
 }

@@ -1,22 +1,36 @@
 import { GM_getValue, GM_info, GM_setValue } from "vite-plugin-monkey/dist/client";
-import logoDark from "./assets/logo-dark.webp?inline";
-import logoLight from "./assets/logo.webp?inline";
+import chunithmLogoDark from "./assets/chunithm-logo-dark.webp?inline";
+import chunithmLogo from "./assets/chunithm-logo.webp?inline";
+import maimaiLogoDark from "./assets/maimai-logo-dark.webp?inline";
+import maimaiLogo from "./assets/maimai-logo.webp?inline";
 import { isSignedIn, signIn, signOut } from "./auth";
 import { LOCALES, LOCALE_NAMES, type Locale } from "./i18n";
 import { ScriptError, chooseLocale, currentLocale, messages, rememberSiteLocale } from "./locale";
+import { GAMES, isGameId, type GameId } from "./games";
 import { readClal, sendClal } from "./sega";
 
 const GATEWAY_HOST = "lng-tgk-aime-gw.am-all.net";
 const GATEWAY_LANDING = `https://${GATEWAY_HOST}/common_auth/`;
-const NET_HOST = "maimaidx-eng.com";
-// Tags the sign-in form opened from the panel. The gateway ignores it and does not pass it on.
-const SIGN_IN_MARK = "tomomai=signin";
-const NET_LOGIN = `https://${GATEWAY_HOST}/common_auth/login?site_id=maimaidxex&redirect_url=https://${NET_HOST}/maimai-mobile/&back_url=https://maimai.sega.com/&${SIGN_IN_MARK}`;
+const LOGOS: Record<GameId, { light: string; dark: string }> = {
+  maimai: { light: maimaiLogo, dark: maimaiLogoDark },
+  chunithm: { light: chunithmLogo, dark: chunithmLogoDark },
+};
 
-// SEGA returns a signed-in player to DX NET (a server redirect through ?ssid=), not to the gateway, so the
-// script sends them back itself as soon as the DX NET page starts loading.
-const KEY_RETURN = "returnToGatewayAt";
-const KEY_RETURNED = "returnedToGatewayAt";
+// The game of the site this copy was installed from, for a landing page opened without a game.
+const HOME_GAME: GameId = isGameId(__HOME_GAME__) ? __HOME_GAME__ : "maimai";
+
+/** The sign-in form for a game, tagged so the script knows the visit came from its panel. The gateway ignores the tag. */
+function netLogin(game: GameId): string {
+  const { netOrigin, netRoot, aime } = GAMES[game];
+  const url = new URL("/common_auth/login", `https://${GATEWAY_HOST}`);
+  url.search = new URLSearchParams({ site_id: aime.siteId, redirect_url: `${netOrigin}${netRoot}`, back_url: aime.backUrl, tomomai: game }).toString();
+  return url.href;
+}
+
+// SEGA returns a signed-in player to the game's NET site (a server redirect through ?ssid=), not to the
+// gateway, so the script sends them back itself as soon as that page starts loading.
+const KEY_RETURN = "returnToGateway";
+const KEY_RETURNED = "returnedToGateway";
 const RETURN_WINDOW_MS = 30 * 60 * 1000;
 
 const ICONS = {
@@ -35,22 +49,22 @@ type IconName = keyof typeof ICONS;
 
 // The site's theme tokens at its default hue, so the panel reads as part of tomomai.
 const STYLES = `
-:host { all: initial; }
+:host { all: initial; --hue: 0; }
 .panel {
-  --content: oklch(0.995 0.0027 0); --foreground: oklch(0.448 0.0963 0); --muted: oklch(0.956 0.009 0);
-  --muted-foreground: oklch(0.448 0.0963 0 / 72%); --primary: oklch(0.5 0.152 0); --primary-foreground: oklch(0.969 0.0135 0);
-  --border: oklch(0.9 0.0137 0); --destructive: oklch(0.577 0.245 27.325);
+  --content: oklch(0.995 0.0027 var(--hue)); --foreground: oklch(0.448 0.0963 var(--hue)); --muted: oklch(0.956 0.009 var(--hue));
+  --muted-foreground: oklch(0.448 0.0963 var(--hue) / 72%); --primary: oklch(0.5 0.152 var(--hue)); --primary-foreground: oklch(0.969 0.0135 var(--hue));
+  --border: oklch(0.9 0.0137 var(--hue)); --destructive: oklch(0.577 0.245 27.325);
   position: fixed; right: 16px; top: 16px; z-index: 2147483647;
   width: min(368px, calc(100vw - 32px)); box-sizing: border-box; padding: 20px;
   border: 1px solid var(--border); border-radius: 28px; background: var(--content); color: var(--foreground);
-  box-shadow: 0 24px 48px -12px oklch(0.3 0.05 0 / 0.25);
+  box-shadow: 0 24px 48px -12px oklch(0.3 0.05 var(--hue) / 0.25);
   font: 14px/1.5 Inter, system-ui, -apple-system, "Segoe UI", "Hiragino Sans", "PingFang SC", "PingFang TC",
     "Apple SD Gothic Neo", "Microsoft YaHei", "Microsoft JhengHei", "Malgun Gothic", "Noto Sans CJK JP", sans-serif;
   animation: enter 0.25s ease-out;
 }
 .backdrop {
   position: fixed; inset: 0; z-index: 2147483646; display: grid; place-items: center; padding: 16px;
-  background: oklch(0.25 0.03 0 / 0.4); backdrop-filter: blur(6px); animation: fade 0.2s ease-out;
+  background: oklch(0.25 0.03 var(--hue) / 0.4); backdrop-filter: blur(6px); animation: fade 0.2s ease-out;
 }
 .backdrop .panel { position: static; width: min(400px, 100%); padding: 24px; }
 @keyframes fade { from { opacity: 0; } }
@@ -97,9 +111,9 @@ svg { width: 18px; height: 18px; flex: none; fill: none; stroke: currentColor; s
 .spin { animation: spin 0.9s linear infinite; }
 @media (prefers-color-scheme: dark) {
   .panel {
-    --content: oklch(0.205 0.018 0); --foreground: oklch(0.9 0.009 0); --muted: oklch(0.269 0.0225 0);
-    --muted-foreground: oklch(0.708 0.027 0); --primary: oklch(0.85 0.135 0); --primary-foreground: oklch(0.15 0.045 0);
-    --border: oklch(1 0.0108 0 / 14%); --destructive: oklch(0.704 0.191 22.216);
+    --content: oklch(0.205 0.018 var(--hue)); --foreground: oklch(0.9 0.009 var(--hue)); --muted: oklch(0.269 0.0225 var(--hue));
+    --muted-foreground: oklch(0.708 0.027 var(--hue)); --primary: oklch(0.85 0.135 var(--hue)); --primary-foreground: oklch(0.15 0.045 var(--hue));
+    --border: oklch(1 0.0108 var(--hue) / 14%); --destructive: oklch(0.704 0.191 22.216);
     box-shadow: 0 24px 48px -12px rgb(0 0 0 / 0.6);
   }
   .logo.light { display: none; }
@@ -141,19 +155,31 @@ function button(label: string, onclick: () => void, { iconName, outline = false,
 }
 
 function errorMessage(err: unknown): string {
-  if (err instanceof ScriptError) return err.localized();
+  if (err instanceof ScriptError) return err.localized(t());
   return err instanceof Error ? err.message : String(err);
 }
 
-function recent(key: string): boolean {
-  const at = GM_getValue(key, 0) as number;
-  return at > 0 && Date.now() - at < RETURN_WINDOW_MS;
+type Trip = { at: number; game: GameId };
+
+/** A trip to SEGA's sign-in and back that started in the last half hour, and the game it is for. */
+function recentTrip(key: string): Trip | null {
+  const trip = GM_getValue(key, null) as Partial<Trip> | null;
+  if (!trip || typeof trip.at !== "number" || !isGameId(trip.game) || Date.now() - trip.at >= RETURN_WINDOW_MS) return null;
+  return trip as Trip;
 }
+
+function setTrip(key: string, game: GameId | null): void {
+  GM_setValue(key, game ? { at: Date.now(), game } : null);
+}
+
+// Set once in start(), before anything renders.
+let game: GameId = HOME_GAME;
+const t = () => messages(GAMES[game], GAMES[HOME_GAME]);
 
 function localeSwitcher(onChange: () => void) {
   const current = currentLocale();
   const select = document.createElement("select");
-  select.ariaLabel = select.title = messages().language;
+  select.ariaLabel = select.title = t().language;
   select.onchange = () => {
     chooseLocale(select.value as Locale);
     onChange();
@@ -174,13 +200,14 @@ function mountShell(layout: "center" | "corner", content: () => (Node | string)[
   document.body.append(host);
   const shadow = host.attachShadow({ mode: "closed" });
   shadow.append(element("style", { textContent: STYLES }));
-  const panel = element("div", { className: "panel", role: "dialog", ariaLabel: "tomomai" });
+  const panel = element("div", { className: "panel", role: "dialog", ariaLabel: GAMES[game].product });
   shadow.append(layout === "center" ? element("div", { className: "backdrop" }, [panel]) : panel);
 
   function render() {
-    const t = messages();
+    const { close: closeLabel } = t();
     panel.lang = currentLocale();
-    const close = element("button", { className: "close", ariaLabel: t.close, title: t.close, onclick: () => {
+    host.style.setProperty("--hue", String(GAMES[game].hue));
+    const close = element("button", { className: "close", ariaLabel: closeLabel, title: closeLabel, onclick: () => {
       onClose?.();
       host.remove();
     } });
@@ -188,8 +215,8 @@ function mountShell(layout: "center" | "corner", content: () => (Node | string)[
     panel.replaceChildren(
       element("div", { className: "head" }, [
         element("span", {}, [
-          element("img", { className: "logo light", src: logoLight, alt: "tomomai" }),
-          element("img", { className: "logo dark", src: logoDark, alt: "tomomai" }),
+          element("img", { className: "logo light", src: LOGOS[game].light, alt: GAMES[game].product }),
+          element("img", { className: "logo dark", src: LOGOS[game].dark, alt: GAMES[game].product }),
         ]),
         element("div", { className: "tools" }, [localeSwitcher(render), close]),
       ]),
@@ -213,8 +240,8 @@ function status(iconName: IconName, title: string, text: string | null, { error 
 
 /** The panel on the gateway landing page, which says Not Found but carries the clal cookie. */
 function mountPanel() {
-  const cameBack = recent(KEY_RETURNED);
-  GM_setValue(KEY_RETURNED, 0);
+  const cameBack = recentTrip(KEY_RETURNED)?.game === game;
+  setTrip(KEY_RETURNED, null);
 
   let state: State = { kind: "checking" };
   const setState = (next: State) => {
@@ -231,7 +258,7 @@ function mountPanel() {
         await signingIn;
       }
       setState({ kind: "sending", clal });
-      await sendClal(clal);
+      await sendClal(game, clal);
       setState({ kind: "sent" });
     } catch (err) {
       setState({ kind: "error", clal, err });
@@ -239,20 +266,20 @@ function mountPanel() {
   }
 
   function goSignIn() {
-    GM_setValue(KEY_RETURN, Date.now());
-    location.href = NET_LOGIN;
+    setTrip(KEY_RETURN, game);
+    location.href = netLogin(game);
   }
 
   function closeTab(label: HTMLButtonElement) {
     window.close();
     // Managers only let a script close a tab it may close, so say where to go when it stays open.
     setTimeout(() => {
-      label.replaceWith(element("p", { className: "text", textContent: messages().canCloseTab }));
+      label.replaceWith(element("p", { className: "text", textContent: t().canCloseTab }));
     }, 300);
   }
 
   function body(): (Node | string)[] {
-    const t = messages();
+    const t = messages(GAMES[game], GAMES[HOME_GAME]);
     switch (state.kind) {
       case "checking":
         return [status("spinner", t.checking, null)];
@@ -300,7 +327,7 @@ function mountPanel() {
   }
 
   function content(): (Node | string)[] {
-    const t = messages();
+    const t = messages(GAMES[game], GAMES[HOME_GAME]);
     const busy = state.kind === "sending" || state.kind === "checking" || state.kind === "signing-in";
     const foot = isSignedIn() && !busy
       ? [element("div", { className: "foot" }, [
@@ -329,7 +356,7 @@ function mountPanel() {
 function mountSignInHint() {
   // clal is SEGA's auto login cookie, so it only exists when that box stays ticked. Closing the hint also
   // stops the trip back, for a player who changed their mind.
-  mountShell("corner", () => [status("signIn", messages().hintTitle, messages().hintText)], () => GM_setValue(KEY_RETURN, 0));
+  mountShell("corner", () => [status("signIn", t().hintTitle, t().hintText)], () => setTrip(KEY_RETURN, null));
 }
 
 /**
@@ -342,25 +369,39 @@ function announce() {
   window.dispatchEvent(new Event("tomomai:userscript"));
 }
 
+/** The game a gateway visit is for: the one the token dialog named in the link, else the one being signed in to. */
+function landingGame(): GameId {
+  const named = new URLSearchParams(location.hash.slice(1)).get("game");
+  return isGameId(named) ? named : recentTrip(KEY_RETURNED)?.game ?? HOME_GAME;
+}
+
 function start() {
   const { hostname, pathname, search } = location;
   if (hostname === GATEWAY_HOST) {
-    if (pathname === "/common_auth/" || pathname === "/common_auth") return mountPanel();
+    if (pathname === "/common_auth/" || pathname === "/common_auth") {
+      game = landingGame();
+      return mountPanel();
+    }
     if (!pathname.startsWith("/common_auth/login")) return;
-    // A failed sign-in reloads the form without the tag, so the hint follows the flag the tag set.
-    if (new URLSearchParams(search).has("tomomai")) GM_setValue(KEY_RETURN, Date.now());
-    if (recent(KEY_RETURN)) mountSignInHint();
+    // A failed sign-in reloads the form without the tag, so the hint follows the trip the tag started.
+    const tagged = new URLSearchParams(search).get("tomomai");
+    if (isGameId(tagged)) setTrip(KEY_RETURN, tagged);
+    const trip = recentTrip(KEY_RETURN);
+    if (!trip) return;
+    game = trip.game;
+    mountSignInHint();
   } else {
     announce();
   }
 }
 
-if (location.hostname === NET_HOST) {
-  if (recent(KEY_RETURN)) {
-    GM_setValue(KEY_RETURN, 0);
-    GM_setValue(KEY_RETURNED, Date.now());
-    location.replace(GATEWAY_LANDING);
-  }
+const returning = recentTrip(KEY_RETURN);
+if (returning && location.origin === GAMES[returning.game].netOrigin) {
+  setTrip(KEY_RETURN, null);
+  setTrip(KEY_RETURNED, returning.game);
+  location.replace(`${GATEWAY_LANDING}#game=${returning.game}`);
+} else if (Object.values(GAMES).some(entry => entry.netOrigin === location.origin)) {
+  // A NET site visit that is not a trip back from the panel.
 } else if (document.readyState === "loading") {
   document.addEventListener("DOMContentLoaded", start);
 } else {

@@ -1,12 +1,10 @@
 import { NextRequest } from "next/server";
 import { useUserscriptFetch } from "@/lib/flags";
-import { requireFrontendGame } from "@/lib/games/current";
 import { SEGA_AIME_GATEWAY } from "@/lib/games/sites";
 
 // The userscript opens the sign-in from the SEGA gateway page, where it reads the cookie, and exchanges
 // the code itself with its PKCE verifier. This page only hands the code back to that window.
 export async function GET(request: NextRequest) {
-  requireFrontendGame("maimai");
   if (!(await useUserscriptFetch())) return new Response("Not Found", { status: 404 });
   const { searchParams } = request.nextUrl;
   const code = searchParams.get("code");

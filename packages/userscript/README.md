@@ -1,7 +1,7 @@
 # @tomomai/userscript
 
-A userscript that sends a player's maimai DX NET International login cookie to tomomai, so they can
-fetch scores without typing a password or copying the cookie by hand.
+A userscript that sends a player's maimai DX NET or CHUNITHM-NET International login cookie to tomomai
+or tomochu, so they can fetch scores without typing a password or copying the cookie by hand.
 
 SEGA's gateway sets the `clal` cookie as HttpOnly, so page scripts and bookmarklets cannot read it.
 A userscript manager can, through `GM_cookie`, once its HttpOnly cookie setting is on. The token
@@ -25,6 +25,27 @@ cookie does. After sending, the panel can close its tab (`@grant window.close`).
 
 The bundle is plain TypeScript with no dependencies and no `@require`, so what players install is what
 this package builds. The panel's logo is inlined from `src/assets`.
+
+## Both games, one script
+
+Both games sign in through the same Aime gateway with the same `clal` cookie, so one build serves both.
+Each site serves it with its own host filled in, so no domain is written into the script, and a copy
+installed from either site works for both games:
+
+- The token dialog opens the gateway with `#game=maimai` or `#game=chunithm`. The panel saves the
+  cookie for that game, `PUT /api/v1/games/{game}/fetch/token`, and takes that game's brand, logo and
+  theme hue. Without a game in the link it uses the game of the site it was installed from.
+- The copy signs in to and saves through the site it was installed from. Both sites share one
+  database and one set of accounts, so the other site's dialog sees the saved token as long as the
+  player uses the same account there. The panel names that site for signing in, and the game's site
+  for sending.
+- The sign-in round trip covers both NET sites, `maimaidx-eng.com/maimai-mobile/*` and
+  `chunithm-net-eng.com/mobile/*`.
+- `src/games.ts` copies each game's SEGA sites from the site's game definitions, and a test on the site
+  checks they agree.
+
+The name and namespace are the same on both sites, so installing from the second replaces the first
+instead of adding a second panel. Its tokens are stored per site, so that copy signs in again.
 
 ## Languages
 
@@ -72,7 +93,8 @@ The route, the callback and the dialog's userscript option are all behind the `u
    switched on, the redirect URI `https://<site>/userscript/callback` and the scope
    **Save game tokens** (`fetch:token:write`). A development server may use
    `http://localhost:3000/userscript/callback`. Set the icon to `https://<site>/brand/maimai/icon.png`
-   so the consent screen shows the tomomai mascot instead of a letter. No secret is issued.
+   so the consent screen shows the tomomai mascot instead of a letter. No secret is issued. Each site
+   that serves the script needs its own redirect URI, on one app or on one app per site.
 2. Set `USERSCRIPT_CLIENT_ID` to its client ID and restart the server.
 3. Build the bundle:
 

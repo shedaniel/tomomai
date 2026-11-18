@@ -1,12 +1,14 @@
 import { BrandLogo } from "@/components/brand-logo";
 import { SEGA_AIME_GATEWAY } from "@/lib/games/sites";
-import { MESSAGES, matchLocale, type Messages } from "@tomomai/userscript/i18n";
+import { matchLocale, panelMessages, type Messages } from "@tomomai/userscript/i18n";
+import { useGame } from "@/components/providers/game-provider";
 import { Cookie, MousePointer2, Send, X } from "lucide-react";
 import { useLocale } from "next-intl";
 
-/** The userscript panel's strings in the language it picks up from the site. */
+/** The userscript panel's strings for this site's game, in the language it picks up from the site. */
 export function usePanelMessages(): Messages {
-  return MESSAGES[matchLocale(useLocale()) ?? "en"];
+  const { brand } = useGame();
+  return panelMessages(matchLocale(useLocale()) ?? "en", { product: brand.productName, netName: brand.netName });
 }
 
 /**

@@ -7,6 +7,9 @@ const CLIENT_ID_PLACEHOLDER = "__TOMOMAI_USERSCRIPT_CLIENT_ID__";
 // The serving route also fills in the site's host for @connect and a match pattern for its pages.
 const HOST_PLACEHOLDER = "__TOMOMAI_API_HOST__";
 const MATCH_PLACEHOLDER = "__TOMOMAI_SITE_MATCH__";
+// The game of the site serving the script, and its brand icon.
+const GAME_PLACEHOLDER = "__TOMOMAI_GAME__";
+const ICON_PLACEHOLDER = "__TOMOMAI_ICON__";
 
 // Userscript managers compare @version numerically to push auto-updates, so it
 // must increase monotonically. Use the HEAD commit datetime directly
@@ -25,6 +28,7 @@ export default defineConfig({
     // resolveBaseUrl(); __USERSCRIPT_CLIENT_ID__ uses process.env.USERSCRIPT_CLIENT_ID.
     __API_BASE__: JSON.stringify(PLACEHOLDER),
     __USERSCRIPT_CLIENT_ID__: JSON.stringify(CLIENT_ID_PLACEHOLDER),
+    __HOME_GAME__: JSON.stringify(GAME_PLACEHOLDER),
   },
   plugins: [
     monkey({
@@ -33,12 +37,13 @@ export default defineConfig({
         name: "tomomai",
         namespace: "https://tomomai.lol",
         version,
-        description: "Sends your maimai DX NET International login cookie to tomomai",
-        icon: `${PLACEHOLDER}/brand/maimai/icon.png`,
+        description: "Sends your maimai DX NET or CHUNITHM-NET International login cookie to tomomai or tomochu",
+        icon: ICON_PLACEHOLDER,
         match: [
           "https://lng-tgk-aime-gw.am-all.net/common_auth/*",
           // Only to send a player who just signed in back to the gateway.
           "https://maimaidx-eng.com/maimai-mobile/*",
+          "https://chunithm-net-eng.com/mobile/*",
           MATCH_PLACEHOLDER,
         ],
         noframes: true,

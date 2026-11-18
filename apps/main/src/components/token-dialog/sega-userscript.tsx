@@ -264,8 +264,9 @@ export function SegaUserscriptDialog({ region, isOpen, onOpenChange, onTokenSave
         )}
         <GatewayPreview />
         <p className="text-sm text-foreground">{t("tokenDialog.userscriptGuide.send.description", { button: panel.send })}</p>
+        {/* The fragment tells the userscript which game to send the cookie for. */}
         <Button asChild className="w-full">
-          <a href={SEGA_AIME_GATEWAY.landingUrl} target="_blank" rel="noopener noreferrer" onClick={() => setSiteOpened(true)}>
+          <a href={`${SEGA_AIME_GATEWAY.landingUrl}#game=${game.id}`} target="_blank" rel="noopener noreferrer" onClick={() => setSiteOpened(true)}>
             <ExternalLink className="h-4 w-4 mr-2" />
             {t("tokenDialog.userscriptGuide.send.gatewayButton")}
           </a>

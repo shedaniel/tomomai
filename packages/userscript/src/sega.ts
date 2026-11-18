@@ -1,5 +1,6 @@
 import { GM, GM_cookie } from "vite-plugin-monkey/dist/client";
 import { API_BASE, SignInRequired, accessToken, request, signOut } from "./auth";
+import type { GameId } from "./games";
 import { ScriptError } from "./locale";
 
 const CLAL = /^[A-Za-z0-9]{64}$/;
@@ -30,9 +31,9 @@ export async function readClal(): Promise<string | null> {
   return value && CLAL.test(value) ? value : null;
 }
 
-/** Saves the cookie as the player's maimai International token. */
-export async function sendClal(clal: string): Promise<void> {
-  const send = async () => request("PUT", `${API_BASE}/api/v1/games/maimai/fetch/token?region=intl`, {
+/** Saves the cookie as the player's International token for the game. */
+export async function sendClal(game: GameId, clal: string): Promise<void> {
+  const send = async () => request("PUT", `${API_BASE}/api/v1/games/${game}/fetch/token?region=intl`, {
     headers: { Authorization: `Bearer ${await accessToken()}`, "Content-Type": "application/json" },
     data: JSON.stringify({ clal }),
   });
