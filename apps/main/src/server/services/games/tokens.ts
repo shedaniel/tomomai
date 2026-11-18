@@ -23,6 +23,13 @@ export async function readToken(game: CanonicalGameId, userId: string, region: R
   }
 }
 
+/** When the stored token was last saved, or null when none is stored. */
+export async function tokenSavedAt(game: CanonicalGameId, userId: string, region: Region): Promise<Date | null> {
+  const [record] = await db.select({ updatedAt: userTokens.updatedAt }).from(userTokens)
+    .where(tokenScope(game, userId, region)).limit(1);
+  return record?.updatedAt ?? null;
+}
+
 export async function saveToken(game: CanonicalGameId, userId: string, region: Region, token: string): Promise<void> {
   const encrypted = encryptToken(token);
   const now = new Date();

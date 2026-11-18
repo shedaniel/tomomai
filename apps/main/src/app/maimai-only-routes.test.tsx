@@ -20,8 +20,6 @@ const ROUTES: Record<string, () => Promise<Handler>> = {
   "GET /api/oauth/lxns/callback": async () => (await import("./api/oauth/lxns/callback/route")).GET,
   "GET /userscript.user.js": async () => (await import("./userscript.user.js/route")).GET,
   "GET /userscript/callback": async () => (await import("./userscript/callback/route")).GET,
-  "OPTIONS /api/userscript/token": async () => (await import("./api/userscript/token/route")).OPTIONS,
-  "POST /api/userscript/token": async () => (await import("./api/userscript/token/route")).POST,
   "/{locale}/cn-proxy pages": async () => {
     const { default: CnProxyLayout } = await import("./[locale]/cn-proxy/layout");
     return () => CnProxyLayout({ children: null });

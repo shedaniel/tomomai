@@ -2,6 +2,7 @@
 
 import { useGame } from "@/components/providers/game-provider";
 import type { Region } from "@/lib/games/ids";
+import { trpc } from "@/lib/trpc-client";
 import { cn } from "@/lib/utils";
 import {
   ResponsiveDialog,
@@ -30,9 +31,6 @@ interface SegaLoginMethodsDialogProps {
 
 type SubDialog = "credentials" | "cookie" | "userscript" | null;
 
-// The userscript cannot send the cookie anywhere yet, so only development can open its guide.
-const USERSCRIPT_READY = process.env.NODE_ENV === "development";
-
 export function SegaLoginMethodsDialog({ region, offerCredentials, isOpen, onOpenChange, onTokenUpdate }: SegaLoginMethodsDialogProps) {
   const t = useTranslations();
   const game = useGame();
@@ -44,17 +42,18 @@ export function SegaLoginMethodsDialog({ region, offerCredentials, isOpen, onOpe
   };
 
   const detectedUserscript = useTomomaiUserscript();
-  const userscriptInstalled = USERSCRIPT_READY && detectedUserscript !== null;
+  const userscriptReady = trpc.user.isUserscriptEnabled.useQuery(undefined, { enabled: isOpen, staleTime: Infinity }).data === true;
+  const userscriptInstalled = userscriptReady && detectedUserscript !== null;
   const userscriptCard = (
     <MethodCard
       icon={Puzzle}
       title={t("tokenDialog.methods.userscript.title")}
       badge={userscriptInstalled
         ? { label: t("tokenDialog.methods.userscript.installed"), variant: "default" }
-        : USERSCRIPT_READY ? undefined : { label: t("tokenDialog.comingSoonBadge"), variant: "secondary" }}
+        : userscriptReady ? undefined : { label: t("tokenDialog.comingSoonBadge"), variant: "secondary" }}
       description={t("tokenDialog.methods.userscript.description")}
       onClick={() => setSubDialog("userscript")}
-      disabled={!USERSCRIPT_READY}
+      disabled={!userscriptReady}
     />
   );
 
@@ -113,11 +112,12 @@ export function SegaLoginMethodsDialog({ region, offerCredentials, isOpen, onOpe
         onOpenChange={open => setSubDialog(open ? "cookie" : null)}
         onTokenUpdate={submit}
       />
-      {USERSCRIPT_READY && (
+      {userscriptReady && (
         <SegaUserscriptDialog
           region={region}
           isOpen={subDialog === "userscript"}
           onOpenChange={open => setSubDialog(open ? "userscript" : null)}
+          onTokenSaved={() => submit("")}
         />
       )}
     </>

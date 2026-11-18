@@ -1225,8 +1225,10 @@
       },
       "send": {
         "title": "傳送 Cookie",
-        "description": "開啟 {net} 並登入。在 SEGA 登入頁面上，使用者腳本會將你的 Cookie 傳送到 {product}，此對話框會自動關閉。",
+        "description": "如果還沒登入，請先登入 {net}。接著開啟 SEGA 登入頁面（會顯示 Not Found），在使用者腳本的面板中點選「Send to {product}」。第一次會開啟視窗讓你登入 {product}。Cookie 送達後，此對話框會自動關閉。",
         "button": "開啟 {net}",
+        "gatewayButton": "開啟 SEGA 登入頁面",
+        "signOut": "在此瀏覽器登出 {net} 會結束此 Cookie 所屬的工作階段，在你重新傳送之前將無法同步。",
         "waiting": "正在等待使用者腳本…",
         "installed": "此瀏覽器已安裝 {product} 使用者腳本。",
         "scriptcatPrompt": "腳本第一次讀取你的 Cookie 時，ScriptCat 會要求權限。請在倒數結束前選擇「Permanent」，再點選「Allow」。"

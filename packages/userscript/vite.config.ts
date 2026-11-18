@@ -1,11 +1,12 @@
 import { execSync } from "node:child_process";
-import tailwindcss from "@tailwindcss/vite";
-import react from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
 import monkey from "vite-plugin-monkey";
 
 const PLACEHOLDER = "__TOMOMAI_API_BASE__";
 const CLIENT_ID_PLACEHOLDER = "__TOMOMAI_USERSCRIPT_CLIENT_ID__";
+// The serving route also fills in the site's host for @connect and a match pattern for its pages.
+const HOST_PLACEHOLDER = "__TOMOMAI_API_HOST__";
+const MATCH_PLACEHOLDER = "__TOMOMAI_SITE_MATCH__";
 
 // Userscript managers compare @version numerically to push auto-updates, so it
 // must increase monotonically. Use the HEAD commit datetime directly
@@ -26,21 +27,20 @@ export default defineConfig({
     __USERSCRIPT_CLIENT_ID__: JSON.stringify(CLIENT_ID_PLACEHOLDER),
   },
   plugins: [
-    tailwindcss(),
-    react(),
     monkey({
-      entry: "src/main.tsx",
+      entry: "src/main.ts",
       userscript: {
         name: "tomomai",
         namespace: "https://tomomai.lol",
         version,
-        description: "tomomai userscript for maimaidx",
+        description: "Sends your maimai DX NET International login cookie to tomomai",
         match: [
-          "https://maimaidx.jp/*",
-          "https://maimaidx-eng.com/*",
+          "https://lng-tgk-aime-gw.am-all.net/common_auth/*",
+          MATCH_PLACEHOLDER,
         ],
-        grant: ["GM_addStyle", "GM_getValue", "GM_setValue", "GM_xmlhttpRequest"],
-        connect: ["tomomai.lol", "localhost"],
+        noframes: true,
+        grant: ["GM_cookie", "GM.cookie", "GM_getValue", "GM_setValue", "GM_xmlhttpRequest", "GM_info"],
+        connect: [HOST_PLACEHOLDER],
         updateURL: `${PLACEHOLDER}/userscript.user.js`,
         downloadURL: `${PLACEHOLDER}/userscript.user.js`,
         "run-at": "document-idle",

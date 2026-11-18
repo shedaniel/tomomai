@@ -1109,8 +1109,10 @@
       },
       "send": {
         "title": "Send your cookie",
-        "description": "Open {net} and sign in. On the SEGA login page, the userscript sends your cookie to {product} and this dialog closes on its own.",
+        "description": "Sign in to {net} if you haven't yet. Then open the SEGA login page, which says Not Found, and choose Send to {product} in the userscript's panel. The first time, a window asks you to sign in to {product}. This dialog closes on its own once the cookie arrives.",
         "button": "Open {net}",
+        "gatewayButton": "Open the SEGA login page",
+        "signOut": "Signing out of {net} in this browser ends the session this cookie belongs to, and fetching stops until you send it again.",
         "waiting": "Waiting for the userscript...",
         "installed": "The {product} userscript is installed in this browser.",
         "scriptcatPrompt": "The first time the script reads your cookie, ScriptCat asks for permission. Choose Permanent, then Allow, before the countdown runs out."

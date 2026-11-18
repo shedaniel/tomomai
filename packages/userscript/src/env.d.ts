@@ -1,3 +1,4 @@
+/// <reference types="vite/client" />
 /// <reference types="vite-plugin-monkey/global" />
 
 declare const __USERSCRIPT_CLIENT_ID__: string;

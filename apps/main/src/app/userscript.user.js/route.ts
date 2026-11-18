@@ -12,6 +12,8 @@ const BUNDLE_PATH = path.join(
 
 const PLACEHOLDER = "__TOMOMAI_API_BASE__";
 const CLIENT_ID_PLACEHOLDER = "__TOMOMAI_USERSCRIPT_CLIENT_ID__";
+const HOST_PLACEHOLDER = "__TOMOMAI_API_HOST__";
+const MATCH_PLACEHOLDER = "__TOMOMAI_SITE_MATCH__";
 
 export async function GET(request: NextRequest) {
   requireFrontendGame("maimai");
@@ -27,9 +29,13 @@ export async function GET(request: NextRequest) {
   try {
     const content = fs.readFileSync(BUNDLE_PATH, "utf-8");
     const base = resolveBaseUrlFromHeaders(request.headers);
+    const { protocol, hostname } = new URL(base);
     const patched = content
       .replaceAll(PLACEHOLDER, base)
-      .replaceAll(CLIENT_ID_PLACEHOLDER, clientId);
+      .replaceAll(CLIENT_ID_PLACEHOLDER, clientId)
+      .replaceAll(HOST_PLACEHOLDER, hostname)
+      // Match patterns take no port, and one without a port matches every port.
+      .replaceAll(MATCH_PLACEHOLDER, `${protocol}//${hostname}/*`);
     return new NextResponse(patched, {
       headers: {
         "Content-Type": "application/javascript; charset=utf-8",

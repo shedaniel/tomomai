@@ -2,7 +2,8 @@
 
 import { useGame } from "@/components/providers/game-provider";
 import type { Region } from "@/lib/games/ids";
-import { siteRoot } from "@/lib/games/sites";
+import { SEGA_AIME_GATEWAY, siteRoot } from "@/lib/games/sites";
+import { trpc } from "@/lib/trpc-client";
 import { GuidePlayer } from "@/components/guide-player";
 import { cn } from "@/lib/utils";
 import {
@@ -15,7 +16,7 @@ import {
 } from "@tomomai/ui";
 import { CircleCheck, CircleX, Download, ExternalLink, Info, LoaderCircle, Puzzle, TriangleAlert } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { BROWSER_ICONS } from "./browser-icons";
 import { USERSCRIPT_GUIDES, type GuideManager } from "./userscript-guides";
 import { useTomomaiUserscript } from "./use-tomomai-userscript";
@@ -26,7 +27,11 @@ interface SegaUserscriptDialogProps {
   region: Region;
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
+  /** Called once the userscript has saved a new token for the region. */
+  onTokenSaved: () => Promise<void>;
 }
+
+const TOKEN_POLL_MS = 3000;
 
 type Step = "pick" | "script" | "cookies" | "send";
 
@@ -94,7 +99,7 @@ function StoreLink({ option, onOpen }: { option: UsableOption; onOpen: () => voi
   );
 }
 
-export function SegaUserscriptDialog({ region, isOpen, onOpenChange }: SegaUserscriptDialogProps) {
+export function SegaUserscriptDialog({ region, isOpen, onOpenChange, onTokenSaved }: SegaUserscriptDialogProps) {
   const t = useTranslations();
   const game = useGame();
   const installedVersion = useTomomaiUserscript();
@@ -115,6 +120,30 @@ export function SegaUserscriptDialog({ region, isOpen, onOpenChange }: SegaUsers
     if (installedVersion) return "send";
   });
   const product = game.brand.productName;
+
+  const sending = isOpen && steps.key === "send";
+  const savedAt = trpc.user.getTokenSavedAt.useQuery(
+    { game: game.id, region },
+    { enabled: sending, refetchInterval: TOKEN_POLL_MS, refetchOnWindowFocus: true },
+  );
+  // The token stored when the send step opened, so only one the userscript saves afterwards counts.
+  const watch = useRef<{ since: number; baseline?: string | null; handedOff?: boolean } | null>(null);
+  useEffect(() => {
+    if (!sending) {
+      watch.current = null;
+      return;
+    }
+    watch.current ??= { since: Date.now() };
+    const state = watch.current;
+    if (!savedAt.isSuccess || savedAt.dataUpdatedAt < state.since || state.handedOff) return;
+    const current = savedAt.data ? new Date(savedAt.data).toISOString() : null;
+    if (state.baseline === undefined) {
+      state.baseline = current;
+    } else if (current !== state.baseline) {
+      state.handedOff = true;
+      void onTokenSaved().catch(() => { state.handedOff = false; state.baseline = current; });
+    }
+  }, [sending, savedAt.isSuccess, savedAt.dataUpdatedAt, savedAt.data, onTokenSaved]);
   const guide = guided ? USERSCRIPT_GUIDES[browser]?.[guided === "tampermonkey" ? "tampermonkey-stable" : guided as GuideManager] : undefined;
   const chromiumFamily = BROWSERS.find(entry => entry.id === browser)?.family !== "firefox" && browser !== "safari" && browser !== "ios";
 
@@ -232,12 +261,21 @@ export function SegaUserscriptDialog({ region, isOpen, onOpenChange }: SegaUsers
           </p>
         )}
         <p className="text-sm text-foreground">{t("tokenDialog.userscriptGuide.send.description", { net: game.brand.netName, product })}</p>
-        <Button asChild variant="outline" className="w-full">
-          <a href={siteRoot(game.id, region).href} target="_blank" rel="noopener noreferrer" onClick={() => setSiteOpened(true)}>
-            <ExternalLink className="h-4 w-4 mr-2" />
-            {t("tokenDialog.userscriptGuide.send.button", { net: game.brand.netName })}
-          </a>
-        </Button>
+        <div className="grid gap-2 sm:grid-cols-2">
+          <Button asChild variant="outline">
+            <a href={siteRoot(game.id, region).href} target="_blank" rel="noopener noreferrer">
+              <ExternalLink className="h-4 w-4 mr-2" />
+              {t("tokenDialog.userscriptGuide.send.button", { net: game.brand.netName })}
+            </a>
+          </Button>
+          <Button asChild>
+            <a href={SEGA_AIME_GATEWAY.landingUrl} target="_blank" rel="noopener noreferrer" onClick={() => setSiteOpened(true)}>
+              <ExternalLink className="h-4 w-4 mr-2" />
+              {t("tokenDialog.userscriptGuide.send.gatewayButton")}
+            </a>
+          </Button>
+        </div>
+        <p className="text-xs text-muted-foreground">{t("tokenDialog.userscriptGuide.send.signOut", { net: game.brand.netName })}</p>
         {guided === "scriptcat" && !installedVersion && (
           <>
             <p className="text-sm text-foreground">{t("tokenDialog.userscriptGuide.send.scriptcatPrompt")}</p>
