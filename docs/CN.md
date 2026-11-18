@@ -36,8 +36,6 @@ This means even items that "support cn today" through hardcoded paths must be re
 - [ ] `server/services/games/maimai/catalog/chart.ts`: CN utage constants come from `maimaiLevelPolicy` too. Verify CN-specific quirks if any surface.
 
 ## HTTP API Routes
-- [x] `app/api/login/route.ts`: the region comes from the signed login authorization
-- [x] `app/api/login.js/route.ts`: the bookmarklet no longer sends a region
 - [x] `app/api/last-credit/route.ts`: the owner's region is checked by `resolveGameContext` against the enabled regions, and a visitor's comes from the snapshot
 - [x] `app/api/admin/update/route.ts`: gated by `getSupportedRegions`. CN needs no source token (`catalogTokenRegions` in the maimai definition)
 - [?] ~~`app/api/admin/fetch/route.ts`~~: N/A, the route handles store data, which CN does not have.

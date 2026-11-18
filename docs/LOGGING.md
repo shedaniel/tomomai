@@ -180,8 +180,8 @@ Dynamic routes get Next's context with `requestId` added:
 > Note: a cached/static response keeps the `x-request-id` of the request that
 > populated the cache — it's most meaningful on dynamic (API) responses.
 
-Reference implementations: `src/app/api/login/route.ts`,
-`src/app/api/daily-plays/route.ts`, `src/app/api/cn-proxy/callback/route.ts`.
+Reference implementations: `src/app/api/daily-plays/route.ts`,
+`src/app/api/cn-proxy/callback/route.ts`.
 
 Pages and server components receive no `NextRequest`. Build their logger with
 `await pageLogger("home")`, which reads the same `x-request-id` header.

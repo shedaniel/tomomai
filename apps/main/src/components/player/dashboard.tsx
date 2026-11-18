@@ -157,7 +157,8 @@ export function Dashboard({ user, initialUserData, initialRegion, initialSnapsho
         if (parseFetchErrorCode(error.message) === "CN_COOKIES_SINGLE_USE") {
           setDialogType("token-cn-proxy");
         } else if (isTokenError(error.message)) {
-          toast.error(fetchErrorDetail(error.message));
+          // The dialog that opens already asks for a token, so only a problem with an existing one needs a toast.
+          if (parseFetchErrorCode(error.message) !== "NO_TOKEN_FOUND") toast.error(fetchErrorDetail(error.message));
           setDialogType("token");
         } else {
           toast.error(fetchErrorDetail(error.message));

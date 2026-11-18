@@ -67,7 +67,6 @@ const STRICT_AUTH_PREFIXES = [
   '/api/auth/send-verification-email',
   '/api/auth/verify-email',
   '/api/auth/delete-user',
-  '/api/login',
 ];
 
 function isStrictAuthPath(path: string): boolean {
@@ -198,7 +197,6 @@ export function csrfProtection(request: NextRequest): NextResponse | null {
 
   // Skip for API routes that don't need CSRF protection
   const csrfExemptRoutes = [
-    '/api/login',
     '/api/auth',
     '/api/discord',
     '/api/webhook'
