@@ -21,7 +21,6 @@ import {
 interface SegaCredentialsDialogProps {
   region: Region;
   isOpen: boolean;
-  modal?: boolean;
   onOpenChange: (open: boolean) => void;
   onTokenUpdate: (token: string) => Promise<void>;
 }
@@ -29,7 +28,6 @@ interface SegaCredentialsDialogProps {
 export function SegaCredentialsDialog({
   region,
   isOpen,
-  modal = true,
   onOpenChange,
   onTokenUpdate,
 }: SegaCredentialsDialogProps) {
@@ -65,7 +63,7 @@ export function SegaCredentialsDialog({
   const canSubmit = username.trim().length > 0 && password.trim().length > 0 && !isSubmitting;
 
   return (
-    <ResponsiveDialog open={isOpen} onOpenChange={onOpenChange} modal={modal}>
+    <ResponsiveDialog open={isOpen} onOpenChange={onOpenChange}>
       <ResponsiveDialogContent className="sm:max-w-md">
         <ResponsiveDialogHeader>
           <ResponsiveDialogTitle className="flex items-center space-x-2">

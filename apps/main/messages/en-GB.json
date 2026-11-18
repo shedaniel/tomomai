@@ -47,7 +47,43 @@
     "resetToDefault": "Reset to default",
     "retry": "Try again",
     "previous": "Previous",
-    "next": "Next"
+    "next": "Next",
+    "guidePlayer": {
+      "play": "Play",
+      "pause": "Pause",
+      "replay": "Replay",
+      "screen": "Screen {number}",
+      "setTo": "Set it to {value}",
+      "previous": "Show previous",
+      "next": "Show next"
+    },
+    "guideLabels": {
+      "allowUserScripts": "Allow User Scripts toggle",
+      "installButton": "Install button",
+      "permanentOption": "Permanent",
+      "allowButton": "Allow button",
+      "settingsTab": "Settings tab",
+      "configMode": "Config mode",
+      "cookieAccess": "Allow scripts to access cookies",
+      "securitySave": "Save, under Security",
+      "settingsLink": "Settings in the sidebar",
+      "httpOnlyGlobal": "HTTP-only cookie access, for every script",
+      "installedScriptsLink": "Installed scripts in the sidebar",
+      "editScript": "The script's edit button",
+      "httpOnlyScript": "HTTP-only cookie access, for this script",
+      "editorSave": "Save",
+      "saveAndClose": "Save & Close",
+      "requestPermission": "Request Permission button",
+      "extensionsButton": "Extensions button in the toolbar",
+      "applicationTab": "Application tab",
+      "cookies": "Cookies",
+      "gatewaySite": "The SEGA login site",
+      "clalRow": "clal row",
+      "clalValue": "clal value",
+      "storageTab": "Storage tab",
+      "clalValueDoubleClick": "clal value: double-click it, then copy",
+      "gatewayCookies": "Cookies for the SEGA login site"
+    }
   },
   "minigames": {
     "badge": "Minigame",
@@ -885,70 +921,141 @@
     "title": "Update {game} authentication",
     "intlDescription": "Choose your authentication method for the International region.",
     "credentialsStored": "Your credentials will be saved for future use.",
+    "methods": {
+      "segaId": {
+        "title": "SEGA ID",
+        "description": "Sign in to {net} with your SEGA ID and password. Works on any device and rarely needs updating."
+      },
+      "cookie": {
+        "title": "Browser cookie",
+        "description": "Copy your login cookie from your browser's developer tools on a computer. No password needed, so it also works with social logins. The cookie may expire."
+      },
+      "userscript": {
+        "title": "Userscript",
+        "description": "Send your login cookie in one click from a userscript manager. No password needed.",
+        "installed": "Installed"
+      }
+    },
+    "cookieGuide": {
+      "description": "Follow these steps on a computer. Mobile browsers can't show cookies.",
+      "intro": {
+        "question": "Are you on a computer, or do you already have your clal cookie?",
+        "mobileTitle": "Not available on mobile",
+        "mobileDescription": "Mobile browsers can't show cookies, so this needs a computer. On a phone or tablet, sign in with SEGA ID instead.",
+        "desktopTitle": "I'm on a computer",
+        "desktopDescription": "Walk me through finding the cookie.",
+        "haveCookieTitle": "I already have my cookie",
+        "haveCookieDescription": "Skip the steps and paste it now."
+      },
+      "signIn": {
+        "title": "Sign in to {net}",
+        "description": "Open this link in a private window and sign in. When you're done, close the window without signing out, since signing out ends the session this cookie belongs to."
+      },
+      "gateway": {
+        "title": "Open the SEGA login page",
+        "description": "In the same window, open this link. The page says Not Found, which is expected.",
+        "screenshot": "The SEGA login page showing Not Found"
+      },
+      "devtools": {
+        "title": "Open developer tools",
+        "description": "With that page open, press:",
+        "otherMac": "On a Mac:",
+        "otherPc": "On Windows or Linux:",
+        "safari": "Safari hides its developer tools at first. Turn on Show features for web developers under Safari > Settings > Advanced."
+      },
+      "copy": {
+        "title": "Copy the clal cookie",
+        "chromium": "Go to the Application tab, expand Cookies and select {host}. Click the clal row, then select its whole value under Cookie Value at the bottom and copy it.",
+        "firefox": "Go to the Storage tab, not Application. Under Cookies, select {host}. Double-click the Value cell of clal, copy it with Cmd + C or Ctrl + C, then press Esc.",
+        "safari": "Go to the Storage tab and select Cookies for {host}. Double-click the Value cell of clal, then copy the selected value with Cmd + C."
+      },
+      "inputLabel": "clal cookie",
+      "inputPlaceholder": "Paste the clal value",
+      "invalid": "This doesn't look like a clal cookie. It should be 64 letters and numbers.",
+      "expiry": "The cookie can expire after a while. If fetching stops working, repeat these steps.",
+      "backToSteps": "Back to Steps",
+      "enterCookie": "Enter cookie",
+      "inputDescription": "Paste the value of the clal cookie you copied.",
+      "whichBrowser": "Which browser are you using?",
+      "browsers": {
+        "chromium": "Chrome or Edge",
+        "firefox": "Firefox",
+        "safari": "Safari"
+      }
+    },
+    "wizard": {
+      "previousStep": "Previous Step",
+      "nextStep": "Next Step"
+    },
+    "userscriptGuide": {
+      "description": "A userscript reads your login cookie on the SEGA login page and sends it to {product}. No password needed.",
+      "detected": "You're on <browser></browser>. Get one of these userscript managers:",
+      "detectedNone": "You're on <browser></browser>.",
+      "browserLabel": "Browser",
+      "browsers": {
+        "chrome": "Chrome",
+        "edge": "Microsoft Edge",
+        "firefox": "Firefox",
+        "safari": "Safari on Mac",
+        "opera": "Opera",
+        "firefox-android": "Firefox for Android",
+        "edge-android": "Edge for Android",
+        "chrome-android": "Chrome for Android",
+        "ios": "iPhone or iPad",
+        "other": "Other"
+      },
+      "incompatibleHeading": "Won't work",
+      "caveats": {
+        "hidesHttpOnly": "Hides the login cookie from scripts.",
+        "noCookieApi": "Can't read cookies at all.",
+        "safariUntested": "Might work on Safari 18 or later, but we haven't tested it yet."
+      },
+      "noManagers": {
+        "chrome-android": "Chrome for Android doesn't support extensions. Try Firefox or Edge for Android, or choose another sign-in method.",
+        "other": "We don't have a guide for this browser yet. Pick the closest one above, or choose another sign-in method."
+      },
+      "pick": {
+        "title": "Get a userscript manager",
+        "haveOne": "Already have one installed? Go to the next step."
+      },
+      "cookies": {
+        "title": "Allow cookie access",
+        "tampermonkey": "Open the Tampermonkey dashboard and go to Settings. Set Config mode to Advanced, then under Security set Allow scripts to access cookies to All and click Save.",
+        "violentmonkey": "In Violentmonkey's settings, tick Allow GM_cookie to access HTTP-only cookies. Then open the script's editor, tick the same option in its Settings tab and click Save."
+      },
+      "script": {
+        "title": "Install the {product} userscript",
+        "allowUserScripts": "First, open your browser's extensions page, open {manager}'s details and turn on Allow User Scripts.",
+        "description": "Then install the script. Your userscript manager opens an install page, so confirm it there.",
+        "scriptcatRestart": "ScriptCat only picks up the Allow User Scripts change after you quit and reopen the browser.",
+        "button": "Install userscript",
+        "scriptcatPermission": "ScriptCat first needs permission to run userscripts. Click Request Permission, tick Allow unverified third-party scripts to access your data and click Allow."
+      },
+      "send": {
+        "title": "Send your cookie",
+        "description": "Open {net} and sign in. On the SEGA login page, the userscript sends your cookie to {product} and this dialog closes on its own.",
+        "button": "Open {net}",
+        "waiting": "Waiting for the userscript...",
+        "installed": "The {product} userscript is installed in this browser.",
+        "scriptcatPrompt": "The first time the script reads your cookie, ScriptCat asks for permission. Choose Permanent, then Allow, before the countdown runs out."
+      },
+      "whichManager": "Which one are you using?"
+    },
     "username": "Username",
     "usernamePlaceholder": "Enter your SEGA account username",
     "password": "Password",
     "passwordPlaceholder": "Enter your SEGA account password",
-    "cookies": "Cookies",
-    "tokenPlaceholder": "clal=your_token_here",
-    "tokenValidationError": "Token must start with \"clal=\" followed by letters and numbers only",
     "authenticationNote": "Authentication:",
     "segaCredentialsNote": "Use your SEGA account credentials to authenticate with {net}.",
     "subscriptionNote": "Fetching {game} ({region}) scores requires an active {subscription} subscription.",
     "credentialsSecureNote": "Your credentials will be stored for future fetches.",
     "savingCredentials": "Saving Credentials...",
     "saveCredentials": "Save Credentials",
-    "tokenTab": "Token",
-    "passwordTab": "Password",
-    "tokenInstructions": {
-      "description": "Cookie value starting with \"clal=\" from {net}.",
-      "expiration": "The token may get invalidated after a certain period of time, so you may need to update it in the future."
-    },
-    "secureStorage": "Your credentials will be stored for future fetches.",
-    "steps": {
-      "step1Title": "Login to {net}",
-      "step2Title": "Go to Not Found page",
-      "step3Title": "Execute Code"
-    },
     "clipboard": {
       "copied": "Copied to clipboard!",
       "failed": "Failed to copy to clipboard"
     },
-    "loading": {
-      "scriptLink": "Generating script link...",
-      "loginLink": "Generating personalised link..."
-    },
-    "tokenDialogDescription": "Enter your browser token to authenticate",
     "segaAccountDescription": "Enter your SEGA account credentials",
-    "backToSteps": "Back to Steps",
-    "step1": {
-      "description": "Login to {net} in an <strong>incognito / private window</strong>.",
-      "clickToCopy": "Click the link below to copy to clipboard:",
-      "haveCookies": "Have your own cookies already?",
-      "enterDirectly": "Enter it directly"
-    },
-    "step2": {
-      "description": "Visit this link below, in the same incognito / private tab.",
-      "otpLabel": "OTP:",
-      "otpExpires": "Expires ~ {time}",
-      "refreshing": "Refreshing...",
-      "refreshOtp": "Refresh OTP"
-    },
-    "step3": {
-      "desktop": "Desktop",
-      "desktopInstructions": "Copy the JavaScript code below and paste it in your browser's developer console (Ctrl + Shift + I or F12).",
-      "mobile": "Mobile",
-      "mobileStep1": "1. Tap the code below to copy to clipboard.",
-      "mobileStep2": "2. Create a bookmark in your browser and paste the copied text in the URL field.",
-      "mobileStep3": "3. Run the bookmark."
-    },
-    "navigation": {
-      "previousStep": "Previous Step",
-      "nextStep": "Next Step"
-    },
-    "recommended": "Recommended",
-    "tokenOptionDescription": "Login to your {net} account with your browser tokens. Token may expire from time to time. No password required and supports social logins.",
-    "passwordOptionDescription": "Login to your {net} account with your SEGA account credentials. Never expire. Not recommended.",
     "cnTitle": "Update maimai authentication",
     "cnDescription": "Choose your authentication method for the China region.",
     "cnExperimentalWarningTitle": "China region is experimental",
@@ -1283,9 +1390,16 @@
           "bottom": "Bottom {percent}",
           "median": "Median"
         },
+        "sections": {
+          "rating": "Rating",
+          "history": "History",
+          "compare": "Compare",
+          "compareEmpty": "No players to compare with on this chart yet."
+        },
         "history": {
           "title": "Your history",
-          "sinceMonth": "+{delta} in 30 days"
+          "sinceMonth": "+{delta} in 30 days",
+          "unchanged": "Unchanged since {date}. New bests will show up here."
         },
         "next": "Next: {target} for +{gain}",
         "recentPlays": "Your recent plays",

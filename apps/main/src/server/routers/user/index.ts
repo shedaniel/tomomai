@@ -33,7 +33,6 @@ export const userRouter = router({
   setAlbumPreference: profileRouter.setAlbumPreference,
 
   // Fetch
-  getLoginOtp: fetchRouter.getLoginOtp,
   startFetch: fetchRouter.startFetch,
   getFetchStatus: fetchRouter.getFetchStatus,
   getSiteStatus: fetchRouter.getSiteStatus,

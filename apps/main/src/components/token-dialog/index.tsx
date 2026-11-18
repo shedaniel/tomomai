@@ -4,7 +4,7 @@ import { useGame } from "@/components/providers/game-provider";
 import { isGameRegion } from "@/lib/games/frontend";
 import type { Region } from "@/lib/games/ids";
 import { CnTokenDialog } from "@/components/games/maimai/cn-token-dialog";
-import { SegaCookieWizardDialog } from "./sega-cookie-wizard";
+import { SegaLoginMethodsDialog } from "./sega-login-methods";
 import { SegaCredentialsDialog } from "./sega-credentials";
 
 interface TokenDialogProps {
@@ -42,14 +42,12 @@ export function TokenDialog({
 
   if (methods.includes("sega-cookie")) {
     return (
-      <SegaCookieWizardDialog
+      <SegaLoginMethodsDialog
         region={region}
         offerCredentials={methods.includes("sega-account")}
         isOpen={isOpen}
         onOpenChange={onOpenChange}
         onTokenUpdate={onTokenUpdate}
-        startSessionPolling={startSessionPolling}
-        stopSessionPolling={stopSessionPolling}
       />
     );
   }

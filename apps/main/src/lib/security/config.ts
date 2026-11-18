@@ -45,7 +45,6 @@ export const CORS_CONFIG = {
     'http://localhost:3000',
     'http://localhost:3001',
     process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
-    'https://lng-tgk-aime-gw.am-all.net', // Maimai official site for login
     ...trustedFromEnv,
   ],
   allowedMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
