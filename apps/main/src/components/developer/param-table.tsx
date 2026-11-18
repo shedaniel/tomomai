@@ -4,11 +4,13 @@ import { parameterDocs, type ParameterDoc } from "@/lib/api/openapi";
 
 interface ParamTableProps {
   schema: z.ZodObject | undefined;
-  kind: ParameterDoc["in"];
+  kind: ParameterDoc["in"] | "body";
 }
 
+const HEADINGS = { path: "Path param", query: "Query param", body: "Body field" } as const;
+
 export function ParamTable({ schema, kind }: ParamTableProps) {
-  const rows = parameterDocs(schema, kind);
+  const rows = parameterDocs(schema, kind === "body" ? "query" : kind);
   if (!rows.length) return null;
 
   return (
@@ -16,7 +18,7 @@ export function ParamTable({ schema, kind }: ParamTableProps) {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>{kind === "path" ? "Path param" : "Query param"}</TableHead>
+            <TableHead>{HEADINGS[kind]}</TableHead>
             <TableHead>Type</TableHead>
             <TableHead>Required</TableHead>
             <TableHead>Description</TableHead>

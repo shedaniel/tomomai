@@ -187,6 +187,15 @@ export default async function ReferenceEndpointPage({
           </section>
         ) : null}
 
+        {spec.body ? (
+          <section className="space-y-3">
+            <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+              Request body
+            </h2>
+            <ParamTable schema={spec.body} kind="body" />
+          </section>
+        ) : null}
+
         <section className="space-y-3">
           <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
             Response (200)

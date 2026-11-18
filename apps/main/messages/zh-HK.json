@@ -609,6 +609,10 @@
           "name": "開始同步",
           "description": "使用已儲存的令牌同步任何遊戲的新資料，並新增一個快照"
         },
+        "fetch:token:write": {
+          "name": "儲存遊戲令牌",
+          "description": "以 SEGA 登入 Cookie 取代遊戲已儲存的令牌，這決定要同步哪個帳戶的成績"
+        },
         "fetch:delete": {
           "name": "刪除已儲存的遊戲令牌",
           "description": "重新登入該遊戲前將無法同步"

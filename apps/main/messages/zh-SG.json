@@ -553,6 +553,10 @@
           "name": "开始取得",
           "description": "使用已储存的令牌取得任何游戏的新资料，并新增一个快照"
         },
+        "fetch:token:write": {
+          "name": "储存游戏令牌",
+          "description": "以 SEGA 登入 Cookie 取代游戏已储存的令牌，这决定要取得哪个账号的成绩"
+        },
         "fetch:delete": {
           "name": "删除已储存的游戏令牌",
           "description": "在你重新登入该游戏之前无法取得"

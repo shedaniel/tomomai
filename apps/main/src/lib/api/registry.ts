@@ -48,6 +48,8 @@ export interface RouteSpec<
   query?: Q;
   /** Zod schema for path params (e.g. `:id`). */
   params?: P;
+  /** Zod schema for a JSON request body. The handler parses it with `parseBody`. */
+  body?: z.ZodObject;
   /** Zod schema for the successful (2xx) JSON response body. */
   response: R;
   /** Inline examples for the docs page. */

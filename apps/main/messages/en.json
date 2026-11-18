@@ -609,6 +609,10 @@
           "name": "Start a fetch",
           "description": "Fetch new data for any game with its saved token, adding a new snapshot"
         },
+        "fetch:token:write": {
+          "name": "Save game tokens",
+          "description": "Replace a game's saved token with a SEGA login cookie, which decides whose scores are fetched"
+        },
         "fetch:delete": {
           "name": "Remove saved game tokens",
           "description": "Fetching a game stops until you sign in to it again"

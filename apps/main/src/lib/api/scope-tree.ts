@@ -38,6 +38,7 @@ export const SCOPE_TREE: TreeNode[] = [
     ],
   },
   { key: "fetch:start" },
+  { key: "fetch:token:write" },
   { key: "fetch:delete" },
   { key: "snapshot:all:delete" },
 ];

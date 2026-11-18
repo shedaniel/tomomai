@@ -189,6 +189,13 @@ export const API_SCOPES = {
     sensitive: false,
     default: false,
   },
+  "fetch:token:write": {
+    name: "Fetch Token (Write)",
+    description: "Save a new upstream authentication token for a region, replacing the stored one. This is sensitive as it decides which game account your fetches read from.",
+    destructive: true,
+    sensitive: true,
+    default: false,
+  },
   "fetch:delete": {
     name: "Fetch Token (Delete)",
     description: "Delete your stored upstream authentication token. This is destructive and sensitive as in-app and API-driven fetches stop until you re-authenticate.",
