@@ -48,8 +48,8 @@ Every app is a confidential client: the token endpoint always requires the
 (PKCE-only) clients and dynamic client registration are not available to
 third-party apps, so an app that can't keep a secret (mobile, SPA, userscript)
 should exchange the code through a small backend you control. tomomai's own
-mobile app is the one exception. It is an official native client that an admin
-registers, and it can only redirect to tomomai's own app link.
+mobile app and userscript are the exceptions. They are official public clients
+that an admin registers, and they can only redirect to tomomai's own pages.
 
 ## 2. Authorization request
 

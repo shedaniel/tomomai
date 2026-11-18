@@ -6,11 +6,14 @@ import { createHash, randomBytes } from "node:crypto";
 import { beforeAll, describe, expect, it } from "vitest";
 
 // Public clients have no secret, so refresh token rotation and reuse detection are the whole defence for
-// the mobile app's long-lived sign-in. This runs Better Auth's OAuth provider with the options that
+// the mobile app's and the userscript's long-lived sign-in. This runs Better Auth's OAuth provider with the options that
 // matter (PKCE, rotation, offline_access) to pin the behaviour the app and the OAuth guide rely on.
 
 const BASE_URL = "http://localhost:3000";
-const REDIRECT = "https://tomomai.lol/oauth/app-callback";
+const CLIENTS = [
+  { type: "native", redirect: "https://tomomai.lol/oauth/app-callback" },
+  { type: "user-agent-based", redirect: "https://tomomai.lol/userscript/callback" },
+] as const;
 
 const MODELS = [
   "user",
@@ -66,21 +69,21 @@ async function signUp(auth: TestAuth, email: string) {
   return cookie;
 }
 
-async function signInWithCode(auth: TestAuth, cookie: string, clientId: string) {
+async function signInWithCode(auth: TestAuth, cookie: string, clientId: string, redirect: string) {
   const verifier = randomBytes(32).toString("base64url");
   const challenge = createHash("sha256").update(verifier).digest("base64url");
   const authorize = new URL("/api/auth/oauth2/authorize", BASE_URL);
   authorize.search = new URLSearchParams({
     response_type: "code",
     client_id: clientId,
-    redirect_uri: REDIRECT,
+    redirect_uri: redirect,
     scope: "read offline_access",
     state: "state",
     code_challenge: challenge,
     code_challenge_method: "S256",
   }).toString();
-  const redirect = await auth.handler(new Request(authorize, { headers: { cookie }, redirect: "manual" }));
-  const code = new URL(redirect.headers.get("location") ?? "").searchParams.get("code");
+  const response = await auth.handler(new Request(authorize, { headers: { cookie }, redirect: "manual" }));
+  const code = new URL(response.headers.get("location") ?? "").searchParams.get("code");
   expect(code).toBeTruthy();
   return { code: code!, verifier };
 }
@@ -96,7 +99,7 @@ async function token(auth: TestAuth, params: Record<string, string>) {
   return { status: response.status, body: (await response.json()) as Record<string, string> };
 }
 
-describe("refresh token rotation for a public client", () => {
+describe.each(CLIENTS)("refresh token rotation for a $type public client", ({ type, redirect }) => {
   let auth: TestAuth;
   let clientId: string;
   let cookie: string;
@@ -106,11 +109,11 @@ describe("refresh token rotation for a public client", () => {
     cookie = await signUp(auth, "player@example.com");
     const client = await auth.api.adminCreateOAuthClient({
       body: {
-        client_name: "native",
-        redirect_uris: [REDIRECT],
+        client_name: type,
+        redirect_uris: [redirect],
         scope: "read offline_access",
         token_endpoint_auth_method: "none",
-        type: "native",
+        type,
         skip_consent: true,
         metadata: { official: true },
       },
@@ -121,12 +124,12 @@ describe("refresh token rotation for a public client", () => {
   });
 
   async function freshTokens() {
-    const { code, verifier } = await signInWithCode(auth, cookie, clientId);
+    const { code, verifier } = await signInWithCode(auth, cookie, clientId, redirect);
     const exchanged = await token(auth, {
       grant_type: "authorization_code",
       code,
       code_verifier: verifier,
-      redirect_uri: REDIRECT,
+      redirect_uri: redirect,
       client_id: clientId,
     });
     expect(exchanged.status).toBe(200);
@@ -138,11 +141,11 @@ describe("refresh token rotation for a public client", () => {
     token(auth, { grant_type: "refresh_token", refresh_token: refreshToken, client_id: clientId });
 
   it("signs in without a secret and needs the PKCE verifier", async () => {
-    const { code } = await signInWithCode(auth, cookie, clientId);
+    const { code } = await signInWithCode(auth, cookie, clientId, redirect);
     const withoutVerifier = await token(auth, {
       grant_type: "authorization_code",
       code,
-      redirect_uri: REDIRECT,
+      redirect_uri: redirect,
       client_id: clientId,
     });
     expect(withoutVerifier.status).toBe(400);

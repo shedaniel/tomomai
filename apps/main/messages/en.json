@@ -631,6 +631,9 @@
         "nativeLabel": "Native app",
         "nativeDescription": "A mobile app that holds no secret and signs in with PKCE alone. It is always official and can only return to the app link on an allowed host. Only admins can create one.",
         "nativeBadge": "Native",
+        "browserLabel": "Browser script",
+        "browserDescription": "A userscript or other browser client that holds no secret and signs in with PKCE alone. It is always official and can only return to a page on an allowed host. Only admins can create one.",
+        "browserBadge": "Browser",
         "officialBadge": "Official",
         "errors": {
           "limitReached": "You can have up to {max} OAuth apps. Delete one to create another.",

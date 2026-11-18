@@ -1,5 +1,5 @@
 import { UAParser } from "ua-parser-js";
-import { NATIVE_CALLBACK_PATH } from "@/lib/oauth-native";
+import { NATIVE_CALLBACK_PATH } from "@/lib/oauth-public";
 
 /**
  * Read from `APPLE_APP_IDS` (comma-separated, each `<team id>.<bundle id>`), `ANDROID_APP_PACKAGE` and

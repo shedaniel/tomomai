@@ -21,10 +21,11 @@ import { isSessionFresh } from "@/lib/security/fresh-session";
 import { isSafeRedirectUrl, isSafeWebUrl, isHttpsUrl } from "@/lib/security/oauth-url";
 import {
   confidentialClientViolation,
-  nativeClientViolation,
-  nativeRedirectHosts,
-  nativeRedirectViolation,
-} from "@/lib/oauth-native";
+  isPublicClientType,
+  publicClientUpdateViolation,
+  publicClientViolation,
+  publicRedirectHosts,
+} from "@/lib/oauth-public";
 import { mirrorRemoteAvatarToR2, isR2AvatarUrl } from "@/lib/r2";
 import { useApiKeyCreation, useOauthAppCreation } from "@/lib/flags";
 import { getCurrentLegalVersions } from "@/lib/legal";
@@ -567,30 +568,28 @@ export const auth = betterAuth({
           ? ((body.update as Record<string, unknown>) ?? {})
           : body;
 
-        // Public clients exist only as admin-registered native clients. The routes a user can reach
-        // register confidential web clients, whatever auth method or type the body asks for.
+        // Public clients exist only as admin-registered native or browser clients. The routes a user can
+        // reach register confidential web clients, whatever auth method or type the body asks for.
         if (ctx.path === "/admin/oauth2/create-client") {
           const session = await getSessionFromCtx(ctx);
           if ((session?.user as { role?: string | null } | undefined)?.role !== "admin") {
-            throw new APIError("FORBIDDEN", { message: "Only admins can register native clients" });
+            throw new APIError("FORBIDDEN", { message: "Only admins can register public clients" });
           }
-          const violation = nativeClientViolation(target, nativeRedirectHosts());
+          const violation = publicClientViolation(target, publicRedirectHosts());
           if (violation) throw new APIError("BAD_REQUEST", { message: violation });
         } else if (ctx.path === "/oauth2/update-client") {
           const existing = typeof body.client_id === "string"
             ? (await db
-                .select({ public: schema.oauthClient.public })
+                .select({ public: schema.oauthClient.public, type: schema.oauthClient.type })
                 .from(schema.oauthClient)
                 .where(eq(schema.oauthClient.clientId, body.client_id))
                 .limit(1))[0]
             : undefined;
-          const violation = existing?.public
-            ? (target.type !== undefined && target.type !== "native"
-                ? "A native client cannot change its type"
-                : target.redirect_uris !== undefined
-                  ? nativeRedirectViolation(target.redirect_uris, nativeRedirectHosts())
-                  : null)
-            : confidentialClientViolation(target);
+          const violation = !existing?.public
+            ? confidentialClientViolation(target)
+            : isPublicClientType(existing.type)
+              ? publicClientUpdateViolation(existing.type, target, publicRedirectHosts())
+              : "This public client cannot be updated";
           if (violation) throw new APIError("BAD_REQUEST", { message: violation });
         } else {
           const violation = confidentialClientViolation(target);
