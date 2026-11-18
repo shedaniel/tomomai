@@ -47,7 +47,43 @@
     "resetToDefault": "デフォルトに戻す",
     "retry": "再試行",
     "previous": "前へ",
-    "next": "次へ"
+    "next": "次へ",
+    "guidePlayer": {
+      "play": "再生",
+      "pause": "一時停止",
+      "replay": "もう一度再生",
+      "screen": "画面 {number}",
+      "setTo": "{value} に設定",
+      "previous": "前を表示",
+      "next": "次を表示"
+    },
+    "guideLabels": {
+      "allowUserScripts": "「Allow User Scripts」トグル",
+      "installButton": "「Install」ボタン",
+      "permanentOption": "「Permanent」",
+      "allowButton": "「Allow」ボタン",
+      "settingsTab": "「Settings」タブ",
+      "configMode": "「Config mode」",
+      "cookieAccess": "「Allow scripts to access cookies」",
+      "securitySave": "「Security」の「Save」",
+      "settingsLink": "サイドバーの「Settings」",
+      "httpOnlyGlobal": "HTTP-only Cookie へのアクセス（すべてのスクリプト）",
+      "installedScriptsLink": "サイドバーの「Installed scripts」",
+      "editScript": "スクリプトの編集ボタン",
+      "httpOnlyScript": "HTTP-only Cookie へのアクセス（このスクリプト）",
+      "editorSave": "「Save」",
+      "saveAndClose": "「Save & Close」",
+      "requestPermission": "「Request Permission」ボタン",
+      "extensionsButton": "ツールバーの拡張機能ボタン",
+      "applicationTab": "「Application」タブ",
+      "cookies": "「Cookies」",
+      "gatewaySite": "SEGA のログインサイト",
+      "clalRow": "clal の行",
+      "clalValue": "clal の値",
+      "storageTab": "「Storage」タブ",
+      "clalValueDoubleClick": "clal の値：ダブルクリックしてコピー",
+      "gatewayCookies": "SEGA ログインサイトの「Cookies」"
+    }
   },
   "security": {
     "reauth": {
@@ -942,70 +978,141 @@
     "title": "{game} 認証情報を更新",
     "intlDescription": "認証方法を選択してください。",
     "credentialsStored": "認証情報は今後の取得で使用されます。",
+    "methods": {
+      "segaId": {
+        "title": "SEGA ID",
+        "description": "SEGA ID とパスワードで {net} にログインします。どの端末でも使え、設定し直す必要はほとんどありません。"
+      },
+      "cookie": {
+        "title": "ブラウザのクッキー",
+        "description": "パソコンのブラウザの開発者ツールから、ログイン用のクッキーをコピーします。パスワードが不要なので、SNS アカウントでログインしている場合にも使えます。クッキーは期限切れになることがあります。"
+      },
+      "userscript": {
+        "title": "ユーザースクリプト",
+        "description": "ユーザースクリプトマネージャーから、ワンクリックでログイン用のクッキーを送信します。パスワードは不要です。",
+        "installed": "インストール済み"
+      }
+    },
+    "cookieGuide": {
+      "description": "以下の手順はパソコンで行ってください。モバイルブラウザではクッキーを表示できません。",
+      "intro": {
+        "question": "パソコンを使っていますか？それとも clal クッキーをすでにお持ちですか？",
+        "mobileTitle": "モバイル端末では利用できません",
+        "mobileDescription": "モバイルブラウザではクッキーを表示できないため、パソコンが必要です。スマートフォンやタブレットでは、SEGA ID でログインしてください。",
+        "desktopTitle": "パソコンを使っている",
+        "desktopDescription": "クッキーの見つけ方を順番に案内します。",
+        "haveCookieTitle": "クッキーはもう手元にある",
+        "haveCookieDescription": "手順を飛ばして、すぐに貼り付けます。"
+      },
+      "signIn": {
+        "title": "{net} にログイン",
+        "description": "このリンクをプライベートウィンドウ（シークレットウィンドウ）で開き、ログインしてください。終わったらログアウトせずにウィンドウを閉じてください。ログアウトすると、このクッキーのセッションが終了してしまいます。"
+      },
+      "gateway": {
+        "title": "SEGA のログインページを開く",
+        "description": "同じウィンドウでこのリンクを開いてください。ページに Not Found と表示されますが、問題ありません。",
+        "screenshot": "Not Found と表示された SEGA のログインページ"
+      },
+      "devtools": {
+        "title": "開発者ツールを開く",
+        "description": "そのページを開いたまま、次のキーを押してください：",
+        "otherMac": "Mac の場合：",
+        "otherPc": "Windows または Linux の場合：",
+        "safari": "Safari の開発者ツールは、最初は表示されません。Safari > 設定 > 詳細 で「Web デベロッパ用の機能を表示」をオンにしてください。"
+      },
+      "copy": {
+        "title": "clal クッキーをコピー",
+        "chromium": "「アプリケーション」タブを開き、「Cookie」を展開して {host} を選択します。clal の行をクリックし、下部の「Cookie の値」で値全体を選択してコピーしてください。",
+        "firefox": "「アプリケーション」ではなく「ストレージ」タブを開き、「Cookie」の下にある {host} を選択します。clal の「値」セルをダブルクリックし、Cmd + C または Ctrl + C でコピーしてから Esc キーを押してください。",
+        "safari": "「ストレージ」タブを開き、サイドバーで {host} の「Cookie」を選択します。clal の「値」セルをダブルクリックし、選択された値を Cmd + C でコピーしてください。"
+      },
+      "inputLabel": "clal クッキー",
+      "inputPlaceholder": "clal の値を貼り付け",
+      "invalid": "clal クッキーではないようです。clal クッキーは英数字 64 文字です。",
+      "expiry": "クッキーは時間が経つと期限切れになることがあります。取得できなくなったら、もう一度この手順を行ってください。",
+      "backToSteps": "手順に戻る",
+      "enterCookie": "クッキーを入力",
+      "inputDescription": "コピーした clal クッキーの値を貼り付けてください。",
+      "whichBrowser": "お使いのブラウザはどれですか？",
+      "browsers": {
+        "chromium": "Chrome または Edge",
+        "firefox": "Firefox",
+        "safari": "Safari"
+      }
+    },
+    "wizard": {
+      "previousStep": "戻る",
+      "nextStep": "次へ"
+    },
+    "userscriptGuide": {
+      "description": "ユーザースクリプトが SEGA のログインページでログイン用のクッキーを読み取り、{product} に送信します。パスワードは不要です。",
+      "detected": "お使いのブラウザは <browser></browser> です。次のいずれかのユーザースクリプトマネージャーを入手してください：",
+      "detectedNone": "お使いのブラウザは <browser></browser> です。",
+      "browserLabel": "ブラウザ",
+      "browsers": {
+        "chrome": "Chrome",
+        "edge": "Microsoft Edge",
+        "firefox": "Firefox",
+        "safari": "Mac の Safari",
+        "opera": "Opera",
+        "firefox-android": "Android 版 Firefox",
+        "edge-android": "Android 版 Edge",
+        "chrome-android": "Android 版 Chrome",
+        "ios": "iPhone または iPad",
+        "other": "その他"
+      },
+      "incompatibleHeading": "非対応",
+      "caveats": {
+        "hidesHttpOnly": "ログイン用のクッキーをスクリプトから読み取れないようにしています。",
+        "noCookieApi": "クッキーをまったく読み取れません。",
+        "safariUntested": "Safari 18 以降では動作する可能性がありますが、まだ検証していません。"
+      },
+      "noManagers": {
+        "chrome-android": "Android 版 Chrome は拡張機能に対応していません。Android 版の Firefox か Edge を試すか、別のログイン方法を選んでください。",
+        "other": "このブラウザ向けのガイドはまだありません。上から最も近いものを選ぶか、別のログイン方法を選んでください。"
+      },
+      "pick": {
+        "title": "ユーザースクリプトマネージャーを入手",
+        "haveOne": "すでにインストール済みなら、次のステップに進んでください。"
+      },
+      "cookies": {
+        "title": "クッキーへのアクセスを許可",
+        "tampermonkey": "Tampermonkey のダッシュボードを開き、「Settings」タブに移動します。「Config mode」を「Advanced」にしてから、「Security」の「Allow scripts to access cookies」を「All」に設定し、「Save」をクリックしてください。",
+        "violentmonkey": "Violentmonkey の設定で「Allow GM_cookie to access HTTP-only cookies」にチェックを入れます。次にスクリプトのエディターを開き、「Settings」タブで同じ項目にチェックを入れて「Save」をクリックしてください。"
+      },
+      "script": {
+        "title": "{product} のユーザースクリプトをインストール",
+        "allowUserScripts": "まず、ブラウザの拡張機能ページで {manager} の詳細を開き、「Allow User Scripts」をオンにしてください。",
+        "description": "次に、スクリプトをインストールします。ユーザースクリプトマネージャーのインストール画面が開くので、そこで確定してください。",
+        "scriptcatRestart": "ScriptCat では、「Allow User Scripts」の変更はブラウザを終了して開き直すまで反映されません。",
+        "button": "ユーザースクリプトをインストール",
+        "scriptcatPermission": "ScriptCat では、まずユーザースクリプトを実行する権限が必要です。「Request Permission」をクリックし、「Allow unverified third-party scripts to access your data」にチェックを入れて「Allow」をクリックしてください。"
+      },
+      "send": {
+        "title": "クッキーを送信",
+        "description": "{net} を開いてログインしてください。SEGA のログインページでユーザースクリプトが {product} にクッキーを送信し、このダイアログは自動で閉じます。",
+        "button": "{net} を開く",
+        "waiting": "ユーザースクリプトを待っています…",
+        "installed": "このブラウザには {product} のユーザースクリプトがインストールされています。",
+        "scriptcatPrompt": "スクリプトが初めてクッキーを読み取るとき、ScriptCat が許可を求めてきます。カウントダウンが終わる前に「Permanent」を選び、「Allow」をクリックしてください。"
+      },
+      "whichManager": "お使いのものはどれですか？"
+    },
     "username": "ユーザー名",
     "usernamePlaceholder": "SEGAアカウントのユーザー名を入力",
     "password": "パスワード",
     "passwordPlaceholder": "SEGAアカウントのパスワードを入力",
-    "cookies": "クッキー",
-    "tokenPlaceholder": "clal=ここにCookie値を入力",
-    "tokenValidationError": "Cookieは「clal=」で始まり、英数字のみを含む必要があります。",
     "authenticationNote": "認証：",
     "segaCredentialsNote": "SEGAアカウントのユーザー名とパスワードで {net} にログインします。",
     "subscriptionNote": "{game}（{region}）のスコア取得には、有効な{subscription}利用権が必要です。",
     "credentialsSecureNote": "認証情報は保存され、今後の同期時に使用されます。",
     "savingCredentials": "認証情報保存中...",
     "saveCredentials": "認証情報を保存",
-    "tokenTab": "トークン",
-    "passwordTab": "パスワード",
-    "tokenInstructions": {
-      "description": "{net}から取得した「clal=」で始まるクッキー値を入力してください。",
-      "expiration": "トークンは一定期間で無効になる場合がありますので、その際は再度更新してください。"
-    },
-    "secureStorage": "認証情報は保存され、今後の同期時に使用されます。",
-    "steps": {
-      "step1Title": "{net}にログイン",
-      "step2Title": "「Not Found」ページに移動",
-      "step3Title": "コードを実行"
-    },
     "clipboard": {
       "copied": "クリップボードにコピーしました！",
       "failed": "クリップボードへのコピーに失敗しました"
     },
-    "loading": {
-      "scriptLink": "スクリプトリンクを生成中...",
-      "loginLink": "専用リンクを生成中..."
-    },
-    "tokenDialogDescription": "ブラウザのトークンを入力して認証します",
     "segaAccountDescription": "SEGAアカウントの認証情報を入力します",
-    "backToSteps": "手順に戻る",
-    "step1": {
-      "description": "<strong>シークレット / プライベートウィンドウ</strong>で {net} にログインします。",
-      "clickToCopy": "下のリンクをクリックしてクリップボードにコピー：",
-      "haveCookies": "すでに Cookie をお持ちですか？",
-      "enterDirectly": "直接入力する"
-    },
-    "step2": {
-      "description": "同じシークレット / プライベートタブで、下のリンクにアクセスします。",
-      "otpLabel": "OTP：",
-      "otpExpires": "有効期限 ~ {time}",
-      "refreshing": "更新中...",
-      "refreshOtp": "OTPを更新"
-    },
-    "step3": {
-      "desktop": "デスクトップ",
-      "desktopInstructions": "下の JavaScript コードをコピーし、ブラウザの開発者コンソール（Ctrl + Shift + I または F12）に貼り付けます。",
-      "mobile": "モバイル",
-      "mobileStep1": "1. 下のコードをタップしてクリップボードにコピーします。",
-      "mobileStep2": "2. ブラウザでブックマークを作成し、コピーしたテキストを URL 欄に貼り付けます。",
-      "mobileStep3": "3. ブックマークを実行します。"
-    },
-    "navigation": {
-      "previousStep": "戻る",
-      "nextStep": "次へ"
-    },
-    "recommended": "おすすめ楽曲",
-    "tokenOptionDescription": "ブラウザのトークンを使用して {net} アカウントにログインします。トークンは一定期間で無効になることがありますので、その際は再度更新してください。パスワードは不要で、ソーシャルログインもサポートしています。",
-    "passwordOptionDescription": "SEGA アカウントの認証情報を使用して {net} アカウントにログインします。期限切れはありません。非推奨です。",
     "cnTitle": "舞萌 DX の認証を更新",
     "cnDescription": "中国版舞萌 DX のログイン認証方式を選んでください。",
     "cnExperimentalWarningTitle": "中国版は実験的なリージョンです",
@@ -1341,15 +1448,15 @@
           "median": "中央値付近"
         },
         "sections": {
-          "rating": "Rating",
-          "history": "History",
-          "compare": "Compare",
-          "compareEmpty": "No players to compare with on this chart yet."
+          "rating": "レート値",
+          "history": "推移",
+          "compare": "比較",
+          "compareEmpty": "この譜面には、まだ比較できるプレイヤーがいません。"
         },
         "history": {
           "title": "あなたの推移",
           "sinceMonth": "30日で+{delta}",
-          "unchanged": "Unchanged since {date}. New bests will show up here."
+          "unchanged": "{date} から変化はありません。自己ベストを更新するとここに表示されます。"
         },
         "next": "次の目標: {target}で+{gain}",
         "recentPlays": "最近のプレイ",
