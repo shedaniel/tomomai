@@ -950,11 +950,10 @@
       },
       "send": {
         "title": "쿠키 보내기",
-        "description": "아직 로그인하지 않았다면 {net}에 로그인하세요. 그런 다음 SEGA 로그인 페이지를 열고(Not Found가 표시됩니다) 유저스크립트 패널에서 \"Send to {product}\"를 누르세요. 처음에는 {product}에 로그인하는 창이 열립니다. 쿠키가 도착하면 이 대화 상자는 자동으로 닫힙니다.",
-        "button": "{net} 열기",
-        "gatewayButton": "SEGA 로그인 페이지 열기",
+        "description": "SEGA 페이지를 열고 패널에서 \"Send to {product}\"를 누르세요.",
+        "gatewayButton": "SEGA 페이지 열기",
         "signOut": "이 브라우저에서 {net} 로그아웃을 하면 이 쿠키가 속한 세션이 종료되어, 다시 보낼 때까지 가져오기가 중단됩니다.",
-        "waiting": "유저스크립트를 기다리는 중...",
+        "waiting": "쿠키를 기다리는 중...",
         "installed": "이 브라우저에 {product} 유저스크립트가 설치되어 있습니다.",
         "scriptcatPrompt": "스크립트가 처음 쿠키를 읽을 때 ScriptCat이 권한을 요청합니다. 카운트다운이 끝나기 전에 \"Permanent\"를 선택한 다음 \"Allow\"를 클릭하세요."
       },

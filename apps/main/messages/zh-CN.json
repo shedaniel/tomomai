@@ -1225,11 +1225,10 @@
       },
       "send": {
         "title": "发送 Cookie",
-        "description": "如果还没登录，请先登录 {net}。然后打开 SEGA 登录页面（会显示 Not Found），在用户脚本的面板中点击“Send to {product}”。第一次会弹出窗口让你登录 {product}。Cookie 送达后，此对话框会自动关闭。",
-        "button": "打开 {net}",
-        "gatewayButton": "打开 SEGA 登录页面",
+        "description": "打开 SEGA 页面，在面板中点击“Send to {product}”。",
+        "gatewayButton": "打开 SEGA 页面",
         "signOut": "在此浏览器中退出 {net} 会结束此 Cookie 所属的会话，在你重新发送之前无法同步。",
-        "waiting": "正在等待用户脚本…",
+        "waiting": "正在等待 Cookie…",
         "installed": "此浏览器已安装 {product} 用户脚本。",
         "scriptcatPrompt": "脚本首次读取你的 Cookie 时，ScriptCat 会请求权限。请在倒计时结束前选择“Permanent”，然后点击“Allow”。"
       },

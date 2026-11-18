@@ -1225,11 +1225,10 @@
       },
       "send": {
         "title": "クッキーを送信",
-        "description": "まだの場合は {net} にログインしてください。次に SEGA のログインページを開き（Not Found と表示されます）、ユーザースクリプトのパネルで「Send to {product}」を押してください。初回は {product} へのログインを求めるウィンドウが開きます。クッキーが届くと、このダイアログは自動で閉じます。",
-        "button": "{net} を開く",
-        "gatewayButton": "SEGA のログインページを開く",
+        "description": "SEGA のページを開き、パネルの「Send to {product}」を押してください。",
+        "gatewayButton": "SEGA のページを開く",
         "signOut": "このブラウザで {net} からログアウトすると、このクッキーのセッションが終了し、再度送信するまでフェッチできなくなります。",
-        "waiting": "ユーザースクリプトを待っています…",
+        "waiting": "クッキーを待っています…",
         "installed": "このブラウザには {product} のユーザースクリプトがインストールされています。",
         "scriptcatPrompt": "スクリプトが初めてクッキーを読み取るとき、ScriptCat が許可を求めてきます。カウントダウンが終わる前に「Permanent」を選び、「Allow」をクリックしてください。"
       },

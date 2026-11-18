@@ -34,16 +34,20 @@ export default defineConfig({
         namespace: "https://tomomai.lol",
         version,
         description: "Sends your maimai DX NET International login cookie to tomomai",
+        icon: `${PLACEHOLDER}/brand/maimai/icon.png`,
         match: [
           "https://lng-tgk-aime-gw.am-all.net/common_auth/*",
+          // Only to send a player who just signed in back to the gateway.
+          "https://maimaidx-eng.com/maimai-mobile/*",
           MATCH_PLACEHOLDER,
         ],
         noframes: true,
-        grant: ["GM_cookie", "GM.cookie", "GM_getValue", "GM_setValue", "GM_xmlhttpRequest", "GM_info"],
+        grant: ["GM_cookie", "GM.cookie", "GM_getValue", "GM_setValue", "GM_xmlhttpRequest", "GM_info", "window.close"],
         connect: [HOST_PLACEHOLDER],
         updateURL: `${PLACEHOLDER}/userscript.user.js`,
         downloadURL: `${PLACEHOLDER}/userscript.user.js`,
-        "run-at": "document-idle",
+        // document-start so a player on their way back leaves the DX NET page before it renders.
+        "run-at": "document-start",
       },
     }),
   ],

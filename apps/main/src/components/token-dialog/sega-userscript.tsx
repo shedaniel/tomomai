@@ -2,7 +2,7 @@
 
 import { useGame } from "@/components/providers/game-provider";
 import type { Region } from "@/lib/games/ids";
-import { SEGA_AIME_GATEWAY, siteRoot } from "@/lib/games/sites";
+import { SEGA_AIME_GATEWAY } from "@/lib/games/sites";
 import { trpc } from "@/lib/trpc-client";
 import { GuidePlayer } from "@/components/guide-player";
 import { cn } from "@/lib/utils";
@@ -18,6 +18,7 @@ import { CircleCheck, CircleX, Download, ExternalLink, Info, LoaderCircle, Puzzl
 import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { BROWSER_ICONS } from "./browser-icons";
+import { GatewayPreview } from "./gateway-preview";
 import { USERSCRIPT_GUIDES, type GuideManager } from "./userscript-guides";
 import { useTomomaiUserscript } from "./use-tomomai-userscript";
 import { BROWSERS, MANAGER_ICONS, MANAGER_NAMES, MANAGER_OPTIONS, detectBrowser, type BrowserId, type ManagerId, type ManagerOption } from "./userscript-managers";
@@ -237,7 +238,7 @@ export function SegaUserscriptDialog({ region, isOpen, onOpenChange, onTokenSave
         )}
         {guided === "scriptcat" && chromiumFamily && <Note icon={TriangleAlert}>{t("tokenDialog.userscriptGuide.script.scriptcatRestart")}</Note>}
         <Button asChild variant="outline" className="w-full">
-          <a href="/userscript.user.js">
+          <a href="/userscript.user.js" target="_blank" rel="noopener">
             <Download className="h-4 w-4 mr-2" />
             {t("tokenDialog.userscriptGuide.script.button")}
           </a>
@@ -260,22 +261,14 @@ export function SegaUserscriptDialog({ region, isOpen, onOpenChange, onTokenSave
             {t("tokenDialog.userscriptGuide.send.installed", { product })}
           </p>
         )}
-        <p className="text-sm text-foreground">{t("tokenDialog.userscriptGuide.send.description", { net: game.brand.netName, product })}</p>
-        <div className="grid gap-2 sm:grid-cols-2">
-          <Button asChild variant="outline">
-            <a href={siteRoot(game.id, region).href} target="_blank" rel="noopener noreferrer">
-              <ExternalLink className="h-4 w-4 mr-2" />
-              {t("tokenDialog.userscriptGuide.send.button", { net: game.brand.netName })}
-            </a>
-          </Button>
-          <Button asChild>
-            <a href={SEGA_AIME_GATEWAY.landingUrl} target="_blank" rel="noopener noreferrer" onClick={() => setSiteOpened(true)}>
-              <ExternalLink className="h-4 w-4 mr-2" />
-              {t("tokenDialog.userscriptGuide.send.gatewayButton")}
-            </a>
-          </Button>
-        </div>
-        <p className="text-xs text-muted-foreground">{t("tokenDialog.userscriptGuide.send.signOut", { net: game.brand.netName })}</p>
+        <GatewayPreview />
+        <p className="text-sm text-foreground">{t("tokenDialog.userscriptGuide.send.description", { product })}</p>
+        <Button asChild className="w-full">
+          <a href={SEGA_AIME_GATEWAY.landingUrl} target="_blank" rel="noopener noreferrer" onClick={() => setSiteOpened(true)}>
+            <ExternalLink className="h-4 w-4 mr-2" />
+            {t("tokenDialog.userscriptGuide.send.gatewayButton")}
+          </a>
+        </Button>
         {guided === "scriptcat" && !installedVersion && (
           <>
             <p className="text-sm text-foreground">{t("tokenDialog.userscriptGuide.send.scriptcatPrompt")}</p>

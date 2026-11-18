@@ -141,6 +141,8 @@ export function signIn(): Promise<void> {
     const onMessage = (event: MessageEvent) => {
       const data = event.data as Record<string, unknown> | null;
       if (event.origin !== apiOrigin || data?.source !== "tomomai-userscript" || data.state !== state) return;
+      // The callback closes itself right away, which must not fail the exchange that is now running.
+      clearInterval(closedPoll);
       if (typeof data.code !== "string") {
         finish(new Error(data.error === "access_denied" ? "Sign-in was cancelled" : String(data.error ?? "Sign-in failed")));
         return;

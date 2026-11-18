@@ -9,16 +9,22 @@ dialog's userscript guide walks players through that setting for each manager.
 
 ## What it does
 
-- **On the SEGA gateway** (`https://lng-tgk-aime-gw.am-all.net/common_auth/*`) it shows a small panel
-  that reads `clal` and, on a click, saves it with `PUT /api/v1/games/maimai/fetch/token?region=intl`.
+- **On the SEGA gateway's landing page** (`https://lng-tgk-aime-gw.am-all.net/common_auth/`, which
+  says Not Found) it shows a panel over the page that reads `clal` and, on a click, saves it with
+  `PUT /api/v1/games/maimai/fetch/token?region=intl`.
+- **When there is no cookie yet**, the panel opens SEGA's sign-in form, tagged with `tomomai=signin`.
+  The script shows a small hint there, reminding players to keep auto login ticked, since `clal` is
+  SEGA's auto login cookie. SEGA sends a signed-in player to DX NET, so on
+  `https://maimaidx-eng.com/maimai-mobile/*` the script sends them straight back to the landing page,
+  only within 30 minutes of that tagged sign-in. It runs at `document-start` so DX NET never renders.
 - **On tomomai's own pages** it only sets `data-tomomai-userscript` on `<html>` and fires a
   `tomomai:userscript` event, so the token dialog knows it is installed and skips the setup steps.
 
 The open token dialog polls for the saved token and starts the fetch itself, the same way a pasted
-cookie does.
+cookie does. After sending, the panel can close its tab (`@grant window.close`).
 
 The bundle is plain TypeScript with no dependencies and no `@require`, so what players install is what
-this package builds.
+this package builds. The panel's logo is inlined from `src/assets`.
 
 ## Signing in to tomomai
 
@@ -53,7 +59,8 @@ The route, the callback and the dialog's userscript option are all behind the `u
 1. Sign in as an admin and open **Settings > Developer**. Create an OAuth app with **Browser script**
    switched on, the redirect URI `https://<site>/userscript/callback` and the scope
    **Save game tokens** (`fetch:token:write`). A development server may use
-   `http://localhost:3000/userscript/callback`. No secret is issued.
+   `http://localhost:3000/userscript/callback`. Set the icon to `https://<site>/brand/maimai/icon.png`
+   so the consent screen shows the tomomai mascot instead of a letter. No secret is issued.
 2. Set `USERSCRIPT_CLIENT_ID` to its client ID and restart the server.
 3. Build the bundle:
 
