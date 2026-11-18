@@ -47,7 +47,43 @@
     "resetToDefault": "恢复默认",
     "retry": "重试",
     "previous": "上一页",
-    "next": "下一页"
+    "next": "下一页",
+    "guidePlayer": {
+      "play": "播放",
+      "pause": "暂停",
+      "replay": "重播",
+      "screen": "第 {number} 个画面",
+      "setTo": "设为 {value}",
+      "previous": "显示上一个",
+      "next": "显示下一个"
+    },
+    "guideLabels": {
+      "allowUserScripts": "“Allow User Scripts”开关",
+      "installButton": "“Install”按钮",
+      "permanentOption": "“Permanent”",
+      "allowButton": "“Allow”按钮",
+      "settingsTab": "“Settings”标签页",
+      "configMode": "“Config mode”",
+      "cookieAccess": "“Allow scripts to access cookies”",
+      "securitySave": "“Security”下的“Save”",
+      "settingsLink": "侧边栏中的“Settings”",
+      "httpOnlyGlobal": "HTTP-only Cookie 访问权限（所有脚本）",
+      "installedScriptsLink": "侧边栏中的“Installed scripts”",
+      "editScript": "脚本的编辑按钮",
+      "httpOnlyScript": "HTTP-only Cookie 访问权限（此脚本）",
+      "editorSave": "“Save”",
+      "saveAndClose": "“Save & Close”",
+      "requestPermission": "“Request Permission”按钮",
+      "extensionsButton": "工具栏中的扩展按钮",
+      "applicationTab": "“Application”标签页",
+      "cookies": "“Cookies”",
+      "gatewaySite": "SEGA 登录网站",
+      "clalRow": "clal 这一行",
+      "clalValue": "clal 的值",
+      "storageTab": "“Storage”标签页",
+      "clalValueDoubleClick": "clal 的值：双击后复制",
+      "gatewayCookies": "SEGA 登录网站的“Cookies”"
+    }
   },
   "security": {
     "reauth": {
@@ -942,70 +978,141 @@
     "title": "更新 {game} 验证",
     "intlDescription": "选择你的 {game} 登录验证方式。",
     "credentialsStored": "你的验证方式将被保存以供将来使用。",
+    "methods": {
+      "segaId": {
+        "title": "SEGA ID",
+        "description": "使用 SEGA ID 和密码登录 {net}。适用于任何设备，很少需要更新。"
+      },
+      "cookie": {
+        "title": "浏览器 Cookie",
+        "description": "在电脑上从浏览器的开发者工具中复制登录 Cookie。无需密码，因此也适用于社交账号登录。Cookie 可能会过期。"
+      },
+      "userscript": {
+        "title": "用户脚本",
+        "description": "通过用户脚本管理器一键发送登录 Cookie。无需密码。",
+        "installed": "已安装"
+      }
+    },
+    "cookieGuide": {
+      "description": "请在电脑上按以下步骤操作。移动端浏览器无法查看 Cookie。",
+      "intro": {
+        "question": "你正在使用电脑，还是已经有 clal Cookie 了？",
+        "mobileTitle": "移动设备无法使用",
+        "mobileDescription": "移动端浏览器无法查看 Cookie，因此需要使用电脑。在手机或平板上，请改用 SEGA ID 登录。",
+        "desktopTitle": "我正在使用电脑",
+        "desktopDescription": "一步步带我找到 Cookie。",
+        "haveCookieTitle": "我已经有 Cookie 了",
+        "haveCookieDescription": "跳过步骤，直接粘贴。"
+      },
+      "signIn": {
+        "title": "登录 {net}",
+        "description": "在无痕窗口中打开此链接并登录。完成后直接关闭窗口，不要退出登录，因为退出登录会结束此 Cookie 所属的会话。"
+      },
+      "gateway": {
+        "title": "打开 SEGA 登录页面",
+        "description": "在同一窗口中打开此链接。页面会显示“Not Found”，这是正常的。",
+        "screenshot": "显示“Not Found”的 SEGA 登录页面"
+      },
+      "devtools": {
+        "title": "打开开发者工具",
+        "description": "在该页面上按下：",
+        "otherMac": "在 Mac 上：",
+        "otherPc": "在 Windows 或 Linux 上：",
+        "safari": "Safari 默认隐藏开发者工具。请前往“Safari 浏览器 > 设置 > 高级”，开启“显示网页开发者功能”。"
+      },
+      "copy": {
+        "title": "复制 clal Cookie",
+        "chromium": "前往“应用”（Application）标签页，展开“Cookie”并选择 {host}。点击 clal 这一行，然后在底部的“Cookie 值”中选中完整的值并复制。",
+        "firefox": "前往“存储”（Storage）标签页，而不是“Application”。在“Cookie”下选择 {host}。双击 clal 的值，按 Cmd + C 或 Ctrl + C 复制，然后按 Esc。",
+        "safari": "前往“Storage”标签页，选择 {host} 的“Cookies”。双击 clal 的值，然后按 Cmd + C 复制选中的值。"
+      },
+      "inputLabel": "clal Cookie",
+      "inputPlaceholder": "粘贴 clal 的值",
+      "invalid": "这看起来不像 clal Cookie。它应由 64 个字母和数字组成。",
+      "expiry": "Cookie 可能会在一段时间后过期。如果无法再获取数据，请重复以上步骤。",
+      "backToSteps": "返回步骤",
+      "enterCookie": "输入 Cookie",
+      "inputDescription": "粘贴你复制的 clal Cookie 的值。",
+      "whichBrowser": "你使用的是哪个浏览器？",
+      "browsers": {
+        "chromium": "Chrome 或 Edge",
+        "firefox": "Firefox",
+        "safari": "Safari"
+      }
+    },
+    "wizard": {
+      "previousStep": "上一步",
+      "nextStep": "下一步"
+    },
+    "userscriptGuide": {
+      "description": "用户脚本会在 SEGA 登录页面读取你的登录 Cookie，并发送到 {product}。无需密码。",
+      "detected": "你正在使用 <browser></browser>。请安装以下任一用户脚本管理器：",
+      "detectedNone": "你正在使用 <browser></browser>。",
+      "browserLabel": "浏览器",
+      "browsers": {
+        "chrome": "Chrome",
+        "edge": "Microsoft Edge",
+        "firefox": "Firefox",
+        "safari": "Mac 上的 Safari",
+        "opera": "Opera",
+        "firefox-android": "Android 版 Firefox",
+        "edge-android": "Android 版 Edge",
+        "chrome-android": "Android 版 Chrome",
+        "ios": "iPhone 或 iPad",
+        "other": "其他"
+      },
+      "incompatibleHeading": "无法使用",
+      "caveats": {
+        "hidesHttpOnly": "会对脚本隐藏登录 Cookie。",
+        "noCookieApi": "完全无法读取 Cookie。",
+        "safariUntested": "可能适用于 Safari 18 或更高版本，但我们尚未测试。"
+      },
+      "noManagers": {
+        "chrome-android": "Android 版 Chrome 不支持扩展程序。请试试 Android 版 Firefox 或 Edge，或选择其他登录方式。",
+        "other": "我们暂时还没有这个浏览器的教程。请选择上方最接近的一项，或选择其他登录方式。"
+      },
+      "pick": {
+        "title": "安装用户脚本管理器",
+        "haveOne": "已经安装了？请直接进入下一步。"
+      },
+      "cookies": {
+        "title": "允许访问 Cookie",
+        "tampermonkey": "打开 Tampermonkey 的“Dashboard”，进入“Settings”。将“Config mode”设为“Advanced”，然后在“Security”下将“Allow scripts to access cookies”设为“All”，并点击“Save”。",
+        "violentmonkey": "在 Violentmonkey 的设置中勾选“Allow GM_cookie to access HTTP-only cookies”。然后打开该脚本的编辑器，在其“Settings”标签页中勾选同一选项，并点击“Save”。"
+      },
+      "script": {
+        "title": "安装 {product} 用户脚本",
+        "allowUserScripts": "首先，打开浏览器的扩展程序页面，进入 {manager} 的详情，开启“Allow User Scripts”。",
+        "description": "然后安装脚本。用户脚本管理器会打开安装页面，请在该页面确认安装。",
+        "scriptcatRestart": "更改“Allow User Scripts”后，需要退出并重新打开浏览器，ScriptCat 才会生效。",
+        "button": "安装用户脚本",
+        "scriptcatPermission": "ScriptCat 需要先获得运行用户脚本的权限。点击“Request Permission”，勾选“Allow unverified third-party scripts to access your data”，然后点击“Allow”。"
+      },
+      "send": {
+        "title": "发送 Cookie",
+        "description": "打开 {net} 并登录。在 SEGA 登录页面上，用户脚本会将你的 Cookie 发送到 {product}，此对话框会自动关闭。",
+        "button": "打开 {net}",
+        "waiting": "正在等待用户脚本…",
+        "installed": "此浏览器已安装 {product} 用户脚本。",
+        "scriptcatPrompt": "脚本首次读取你的 Cookie 时，ScriptCat 会请求权限。请在倒计时结束前选择“Permanent”，然后点击“Allow”。"
+      },
+      "whichManager": "你使用的是哪一个？"
+    },
     "username": "用户名",
     "usernamePlaceholder": "输入你的 SEGA 账户用户名",
     "password": "密码",
     "passwordPlaceholder": "输入你的 SEGA 账户密码",
-    "cookies": "Cookies",
-    "tokenPlaceholder": "clal=在此输入你的 Cookies",
-    "tokenValidationError": "Cookies 必须以 \"clal=\" 开头，后面跟着字母和数字",
     "authenticationNote": "验证：",
     "segaCredentialsNote": "使用你的 SEGA 账户凭证来验证 {net}。",
     "subscriptionNote": "获取 {game}（{region}）成绩需要有效的 {subscription} 服务订阅。",
     "credentialsSecureNote": "你的验证方式将被保存以供将来使用。",
     "savingCredentials": "保存验证方式中...",
     "saveCredentials": "保存验证方式",
-    "tokenTab": "令牌",
-    "passwordTab": "密码",
-    "tokenInstructions": {
-      "description": "来自 {net} 的以 \"clal=\" 开头的 Cookie 值。",
-      "expiration": "Cookies 可能会在一段时间后失效，你可能需要重新登录。"
-    },
-    "secureStorage": "你的验证方式将被保存以供将来使用。",
-    "steps": {
-      "step1Title": "登录 {net}",
-      "step2Title": "访问 \"Not Found\" 页面",
-      "step3Title": "执行代码"
-    },
     "clipboard": {
       "copied": "已复制到剪贴板！",
       "failed": "复制到剪贴板失败"
     },
-    "loading": {
-      "scriptLink": "正在生成脚本链接...",
-      "loginLink": "正在生成个性化链接..."
-    },
-    "tokenDialogDescription": "输入您的浏览器令牌以进行验证",
     "segaAccountDescription": "输入您的 SEGA 账户凭证",
-    "backToSteps": "返回步骤",
-    "step1": {
-      "description": "在<strong>无痕 / 隐私窗口</strong>中登录 {net}。",
-      "clickToCopy": "点击下方的链接以复制到剪贴板：",
-      "haveCookies": "已经有自己的 Cookies 了吗？",
-      "enterDirectly": "直接输入"
-    },
-    "step2": {
-      "description": "在同一个无痕 / 隐私标签页中，访问下方的链接。",
-      "otpLabel": "OTP:",
-      "otpExpires": "过期时间 ~ {time}",
-      "refreshing": "刷新中...",
-      "refreshOtp": "刷新 OTP"
-    },
-    "step3": {
-      "desktop": "桌面版",
-      "desktopInstructions": "复制下方的 JavaScript 代码，并将其粘贴到浏览器的开发者控制台（Ctrl + Shift + I 或 F12）中。",
-      "mobile": "移动版",
-      "mobileStep1": "1. 点击下方的代码以复制到剪贴板。",
-      "mobileStep2": "2. 在您的浏览器中创建一个书签，并将复制的文本粘贴到 URL 字段中。",
-      "mobileStep3": "3. 运行该书签。"
-    },
-    "navigation": {
-      "previousStep": "上一步",
-      "nextStep": "下一步"
-    },
-    "recommended": "推荐歌曲",
-    "tokenOptionDescription": "使用您的浏览器令牌登录您的 {net} 账户。令牌可能会不时过期。无需密码，并支持社交登录。",
-    "passwordOptionDescription": "使用您的 SEGA 账户凭证登录您的 {net} 账户。永久有效。不推荐。",
     "cnTitle": "更新舞萌 DX 验证",
     "cnDescription": "选择您的舞萌 DX 登录验证方式。",
     "cnExperimentalWarningTitle": "国服为实验性地区",
@@ -1341,15 +1448,15 @@
           "median": "中位数附近"
         },
         "sections": {
-          "rating": "Rating",
-          "history": "History",
-          "compare": "Compare",
-          "compareEmpty": "No players to compare with on this chart yet."
+          "rating": "R 值",
+          "history": "历史记录",
+          "compare": "比较",
+          "compareEmpty": "这张谱面暂时还没有可比较的玩家。"
         },
         "history": {
           "title": "你的成绩变化",
           "sinceMonth": "30 天内 +{delta}",
-          "unchanged": "Unchanged since {date}. New bests will show up here."
+          "unchanged": "自 {date} 起没有变化。新的最佳成绩会显示在这里。"
         },
         "next": "下一目标:{target},+{gain}",
         "recentPlays": "最近游玩",
