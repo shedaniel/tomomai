@@ -84,22 +84,52 @@ export function isSignedIn(): boolean {
   return Boolean(GM_getValue(KEY_REFRESH_TOKEN, null) ?? GM_getValue(KEY_ACCESS_TOKEN, null));
 }
 
-/** A current access token. Refreshes it when it is about to expire, and asks for a new sign-in when that fails. */
-export async function accessToken(): Promise<string> {
+function currentAccess(): string | null {
   const access = GM_getValue(KEY_ACCESS_TOKEN, null) as string | null;
   const expiresAt = GM_getValue(KEY_EXPIRES_AT, 0) as number;
-  if (access && Date.now() < expiresAt - 60_000) return access;
-  const refresh = GM_getValue(KEY_REFRESH_TOKEN, null) as string | null;
-  if (!refresh) throw new SignInRequired();
-  try {
-    const tokens = await tokenRequest({ grant_type: "refresh_token", refresh_token: refresh });
-    store(tokens);
-    return tokens.access_token;
-  } catch (err) {
-    // A refresh token is single use, so a failed one is gone either way.
-    if (err instanceof SignInRequired) signOut();
-    throw err;
-  }
+  return access && Date.now() < expiresAt - 60_000 ? access : null;
+}
+
+/**
+ * Gateway tabs share one refresh token, and reusing a rotated one revokes the sign-in everywhere, so
+ * only one tab refreshes at a time.
+ */
+function withRefreshLock(run: () => Promise<string>): Promise<string> {
+  if (typeof navigator.locks?.request !== "function") return run();
+  return new Promise((resolve, reject) => {
+    let started = false;
+    const locked = () => {
+      started = true;
+      return run().then(resolve, reject);
+    };
+    // A manager's sandbox may refuse the lock, and then refreshing without it beats failing the send.
+    const unlocked = () => (started ? undefined : run().then(resolve, reject));
+    try {
+      navigator.locks.request(`tomomai:refresh:${KEY_PREFIX}`, locked).catch(unlocked);
+    } catch {
+      unlocked();
+    }
+  });
+}
+
+/** A current access token. Refreshes it when it is about to expire, and asks for a new sign-in when that fails. */
+export async function accessToken(): Promise<string> {
+  return currentAccess() ?? withRefreshLock(async () => {
+    // Another tab may have refreshed while this one waited for the lock.
+    const access = currentAccess();
+    if (access) return access;
+    const refresh = GM_getValue(KEY_REFRESH_TOKEN, null) as string | null;
+    if (!refresh) throw new SignInRequired();
+    try {
+      const tokens = await tokenRequest({ grant_type: "refresh_token", refresh_token: refresh });
+      store(tokens);
+      return tokens.access_token;
+    } catch (err) {
+      // A refresh token is single use, so a failed one is gone either way.
+      if (err instanceof SignInRequired) signOut();
+      throw err;
+    }
+  });
 }
 
 function base64url(bytes: Uint8Array): string {
