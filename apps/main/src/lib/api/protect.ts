@@ -3,10 +3,11 @@ import type { z } from "zod";
 import { createHash } from "crypto";
 import { auth } from "@/lib/auth";
 import { verifyAccessToken } from "better-auth/oauth2";
-import { API_SCOPES, isInternalScope, type ScopeKey, scopesToPermissions } from "@/lib/api/scopes";
+import { API_SCOPES, isInternalScope, isOfficialOnlyScope, type ScopeKey, scopesToPermissions } from "@/lib/api/scopes";
 import { requiredScopes, type GameRouteSpec, type RouteScope, type RouteSpec } from "@/lib/api/registry";
 import { bindGameRoute, withApiRequest, type GameHandler, type RouteContext } from "@/lib/api/route";
 import { resolveBaseUrl } from "@/lib/base-url";
+import { isOfficialClient } from "@/lib/oauth-official";
 import { db } from "@/lib/db";
 import { oauthAccessToken, oauthClient, oauthConsent } from "@/lib/db/schema-pg";
 import { and, eq } from "drizzle-orm";
@@ -39,11 +40,17 @@ function jwtSurrogateId(token: string): string {
 
 /**
  * JWT access tokens are not stored, so revoking an authorization cannot delete them. They stay valid
- * only while the client is enabled and the user's consent for it still exists.
+ * only while the client is enabled and the user's consent for it still exists. Returns whether the
+ * client is official, or null when the grant is no longer active.
  */
-async function isJwtGrantActive(clientId: string, userId: string): Promise<boolean> {
+async function activeJwtGrant(clientId: string, userId: string): Promise<{ official: boolean } | null> {
   const [row] = await db
-    .select({ disabled: oauthClient.disabled, skipConsent: oauthClient.skipConsent, consentId: oauthConsent.id })
+    .select({
+      disabled: oauthClient.disabled,
+      skipConsent: oauthClient.skipConsent,
+      metadata: oauthClient.metadata,
+      consentId: oauthConsent.id,
+    })
     .from(oauthClient)
     .leftJoin(
       oauthConsent,
@@ -51,8 +58,9 @@ async function isJwtGrantActive(clientId: string, userId: string): Promise<boole
     )
     .where(eq(oauthClient.clientId, clientId))
     .limit(1);
-  if (!row || row.disabled) return false;
-  return row.skipConsent === true || row.consentId !== null;
+  if (!row || row.disabled) return null;
+  if (row.skipConsent !== true && row.consentId === null) return null;
+  return { official: isOfficialClient(row.metadata) };
 }
 
 /**
@@ -69,6 +77,7 @@ async function verifyOAuthToken(
   routeScopes: ScopeKey[],
 ): Promise<ApiKeyInfo | null> {
   if (routeScopes.some(isInternalScope)) return null;
+  const needsOfficial = routeScopes.some(isOfficialOnlyScope);
   const tokenScopes = routeScopes.filter((s) => s !== "ready");
   // ── JWT fast-path ──────────────────────────────────────────────────────
   if ((token.match(/\./g) ?? []).length === 2) {
@@ -83,7 +92,8 @@ async function verifyOAuthToken(
       });
       const clientId = typeof payload.azp === "string" ? payload.azp : null;
       if (payload.sub && clientId) {
-        if (!(await isJwtGrantActive(clientId, payload.sub))) return null;
+        const grant = await activeJwtGrant(clientId, payload.sub);
+        if (!grant || (needsOfficial && !grant.official)) return null;
         const scopeList = (typeof payload.scope === "string" ? payload.scope : "")
           .split(" ")
           .filter(Boolean);
@@ -108,6 +118,7 @@ async function verifyOAuthToken(
       scopes: oauthAccessToken.scopes,
       expiresAt: oauthAccessToken.expiresAt,
       clientDisabled: oauthClient.disabled,
+      clientMetadata: oauthClient.metadata,
     })
     .from(oauthAccessToken)
     .innerJoin(oauthClient, eq(oauthClient.clientId, oauthAccessToken.clientId))
@@ -115,6 +126,7 @@ async function verifyOAuthToken(
     .limit(1);
 
   if (!row || !row.userId || row.clientDisabled) return null;
+  if (needsOfficial && !isOfficialClient(row.clientMetadata)) return null;
   if (row.expiresAt.getTime() <= Date.now()) return null;
   for (const required of tokenScopes) {
     if (!row.scopes.includes(required)) return null;
@@ -198,6 +210,9 @@ async function authenticate(req: NextRequest, scopes: ScopeKey[]): Promise<ApiKe
     return key ?? Response.json({ error: "Invalid or expired token" }, { status: 403 });
   }
 
+  if (scopes.some(isOfficialOnlyScope)) {
+    return Response.json({ error: "Only official apps can use this endpoint" }, { status: 403 });
+  }
   const result = await auth.api.verifyApiKey({
     body: { key: rawKey, permissions: scopesToPermissions(scopes) },
   });

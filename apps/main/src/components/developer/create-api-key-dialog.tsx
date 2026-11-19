@@ -27,7 +27,7 @@ import { API_SCOPES, type ScopeKey } from "@/lib/api/scopes";
 import { AlertTriangle, Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import {
-  SCOPE_TREE,
+  scopeTreeFor,
   ALL_PARENT_KEYS,
   DEFAULT_SCOPES,
   computeImplied,
@@ -171,7 +171,7 @@ export function CreateApiKeyDialog({ open, onOpenChange, onCreated }: CreateApiK
                 <Label>{t("createDialog.scopesLabel")}</Label>
                 <div className="border rounded-md">
                   <div className="p-1">
-                    {SCOPE_TREE.map((node) => (
+                    {scopeTreeFor(false).map((node) => (
                       <ScopeTreeNode
                         key={node.key}
                         node={node}

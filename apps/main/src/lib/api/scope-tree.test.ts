@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { API_SCOPES, isInternalScope, type ScopeKey } from "./scopes";
-import { grantedScopeTree, SCOPE_TREE, type TreeNode } from "./scope-tree";
+import { grantedScopeTree, pickedScopes, SCOPE_TREE, scopeTreeFor, type TreeNode } from "./scope-tree";
 
 function keys(nodes: TreeNode[]): ScopeKey[] {
   return nodes.flatMap((n) => [n.key, ...keys(n.children ?? [])]);
@@ -20,5 +20,13 @@ describe("scope tree", () => {
       { key: "fetch:delete" },
       { key: "snapshot:submit" },
     ]);
+  });
+
+  it("shows and submits official-only scopes only for an official app", () => {
+    expect(keys(scopeTreeFor(true))).toContain("fetch:token:write");
+    expect(keys(scopeTreeFor(false))).not.toContain("fetch:token:write");
+    expect(keys(scopeTreeFor(false))).toContain("fetch:start");
+    expect(pickedScopes(["fetch:start", "fetch:token:write"], false)).toEqual(["fetch:start"]);
+    expect(pickedScopes(["fetch:start", "fetch:token:write"], true)).toEqual(["fetch:start", "fetch:token:write"]);
   });
 });

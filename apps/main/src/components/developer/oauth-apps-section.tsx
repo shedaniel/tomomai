@@ -37,13 +37,14 @@ import { Plus, Trash2, Globe, Loader2, RefreshCw, AlertTriangle, X, AppWindow, P
 import { useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import {
-  SCOPE_TREE,
   ALL_PARENT_KEYS,
   DEFAULT_SCOPES,
   computeImplied,
   CopyableInput,
   SaveWarning,
   ScopeTreeNode,
+  pickedScopes,
+  scopeTreeFor,
 } from "@/components/developer/developer-shared";
 import { clientIconSrc } from "@/lib/oauth-client-icon";
 import type { PublicClientType } from "@/lib/oauth-public";
@@ -279,6 +280,7 @@ function ScopePickerField({
   badges,
   scopeName,
   scopeDescription,
+  official,
 }: {
   selectedScopes: Set<ScopeKey>;
   implied: Set<ScopeKey>;
@@ -289,11 +291,12 @@ function ScopePickerField({
   badges: { default: string; included: string; sensitive: string };
   scopeName: (k: ScopeKey) => string;
   scopeDescription: (k: ScopeKey) => string;
+  official: boolean;
 }) {
   return (
     <div className="border rounded-md">
       <div className="p-1">
-        {SCOPE_TREE.map((node) => (
+        {scopeTreeFor(official).map((node) => (
           <ScopeTreeNode
             key={node.key}
             node={node}
@@ -364,16 +367,19 @@ function CreateOAuthAppDialog({
   });
   const isCreating = createMutation.isPending || createPublicMutation.isPending;
 
+  const createsOfficial = isAdmin && (form.official || form.publicType !== null);
+
   function handleCreate() {
+    const scopes = pickedScopes(form.selectedScopes, createsOfficial);
     if (!form.name.trim()) { toast.error("App name is required."); return; }
     if (form.redirectUris.length === 0) { toast.error("At least one redirect URI is required."); return; }
-    if (form.selectedScopes.size === 0) { toast.error("Select at least one scope."); return; }
+    if (scopes.length === 0) { toast.error("Select at least one scope."); return; }
     if (isAdmin && form.publicType) {
       createPublicMutation.mutate({
         type: form.publicType,
         name: form.name.trim(),
         redirectUris: form.redirectUris,
-        scopes: Array.from(form.selectedScopes) as [ScopeKey, ...ScopeKey[]],
+        scopes: scopes as [ScopeKey, ...ScopeKey[]],
         uri: form.uriInput || undefined,
       });
       return;
@@ -381,7 +387,7 @@ function CreateOAuthAppDialog({
     createMutation.mutate({
       name: form.name.trim(),
       redirectUris: form.redirectUris,
-      scopes: Array.from(form.selectedScopes) as [ScopeKey, ...ScopeKey[]],
+      scopes: scopes as [ScopeKey, ...ScopeKey[]],
       uri: form.uriInput || undefined,
       official: isAdmin ? form.official : undefined,
     });
@@ -488,6 +494,7 @@ function CreateOAuthAppDialog({
                   badges={badges}
                   scopeName={(k) => t(`scopes.${k}.name`)}
                   scopeDescription={(k) => t(`scopes.${k}.description`)}
+                  official={createsOfficial}
                 />
               </div>
 
@@ -553,10 +560,13 @@ function EditOAuthAppDialog({
     },
   });
 
+  const staysOfficial = app.publicType !== null || (isAdmin ? form.official : app.official);
+
   function handleSave() {
+    const scopes = pickedScopes(form.selectedScopes, staysOfficial);
     if (!form.name.trim()) { toast.error("App name is required."); return; }
     if (form.redirectUris.length === 0) { toast.error("At least one redirect URI is required."); return; }
-    if (form.selectedScopes.size === 0) { toast.error("Select at least one scope."); return; }
+    if (scopes.length === 0) { toast.error("Select at least one scope."); return; }
     updateMutation.mutate({
       clientId: app.clientId,
       name: form.name.trim(),
@@ -565,7 +575,7 @@ function EditOAuthAppDialog({
       icon: form.iconInput || null,
       policy: form.policyInput || null,
       tos: form.tosInput || null,
-      scopes: Array.from(form.selectedScopes) as [ScopeKey, ...ScopeKey[]],
+      scopes: scopes as [ScopeKey, ...ScopeKey[]],
       official: isAdmin && !app.publicType ? form.official : undefined,
     });
   }
@@ -649,6 +659,7 @@ function EditOAuthAppDialog({
               badges={badges}
               scopeName={(k) => t(`scopes.${k}.name`)}
               scopeDescription={(k) => t(`scopes.${k}.description`)}
+              official={staysOfficial}
             />
             <p className="text-xs text-muted-foreground">{t("oauthApps.editDialog.scopesNote")}</p>
           </div>

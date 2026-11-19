@@ -20,7 +20,7 @@ export const ScopeRoutesProvider = ScopeRoutesContext.Provider;
 
 // ── Tree types & helpers ──────────────────────────────────────────────────────
 
-export { SCOPE_TREE, ALL_PARENT_KEYS, collectParents, type TreeNode } from "@/lib/api/scope-tree";
+export { SCOPE_TREE, ALL_PARENT_KEYS, collectParents, pickedScopes, scopeTreeFor, type TreeNode } from "@/lib/api/scope-tree";
 
 export const DEFAULT_SCOPES = new Set(
   (Object.entries(API_SCOPES) as [ScopeKey, (typeof API_SCOPES)[ScopeKey]][])

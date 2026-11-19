@@ -191,10 +191,11 @@ export const API_SCOPES = {
   },
   "fetch:token:write": {
     name: "Fetch Token (Write)",
-    description: "Save a new upstream authentication token for a region, replacing the stored one. This is sensitive as it decides which game account your fetches read from.",
+    description: "Save a new upstream authentication token for a region, replacing the stored one. This is sensitive as it decides which game account your fetches read from. Only official apps can ask for it.",
     destructive: true,
     sensitive: true,
     default: false,
+    officialOnly: true,
   },
   "fetch:delete": {
     name: "Fetch Token (Delete)",
@@ -245,6 +246,12 @@ export function scopesToPermissions(scopes: ScopeKey[]) {
 export function isInternalScope(s: string): boolean {
   const def = (API_SCOPES as Record<string, { internal?: boolean } | undefined>)[s];
   return def?.internal === true;
+}
+
+/** Scopes only official OAuth apps may hold. No API key or third-party app can use one. */
+export function isOfficialOnlyScope(s: string): boolean {
+  const def = (API_SCOPES as Record<string, { officialOnly?: boolean } | undefined>)[s];
+  return def?.officialOnly === true;
 }
 
 /** Leaf scopes that each encompassing scope expands to (source scope is NOT stored). */
