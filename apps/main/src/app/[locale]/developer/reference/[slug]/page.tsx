@@ -15,7 +15,7 @@ import { Badge } from "@tomomai/ui";
 import { CodeSamples } from "@/components/developer/code-samples";
 import { CodeBlock } from "@/components/developer/code-block";
 import { highlight } from "@/lib/developer/highlight";
-import { renderSnippet, SAMPLE_HIGHLIGHT, SAMPLE_LANGS } from "@/lib/developer/code-samples";
+import { renderSnippet, SAMPLE_HIGHLIGHT, SAMPLE_LANGS, type SampleBody } from "@/lib/developer/code-samples";
 import { MethodBadge } from "@/components/developer/method-badge";
 import type { RouteSpec } from "@/lib/api/registry";
 
@@ -41,6 +41,11 @@ function buildExampleUrl(spec: RouteSpec, baseUrl: string): string {
   const qs: string[] = [];
   if (spec.query && "region" in spec.query.shape) qs.push("region=intl");
   return `${baseUrl}${path}${qs.length ? "?" + qs.join("&") : ""}`;
+}
+
+function buildExampleBody(spec: RouteSpec): SampleBody | undefined {
+  if (!spec.body) return undefined;
+  return Object.fromEntries(Object.keys(spec.body.shape).map((name) => [name, `<${name}>`]));
 }
 
 export function generateStaticParams() {
@@ -79,11 +84,12 @@ export default async function ReferenceEndpointPage({
 
   const exampleUrl = buildExampleUrl(spec, baseUrl);
   const needsAuth = spec.scope !== "public";
+  const exampleBody = buildExampleBody(spec);
   const [responseCode, samples] = await Promise.all([
     renderResponseCode(spec.response, responseTypeName(slug)),
     Promise.all(
       SAMPLE_LANGS.map(async (lang) => {
-        const code = renderSnippet(lang, spec.method, exampleUrl, needsAuth);
+        const code = renderSnippet(lang, spec.method, exampleUrl, needsAuth, exampleBody);
         return { lang, code, html: await highlight(code, SAMPLE_HIGHLIGHT[lang]) };
       }),
     ),
