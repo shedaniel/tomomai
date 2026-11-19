@@ -16,7 +16,8 @@ dialog's userscript guide walks players through that setting for each manager.
   The script shows a small hint there, reminding players to keep auto login ticked, since `clal` is
   SEGA's auto login cookie. SEGA sends a signed-in player to DX NET, so on
   `https://maimaidx-eng.com/maimai-mobile/*` the script sends them straight back to the landing page,
-  only within 30 minutes of that tagged sign-in. It runs at `document-start` so DX NET never renders.
+  only within 5 minutes of opening that tagged form or submitting it. A trip the player gave up on
+  stops on its own. It runs at `document-start` so DX NET never renders.
 - **On tomomai's own pages** it only sets `data-tomomai-userscript` on `<html>` and fires a
   `tomomai:userscript` event, so the token dialog knows it is installed and skips the setup steps.
 

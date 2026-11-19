@@ -31,7 +31,9 @@ function netLogin(game: GameId): string {
 // gateway, so the script sends them back itself as soon as that page starts loading.
 const KEY_RETURN = "returnToGateway";
 const KEY_RETURNED = "returnedToGateway";
-const RETURN_WINDOW_MS = 30 * 60 * 1000;
+// Short, so a trip the player gave up on stops redirecting NET visits soon. Each sign-in attempt
+// restarts it, for a player who takes a while on the form.
+const RETURN_WINDOW_MS = 5 * 60 * 1000;
 
 const ICONS = {
   close: '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
@@ -389,6 +391,7 @@ function start() {
     const trip = recentTrip(KEY_RETURN);
     if (!trip) return;
     game = trip.game;
+    document.addEventListener("submit", () => setTrip(KEY_RETURN, trip.game), true);
     mountSignInHint();
   } else {
     announce();
