@@ -4,7 +4,7 @@ import monkey from "vite-plugin-monkey";
 
 const PLACEHOLDER = "__TOMOMAI_API_BASE__";
 const CLIENT_ID_PLACEHOLDER = "__TOMOMAI_USERSCRIPT_CLIENT_ID__";
-// The serving route also fills in the site's host for @connect and a match pattern for its pages.
+// The serving route also fills in the site's host for @connect and match patterns for every site's pages.
 const HOST_PLACEHOLDER = "__TOMOMAI_API_HOST__";
 const MATCH_PLACEHOLDER = "__TOMOMAI_SITE_MATCH__";
 // The game of the site serving the script, and its brand icon.

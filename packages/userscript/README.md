@@ -39,6 +39,8 @@ installed from either site works for both games:
   database and one set of accounts, so the other site's dialog sees the saved token as long as the
   player uses the same account there. The panel names that site for signing in, and the game's site
   for sending.
+- The copy runs on the pages of the site that served it and of every game's site, so both sites'
+  token dialogs see it installed and skip their setup steps.
 - The sign-in round trip covers both NET sites, `maimaidx-eng.com/maimai-mobile/*` and
   `chunithm-net-eng.com/mobile/*`.
 - `src/games.ts` copies each game's SEGA sites from the site's game definitions, and a test on the site
