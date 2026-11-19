@@ -89,7 +89,7 @@ function FetchFields() {
     setSelectedFetchUseAlbums(undefined);
   });
 
-  const handleTokenUpdate = async (token: string) => {
+  const handleTokenUpdate = async (token?: string) => {
     if (!selectedRegion) return;
     if (!(await confirmFetch())) {
       // Keeps the TokenDialog open with what the user typed.

@@ -26,7 +26,7 @@ interface SegaLoginMethodsDialogProps {
   offerCredentials: boolean;
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
-  onTokenUpdate: (token: string) => Promise<void>;
+  onTokenUpdate: (token?: string) => Promise<void>;
 }
 
 type SubDialog = "credentials" | "cookie" | "userscript" | null;
@@ -57,7 +57,7 @@ export function SegaLoginMethodsDialog({ region, offerCredentials, isOpen, onOpe
     />
   );
 
-  const submit = async (token: string) => {
+  const submit = async (token?: string) => {
     await onTokenUpdate(token);
     closeAll();
   };
@@ -117,7 +117,7 @@ export function SegaLoginMethodsDialog({ region, offerCredentials, isOpen, onOpe
           region={region}
           isOpen={subDialog === "userscript"}
           onOpenChange={open => setSubDialog(open ? "userscript" : null)}
-          onTokenSaved={() => submit("")}
+          onTokenSaved={() => submit()}
         />
       )}
     </>
