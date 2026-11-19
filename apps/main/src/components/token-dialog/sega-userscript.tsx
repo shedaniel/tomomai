@@ -126,7 +126,8 @@ export function SegaUserscriptDialog({ region, isOpen, onOpenChange, onTokenSave
   const sending = isOpen && steps.key === "send";
   const savedAt = trpc.user.getTokenSavedAt.useQuery(
     { game: game.id, region },
-    { enabled: sending, refetchInterval: TOKEN_POLL_MS, refetchOnWindowFocus: true },
+    // The gateway opens in another tab, so this one is hidden while the player sends.
+    { enabled: sending, refetchInterval: TOKEN_POLL_MS, refetchIntervalInBackground: true, refetchOnWindowFocus: true },
   );
   // The token stored when the send step opened, so only one the userscript saves afterwards counts.
   const watch = useRef<{ since: number; baseline?: string | null; handedOff?: boolean } | null>(null);
