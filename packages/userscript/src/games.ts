@@ -2,6 +2,9 @@
 // definitions describe them. A test on the site checks the two agree. Pure data, so the site can import it.
 
 export const GAME_IDS = ["maimai", "chunithm"] as const;
+
+/** The value of the gateway's `clal` cookie, which both games sign in with. */
+export const CLAL = /^[A-Za-z0-9]{64}$/;
 export type GameId = (typeof GAME_IDS)[number];
 
 export type ScriptGame = {

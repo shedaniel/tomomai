@@ -1,9 +1,7 @@
 import { GM, GM_cookie } from "vite-plugin-monkey/dist/client";
 import { API_BASE, SignInRequired, accessToken, request, signOut } from "./auth";
-import type { GameId } from "./games";
+import { CLAL, type GameId } from "./games";
 import { ScriptError } from "./locale";
-
-const CLAL = /^[A-Za-z0-9]{64}$/;
 
 type Cookie = { name: string; value: string };
 

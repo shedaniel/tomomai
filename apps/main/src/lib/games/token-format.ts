@@ -1,5 +1,8 @@
 import type { LoginMethod } from "./types";
 
+/** The value of the SEGA gateway's `clal` cookie. */
+export const CLAL_VALUE = /^[A-Za-z0-9]{64}$/;
+
 export type DivingFishIdentifier = { kind: "username" | "qq"; value: string };
 
 export type SegaAccountToken = { provider: "sega-account"; username: string; password: string; clal?: string };

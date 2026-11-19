@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { defineGameRoute } from "@/lib/api/registry";
 import { querySchemas, successResponse } from "@/lib/api/schemas";
+import { CLAL_VALUE } from "@/lib/games/token-format";
 
 export const COOKIE_SIGN_IN_UNSUPPORTED = "COOKIE_SIGN_IN_UNSUPPORTED";
 
@@ -21,7 +22,7 @@ export const spec = defineGameRoute({
 });
 
 export const putBody = z.object({
-  clal: z.string().regex(/^[A-Za-z0-9]{64}$/, "Expected the 64-character value of the clal cookie")
+  clal: z.string().regex(CLAL_VALUE, "Expected the 64-character value of the clal cookie")
     .describe("The value of the `clal` cookie the SEGA gateway sets after signing in."),
 });
 

@@ -4,7 +4,7 @@ import { GuidePlayer } from "@/components/guide-player";
 import { useGame } from "@/components/providers/game-provider";
 import type { Region } from "@/lib/games/ids";
 import { SEGA_AIME_GATEWAY, siteRoot } from "@/lib/games/sites";
-import { formatSegaCookie } from "@/lib/games/token-format";
+import { CLAL_VALUE, formatSegaCookie } from "@/lib/games/token-format";
 import { cn } from "@/lib/utils";
 import { logger } from "@/lib/logger";
 import {
@@ -34,8 +34,6 @@ interface SegaCookieDialogProps {
   onOpenChange: (open: boolean) => void;
   onTokenUpdate: (token: string) => Promise<void>;
 }
-
-const CLAL_PATTERN = /^(?:clal=)?[A-Za-z0-9]{64}$/;
 
 /** Browsers whose DevTools differ, and so get their own instructions. */
 type DevtoolsBrowser = DevtoolsFamily;
@@ -108,7 +106,7 @@ export function SegaCookieDialog({ region, isOpen, onOpenChange, onTokenUpdate }
   const [value, setValue] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const trimmed = value.trim();
-  const isValid = CLAL_PATTERN.test(trimmed);
+  const isValid = CLAL_VALUE.test(trimmed.replace(/^clal=/, ""));
   const [browser, setBrowser] = useState<DevtoolsBrowser>("chromium");
   const [isMac, setIsMac] = useState(false);
   const steps = useWizardSteps(STEPS, isOpen, () => {
