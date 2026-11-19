@@ -1,4 +1,6 @@
 import { resolveBaseUrl } from "@/lib/base-url";
+import { CANONICAL_GAME_IDS } from "@/lib/games/ids";
+import { getGame } from "@/lib/games/registry";
 
 /** The one path a native app's universal link or App Link claims, on each allowlisted host. */
 export const NATIVE_CALLBACK_PATH = "/oauth/app-callback";
@@ -22,18 +24,25 @@ export function isPublicClientType(value: unknown): value is PublicClientType {
 }
 
 /**
- * Hosts a public client may redirect to. `NATIVE_APP_REDIRECT_HOSTS` is a comma-separated list of hosts,
- * and the deployment's own host is the default.
+ * Hosts a public client may redirect to. `PUBLIC_CLIENT_REDIRECT_HOSTS` is a comma-separated list of hosts,
+ * and the deployment's own host is the default. A browser client may also use every game's site, so one
+ * userscript app can carry each site's callback.
  */
 export function publicRedirectHosts(
-  configured: string | undefined = process.env.NATIVE_APP_REDIRECT_HOSTS,
+  type: PublicClientType,
+  configured: string | undefined = process.env.PUBLIC_CLIENT_REDIRECT_HOSTS,
   baseUrl: string = resolveBaseUrl(),
 ): string[] {
   const hosts = configured
     ?.split(",")
     .map((host) => host.trim().toLowerCase())
     .filter(Boolean);
-  if (hosts?.length) return hosts;
+  const base = hosts?.length ? hosts : deploymentHost(baseUrl);
+  if (type === "native") return base;
+  return [...new Set([...base, ...CANONICAL_GAME_IDS.map((game) => getGame(game).brand.domain)])];
+}
+
+function deploymentHost(baseUrl: string): string[] {
   try {
     return [new URL(baseUrl).host];
   } catch {

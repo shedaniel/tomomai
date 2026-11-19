@@ -575,7 +575,7 @@ export const auth = betterAuth({
           if ((session?.user as { role?: string | null } | undefined)?.role !== "admin") {
             throw new APIError("FORBIDDEN", { message: "Only admins can register public clients" });
           }
-          const violation = publicClientViolation(target, publicRedirectHosts());
+          const violation = publicClientViolation(target, publicRedirectHosts(isPublicClientType(target.type) ? target.type : "native"));
           if (violation) throw new APIError("BAD_REQUEST", { message: violation });
         } else if (ctx.path === "/oauth2/update-client") {
           const existing = typeof body.client_id === "string"
@@ -588,7 +588,7 @@ export const auth = betterAuth({
           const violation = !existing?.public
             ? confidentialClientViolation(target)
             : isPublicClientType(existing.type)
-              ? publicClientUpdateViolation(existing.type, target, publicRedirectHosts())
+              ? publicClientUpdateViolation(existing.type, target, publicRedirectHosts(existing.type))
               : "This public client cannot be updated";
           if (violation) throw new APIError("BAD_REQUEST", { message: violation });
         } else {

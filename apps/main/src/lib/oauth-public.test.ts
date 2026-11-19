@@ -23,19 +23,31 @@ const browserBody = { ...nativeBody, type: "user-agent-based", redirect_uris: [B
 
 describe("publicRedirectHosts", () => {
   it("uses the configured list", () => {
-    expect(publicRedirectHosts(" Tomomai.lol , chu.tomomai.lol ", "https://other.example")).toEqual([
+    expect(publicRedirectHosts("native", " Tomomai.lol , chu.tomomai.lol ", "https://other.example")).toEqual([
       "tomomai.lol",
       "chu.tomomai.lol",
     ]);
   });
 
   it("falls back to the deployment's host", () => {
-    expect(publicRedirectHosts(undefined, "https://tomomai.lol")).toEqual(["tomomai.lol"]);
-    expect(publicRedirectHosts("", "https://tomomai.lol:8443")).toEqual(["tomomai.lol:8443"]);
+    expect(publicRedirectHosts("native", undefined, "https://tomomai.lol")).toEqual(["tomomai.lol"]);
+    expect(publicRedirectHosts("native", "", "https://tomomai.lol:8443")).toEqual(["tomomai.lol:8443"]);
   });
 
-  it("allows nothing when the base URL is unusable", () => {
-    expect(publicRedirectHosts(undefined, "not a url")).toEqual([]);
+  it("allows nothing for a native client when the base URL is unusable", () => {
+    expect(publicRedirectHosts("native", undefined, "not a url")).toEqual([]);
+  });
+
+  it("adds every game's site for a browser client", () => {
+    expect(publicRedirectHosts("user-agent-based", undefined, "http://localhost:3000")).toEqual([
+      "localhost:3000",
+      "tomomai.lol",
+      "chu.tomochu.lol",
+    ]);
+    expect(publicRedirectHosts("user-agent-based", "tomomai.lol", "https://other.example")).toEqual([
+      "tomomai.lol",
+      "chu.tomochu.lol",
+    ]);
   });
 });
 

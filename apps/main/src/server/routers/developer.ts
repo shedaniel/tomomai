@@ -210,7 +210,7 @@ export const developerRouter = router({
       if (ctx.session.user.role !== "admin") {
         throw new TRPCError({ code: "FORBIDDEN", message: "Only admins can create public apps" });
       }
-      const violation = publicRedirectViolation(input.type, input.redirectUris, publicRedirectHosts());
+      const violation = publicRedirectViolation(input.type, input.redirectUris, publicRedirectHosts(input.type));
       if (violation) throw new TRPCError({ code: "BAD_REQUEST", message: violation });
 
       const result = await auth.api.adminCreateOAuthClient({
@@ -350,7 +350,7 @@ export const developerRouter = router({
       }
       if (app.public && input.redirectUris) {
         if (!isPublicClientType(app.type)) throw new TRPCError({ code: "BAD_REQUEST", message: "This public app cannot be updated" });
-        const violation = publicRedirectViolation(app.type, input.redirectUris, publicRedirectHosts());
+        const violation = publicRedirectViolation(app.type, input.redirectUris, publicRedirectHosts(app.type));
         if (violation) throw new TRPCError({ code: "BAD_REQUEST", message: violation });
       }
 
