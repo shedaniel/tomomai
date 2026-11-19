@@ -36,6 +36,8 @@ it.each([
   const [updated] = proxy.updated("user_tokens");
   expect(updated.where).toEqual(["same-owner", game, "jp"]);
   expect(decryptToken(String(updated.values.token))).toBe("refreshed-token");
+  // The token dialog waits for updatedAt to move, so a login's refresh must not look like a save.
+  expect(updated.values).not.toHaveProperty("updatedAt");
   expect(proxy.queries[2]).toMatchObject({ sql: expect.stringMatching(/^delete from "user_tokens" /), params: ["same-owner", game, "jp"] });
 });
 
