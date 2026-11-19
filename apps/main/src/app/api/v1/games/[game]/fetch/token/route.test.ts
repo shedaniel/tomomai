@@ -1,9 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { NextRequest } from "next/server";
 
-const { saveToken } = vi.hoisted(() => ({ saveToken: vi.fn() }));
+const { saveToken, userscriptFetch } = vi.hoisted(() => ({ saveToken: vi.fn(), userscriptFetch: vi.fn() }));
 
 vi.mock("@/server/services/games/tokens", () => ({ saveToken, deleteToken: vi.fn() }));
+vi.mock("@/lib/flags", () => ({ useUserscriptFetch: userscriptFetch }));
 // Authentication and metering have their own tests, so the handler runs as an already verified key.
 vi.mock("@/lib/api/protect", async () => {
   const { bindGameRoute } = await import("@/lib/api/route");
@@ -30,6 +31,7 @@ function put(region: string, body: unknown) {
 
 beforeEach(() => {
   saveToken.mockReset();
+  userscriptFetch.mockReset().mockResolvedValue(true);
 });
 
 describe("PUT /api/v1/games/{game}/fetch/token", () => {
@@ -49,6 +51,13 @@ describe("PUT /api/v1/games/{game}/fetch/token", () => {
     const res = await put("intl", body);
     expect(res.status).toBe(400);
     expect((await res.json()).code).toBe("INVALID_PARAMETER");
+    expect(saveToken).not.toHaveBeenCalled();
+  });
+
+  it("answers 404 while the userscript flag is off", async () => {
+    userscriptFetch.mockResolvedValue(false);
+    const res = await put("intl", { clal: CLAL });
+    expect(res.status).toBe(404);
     expect(saveToken).not.toHaveBeenCalled();
   });
 

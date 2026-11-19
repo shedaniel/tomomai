@@ -1,5 +1,6 @@
 import { defineGameHandler } from "@/lib/api/protect";
 import { parseBody } from "@/lib/api/parse-input";
+import { useUserscriptFetch } from "@/lib/flags";
 import { getGame } from "@/lib/games/registry";
 import { formatSegaCookie } from "@/lib/games/token-format";
 import { deleteToken, saveToken } from "@/server/services/games/tokens";
@@ -11,6 +12,7 @@ export const DELETE = defineGameHandler(spec, async ({ game, key, query }) => {
 });
 
 export const PUT = defineGameHandler(putSpec, async ({ req, game, key, query }) => {
+  if (!(await useUserscriptFetch())) return Response.json({ error: "Not Found" }, { status: 404 });
   const body = await parseBody(req, putBody);
   if (body instanceof Response) return body;
   if (!getGame(game).loginMethods[query.region]?.includes("sega-cookie")) {
