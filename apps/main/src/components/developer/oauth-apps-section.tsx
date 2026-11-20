@@ -33,7 +33,7 @@ import { useRouter } from "@/i18n/navigation";
 import { MAX_OAUTH_APPS_PER_USER, OAUTH_APP_LIMIT_REACHED, OAUTH_APP_NAME_RESERVED } from "@/lib/developer-limits";
 import { SettingsField } from "@/components/settings/primitives";
 import { toast } from "sonner";
-import { Plus, Trash2, Globe, Loader2, RefreshCw, AlertTriangle, X, AppWindow, Pencil, BadgeCheck } from "lucide-react";
+import { Plus, Trash2, Globe, Loader2, RefreshCw, AlertTriangle, X, AppWindow, Pencil, BadgeCheck, Smartphone, Puzzle } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import {
@@ -46,6 +46,7 @@ import {
   ScopeTreeNode,
 } from "@/components/developer/developer-shared";
 import { clientIconSrc } from "@/lib/oauth-client-icon";
+import type { PublicClientType } from "@/lib/oauth-public";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -59,6 +60,7 @@ type OAuthApp = {
   tos: string | null;
   redirectUris: string[] | null;
   official: boolean;
+  publicType: PublicClientType | null;
   scopes: string[] | null;
   createdAt: Date | null;
   updatedAt: Date | null;
@@ -85,6 +87,7 @@ function useOAuthAppForm(initial: OAuthAppFormInit) {
   const [tosInput, setTosInput] = useState(initial.tos ?? "");
   const [redirectUris, setRedirectUris] = useState<string[]>(initial.redirectUris ?? []);
   const [official, setOfficial] = useState(initial.official ?? false);
+  const [publicType, setPublicType] = useState<PublicClientType | null>(null);
   const [redirectInput, setRedirectInput] = useState("");
   const [selectedScopes, setSelectedScopes] = useState<Set<ScopeKey>>(
     initial.scopes
@@ -134,6 +137,7 @@ function useOAuthAppForm(initial: OAuthAppFormInit) {
     setTosInput(initial.tos ?? "");
     setRedirectUris(initial.redirectUris ?? []);
     setOfficial(initial.official ?? false);
+    setPublicType(null);
     setRedirectInput("");
     setSelectedScopes(
       initial.scopes
@@ -153,6 +157,7 @@ function useOAuthAppForm(initial: OAuthAppFormInit) {
     tosInput, setTosInput,
     redirectUris,
     official, setOfficial,
+    publicType, setPublicType,
     redirectInput, setRedirectInput,
     selectedScopes,
     implied,
@@ -187,6 +192,31 @@ function OfficialAppField({ checked, onChange }: { checked: boolean; onChange: (
       <Switch checked={checked} onCheckedChange={onChange} />
     </label>
   );
+}
+
+const PUBLIC_CLIENT_FIELDS = {
+  native: { icon: Smartphone, label: "nativeLabel", description: "nativeDescription", badge: "nativeBadge" },
+  "user-agent-based": { icon: Puzzle, label: "browserLabel", description: "browserDescription", badge: "browserBadge" },
+} as const;
+
+/** Admin-only: an app that holds no secret, such as the mobile app or the userscript. It is always official. */
+function PublicClientField({ value, onChange }: { value: PublicClientType | null; onChange: (v: PublicClientType | null) => void }) {
+  const t = useTranslations("settings.developer.oauthApps");
+  return (Object.keys(PUBLIC_CLIENT_FIELDS) as PublicClientType[]).map((type) => {
+    const { icon: Icon, label, description } = PUBLIC_CLIENT_FIELDS[type];
+    return (
+      <label key={type} className="flex cursor-pointer items-start justify-between gap-4 rounded-lg border border-border px-3 py-2.5">
+        <span className="space-y-0.5">
+          <span className="flex items-center gap-1.5 text-sm font-medium">
+            <Icon className="h-4 w-4 text-primary" aria-hidden />
+            {t(label)}
+          </span>
+          <span className="block text-xs text-muted-foreground">{t(description)}</span>
+        </span>
+        <Switch checked={value === type} onCheckedChange={(checked) => onChange(checked ? type : null)} />
+      </label>
+    );
+  });
 }
 
 function RedirectUrisField({
@@ -300,7 +330,7 @@ function CreateOAuthAppDialog({
   const tc = useTranslations("common");
   const form = useOAuthAppForm(CREATE_INITIAL);
   const isAdmin = useIsAdmin();
-  const [createdApp, setCreatedApp] = useState<{ clientId: string; secret: string } | null>(null);
+  const [createdApp, setCreatedApp] = useState<{ clientId: string; secret: string | null } | null>(null);
 
   const createMutation = trpc.developer.createOAuthApp.useMutation({
     ...useReauthGuard({
@@ -318,10 +348,36 @@ function CreateOAuthAppDialog({
     },
   });
 
+  const createPublicMutation = trpc.developer.createPublicOAuthApp.useMutation({
+    ...useReauthGuard({
+      callbackURL: "/settings/developer?open=new-app",
+      reauthMessage: t("reauthRequired"),
+      fallback: t("oauthApps.createDialog.createError"),
+      errorMessages: {
+        [OAUTH_APP_NAME_RESERVED]: t("oauthApps.errors.nameReserved"),
+      },
+    }),
+    onSuccess: (data) => {
+      setCreatedApp({ clientId: data.client_id, secret: null });
+      onCreated();
+    },
+  });
+  const isCreating = createMutation.isPending || createPublicMutation.isPending;
+
   function handleCreate() {
     if (!form.name.trim()) { toast.error("App name is required."); return; }
     if (form.redirectUris.length === 0) { toast.error("At least one redirect URI is required."); return; }
     if (form.selectedScopes.size === 0) { toast.error("Select at least one scope."); return; }
+    if (isAdmin && form.publicType) {
+      createPublicMutation.mutate({
+        type: form.publicType,
+        name: form.name.trim(),
+        redirectUris: form.redirectUris,
+        scopes: Array.from(form.selectedScopes) as [ScopeKey, ...ScopeKey[]],
+        uri: form.uriInput || undefined,
+      });
+      return;
+    }
     createMutation.mutate({
       name: form.name.trim(),
       redirectUris: form.redirectUris,
@@ -350,18 +406,26 @@ function CreateOAuthAppDialog({
           <>
             <ResponsiveDialogHeader>
               <ResponsiveDialogTitle>{t("oauthApps.createDialog.createdTitle")}</ResponsiveDialogTitle>
-              <ResponsiveDialogDescription>{t("oauthApps.createDialog.createdDescription")}</ResponsiveDialogDescription>
+              {createdApp.secret !== null && (
+                <ResponsiveDialogDescription>{t("oauthApps.createDialog.createdDescription")}</ResponsiveDialogDescription>
+              )}
             </ResponsiveDialogHeader>
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label className="text-xs text-muted-foreground">{t("oauthApps.createDialog.clientIdLabel")}</Label>
                 <CopyableInput value={createdApp.clientId} ariaLabel={t("oauthApps.createDialog.copyAriaLabel")} />
               </div>
-              <div className="space-y-2">
-                <Label className="text-xs text-muted-foreground">{t("oauthApps.createDialog.secretLabel")}</Label>
-                <CopyableInput value={createdApp.secret} ariaLabel={t("oauthApps.createDialog.copyAriaLabel")} />
-              </div>
-              <SaveWarning message={t("oauthApps.createDialog.saveWarning")} />
+              {createdApp.secret !== null ? (
+                <>
+                  <div className="space-y-2">
+                    <Label className="text-xs text-muted-foreground">{t("oauthApps.createDialog.secretLabel")}</Label>
+                    <CopyableInput value={createdApp.secret} ariaLabel={t("oauthApps.createDialog.copyAriaLabel")} />
+                  </div>
+                  <SaveWarning message={t("oauthApps.createDialog.saveWarning")} />
+                </>
+              ) : (
+                <p className="text-xs text-muted-foreground">{t("oauthApps.createDialog.nativeCreatedNote")}</p>
+              )}
               <div className="flex justify-end">
                 <Button onClick={handleClose}>{t("oauthApps.createDialog.done")}</Button>
               </div>
@@ -386,7 +450,8 @@ function CreateOAuthAppDialog({
                 <p className="text-xs text-muted-foreground">{t("oauthApps.createDialog.nameDescription")}</p>
               </div>
 
-              {isAdmin && <OfficialAppField checked={form.official} onChange={form.setOfficial} />}
+              {isAdmin && !form.publicType && <OfficialAppField checked={form.official} onChange={form.setOfficial} />}
+              {isAdmin && <PublicClientField value={form.publicType} onChange={form.setPublicType} />}
 
               <div className="space-y-2">
                 <Label htmlFor="oauth-uri">{t("oauthApps.createDialog.uriLabel")}</Label>
@@ -428,11 +493,11 @@ function CreateOAuthAppDialog({
 
             </div>
             <ResponsiveDialogFooter>
-              <Button variant="outline" onClick={handleClose} disabled={createMutation.isPending}>
+              <Button variant="outline" onClick={handleClose} disabled={isCreating}>
                 {tc("cancel")}
               </Button>
-              <Button onClick={handleCreate} disabled={createMutation.isPending}>
-                {createMutation.isPending ? (
+              <Button onClick={handleCreate} disabled={isCreating}>
+                {isCreating ? (
                   <>
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                     {t("oauthApps.createDialog.creating")}
@@ -501,7 +566,7 @@ function EditOAuthAppDialog({
       policy: form.policyInput || null,
       tos: form.tosInput || null,
       scopes: Array.from(form.selectedScopes) as [ScopeKey, ...ScopeKey[]],
-      official: isAdmin ? form.official : undefined,
+      official: isAdmin && !app.publicType ? form.official : undefined,
     });
   }
 
@@ -565,7 +630,7 @@ function EditOAuthAppDialog({
             />
           </div>
 
-          {isAdmin && (
+          {isAdmin && !app.publicType && (
             <div className="border-t pt-4">
               <OfficialAppField checked={form.official} onChange={form.setOfficial} />
             </div>
@@ -742,6 +807,15 @@ export function OAuthAppsSection() {
                       {t("oauthApps.officialBadge")}
                     </Badge>
                   )}
+                  {app.publicType && (() => {
+                    const { icon: Icon, badge } = PUBLIC_CLIENT_FIELDS[app.publicType];
+                    return (
+                      <Badge variant="secondary" className="gap-1">
+                        <Icon className="h-3 w-3" aria-hidden />
+                        {t(`oauthApps.${badge}`)}
+                      </Badge>
+                    );
+                  })()}
                 </span>
                 <p className="font-mono text-xs bg-muted text-muted-foreground px-1.5 py-0.5 rounded-sm border border-border w-fit truncate max-w-xs">
                   {app.clientId}
@@ -783,12 +857,14 @@ export function OAuthAppsSection() {
                 >
                   <Pencil className="h-4 w-4" />
                 </Button>
-                <Button
-                  variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground"
-                  onClick={() => setRotateId(app.clientId)} aria-label={t("oauthApps.rotateAriaLabel")}
-                >
-                  <RefreshCw className="h-4 w-4" />
-                </Button>
+                {!app.publicType && (
+                  <Button
+                    variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                    onClick={() => setRotateId(app.clientId)} aria-label={t("oauthApps.rotateAriaLabel")}
+                  >
+                    <RefreshCw className="h-4 w-4" />
+                  </Button>
+                )}
                 <Button
                   variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive"
                   onClick={() => setDeleteId(app.clientId)} aria-label={t("oauthApps.deleteAriaLabel")}

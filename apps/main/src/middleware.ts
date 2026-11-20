@@ -112,6 +112,8 @@ export async function middleware(request: NextRequest) {
     const locale = negotiateLocale(request);
     const url = request.nextUrl.clone();
     url.pathname = `/${locale}${pathname === '/' ? '' : pathname}`;
+    // The mobile sign-in code in this page's query is useless to it, so it never reaches the page.
+    if (pathname === '/oauth/app-callback') url.search = '';
     const res = NextResponse.redirect(url, { status: 307 });
     // Persist the negotiated locale.
     if (request.cookies.get('NEXT_LOCALE')?.value !== locale) {

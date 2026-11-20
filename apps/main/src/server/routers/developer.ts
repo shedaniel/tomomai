@@ -18,6 +18,7 @@ function assertInternalScopesAllowed(scopes: readonly ScopeKey[], userRole: stri
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { isOfficialClient, officialMetadata } from "@/lib/oauth-official";
+import { PUBLIC_CLIENT_TYPES, isPublicClientType, publicRedirectHosts, publicRedirectViolation } from "@/lib/oauth-public";
 import { apikey, oauthClient, oauthConsent, oauthRefreshToken, oauthAccessToken } from "@/lib/db/schema-pg";
 import { and, count, eq } from "drizzle-orm";
 import {
@@ -172,12 +173,78 @@ export const developerRouter = router({
           policy: oauthClient.policy,
           tos: oauthClient.tos,
           metadata: oauthClient.metadata,
+          public: oauthClient.public,
+          type: oauthClient.type,
           createdAt: oauthClient.createdAt,
           updatedAt: oauthClient.updatedAt,
         })
         .from(oauthClient)
         .where(eq(oauthClient.userId, ctx.session.user.id));
-      return apps.map(({ metadata, ...app }) => ({ ...app, official: isOfficialClient(metadata) }));
+      return apps.map(({ metadata, public: isPublic, type, ...app }) => ({
+        ...app,
+        official: isOfficialClient(metadata),
+        publicType: isPublic === true && isPublicClientType(type) ? type : null,
+      }));
+    }),
+
+  /**
+   * Registers a first-party public client: the mobile app or the userscript. A public client holds no
+   * secret and relies on PKCE, so only admins can create one, it is always official, and its redirects
+   * stay on our own hosts.
+   */
+  createPublicOAuthApp: protectedProcedure
+    .input(
+      z.object({
+        type: z.enum(PUBLIC_CLIENT_TYPES),
+        name: z.string().min(1).max(64),
+        redirectUris: z.array(httpsRedirectUrl).min(1).max(4),
+        scopes: z.array(oauthScopeKey).min(1),
+        uri: safeWebUrl.optional(),
+        icon: httpsWebUrl.optional(),
+        policy: safeWebUrl.optional(),
+        tos: safeWebUrl.optional(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      requireFreshSession(ctx.session);
+      if (ctx.session.user.role !== "admin") {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Only admins can create public apps" });
+      }
+      const violation = publicRedirectViolation(input.type, input.redirectUris, publicRedirectHosts(input.type));
+      if (violation) throw new TRPCError({ code: "BAD_REQUEST", message: violation });
+
+      const result = await auth.api.adminCreateOAuthClient({
+        body: {
+          client_name: input.name,
+          redirect_uris: input.redirectUris,
+          scope: oauthClientScope(input.scopes),
+          client_uri: input.uri,
+          logo_uri: input.icon,
+          policy_uri: input.policy,
+          tos_uri: input.tos,
+          token_endpoint_auth_method: "none",
+          type: input.type,
+          grant_types: ["authorization_code", "refresh_token"],
+          response_types: ["code"],
+          metadata: { official: true },
+        },
+        headers: ctx.req.headers,
+      });
+      if (!result) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to create public OAuth application" });
+
+      const clientId = (result as { client_id: string }).client_id;
+      try {
+        await db.update(oauthClient).set({ userId: ctx.session.user.id }).where(eq(oauthClient.clientId, clientId));
+      } catch (err) {
+        await auth.api.deleteOAuthClient({ body: { client_id: clientId }, headers: ctx.req.headers }).catch((compensationErr) => {
+          logger.error(
+            { err: compensationErr, userId: ctx.session.user.id, clientId },
+            "Failed to delete orphan public OAuth client after userId patch failure",
+          );
+        });
+        throw err;
+      }
+      return { client_id: clientId };
     }),
 
   createOAuthApp: protectedProcedure
@@ -274,10 +341,18 @@ export const developerRouter = router({
       if (input.name !== undefined) assertAppNameAllowed(input.name, ctx.session.user.role);
       // Verify ownership
       const [app] = await db
-        .select({ id: oauthClient.id })
+        .select({ id: oauthClient.id, public: oauthClient.public, type: oauthClient.type })
         .from(oauthClient)
         .where(and(eq(oauthClient.clientId, input.clientId), eq(oauthClient.userId, ctx.session.user.id)));
       if (!app) throw new TRPCError({ code: "FORBIDDEN", message: "App not found" });
+      if (app.public && input.official === false) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Public apps are always official" });
+      }
+      if (app.public && input.redirectUris) {
+        if (!isPublicClientType(app.type)) throw new TRPCError({ code: "BAD_REQUEST", message: "This public app cannot be updated" });
+        const violation = publicRedirectViolation(app.type, input.redirectUris, publicRedirectHosts(app.type));
+        if (violation) throw new TRPCError({ code: "BAD_REQUEST", message: violation });
+      }
 
       const result = await auth.api.updateOAuthClient({
         body: {
@@ -326,10 +401,11 @@ export const developerRouter = router({
     .mutation(async ({ ctx, input }) => {
       requireFreshSession(ctx.session);
       const [app] = await db
-        .select({ id: oauthClient.id })
+        .select({ id: oauthClient.id, public: oauthClient.public })
         .from(oauthClient)
         .where(and(eq(oauthClient.clientId, input.clientId), eq(oauthClient.userId, ctx.session.user.id)));
       if (!app) throw new TRPCError({ code: "FORBIDDEN", message: "App not found" });
+      if (app.public) throw new TRPCError({ code: "BAD_REQUEST", message: "A public app has no secret to rotate" });
 
       const result = await auth.api.rotateClientSecret({
         body: { client_id: input.clientId },
