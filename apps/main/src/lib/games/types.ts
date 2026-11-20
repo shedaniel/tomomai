@@ -217,7 +217,6 @@ export type GameBrand = {
   displayName: string;
   /** The game's official player site. */
   netName: string;
-  domain: string;
   /** The square icon for home screens and structured data. */
   icon: string | null;
   /** Light and dark wordmarks. Without them the brand title is set as text. */

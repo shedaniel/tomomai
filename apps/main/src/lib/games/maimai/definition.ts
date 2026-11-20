@@ -13,7 +13,6 @@ export const maimaiDefinition = {
     japaneseName: "ともマイ",
     displayName: "maimai DX",
     netName: "maimai DX NET",
-    domain: "tomomai.lol",
     icon: "/brand/maimai/icon.png",
     logos: {
       width: 528,

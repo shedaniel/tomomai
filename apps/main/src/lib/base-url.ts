@@ -40,6 +40,11 @@ export function resolveBaseUrl(): string {
   return normalize(`http://localhost:${process.env.PORT || "3000"}`);
 }
 
+/** The host this site is reached on, such as tomomai.lol, as printed on share images. */
+export function siteHost(): string {
+  return new URL(resolveBaseUrl()).host;
+}
+
 /**
  * Like resolveBaseUrl(), but prefers the request's actual host (via
  * `x-forwarded-host` / `host` headers) when available.

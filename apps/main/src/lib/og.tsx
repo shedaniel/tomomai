@@ -3,6 +3,7 @@ import path from "path";
 import { readFile } from "fs/promises";
 import sharp from "sharp";
 import type { Locale } from "@/i18n/locale";
+import { siteHost } from "@/lib/base-url";
 import { getRatingImageUrl } from "@/lib/games/maimai/assets";
 import type { Region } from "@/lib/games/ids";
 import { brandTitle, supportsGameFeature, type FrontendGame } from "@/lib/games/frontend";
@@ -328,7 +329,7 @@ function BrandChip({ brand, section, icon }: { brand: GameBrand; section?: strin
   return (
     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
       <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-        <span style={{ color: "#fafafa", fontSize: "20px", fontWeight: 700 }}>{brand.domain}</span>
+        <span style={{ color: "#fafafa", fontSize: "20px", fontWeight: 700 }}>{siteHost()}</span>
         {section && (
           <span style={{ color: "#a1a1aa", fontSize: "20px", fontWeight: 400 }}>· {section}</span>
         )}
@@ -807,7 +808,7 @@ export async function createProfileOGImage(options: ProfileOGImageOptions) {
               }}
             />
             <span style={{ color: "#a1a1aa", fontSize: "18px", fontWeight: 600 }}>
-              {brand.domain}/profile/{username}
+              {siteHost()}/profile/{username}
             </span>
           </div>
         </div>
@@ -1091,7 +1092,7 @@ export async function createSongOGImage(options: SongOGImageOptions) {
               }}
             />
             <span style={{ color: "#a1a1aa", fontSize: "18px", fontWeight: 600 }}>
-              {brand.domain}/db/songs
+              {siteHost()}/db/songs
             </span>
           </div>
         </div>

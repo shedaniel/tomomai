@@ -421,7 +421,7 @@ The app handles each of these as its own state, and never erases cached data bec
 
 ## Open decisions
 
-1. **The CHUNITHM domain.** Not needed for v1, since the app only uses `tomomai.lol`. Today it is `chu.tomomai.lol`, while the brand definition says `chu.tomochu.lol` and the multi-domain plan and changelog guide say `tomochu.app`. It matters only if website links on the CHUNITHM site should open the app, and then for a redirect allowlist entry and its own association files.
+1. **The CHUNITHM domain.** Not needed for v1, since the app only uses `tomomai.lol`. Today it is `chu.tomomai.lol`, while the multi-domain plan and changelog guide say `tomochu.app`. It matters only if website links on the CHUNITHM site should open the app, and then for a redirect allowlist entry and its own association files.
 2. **Development and staging client.** Which staging host and which `client_id` the debug build uses.
 3. **Skip Fuse or Lite for the model.** Decided by the spike.
 4. **In-app SEGA token entry.** Out of scope for v1. If wanted later, it needs a server design and a look at how SEGA credentials may be handled in a native app.
