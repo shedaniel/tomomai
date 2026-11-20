@@ -63,8 +63,6 @@ type RawFlagConfig = {
   defaultValue: boolean;
   userSelectable: boolean;
   category: FlagCategory;
-  /** Loads the signed-in user for a flag users cannot override, so decide can read their role. */
-  needsUser?: true;
   decide: (ctx: FlagContext) => boolean | Promise<boolean>;
 };
 
@@ -97,11 +95,11 @@ function defineFlag(key: keyof Flags, cfg: RawFlagConfig): DefinedFlag {
     fn: flag<boolean, FlagContext>({
       key,
       defaultValue: cfg.defaultValue,
-      // Only userSelectable and needsUser flags look up the user + DB overrides.
+      // Only userSelectable flags need to look up the user + DB overrides.
       // Skipping identify for the rest avoids a needless session/DB hit per
       // request (and avoids re-entry when called from inside the Better Auth
       // middleware in @/lib/auth.ts).
-      ...(cfg.userSelectable || cfg.needsUser ? { identify: identifyFlagContext } : {}),
+      ...(cfg.userSelectable ? { identify: identifyFlagContext } : {}),
       decide: async ({ entities }) => {
         const ctx: FlagContext = entities ?? { userId: null, role: null, overrides: {} };
         if (cfg.userSelectable && ctx.overrides[key] != null) {
@@ -213,8 +211,7 @@ const registry = {
     defaultValue: false,
     userSelectable: false,
     category: "developer",
-    needsUser: true,
-    decide: (ctx) => ctx.role === "admin",
+    decide: () => true,
   }),
 } satisfies Record<keyof Flags, DefinedFlag>;
 
