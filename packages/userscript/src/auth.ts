@@ -1,132 +1,136 @@
-import {
-  GM_getValue,
-  GM_setValue,
-  GM_xmlhttpRequest,
-} from "vite-plugin-monkey/dist/client";
+import { GM_getValue, GM_setValue, GM_xmlhttpRequest } from "vite-plugin-monkey/dist/client";
+import { ScriptError } from "./locale";
 
-const KEY_ACCESS_TOKEN = "tomomai_access_token";
-const KEY_REFRESH_TOKEN = "tomomai_refresh_token";
-const KEY_EXPIRES_AT = "tomomai_token_expires_at";
+const SCOPES = "offline_access fetch:token:write";
 
-// __API_BASE__ is replaced at build time from VITE_API_BASE / BETTER_AUTH_URL
-// env vars (see vite.config.ts). This ensures localhost dev builds point to
-// localhost rather than always resolving to the production @downloadURL.
-export function getApiBase(): string {
-  return __API_BASE__;
+// Both are filled in by the route that serves the script, so one build works on every deployment.
+export const API_BASE: string = __API_BASE__;
+
+// Each site signs its own tokens, so a copy installed from another site keeps its sign-in apart.
+const KEY_PREFIX = `tokens:${new URL(API_BASE).host}:`;
+const KEY_ACCESS_TOKEN = `${KEY_PREFIX}access`;
+const KEY_REFRESH_TOKEN = `${KEY_PREFIX}refresh`;
+const KEY_EXPIRES_AT = `${KEY_PREFIX}expiresAt`;
+const CLIENT_ID: string = __USERSCRIPT_CLIENT_ID__;
+const REDIRECT_URI = `${API_BASE}/userscript/callback`;
+
+type TokenResponse = { access_token: string; refresh_token?: string; expires_in: number };
+
+export class SignInRequired extends ScriptError {
+  constructor() {
+    super("signInExpired");
+  }
 }
 
-export function getStoredToken(): string | null {
-  return (GM_getValue(KEY_ACCESS_TOKEN, null) as string | null) ?? null;
+export type JsonResponse = { status: number; body: Record<string, unknown> };
+
+/**
+ * Talks to tomomai without the page's cookies, which also keeps tomomai's sign-in session out of it.
+ * The manager makes the request, so the SEGA page's CORS rules do not apply.
+ */
+export function request(method: string, url: string, init: { headers?: Record<string, string>; data?: string } = {}): Promise<JsonResponse> {
+  return new Promise((resolve, reject) => {
+    GM_xmlhttpRequest({
+      method: method as "GET",
+      url,
+      headers: init.headers,
+      data: init.data,
+      anonymous: true,
+      onload(res) {
+        let body: Record<string, unknown> = {};
+        try {
+          body = JSON.parse(res.responseText) as Record<string, unknown>;
+        } catch {
+          // Leave the body empty, the status says what happened.
+        }
+        resolve({ status: res.status, body });
+      },
+      onerror() {
+        reject(new ScriptError("unreachable"));
+      },
+      ontimeout() {
+        reject(new ScriptError("timeout"));
+      },
+      timeout: 20_000,
+    });
+  });
 }
 
-export function getStoredRefreshToken(): string | null {
-  return (GM_getValue(KEY_REFRESH_TOKEN, null) as string | null) ?? null;
+async function tokenRequest(params: Record<string, string>): Promise<TokenResponse> {
+  const { status, body } = await request("POST", `${API_BASE}/api/auth/oauth2/token`, {
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    data: new URLSearchParams({ client_id: CLIENT_ID, resource: API_BASE, ...params }).toString(),
+  });
+  if (status === 200 && typeof body.access_token === "string" && typeof body.expires_in === "number") {
+    return body as TokenResponse;
+  }
+  if (body.error === "invalid_grant") throw new SignInRequired();
+  throw new ScriptError("signInFailed", { status: String(body.error ?? status) });
 }
 
-export function isTokenExpired(): boolean {
-  const expiresAt = GM_getValue(KEY_EXPIRES_AT, 0) as number;
-  return Date.now() >= expiresAt - 60_000; // 60s skew
+function store(tokens: TokenResponse): void {
+  GM_setValue(KEY_ACCESS_TOKEN, tokens.access_token);
+  if (tokens.refresh_token) GM_setValue(KEY_REFRESH_TOKEN, tokens.refresh_token);
+  GM_setValue(KEY_EXPIRES_AT, Date.now() + tokens.expires_in * 1000);
 }
 
-export function setStoredToken(
-  accessToken: string,
-  refreshToken: string,
-  expiresIn: number
-): void {
-  GM_setValue(KEY_ACCESS_TOKEN, accessToken);
-  GM_setValue(KEY_REFRESH_TOKEN, refreshToken);
-  GM_setValue(KEY_EXPIRES_AT, Date.now() + expiresIn * 1000);
-}
-
-export function clearStoredToken(): void {
+export function signOut(): void {
   GM_setValue(KEY_ACCESS_TOKEN, null);
   GM_setValue(KEY_REFRESH_TOKEN, null);
   GM_setValue(KEY_EXPIRES_AT, 0);
 }
 
-function refreshAccessToken(refreshToken: string): Promise<OAuthResult> {
-  const base = getApiBase();
+export function isSignedIn(): boolean {
+  return Boolean(GM_getValue(KEY_REFRESH_TOKEN, null) ?? GM_getValue(KEY_ACCESS_TOKEN, null));
+}
+
+function currentAccess(): string | null {
+  const access = GM_getValue(KEY_ACCESS_TOKEN, null) as string | null;
+  const expiresAt = GM_getValue(KEY_EXPIRES_AT, 0) as number;
+  return access && Date.now() < expiresAt - 60_000 ? access : null;
+}
+
+/**
+ * Gateway tabs share one refresh token, and reusing a rotated one revokes the sign-in everywhere, so
+ * only one tab refreshes at a time.
+ */
+function withRefreshLock(run: () => Promise<string>): Promise<string> {
+  if (typeof navigator.locks?.request !== "function") return run();
   return new Promise((resolve, reject) => {
-    GM_xmlhttpRequest({
-      method: "POST",
-      url: `${base}/api/userscript/token`,
-      headers: { "Content-Type": "application/json" },
-      data: JSON.stringify({
-        grant_type: "refresh_token",
-        refresh_token: refreshToken,
-      }),
-      onload(res) {
-        try {
-          const body = JSON.parse(res.responseText) as Record<string, unknown>;
-          if (res.status === 200 && typeof body.access_token === "string") {
-            resolve(body as unknown as OAuthResult);
-          } else {
-            reject(new Error(String(body.error ?? `refresh failed (${res.status})`)));
-          }
-        } catch {
-          reject(new Error(`refresh failed (${res.status})`));
-        }
-      },
-      onerror() {
-        reject(new Error("network error during refresh"));
-      },
-    });
+    let started = false;
+    const locked = () => {
+      started = true;
+      return run().then(resolve, reject);
+    };
+    // A manager's sandbox may refuse the lock, and then refreshing without it beats failing the send.
+    const unlocked = () => (started ? undefined : run().then(resolve, reject));
+    try {
+      navigator.locks.request(`tomomai:refresh:${KEY_PREFIX}`, locked).catch(unlocked);
+    } catch {
+      unlocked();
+    }
   });
 }
 
-/** Returns a non-expired access token, refreshing if needed. Throws (and
- *  clears stored state) if no token is available or refresh fails. */
-export async function getValidAccessToken(): Promise<string> {
-  const access = getStoredToken();
-  if (access && !isTokenExpired()) return access;
-  const refresh = getStoredRefreshToken();
-  if (!refresh) {
-    clearStoredToken();
-    throw new Error("not signed in");
-  }
-  try {
-    const result = await refreshAccessToken(refresh);
-    setStoredToken(result.access_token, result.refresh_token, result.expires_in);
-    return result.access_token;
-  } catch (err) {
-    clearStoredToken();
-    throw err;
-  }
-}
-
-export type MeData = {
-  username: string;
-  region: string;
-  publishProfile: boolean;
-  role: string;
-};
-
-export function fetchMe(token: string): Promise<MeData> {
-  const base = getApiBase();
-  return new Promise((resolve, reject) => {
-    GM_xmlhttpRequest({
-      method: "GET",
-      url: `${base}/api/v1/me`,
-      headers: { Authorization: `Bearer ${token}` },
-      onload(res) {
-        if (res.status === 200) {
-          resolve(JSON.parse(res.responseText) as MeData);
-        } else {
-          reject(new Error(`${res.status}`));
-        }
-      },
-      onerror() {
-        reject(new Error("network error"));
-      },
-    });
+/** A current access token. Refreshes it when it is about to expire, and asks for a new sign-in when that fails. */
+export async function accessToken(): Promise<string> {
+  return currentAccess() ?? withRefreshLock(async () => {
+    // Another tab may have refreshed while this one waited for the lock.
+    const access = currentAccess();
+    if (access) return access;
+    const refresh = GM_getValue(KEY_REFRESH_TOKEN, null) as string | null;
+    if (!refresh) throw new SignInRequired();
+    try {
+      const tokens = await tokenRequest({ grant_type: "refresh_token", refresh_token: refresh });
+      store(tokens);
+      return tokens.access_token;
+    } catch (err) {
+      // A refresh token is single use, so a failed one is gone either way.
+      if (err instanceof SignInRequired) signOut();
+      throw err;
+    }
   });
 }
-
-type OAuthResult = {
-  access_token: string;
-  refresh_token: string;
-  expires_in: number;
-};
 
 function base64url(bytes: Uint8Array): string {
   let str = "";
@@ -141,121 +145,66 @@ function randomString(byteLength: number): string {
 }
 
 async function pkceChallenge(verifier: string): Promise<string> {
-  const digest = await crypto.subtle.digest(
-    "SHA-256",
-    new TextEncoder().encode(verifier)
-  );
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(verifier));
   return base64url(new Uint8Array(digest));
 }
 
-function exchangeCode(
-  code: string,
-  verifier: string,
-  redirectUri: string
-): Promise<OAuthResult> {
-  const base = getApiBase();
-  return new Promise((resolve, reject) => {
-    GM_xmlhttpRequest({
-      method: "POST",
-      url: `${base}/api/userscript/token`,
-      headers: { "Content-Type": "application/json" },
-      data: JSON.stringify({
-        code,
-        code_verifier: verifier,
-        redirect_uri: redirectUri,
-      }),
-      onload(res) {
-        try {
-          const body = JSON.parse(res.responseText) as Record<string, unknown>;
-          if (res.status === 200 && typeof body.access_token === "string") {
-            resolve(body as unknown as OAuthResult);
-          } else {
-            reject(new Error(String(body.error ?? `token exchange failed (${res.status})`)));
-          }
-        } catch {
-          reject(new Error(`token exchange failed (${res.status})`));
-        }
-      },
-      onerror() {
-        reject(new Error("network error during token exchange"));
-      },
-    });
-  });
-}
-
-export async function openLoginPopup(): Promise<OAuthResult> {
-  const base = getApiBase();
+/**
+ * Opens tomomai's sign-in in a popup and exchanges the code it returns. Call it straight from a click,
+ * since browsers block popups opened later.
+ */
+export function signIn(): Promise<void> {
   const state = randomString(16);
   const verifier = randomString(32);
-  const challenge = await pkceChallenge(verifier);
-  const redirectUri = `${base}/userscript/callback`;
+  // Opened before the challenge is ready so the click still counts, then pointed at the sign-in.
+  const popup = window.open("about:blank", "tomomai-sign-in", "width=500,height=720");
+  if (!popup) return Promise.reject(new ScriptError("popupBlocked"));
 
-  // __USERSCRIPT_CLIENT_ID__ is baked as a placeholder by vite.config.ts and
-  // substituted at serve-time by the Next.js route, mirroring __API_BASE__.
-  // This keeps a single prebuilt bundle working across environments and lets
-  // the server rotate the OAuth client ID without rebuilding.
-  const clientId = __USERSCRIPT_CLIENT_ID__;
-
-  const params = new URLSearchParams({
-    response_type: "code",
-    client_id: clientId,
-    redirect_uri: redirectUri,
-    scope: "user:metadata:read",
-    state,
-    code_challenge: challenge,
-    code_challenge_method: "S256",
-    // RFC 8707. Binds the issued access token to our API as its audience and,
-    // because Better Auth's JWT plugin is enabled, makes the access token a
-    // JWT (signed via the /api/auth/jwks endpoint). Resource servers then
-    // verify the JWT locally without needing client credentials, which is
-    // what lets multiple OAuth apps share the same API verifier.
-    resource: base,
-  });
-
-  const popup = window.open(
-    `${base}/api/auth/oauth2/authorize?${params}`,
-    "tomomai-login",
-    "width=500,height=700,menubar=no,toolbar=no,location=no"
-  );
-
-  return new Promise((resolve, reject) => {
-    let pollClosed: ReturnType<typeof setInterval> | undefined;
-    const cleanup = () => {
-      window.removeEventListener("message", handler);
-      if (pollClosed) clearInterval(pollClosed);
+  return new Promise<void>((resolve, reject) => {
+    const apiOrigin = new URL(API_BASE).origin;
+    let closedPoll: ReturnType<typeof setInterval> | undefined;
+    const finish = (error?: Error) => {
+      window.removeEventListener("message", onMessage);
+      clearInterval(closedPoll);
+      if (!popup.closed) popup.close();
+      if (error) reject(error);
+      else resolve();
     };
 
-    const handler = async (event: MessageEvent) => {
-      if (event.data?.source !== "tomomai-userscript") return;
-      const data = event.data as Record<string, unknown>;
-      // Only consume messages belonging to this login attempt.
-      if (data.state && data.state !== state) return;
-
-      cleanup();
-      popup?.close();
-
-      if (data.error) {
-        reject(new Error(String(data.error)));
-        return;
-      }
+    const onMessage = (event: MessageEvent) => {
+      const data = event.data as Record<string, unknown> | null;
+      if (event.origin !== apiOrigin || data?.source !== "tomomai-userscript" || data.state !== state) return;
+      // The callback closes itself right away, which must not fail the exchange that is now running.
+      clearInterval(closedPoll);
       if (typeof data.code !== "string") {
-        reject(new Error("invalid response"));
+        finish(data.error === "access_denied" ? new ScriptError("signInCancelled") : new ScriptError("signInFailed", { status: String(data.error ?? "error") }));
         return;
       }
-      try {
-        resolve(await exchangeCode(data.code, verifier, redirectUri));
-      } catch (err) {
-        reject(err instanceof Error ? err : new Error(String(err)));
-      }
+      tokenRequest({ grant_type: "authorization_code", code: data.code, code_verifier: verifier, redirect_uri: REDIRECT_URI })
+        .then(tokens => {
+          store(tokens);
+          finish();
+        })
+        .catch((err: unknown) => finish(err instanceof Error ? err : new Error(String(err))));
     };
-    window.addEventListener("message", handler);
+    window.addEventListener("message", onMessage);
 
-    // Clean up if popup is closed without completing
-    pollClosed = setInterval(() => {
-      if (popup?.closed) {
-        cleanup();
-        reject(new Error("popup closed"));
-      }
+    closedPoll = setInterval(() => {
+      if (popup.closed) finish(new ScriptError("signInClosed"));
     }, 500);
+
+    pkceChallenge(verifier).then(challenge => {
+      const params = new URLSearchParams({
+        response_type: "code",
+        client_id: CLIENT_ID,
+        redirect_uri: REDIRECT_URI,
+        scope: SCOPES,
+        state,
+        code_challenge: challenge,
+        code_challenge_method: "S256",
+        resource: API_BASE,
+      });
+      popup.location.href = `${API_BASE}/api/auth/oauth2/authorize?${params}`;
+    }, (err: unknown) => finish(err instanceof Error ? err : new Error(String(err))));
   });
 }

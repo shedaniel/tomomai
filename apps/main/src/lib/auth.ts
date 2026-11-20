@@ -8,7 +8,7 @@ import { admin, jwt, openAPI } from "better-auth/plugins";
 import { apiKey } from "@better-auth/api-key";
 import { passkey } from "@better-auth/passkey";
 import { oauthProvider } from "@better-auth/oauth-provider";
-import { API_SCOPES, isInternalScope, OFFLINE_ACCESS } from "@/lib/api/scopes";
+import { API_SCOPES, isInternalScope, isOfficialOnlyScope, OFFLINE_ACCESS } from "@/lib/api/scopes";
 
 const OAUTH_SCOPES = [...Object.keys(API_SCOPES).filter((s) => !isInternalScope(s)), OFFLINE_ACCESS];
 import { and, eq, isNull, lt, or } from "drizzle-orm";
@@ -26,6 +26,7 @@ import {
   publicClientViolation,
   publicRedirectHosts,
 } from "@/lib/oauth-public";
+import { isOfficialClient } from "@/lib/oauth-official";
 import { mirrorRemoteAvatarToR2, isR2AvatarUrl } from "@/lib/r2";
 import { useApiKeyCreation, useOauthAppCreation } from "@/lib/flags";
 import { getCurrentLegalVersions } from "@/lib/legal";
@@ -671,6 +672,20 @@ export const auth = betterAuth({
             });
           }
           rejectInternalScopes(granted);
+        }
+        const granted = bodyScope ? bodyScope.split(" ").filter(Boolean) : requestedScopes;
+        if (granted.some(isOfficialOnlyScope)) {
+          const clientId = new URLSearchParams(rawQuery).get("client_id");
+          const [client] = clientId
+            ? await db
+                .select({ metadata: schema.oauthClient.metadata })
+                .from(schema.oauthClient)
+                .where(eq(schema.oauthClient.clientId, clientId))
+                .limit(1)
+            : [];
+          if (!client || !isOfficialClient(client.metadata)) {
+            throw new APIError("FORBIDDEN", { message: "OFFICIAL_SCOPE_FORBIDDEN" });
+          }
         }
       }
 

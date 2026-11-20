@@ -2,11 +2,12 @@ import { GameError } from "@/lib/games/errors";
 import { gameProcedure } from "../game-procedures";
 import { startScoreFetch, getScoreFetchStatus } from "@/server/services/games/fetch-sessions";
 import { FetchStartError, toTrpcFetchStartError } from "@/server/services/games/fetch-errors";
-import { deleteToken } from "@/server/services/games/tokens";
+import { deleteToken, tokenSavedAt } from "@/server/services/games/tokens";
 import { protectedProcedure, router } from '@/lib/trpc';
 import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
 import { getGameSiteStatus } from "@/server/services/games/sega/budget";
+import { useUserscriptFetch } from "@/lib/flags";
 
 export const fetchRouter = router({
   startFetch: gameProcedure(protectedProcedure, "scores")
@@ -38,6 +39,12 @@ export const fetchRouter = router({
       const status = await getScoreFetchStatus({ game: ctx.game, region: ctx.region, userId: ctx.session.user.id });
       return status ? { id: status.id, startedAt: status.startedAt } : null;
     }),
+
+  isUserscriptEnabled: protectedProcedure.query(() => useUserscriptFetch()),
+
+  // Lets the token dialog notice a token saved elsewhere, such as by the userscript.
+  getTokenSavedAt: gameProcedure(protectedProcedure, "scores")
+    .query(({ ctx }) => tokenSavedAt(ctx.game, ctx.session.user.id, ctx.region)),
 
   deleteToken: gameProcedure(protectedProcedure, "scores")
     .mutation(async ({ ctx }) => {

@@ -385,6 +385,10 @@
           "name": "가져오기 시작",
           "description": "저장된 토큰으로 각 게임의 새 데이터를 가져와 새 스냅샷을 추가"
         },
+        "fetch:token:write": {
+          "name": "게임 토큰 저장",
+          "description": "게임에 저장된 토큰을 SEGA 로그인 쿠키로 교체합니다. 어떤 계정의 점수를 가져올지가 정해집니다"
+        },
         "fetch:delete": {
           "name": "저장된 게임 토큰 삭제",
           "description": "해당 게임에 다시 로그인할 때까지 가져오기가 중단됩니다"
@@ -946,9 +950,10 @@
       },
       "send": {
         "title": "쿠키 보내기",
-        "description": "{net}에 접속해 로그인하세요. SEGA 로그인 페이지에서 유저스크립트가 쿠키를 {product}에 보내면 이 대화 상자는 자동으로 닫힙니다.",
-        "button": "{net} 열기",
-        "waiting": "유저스크립트를 기다리는 중...",
+        "description": "SEGA 페이지를 열고 패널에서 \"{button}\"를 누르세요.",
+        "gatewayButton": "SEGA 페이지 열기",
+        "signOut": "이 브라우저에서 {net} 로그아웃을 하면 이 쿠키가 속한 세션이 종료되어, 다시 보낼 때까지 가져오기가 중단됩니다.",
+        "waiting": "쿠키를 기다리는 중...",
         "installed": "이 브라우저에 {product} 유저스크립트가 설치되어 있습니다.",
         "scriptcatPrompt": "스크립트가 처음 쿠키를 읽을 때 ScriptCat이 권한을 요청합니다. 카운트다운이 끝나기 전에 \"Permanent\"를 선택한 다음 \"Allow\"를 클릭하세요."
       },

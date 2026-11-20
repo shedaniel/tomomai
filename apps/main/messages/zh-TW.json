@@ -609,6 +609,10 @@
           "name": "開始同步",
           "description": "使用已儲存的權杖同步任何遊戲的新資料，並新增一個快照"
         },
+        "fetch:token:write": {
+          "name": "儲存遊戲權杖",
+          "description": "以 SEGA 登入 Cookie 取代遊戲已儲存的權杖，這決定要同步哪個帳號的成績"
+        },
         "fetch:delete": {
           "name": "刪除已儲存的遊戲權杖",
           "description": "重新登入該遊戲前將無法同步"
@@ -1221,9 +1225,10 @@
       },
       "send": {
         "title": "傳送 Cookie",
-        "description": "開啟 {net} 並登入。在 SEGA 登入頁面上，使用者腳本會將你的 Cookie 傳送到 {product}，此對話框會自動關閉。",
-        "button": "開啟 {net}",
-        "waiting": "正在等待使用者腳本…",
+        "description": "開啟 SEGA 頁面，在面板中點選「{button}」。",
+        "gatewayButton": "開啟 SEGA 頁面",
+        "signOut": "在此瀏覽器登出 {net} 會結束此 Cookie 所屬的工作階段，在你重新傳送之前將無法同步。",
+        "waiting": "正在等待 Cookie…",
         "installed": "此瀏覽器已安裝 {product} 使用者腳本。",
         "scriptcatPrompt": "腳本第一次讀取你的 Cookie 時，ScriptCat 會要求權限。請在倒數結束前選擇「Permanent」，再點選「Allow」。"
       },

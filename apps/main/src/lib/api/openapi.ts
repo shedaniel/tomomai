@@ -96,6 +96,9 @@ function buildOperation(route: RouteSpec) {
 
   const parameters = [...parameterDocs(route.params, "path"), ...parameterDocs(route.query, "query")];
   if (parameters.length) operation.parameters = parameters;
+  if (route.body) {
+    operation.requestBody = { required: true, content: { "application/json": { schema: safeJsonSchema(route.body) } } };
+  }
 
   // Responses
   const redirect = isGameRoute(route) && route.redirect;

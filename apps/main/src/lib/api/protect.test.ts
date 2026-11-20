@@ -93,3 +93,30 @@ describe("OAuth access tokens", () => {
     expect((await call("opaque-token", readyHandler)).status).toBe(200);
   });
 });
+
+describe("official-only scopes", () => {
+  const tokenWriteHandler = withApiKey(keyedSpec("fetch:token:write"), async (_req, key) => Response.json({ userId: key.userId }));
+
+  it.each([
+    [{ official: true }, 200],
+    [{ official: false }, 403],
+    [null, 403],
+  ])("serves a JWT only for an official client: metadata %j", async (metadata, status) => {
+    verifyAccessToken.mockResolvedValue({ sub: "user-1", azp: "client-1", scope: "fetch:token:write" });
+    rows.push([{ disabled: false, skipConsent: false, metadata, consentId: "c1" }]);
+    expect((await call(jwt, tokenWriteHandler)).status).toBe(status);
+  });
+
+  it.each([
+    [{ official: true }, 200],
+    [JSON.stringify({ official: true }), 200],
+    [{}, 403],
+  ])("serves an opaque token only for an official client: metadata %j", async (clientMetadata, status) => {
+    rows.push([{ id: "t1", userId: "user-1", scopes: ["fetch:token:write"], expiresAt: future, clientDisabled: false, clientMetadata }]);
+    expect((await call("opaque-token", tokenWriteHandler)).status).toBe(status);
+  });
+
+  it("refuses API keys", async () => {
+    expect((await call("tmk_key", tokenWriteHandler)).status).toBe(403);
+  });
+});

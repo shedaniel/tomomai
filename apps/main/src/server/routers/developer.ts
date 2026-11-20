@@ -1,7 +1,19 @@
 import { auth } from "@/lib/auth";
-import { API_SCOPES, expandScopes, isInternalScope, OFFLINE_ACCESS, type ScopeKey } from "@/lib/api/scopes";
+import { API_SCOPES, expandScopes, isInternalScope, isOfficialOnlyScope, OFFLINE_ACCESS, type ScopeKey } from "@/lib/api/scopes";
 import { protectedProcedure, router } from "@/lib/trpc";
 import { TRPCError } from "@trpc/server";
+
+/** Official-only scopes belong to official OAuth apps, never to an API key or a third-party app. */
+function assertOfficialScopesAllowed(scopes: readonly ScopeKey[], official: boolean) {
+  const officialOnly = scopes.filter(isOfficialOnlyScope);
+  if (officialOnly.length > 0 && !official) {
+    throw new TRPCError({
+      code: "FORBIDDEN",
+      message: "OFFICIAL_SCOPE_FORBIDDEN",
+      cause: { code: "OFFICIAL_SCOPE_FORBIDDEN", scopes: officialOnly },
+    });
+  }
+}
 
 /** API keys only: throw FORBIDDEN if any requested scope is internal-only and the session user is not an admin. */
 function assertInternalScopesAllowed(scopes: readonly ScopeKey[], userRole: string | null | undefined) {
@@ -142,6 +154,7 @@ export const developerRouter = router({
     .mutation(async ({ ctx, input }) => {
       requireFreshSession(ctx.session);
       assertInternalScopesAllowed(input.scopes, ctx.session.user.role);
+      assertOfficialScopesAllowed(input.scopes, false);
       await assertUnderLimit(ctx.session.user.role, apikey, apikey.referenceId, ctx.session.user.id, MAX_API_KEYS_PER_USER, API_KEY_LIMIT_REACHED);
       // Expand any encompassing scopes to their leaf scopes before storing.
       // This keeps verifyApiKey simple (pure AND logic, single Better Auth call).
@@ -264,6 +277,7 @@ export const developerRouter = router({
       requireFreshSession(ctx.session);
       assertAppNameAllowed(input.name, ctx.session.user.role);
       assertOfficialAllowed(input.official, ctx.session.user.role);
+      assertOfficialScopesAllowed(input.scopes, input.official === true);
       await assertUnderLimit(ctx.session.user.role, oauthClient, oauthClient.userId, ctx.session.user.id, MAX_OAUTH_APPS_PER_USER, OAUTH_APP_LIMIT_REACHED);
       // Delegate creation to Better Auth so it handles client_id generation,
       // secret hashing, and any internal bookkeeping consistently.
@@ -341,10 +355,14 @@ export const developerRouter = router({
       if (input.name !== undefined) assertAppNameAllowed(input.name, ctx.session.user.role);
       // Verify ownership
       const [app] = await db
-        .select({ id: oauthClient.id, public: oauthClient.public, type: oauthClient.type })
+        .select({ id: oauthClient.id, public: oauthClient.public, type: oauthClient.type, metadata: oauthClient.metadata, scopes: oauthClient.scopes })
         .from(oauthClient)
         .where(and(eq(oauthClient.clientId, input.clientId), eq(oauthClient.userId, ctx.session.user.id)));
       if (!app) throw new TRPCError({ code: "FORBIDDEN", message: "App not found" });
+      assertOfficialScopesAllowed(
+        input.scopes ?? (app.scopes ?? []).filter((s): s is ScopeKey => s in API_SCOPES),
+        input.official ?? isOfficialClient(app.metadata),
+      );
       if (app.public && input.official === false) {
         throw new TRPCError({ code: "BAD_REQUEST", message: "Public apps are always official" });
       }

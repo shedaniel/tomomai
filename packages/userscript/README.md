@@ -1,172 +1,122 @@
 # @tomomai/userscript
 
-A userscript (Tampermonkey / Violentmonkey / Greasemonkey) that augments
-`maimaidx.jp` and `maimaidx-eng.com` with a tomomai overlay. It runs inside a
-shadow DOM on those pages and authenticates against the tomomai backend via
-OAuth 2.0.
+A userscript that sends a player's maimai DX NET or CHUNITHM-NET International login cookie to tomomai
+or tomochu, so they can fetch scores without typing a password or copying the cookie by hand.
 
-## Architecture at a glance
+SEGA's gateway sets the `clal` cookie as HttpOnly, so page scripts and bookmarklets cannot read it.
+A userscript manager can, through `GM_cookie`, once its HttpOnly cookie setting is on. The token
+dialog's userscript guide walks players through that setting for each manager.
 
-- Built with Vite + `vite-plugin-monkey`. Output: `dist/@tomomai/userscript.user.js`.
-- Served to users by the Next.js route [`/userscript.user.js`](../../src/app/userscript.user.js/route.ts).
-  That route patches two placeholders into the prebuilt bundle on every request,
-  so a single build artifact works across local / preview / production.
+## What it does
 
-| Placeholder                          | Source at serve time                                | Used by                          |
-| ------------------------------------ | --------------------------------------------------- | -------------------------------- |
-| `__TOMOMAI_API_BASE__`               | `resolveBaseUrlFromHeaders(request.headers)`        | `__API_BASE__` in `src/auth.ts`  |
-| `__TOMOMAI_USERSCRIPT_CLIENT_ID__`   | `process.env.USERSCRIPT_CLIENT_ID`                  | `__USERSCRIPT_CLIENT_ID__`       |
+- **On the SEGA gateway's landing page** (`https://lng-tgk-aime-gw.am-all.net/common_auth/`, which
+  says Not Found) it shows a panel over the page that reads `clal` and, on a click, saves it with
+  `PUT /api/v1/games/maimai/fetch/token?region=intl`.
+- **When there is no cookie yet**, the panel opens SEGA's sign-in form, tagged with `tomomai=signin`.
+  The script shows a small hint there, reminding players to keep auto login ticked, since `clal` is
+  SEGA's auto login cookie. SEGA sends a signed-in player to DX NET, so on
+  `https://maimaidx-eng.com/maimai-mobile/*` the script sends them straight back to the landing page,
+  only within 5 minutes of opening that tagged form or submitting it. A trip the player gave up on
+  stops on its own. It runs at `document-start` so DX NET never renders.
+- **On tomomai's own pages** it only sets `data-tomomai-userscript` on `<html>` and fires a
+  `tomomai:userscript` event, so the token dialog knows it is installed and skips the setup steps.
 
-The client *secret* never ships to the browser — it's used only by the
-server-side token endpoint at [`/api/userscript/token`](../../src/app/api/userscript/token/route.ts)
-to exchange the authorization code (plus the userscript's PKCE verifier) for
-tokens.
+The open token dialog polls for the saved token and starts the fetch itself, the same way a pasted
+cookie does. After sending, the panel can close its tab (`@grant window.close`).
 
-### Auth flow
+The bundle is plain TypeScript with no dependencies and no `@require`, so what players install is what
+this package builds. The panel's logo is inlined from `src/assets`.
 
-1. Userscript generates a PKCE `code_verifier` + `code_challenge` and a random
-   `state`, keeps the verifier in memory, and opens a popup at
-   `${base}/api/auth/oauth2/authorize?...&code_challenge=...&code_challenge_method=S256`.
-2. The user consents in the popup. Better Auth redirects the popup to
-   [`/userscript/callback`](../../src/app/userscript/callback/route.ts) with
-   `?code=...&state=...`.
-3. That callback page is a thin relay: it `postMessage`s `{code, state}` (or
-   `{error}`) back to the opener window and closes itself.
-4. The userscript receives the message, looks up the verifier it stashed for
-   this `state`, then `POST`s `{code, code_verifier, redirect_uri}` to
-   [`/api/userscript/token`](../../src/app/api/userscript/token/route.ts) via
-   `GM_xmlhttpRequest`.
-5. That route attaches `client_id` + `client_secret` from server env and forwards
-   to Better Auth's `/api/auth/oauth2/token`, returning the access token to
-   the userscript.
+## Both games, one script
 
-### How API endpoints verify the token
+Both games sign in through the same Aime gateway with the same `clal` cookie, so one build serves both.
+Each site serves it with its own host filled in, so no domain is written into the script, and a copy
+installed from either site works for both games:
 
-[`src/lib/api/protect.ts`](../../src/lib/api/protect.ts) accepts both shapes of
-OAuth access token Better Auth can issue, so a third-party OAuth app just does
-standard OAuth 2.1 with PKCE — no extra parameters required:
+- The token dialog opens the gateway with `#game=maimai` or `#game=chunithm`. The panel saves the
+  cookie for that game, `PUT /api/v1/games/{game}/fetch/token`, and takes that game's brand, logo and
+  theme hue. Without a game in the link it uses the game of the site it was installed from.
+- The copy signs in to and saves through the site it was installed from. Both sites share one
+  database and one set of accounts, so the other site's dialog sees the saved token as long as the
+  player uses the same account there. The panel names that site for signing in, and the game's site
+  for sending.
+- The copy runs on the pages of the site that served it and of every game's site, so both sites'
+  token dialogs see it installed and skip their setup steps.
+- The sign-in round trip covers both NET sites, `maimaidx-eng.com/maimai-mobile/*` and
+  `chunithm-net-eng.com/mobile/*`.
+- `src/games.ts` copies each game's SEGA sites from the site's game definitions, and a test on the site
+  checks they agree.
 
-- **Opaque tokens** (the default for any OAuth client): validated via a single
-  indexed lookup against the `oauthAccessToken` table, applying the same
-  SHA-256/base64url hash Better Auth uses at write time. Works for tokens
-  issued to any OAuth client without per-app credentials.
-- **JWT tokens** (opt-in optimization): a client that sends
-  `resource=<base url>` at the token endpoint per
-  [RFC 8707](https://datatracker.ietf.org/doc/html/rfc8707) gets back a JWT
-  access token, which we verify locally via `/api/auth/jwks`. No DB hit. The
-  userscript opts into this — see [`/api/userscript/token`](../../src/app/api/userscript/token/route.ts) —
-  but it's never required.
+The name and namespace are the same on both sites, so installing from the second replaces the first
+instead of adding a second panel. Its tokens are stored per site, so that copy signs in again.
 
-Both paths enforce required scopes and the `expiresAt` claim.
+## Languages
 
-## First-time setup
+The panel has its own small bundle in [`src/i18n.ts`](src/i18n.ts): English, Japanese, Korean,
+Simplified and Traditional Chinese. It uses, in order, the language picked in the panel's switcher,
+the language of the tomomai site (noted whenever the script runs on tomomai's pages), and the
+browser's. The site's zh-CN and zh-SG map to Simplified Chinese, and zh-TW and zh-HK to Traditional.
 
-### 1. Register an OAuth application
+The module has no userscript manager APIs, so the site imports it as `@tomomai/userscript/i18n`. The
+token dialog's picture of the panel and its "press ... in the panel" line use the panel's own strings,
+so they always match. SEGA's sign-in form is English in every language, so the strings quote its auto
+login checkbox by its English label.
 
-The userscript authenticates as a registered OAuth client. You need to create
-one and record both the client ID and secret.
+## Signing in to tomomai
 
-1. Run the tomomai web app (`pnpm dev` at the repo root) and sign in.
-2. Open **Settings → Developer** (`/settings/developer`).
-3. Create an OAuth application with:
-   - **Name:** anything (e.g. `tomomai userscript (local)`).
-   - **Redirect URIs:** must include **every** origin you serve the userscript
-     from. At minimum:
-     - `http://localhost:3000/userscript/callback` (local dev)
-     - `https://tomomai.lol/userscript/callback` (production, if applicable)
-   - **Scopes:** at least `user:metadata:read` (this is what `openLoginPopup`
-     in [`src/auth.ts`](src/auth.ts) requests). Add more if you extend the
-     userscript to call other endpoints.
-4. Copy the generated `client_id` and `client_secret` — the secret is shown
-   only once.
+The script is an OAuth **public client**: it holds no secret and signs in with PKCE.
 
-> If the redirect URI sent at runtime doesn't exactly match one of the URIs you
-> registered, Better Auth responds with `invalid_redirect` and bounces the user
-> to `/api/auth/error`. The userscript sends `${__API_BASE__}/userscript/callback`,
-> so the registered URI must match scheme, host, port, and path exactly.
+1. A click on the panel opens `/api/auth/oauth2/authorize` in a popup, asking for
+   `offline_access fetch:token:write`.
+2. Better Auth returns the popup to [`/userscript/callback`](../../apps/main/src/app/userscript/callback/route.ts),
+   which posts `{ code, state }` to the opener on the gateway origin only and closes.
+3. The script checks the message's origin and `state`, then exchanges the code at
+   `/api/auth/oauth2/token` with `client_id` and its `code_verifier`, through `GM_xmlhttpRequest`
+   without cookies, so CORS and tomomai's session cookie are out of the way.
+4. Tokens are kept in the manager's storage. Refresh tokens rotate on every use, and a failed
+   refresh asks the player to sign in again.
 
-### 2. Set the server env vars
+## Serving
 
-Add to `.env.local` (or whichever env file your Next.js server reads):
+The bundle is built once and served by [`/userscript.user.js`](../../apps/main/src/app/userscript.user.js/route.ts),
+which fills in placeholders on every request, so one build works on every deployment:
 
-```env
-USERSCRIPT_CLIENT_ID=...     # from step 1
-USERSCRIPT_CLIENT_SECRET=... # from step 1
-```
+| Placeholder                        | Filled with                                          |
+| ---------------------------------- | ---------------------------------------------------- |
+| `__TOMOMAI_API_BASE__`             | The site's base URL                                  |
+| `__TOMOMAI_USERSCRIPT_CLIENT_ID__` | `USERSCRIPT_CLIENT_ID`                               |
+| `__TOMOMAI_API_HOST__`             | The site's host name, for `@connect`                 |
+| `__TOMOMAI_SITE_MATCH__`           | A match pattern for the site's pages, for `@match`   |
 
-Both are read on the server only:
-- `USERSCRIPT_CLIENT_ID` is substituted into the bundle by the
-  `/userscript.user.js` route. If unset, the route responds 500 with a clear
-  error rather than shipping a bundle with an empty `client_id`.
-- `USERSCRIPT_CLIENT_SECRET` is used by `/userscript/callback` during the
-  authorization-code exchange.
+The route, the callback and the dialog's userscript option are all behind the `userscriptFetch` flag.
 
-Restart the Next.js dev server after editing env files.
+## Setup
 
-### 3. Build the userscript
+1. Sign in as an admin and open **Settings > Developer**. Create an OAuth app with **Browser script**
+   switched on, the redirect URI `https://<site>/userscript/callback` and the scope
+   **Save game tokens** (`fetch:token:write`). A development server may use
+   `http://localhost:3000/userscript/callback`. Set the icon to `https://<site>/brand/maimai/icon.png`
+   so the consent screen shows the tomomai mascot instead of a letter. No secret is issued. Each site
+   that serves the script needs its own redirect URI, on one app or on one app per site.
+2. Set `USERSCRIPT_CLIENT_ID` to its client ID and restart the server.
+3. Build the bundle:
 
-```sh
-pnpm --filter @tomomai/userscript build
-```
+   ```sh
+   pnpm --filter @tomomai/userscript build
+   ```
 
-This produces `packages/userscript/dist/@tomomai/userscript.user.js`. The
-Next.js route reads this file from disk on each request and patches in the
-placeholders, so you only need to rebuild when *userscript source code*
-changes — not when the API base URL or client ID changes.
-
-### 4. Install it in your browser
-
-With the tomomai server running, navigate to:
-
-- Local: <http://localhost:3000/userscript.user.js>
-- Production: <https://tomomai.lol/userscript.user.js>
-
-Tampermonkey / Violentmonkey will detect the `// ==UserScript==` header and
-prompt to install. After installing, visit `https://maimaidx.jp/` (or the
-English site); the overlay should mount and the login button should kick off
-the OAuth popup.
-
-## Local development loop
-
-For iterating on the userscript itself, the fastest loop is:
-
-```sh
-pnpm --filter @tomomai/userscript build --watch
-```
-
-The Next.js route serves whatever the latest build wrote to `dist/`, so a
-hard refresh (or "Update" in your userscript manager) picks up changes.
-
-Pure HMR via `pnpm --filter @tomomai/userscript dev` is also possible but
-doesn't go through the placeholder-substitution flow — you'd have to set the
-client ID yourself.
+   The route reads `dist/@tomomai/userscript.user.js` on each request, so rebuild only when the
+   script's source changes. `build --watch` works for iterating.
+4. Turn on `userscriptFetch`, open `/userscript.user.js` and install it.
 
 ## Troubleshooting
 
-**`?error=invalid_client&error_description=client_id+is+required`**
-The bundle still has the placeholder (or an empty string) where the client ID
-should be. Confirm `USERSCRIPT_CLIENT_ID` is set in the server env and that
-you rebuilt after pulling the placeholder-substitution change.
+**`invalid_redirect` on sign-in.** The app's redirect URI must be exactly `<site>/userscript/callback`,
+scheme, host, port and path included.
 
-**`?error=invalid_redirect`**
-The redirect URI in the registered OAuth application doesn't match
-`${baseUrl}/userscript/callback`. Open Settings → Developer, edit the app,
-and add the exact URL the userscript is sending. Check the dev console
-network tab to see what `redirect_uri` was sent.
+**The panel says there is no login cookie while you are signed in.** The manager is not letting
+scripts read HttpOnly cookies. Tampermonkey needs Config mode Advanced and "Allow scripts to access
+cookies" set to All. Violentmonkey needs both "Allow GM_cookie to access HTTP-only cookies" boxes.
+ScriptCat asks on first use.
 
-**`server_misconfigured` from `/api/userscript/token`**
-`USERSCRIPT_CLIENT_ID` or `USERSCRIPT_CLIENT_SECRET` is unset on the server.
-See step 2.
-
-**`pkce is required for this client`**
-Hitting `/api/auth/error` with this message means the userscript built before
-the PKCE change is being served. Run `pnpm --filter @tomomai/userscript build`
-and reinstall the userscript (Tampermonkey → check for updates).
-
-**`downloadable font: download failed ... bad URI or cross-site access not allowed`**
-The font CORS allowlist in [`src/middleware.ts`](../../src/middleware.ts)
-only permits `https://maimaidx.jp` and `https://maimaidx-eng.com`. If you're
-testing on another origin, add it there.
-
-**Bundle 404 from the Next.js route**
-You haven't built the userscript yet. Run `pnpm --filter @tomomai/userscript build`.
+**`USERSCRIPT_CLIENT_ID is not set on the server`.** Set it, see step 2.

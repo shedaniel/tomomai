@@ -115,7 +115,7 @@ const APP_VERSION_MINOR = (() => {
 
 const nextConfig: NextConfig = {
   distDir: getFrontendDistDir(frontendGame, process.env.NODE_ENV === "development"),
-  transpilePackages: ["@tomomai/ui", "@tomomai/i18n", "@tomomai/markdown"],
+  transpilePackages: ["@tomomai/ui", "@tomomai/i18n", "@tomomai/markdown", "@tomomai/userscript"],
   env: { BUILD_STAMP, GIT_SHA, APP_VERSION_MINOR, FRONTEND_GAME: frontendGame },
   // Comma-separated hosts, such as a tailnet name, that may load dev resources like hot reload.
   allowedDevOrigins: process.env.DEV_ALLOWED_ORIGINS?.split(",").map(host => host.trim()).filter(Boolean),
@@ -280,6 +280,7 @@ const nextConfig: NextConfig = {
   outputFileTracingRoot: path.resolve(process.cwd(), '..', '..'),
   outputFileTracingIncludes: {
     '/api/image-proxy': ['./public/res/**/*'],
+    '/userscript.user.js': ['../../packages/userscript/dist/**/*'],
     '/**/*': ['../../node_modules/.pnpm/kuromoji@*/node_modules/kuromoji/dict/**/*'],
   },
   devIndicators: false,

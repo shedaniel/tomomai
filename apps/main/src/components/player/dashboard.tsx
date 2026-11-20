@@ -197,7 +197,7 @@ export function Dashboard({ user, initialUserData, initialRegion, initialSnapsho
   ], [isFetching, game.regions, selectedRegion, tPalette, tRegions]);
   useCommandPaletteActions("dashboard", paletteActions);
 
-  const handleTokenUpdate = async (token: string) => {
+  const handleTokenUpdate = async (token?: string) => {
     if (!(await confirmFetch())) {
       // Keeps the TokenDialog open with what the user typed.
       throw new Error("Fetch postponed");

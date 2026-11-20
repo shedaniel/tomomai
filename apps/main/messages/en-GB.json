@@ -544,6 +544,10 @@
           "name": "Start a fetch",
           "description": "Fetch new data for any game with its saved token, adding a new snapshot"
         },
+        "fetch:token:write": {
+          "name": "Save game tokens",
+          "description": "Replace a game's saved token with a SEGA login cookie, which decides whose scores are fetched"
+        },
         "fetch:delete": {
           "name": "Remove saved game tokens",
           "description": "Fetching a game stops until you sign in to it again"
@@ -1040,9 +1044,10 @@
       },
       "send": {
         "title": "Send your cookie",
-        "description": "Open {net} and sign in. On the SEGA login page, the userscript sends your cookie to {product} and this dialog closes on its own.",
-        "button": "Open {net}",
-        "waiting": "Waiting for the userscript...",
+        "description": "Open the SEGA page and press {button} in the panel.",
+        "gatewayButton": "Open the SEGA page",
+        "signOut": "Signing out of {net} in this browser ends the session this cookie belongs to, and fetching stops until you send it again.",
+        "waiting": "Waiting for your cookie...",
         "installed": "The {product} userscript is installed in this browser.",
         "scriptcatPrompt": "The first time the script reads your cookie, ScriptCat asks for permission. Choose Permanent, then Allow, before the countdown runs out."
       },

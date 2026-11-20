@@ -11,7 +11,8 @@ interface TokenDialogProps {
   region: Region;
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
-  onTokenUpdate: (token: string) => Promise<void>;
+  /** Saves the token and starts a fetch. Without one, the fetch uses the stored token. */
+  onTokenUpdate: (token?: string) => Promise<void>;
   startSessionPolling?: (region: Region, onSessionDetected?: () => void) => void;
   stopSessionPolling?: () => void;
 }

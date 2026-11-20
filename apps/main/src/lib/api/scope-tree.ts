@@ -1,4 +1,4 @@
-import type { ScopeKey } from "@/lib/api/scopes";
+import { isOfficialOnlyScope, type ScopeKey } from "@/lib/api/scopes";
 
 export type TreeNode = { key: ScopeKey; children?: TreeNode[] };
 
@@ -38,9 +38,23 @@ export const SCOPE_TREE: TreeNode[] = [
     ],
   },
   { key: "fetch:start" },
+  { key: "fetch:token:write" },
   { key: "fetch:delete" },
   { key: "snapshot:all:delete" },
 ];
+
+/** The tree a picker shows. Official-only scopes appear only for an official app. */
+export function scopeTreeFor(official: boolean, tree: TreeNode[] = SCOPE_TREE): TreeNode[] {
+  if (official) return tree;
+  return tree
+    .filter((node) => !isOfficialOnlyScope(node.key))
+    .map((node) => (node.children ? { ...node, children: scopeTreeFor(false, node.children) } : node));
+}
+
+/** The selection to submit, without official-only scopes a picker no longer shows. */
+export function pickedScopes(selected: Iterable<ScopeKey>, official: boolean): ScopeKey[] {
+  return Array.from(selected).filter((key) => official || !isOfficialOnlyScope(key));
+}
 
 export function collectParents(nodes: TreeNode[], parents = new Set<ScopeKey>()): Set<ScopeKey> {
   for (const n of nodes) {

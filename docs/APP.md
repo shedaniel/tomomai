@@ -341,7 +341,7 @@ A vertical slice on this branch, iOS first and Android second, before committing
 
 ## Server changes
 
-The app is the second user of the API and OAuth code. These are changes to the server, each a documented improvement that benefits other integrators. Items 1 to 5 unblock and secure login and are implemented on `feat/native-oauth-client`. Items 6 to 9 make the app cheaper and simpler to run and are not implemented yet. Item 10 extends public clients past the app, and its first part, browser public clients, is implemented.
+The app is the second user of the API and OAuth code. These are changes to the server, each a documented improvement that benefits other integrators. Items 1 to 5 unblock and secure login and are implemented on `feat/native-oauth-client`. Items 6 to 9 make the app cheaper and simpler to run and are not implemented yet. Item 10 extends public clients past the app, and its first part, the userscript's browser client, is implemented.
 
 1. **Official native OAuth client (implemented).**
    - A separate admin-only `createPublicOAuthApp` procedure in the developer router creates the client through Better Auth's server-only `adminCreateOAuthClient`, with `type: "native"`, `token_endpoint_auth_method: "none"`, `metadata.official: true` and no secret. The user-facing `createOAuthApp` is unchanged and still creates confidential clients only.
@@ -364,10 +364,7 @@ The app is the second user of the API and OAuth code. These are changes to the s
     - Later, open public clients to third parties with the same https rule plus loopback redirects (`http://127.0.0.1:<port>/...`, RFC 8252) for desktop and CLI tools. Check whether Better Auth matches loopback on any port first. Never allow custom schemes: any app can claim one, so an attacker can start a flow with a real app's `client_id` and their own PKCE pair and receive the code. The device authorization grant (RFC 8628) is the alternative for CLIs.
     - Third-party public clients always show the third-party warning, never skip consent, and stay under the per-user limit and the kill switch.
 
-    Notes for the userscript:
-    - Its callback can be its own page on `tomomai.lol` (which must keep the query, unlike `/oauth/app-callback`, and load no analytics or third-party scripts), or a URL on the official site where the userscript already runs, read by the userscript itself. The second needs nothing from us.
-    - The current userscript already runs PKCE and sends the code to `/api/userscript/token`, which only adds `USERSCRIPT_CLIENT_SECRET`. Anyone holding a code and verifier can call it, so it is a public client in practice. Moving it to a real public client lets that route go.
-    - `snapshot:submit` is internal and refused for every OAuth client. A userscript that submits snapshots needs its own design.
+    The userscript now uses it. It reads the SEGA gateway's HttpOnly `clal` cookie and saves it with `PUT /api/v1/games/{game}/fetch/token` under the new `fetch:token:write` scope. Its callback is `/userscript/callback` on `tomomai.lol`, which posts the code only to the gateway origin, and it exchanges the code itself, so `/api/userscript/token` and `USERSCRIPT_CLIENT_SECRET` are gone. `snapshot:submit` stays internal and refused for every OAuth client.
 
 Later, and only if needed:
 

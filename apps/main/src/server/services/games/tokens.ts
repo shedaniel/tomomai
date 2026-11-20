@@ -23,6 +23,13 @@ export async function readToken(game: CanonicalGameId, userId: string, region: R
   }
 }
 
+/** When the player last saved the stored token, or null when none is stored. A login's refresh does not count. */
+export async function tokenSavedAt(game: CanonicalGameId, userId: string, region: Region): Promise<Date | null> {
+  const [record] = await db.select({ updatedAt: userTokens.updatedAt }).from(userTokens)
+    .where(tokenScope(game, userId, region)).limit(1);
+  return record?.updatedAt ?? null;
+}
+
 export async function saveToken(game: CanonicalGameId, userId: string, region: Region, token: string): Promise<void> {
   const encrypted = encryptToken(token);
   const now = new Date();
@@ -33,8 +40,9 @@ export async function saveToken(game: CanonicalGameId, userId: string, region: R
     });
 }
 
+/** Replaces the token with the one a login refreshed it to. It leaves updatedAt alone, which only a save moves. */
 export async function updateToken(game: CanonicalGameId, userId: string, region: Region, token: string): Promise<void> {
-  await db.update(userTokens).set({ token: encryptToken(token), updatedAt: new Date() })
+  await db.update(userTokens).set({ token: encryptToken(token) })
     .where(tokenScope(game, userId, region));
 }
 
