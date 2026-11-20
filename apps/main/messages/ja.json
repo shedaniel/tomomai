@@ -248,6 +248,14 @@
     "scrollHint": "スクロールしてすべての権限を確認",
     "groupCount": "{count, plural, one {# permission} other {# permissions}}"
   },
+  "oauthAppCallback": {
+    "title": "Sign-in didn't reach the app",
+    "body": "Go back to the app and sign in again.",
+    "getApp": "Don't have the app yet?",
+    "appStore": "Download on the App Store",
+    "playStore": "Get it on Google Play",
+    "home": "Back to the website"
+  },
   "consent": {
     "description": "アカウント作成にあたり、以下の規約およびポリシーをご確認の上、同意をお願いいたします。",
     "tldr": {
@@ -601,6 +609,10 @@
           "name": "フェッチ開始",
           "description": "保存済みのトークンでいずれかのゲームの新しいデータを取得し、スナップショットを追加します"
         },
+        "fetch:token:write": {
+          "name": "ゲームトークンの保存",
+          "description": "ゲームの保存済みトークンを SEGA のログインクッキーで置き換えます。どのアカウントのスコアを取得するかが決まります"
+        },
         "fetch:delete": {
           "name": "保存済みのゲームトークンの削除",
           "description": "そのゲームに再度ログインするまでフェッチできなくなります"
@@ -620,6 +632,12 @@
       },
       "oauthApps": {
         "officialDescription": "同意画面に、第三者アプリの注意書きの代わりに公式バッジを表示します。管理者のみ設定できます。",
+        "nativeLabel": "Native app",
+        "nativeDescription": "A mobile app that holds no secret and signs in with PKCE alone. It is always official and can only return to the app link on an allowed host. Only admins can create one.",
+        "nativeBadge": "Native",
+        "browserLabel": "Browser script",
+        "browserDescription": "A userscript or other browser client that holds no secret and signs in with PKCE alone. It is always official and can only return to a page on an allowed host. Only admins can create one.",
+        "browserBadge": "Browser",
         "officialBadge": "公式",
         "errors": {
           "limitReached": "OAuth アプリは最大 {max} 個まで作成できます。新しく作成するには既存のアプリを削除してください。",
@@ -659,7 +677,8 @@
           "secretLabel": "クライアントシークレット",
           "copyAriaLabel": "値をコピー",
           "saveWarning": "このシークレットを保存してください。ダイアログを閉じると再表示されません。",
-          "done": "完了"
+          "done": "完了",
+          "nativeCreatedNote": "This app has no client secret. It signs in with PKCE only."
         },
         "rotateDialog": {
           "title": "クライアントシークレットを再生成しますか？",
@@ -1090,9 +1109,10 @@
       },
       "send": {
         "title": "クッキーを送信",
-        "description": "{net} を開いてログインしてください。SEGA のログインページでユーザースクリプトが {product} にクッキーを送信し、このダイアログは自動で閉じます。",
-        "button": "{net} を開く",
-        "waiting": "ユーザースクリプトを待っています…",
+        "description": "SEGA のページを開き、パネルの「{button}」を押してください。",
+        "gatewayButton": "SEGA のページを開く",
+        "signOut": "このブラウザで {net} からログアウトすると、このクッキーのセッションが終了し、再度送信するまでフェッチできなくなります。",
+        "waiting": "クッキーを待っています…",
         "installed": "このブラウザには {product} のユーザースクリプトがインストールされています。",
         "scriptcatPrompt": "スクリプトが初めてクッキーを読み取るとき、ScriptCat が許可を求めてきます。カウントダウンが終わる前に「Permanent」を選び、「Allow」をクリックしてください。"
       },
