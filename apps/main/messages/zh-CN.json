@@ -248,6 +248,14 @@
     "scrollHint": "滚动查看所有权限",
     "groupCount": "{count, plural, one {# permission} other {# permissions}}"
   },
+  "oauthAppCallback": {
+    "title": "Sign-in didn't reach the app",
+    "body": "Go back to the app and sign in again.",
+    "getApp": "Don't have the app yet?",
+    "appStore": "Download on the App Store",
+    "playStore": "Get it on Google Play",
+    "home": "Back to the website"
+  },
   "consent": {
     "description": "在创建账户前，请先阅读并同意我们的政策。",
     "tldr": {
@@ -601,6 +609,10 @@
           "name": "发起同步",
           "description": "使用已保存的令牌同步任一游戏的新数据，并新增一个快照"
         },
+        "fetch:token:write": {
+          "name": "保存游戏令牌",
+          "description": "用 SEGA 登录 Cookie 替换游戏已保存的令牌，这决定了同步哪个账号的成绩"
+        },
         "fetch:delete": {
           "name": "删除已保存的游戏令牌",
           "description": "在你重新登录该游戏之前无法同步"
@@ -620,6 +632,12 @@
       },
       "oauthApps": {
         "officialDescription": "同意页面会显示官方标识，取代第三方应用的提醒。仅管理员可设置。",
+        "nativeLabel": "Native app",
+        "nativeDescription": "A mobile app that holds no secret and signs in with PKCE alone. It is always official and can only return to the app link on an allowed host. Only admins can create one.",
+        "nativeBadge": "Native",
+        "browserLabel": "Browser script",
+        "browserDescription": "A userscript or other browser client that holds no secret and signs in with PKCE alone. It is always official and can only return to a page on an allowed host. Only admins can create one.",
+        "browserBadge": "Browser",
         "officialBadge": "官方",
         "errors": {
           "limitReached": "最多可创建 {max} 个 OAuth 应用。请先删除一个再创建新的。",
@@ -659,7 +677,8 @@
           "secretLabel": "客户端密钥",
           "copyAriaLabel": "复制值",
           "saveWarning": "请保存此密钥。关闭此对话框后将不会再次显示。",
-          "done": "完成"
+          "done": "完成",
+          "nativeCreatedNote": "This app has no client secret. It signs in with PKCE only."
         },
         "rotateDialog": {
           "title": "轮换客户端密钥？",
@@ -1090,9 +1109,10 @@
       },
       "send": {
         "title": "发送 Cookie",
-        "description": "打开 {net} 并登录。在 SEGA 登录页面上，用户脚本会将你的 Cookie 发送到 {product}，此对话框会自动关闭。",
-        "button": "打开 {net}",
-        "waiting": "正在等待用户脚本…",
+        "description": "打开 SEGA 页面，在面板中点击“{button}”。",
+        "gatewayButton": "打开 SEGA 页面",
+        "signOut": "在此浏览器中退出 {net} 会结束此 Cookie 所属的会话，在你重新发送之前无法同步。",
+        "waiting": "正在等待 Cookie…",
         "installed": "此浏览器已安装 {product} 用户脚本。",
         "scriptcatPrompt": "脚本首次读取你的 Cookie 时，ScriptCat 会请求权限。请在倒计时结束前选择“Permanent”，然后点击“Allow”。"
       },
