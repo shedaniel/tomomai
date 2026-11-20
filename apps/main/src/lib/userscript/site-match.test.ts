@@ -2,16 +2,22 @@ import { describe, expect, it } from "vitest";
 import { fillSiteMatches, siteMatchPatterns } from "./site-match";
 
 describe("siteMatchPatterns", () => {
-  it("covers the serving site and every game's site", () => {
-    expect(siteMatchPatterns("http://localhost:3001")).toEqual([
-      "http://localhost/*",
-      "https://tomomai.lol/*",
-      "https://chu.tomochu.lol/*",
+  it("covers the serving site and the peer sites", () => {
+    expect(siteMatchPatterns("https://main.example.test", ["https://chu.example.test:8443"])).toEqual([
+      "https://main.example.test/*",
+      "https://chu.example.test/*",
     ]);
   });
 
-  it("lists a game's site once when it serves the script", () => {
-    expect(siteMatchPatterns("https://chu.tomochu.lol")).toEqual(["https://chu.tomochu.lol/*", "https://tomomai.lol/*"]);
+  it("covers only the serving site without peers, on every port", () => {
+    expect(siteMatchPatterns("http://localhost:3001", [])).toEqual(["http://localhost/*"]);
+  });
+
+  it("lists the serving site once when it is also a peer", () => {
+    expect(siteMatchPatterns("https://chu.example.test", ["https://chu.example.test", "https://main.example.test"])).toEqual([
+      "https://chu.example.test/*",
+      "https://main.example.test/*",
+    ]);
   });
 });
 

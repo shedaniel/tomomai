@@ -38,16 +38,14 @@ describe("publicRedirectHosts", () => {
     expect(publicRedirectHosts("native", undefined, "not a url")).toEqual([]);
   });
 
-  it("adds every game's site for a browser client", () => {
-    expect(publicRedirectHosts("user-agent-based", undefined, "http://localhost:3000")).toEqual([
-      "localhost:3000",
+  it("adds the peer sites for a browser client only", () => {
+    const peers = ["https://chu.example.test", "https://tomomai.lol"];
+    expect(publicRedirectHosts("user-agent-based", undefined, "https://tomomai.lol", peers)).toEqual([
       "tomomai.lol",
-      "chu.tomochu.lol",
+      "chu.example.test",
     ]);
-    expect(publicRedirectHosts("user-agent-based", "tomomai.lol", "https://other.example")).toEqual([
-      "tomomai.lol",
-      "chu.tomochu.lol",
-    ]);
+    expect(publicRedirectHosts("user-agent-based", undefined, "http://localhost:3000", [])).toEqual(["localhost:3000"]);
+    expect(publicRedirectHosts("native", undefined, "https://tomomai.lol", peers)).toEqual(["tomomai.lol"]);
   });
 });
 

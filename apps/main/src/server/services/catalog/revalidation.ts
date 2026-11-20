@@ -7,6 +7,7 @@ import { catalogTags } from "@/lib/cache-tags";
 import { keyOf } from "@/lib/games/codes";
 import { getCurrentGame } from "@/lib/games/current";
 import type { CanonicalGameId } from "@/lib/games/ids";
+import { peerOrigins } from "@/lib/peer-origins";
 import { getSongSlugs } from "@/lib/song-slug";
 import { GAME_SERVER_MODULES } from "@/server/services/games/registry";
 import type { AffectedChart } from "./ingestion/persistence";
@@ -53,7 +54,7 @@ export async function revalidateCatalogLocal(
 }
 
 /**
- * Invalidates a game's catalog caches here and on every peer in CATALOG_PEER_ORIGINS. Pass `affected`
+ * Invalidates a game's catalog caches here and on every peer in PEER_ORIGINS. Pass `affected`
  * when only those charts changed. A failure is logged and never thrown, because the catalog is already
  * written and published when this runs.
  */
@@ -67,7 +68,7 @@ export async function revalidateCatalog(
   } catch (err) {
     log.error({ err }, "Catalog cache revalidation failed");
   }
-  const peers = catalogPeerOrigins();
+  const peers = peerOrigins();
   if (peers.length === 0) return;
   const token = process.env.ADMIN_UPDATE_TOKEN;
   if (!token) {
@@ -76,10 +77,6 @@ export async function revalidateCatalog(
   }
   const body = JSON.stringify({ affected });
   await Promise.all(peers.map(origin => revalidatePeer(origin, game, body, token, log)));
-}
-
-function catalogPeerOrigins(): string[] {
-  return (process.env.CATALOG_PEER_ORIGINS ?? "").split(",").map(origin => origin.trim()).filter(Boolean);
 }
 
 async function revalidatePeer(origin: string, game: CanonicalGameId, body: string, token: string, log: Logger): Promise<void> {

@@ -21,7 +21,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   vi.stubEnv("FRONTEND_GAME", "maimai");
   vi.stubEnv("ADMIN_UPDATE_TOKEN", "admin-secret");
-  vi.stubEnv("CATALOG_PEER_ORIGINS", "");
+  vi.stubEnv("PEER_ORIGINS", "");
   vi.stubGlobal("fetch", mocks.fetch);
   mocks.fetch.mockResolvedValue(new Response(null, { status: 200 }));
 });
@@ -57,7 +57,7 @@ describe("revalidateCatalogLocal", () => {
 
 describe("revalidateCatalog", () => {
   it("revalidates here, then posts the change to every peer with the admin token", async () => {
-    vi.stubEnv("CATALOG_PEER_ORIGINS", " https://chunithm.example.test , https://other.example.test/");
+    vi.stubEnv("PEER_ORIGINS", " https://chunithm.example.test , https://other.example.test/");
     await revalidateCatalog("maimai", { affected: [chart("Song")], log: log as never });
     expect(mocks.tag).toHaveBeenCalledWith(catalogTags("maimai").uniqueSongs, { expire: 0 });
     expect(mocks.fetch).toHaveBeenCalledTimes(2);
@@ -69,13 +69,13 @@ describe("revalidateCatalog", () => {
   });
 
   it("sends no chart list when the whole catalog changed", async () => {
-    vi.stubEnv("CATALOG_PEER_ORIGINS", "https://chunithm.example.test");
+    vi.stubEnv("PEER_ORIGINS", "https://chunithm.example.test");
     await revalidateCatalog("maimai", { log: log as never });
     expect(JSON.parse(mocks.fetch.mock.calls[0][1].body)).toEqual({});
   });
 
   it("never throws on a failed revalidation and still reaches every peer", async () => {
-    vi.stubEnv("CATALOG_PEER_ORIGINS", "https://down.example.test,https://refusing.example.test");
+    vi.stubEnv("PEER_ORIGINS", "https://down.example.test,https://refusing.example.test");
     const local = new Error("revalidate failed");
     mocks.tag.mockImplementationOnce(() => { throw local; });
     mocks.fetch.mockRejectedValueOnce(new Error("timeout")).mockResolvedValueOnce(new Response(null, { status: 403 }));
@@ -84,7 +84,7 @@ describe("revalidateCatalog", () => {
   });
 
   it("skips the peers without an admin token to send", async () => {
-    vi.stubEnv("CATALOG_PEER_ORIGINS", "https://chunithm.example.test");
+    vi.stubEnv("PEER_ORIGINS", "https://chunithm.example.test");
     vi.stubEnv("ADMIN_UPDATE_TOKEN", "");
     await revalidateCatalog("maimai", { log: log as never });
     expect(mocks.fetch).not.toHaveBeenCalled();

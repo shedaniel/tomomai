@@ -232,8 +232,8 @@ When enabled, the widget must have [pre-clearance enabled](https://developers.cl
 
 | Variable | Required | Description |
 |---|---|---|
-| `ADMIN_UPDATE_TOKEN` | Yes | Bearer token for admin API routes. Generate with `openssl rand -base64 32`. Every game's deployment needs the same value when `CATALOG_PEER_ORIGINS` is set |
-| `CATALOG_PEER_ORIGINS` | No | Comma-separated origins of the other games' deployments, such as `https://chunithm.example.com`. After a catalog write, this site asks each peer to drop its cached copy of that game's public API data. Leave it unset for a single deployment |
+| `ADMIN_UPDATE_TOKEN` | Yes | Bearer token for admin API routes. Generate with `openssl rand -base64 32`. Every game's deployment needs the same value when `PEER_ORIGINS` is set |
+| `PEER_ORIGINS` | No | Comma-separated origins of the other games' deployments that share this database, such as `https://chunithm.example.com`. After a catalog write, this site asks each peer to drop its cached copy of that game's public API data. Browser OAuth clients may also redirect to these sites, and the userscript also runs on them. Leave it unset for a single deployment |
 | `CRON_SECRET` | Yes | Vercel sends it as a bearer token on cron requests. Without it, `/api/cron/percentile-bands` rejects every request outside development. Generate with `openssl rand -hex 16` |
 
 #### Crypto / Tokens
@@ -288,7 +288,7 @@ that service.
 | `NEXT_PUBLIC_ENABLED_MAIMAI_REGIONS` | No | Comma-separated maimai regions (`intl,jp` by default). An empty value disables maimai player features, and its catalog stays readable. A value that names no maimai region is logged as an error and disables them too |
 | `NEXT_PUBLIC_ENABLED_CHUNITHM_REGIONS` | No | Comma-separated CHUNITHM regions (`intl,jp` by default). An empty value disables CHUNITHM player features, and its catalog stays readable. A value that names no CHUNITHM region is logged as an error and disables them too |
 | `NEXT_PUBLIC_ENABLED_REGIONS` | No | Legacy maimai fallback when `NEXT_PUBLIC_ENABLED_MAIMAI_REGIONS` is unset. An empty value counts as unset |
-| `PUBLIC_CLIENT_REDIRECT_HOSTS` | No | Comma-separated hosts a public OAuth client may redirect to. A native client redirects to `/oauth/app-callback` on them. Defaults to the deployment's own host. A browser client may also redirect to every game's site |
+| `PUBLIC_CLIENT_REDIRECT_HOSTS` | No | Comma-separated hosts a public OAuth client may redirect to. A native client redirects to `/oauth/app-callback` on them. Defaults to the deployment's own host. A browser client may also redirect to the sites in `PEER_ORIGINS` |
 | `APPLE_APP_IDS` | No | Comma-separated Apple app IDs (`<team id>.<bundle id>`) served in `/.well-known/apple-app-site-association`. The file answers 404 while this is unset |
 | `ANDROID_APP_PACKAGE` | No | Android package served in `/.well-known/assetlinks.json`, together with `ANDROID_APP_SHA256_FINGERPRINTS`. The file answers 404 while either is unset |
 | `ANDROID_APP_SHA256_FINGERPRINTS` | No | Comma-separated SHA-256 signing certificate fingerprints of the Android app, as colon-separated hex bytes |
@@ -395,7 +395,7 @@ curl "https://your-chunithm-domain.com/api/admin/update_all?game=chunithm" \
   -H "Authorization: Bearer $ADMIN_UPDATE_TOKEN"
 ```
 
-When both games are deployed, list each deployment's origin in the other's `CATALOG_PEER_ORIGINS` and give both the same `ADMIN_UPDATE_TOKEN`, so a catalog write on one also refreshes the other's cached API data. [docs/CHUNITHM_CATALOG.md](docs/CHUNITHM_CATALOG.md) describes the CHUNITHM source and its admin requests.
+When both games are deployed, list each deployment's origin in the other's `PEER_ORIGINS` and give both the same `ADMIN_UPDATE_TOKEN`, so a catalog write on one also refreshes the other's cached API data. [docs/CHUNITHM_CATALOG.md](docs/CHUNITHM_CATALOG.md) describes the CHUNITHM source and its admin requests.
 
 ### Preparing a New Game Version
 

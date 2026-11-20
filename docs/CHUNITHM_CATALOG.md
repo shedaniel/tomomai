@@ -27,7 +27,7 @@ Every admin request names its game and needs the `ADMIN_UPDATE_TOKEN` bearer tok
 
 - `GET /api/admin/update?game=chunithm&region=jp` collects a region and returns the charts without writing. It may run on any deployment.
 - `GET /api/admin/update_all?game=chunithm` collects, hosts covers, stores and publishes every enabled region (International, then JP), or every region while none is enabled. Add `region=jp` or `region=intl` for one region.
-- Writes (`update_all`, `upload`, `import`, `db` and `catalog/publish`) must run on the CHUNITHM deployment, whose `FRONTEND_GAME` is `chunithm`, because only it renders CHUNITHM's pages. Any other deployment answers 409. After a write, the CHUNITHM deployment asks every origin in `CATALOG_PEER_ORIGINS` to drop its cached copy of the CHUNITHM API, so each deployment lists the others there and all share one `ADMIN_UPDATE_TOKEN`.
+- Writes (`update_all`, `upload`, `import`, `db` and `catalog/publish`) must run on the CHUNITHM deployment, whose `FRONTEND_GAME` is `chunithm`, because only it renders CHUNITHM's pages. Any other deployment answers 409. After a write, the CHUNITHM deployment asks every origin in `PEER_ORIGINS` to drop its cached copy of the CHUNITHM API, so each deployment lists the others there and all share one `ADMIN_UPDATE_TOKEN`.
 
 A region's publication rebuilds all of CHUNITHM's catalog objects, so a JP update also republishes International. To replace covers in an existing catalog, run both regions, because International alone may leave covers of JP-preferred parents unchanged.
 

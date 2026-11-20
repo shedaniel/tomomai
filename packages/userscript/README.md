@@ -40,8 +40,8 @@ installed from either site works for both games:
   database and one set of accounts, so the other site's dialog sees the saved token as long as the
   player uses the same account there. The panel names that site for signing in, and the game's site
   for sending.
-- The copy runs on the pages of the site that served it and of every game's site, so both sites'
-  token dialogs see it installed and skip their setup steps.
+- The copy runs on the pages of the site that served it and of the sites in its `PEER_ORIGINS`, so
+  both sites' token dialogs see it installed and skip their setup steps.
 - The sign-in round trip covers both NET sites, `maimaidx-eng.com/maimai-mobile/*` and
   `chunithm-net-eng.com/mobile/*`.
 - `src/games.ts` copies each game's SEGA sites from the site's game definitions, and a test on the site
@@ -97,7 +97,8 @@ The route, the callback and the dialog's userscript option are all behind the `u
    **Save game tokens** (`fetch:token:write`). A development server may use
    `http://localhost:3000/userscript/callback`. Set the icon to `https://<site>/brand/maimai/icon.png`
    so the consent screen shows the tomomai mascot instead of a letter. No secret is issued. Each site
-   that serves the script needs its own redirect URI, on one app or on one app per site.
+   that serves the script needs its own redirect URI, on one app or on one app per site. One app can
+   hold every site's callback when each site lists the others in `PEER_ORIGINS`.
 2. Set `USERSCRIPT_CLIENT_ID` to its client ID and restart the server.
 3. Build the bundle:
 
