@@ -4,7 +4,9 @@ import { NextRequest } from "next/server";
 const { saveToken, userscriptFetch } = vi.hoisted(() => ({ saveToken: vi.fn(), userscriptFetch: vi.fn() }));
 
 vi.mock("@/server/services/games/tokens", () => ({ saveToken, deleteToken: vi.fn() }));
-vi.mock("@/lib/flags", () => ({ useUserscriptFetch: userscriptFetch }));
+vi.mock("@/lib/flags", () => ({
+  resolveFlagsForUser: async (userId: string) => ({ userscriptFetch: await userscriptFetch(userId) }),
+}));
 // Authentication and metering have their own tests, so the handler runs as an already verified key.
 vi.mock("@/lib/api/protect", async () => {
   const { bindGameRoute } = await import("@/lib/api/route");
@@ -54,10 +56,11 @@ describe("PUT /api/v1/games/{game}/fetch/token", () => {
     expect(saveToken).not.toHaveBeenCalled();
   });
 
-  it("answers 404 while the userscript flag is off", async () => {
+  it("answers 404 while the userscript flag is off for the key's user", async () => {
     userscriptFetch.mockResolvedValue(false);
     const res = await put("intl", { clal: CLAL });
     expect(res.status).toBe(404);
+    expect(userscriptFetch).toHaveBeenCalledWith("user-1");
     expect(saveToken).not.toHaveBeenCalled();
   });
 
