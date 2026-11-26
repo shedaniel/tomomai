@@ -139,7 +139,14 @@ export function ExperimentsDialog({ open, onOpenChange }: ExperimentsDialogProps
 
                         return (
                           <div key={flagKey} className="flex items-center justify-between">
-                            <Label className="text-sm font-medium cursor-pointer">{flagKey}</Label>
+                            <Label className="text-sm font-medium cursor-pointer">
+                              {flagKey}
+                              {!def.userSelectable && (
+                                <span className="rounded border px-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                                  Admin
+                                </span>
+                              )}
+                            </Label>
                             <div className="flex items-center gap-2">
                               {overridden && (
                                 <TooltipLabel label={t('common.resetToDefault')}>
