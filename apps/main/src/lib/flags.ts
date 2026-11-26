@@ -88,6 +88,15 @@ const identifyFlagContext = dedupe(async (): Promise<FlagContext> => {
   };
 });
 
+export function canOverrideFlag(userSelectable: boolean, role: string | null | undefined): boolean {
+  return userSelectable || role === "admin";
+}
+
+function readOverride(key: keyof Flags, userSelectable: boolean, ctx: FlagContext): boolean | null {
+  if (!canOverrideFlag(userSelectable, ctx.role)) return null;
+  return ctx.overrides[key] ?? null;
+}
+
 function defineFlag(key: keyof Flags, cfg: RawFlagConfig): DefinedFlag {
   return {
     config: { key, defaultValue: cfg.defaultValue, userSelectable: cfg.userSelectable, category: cfg.category },
@@ -95,17 +104,11 @@ function defineFlag(key: keyof Flags, cfg: RawFlagConfig): DefinedFlag {
     fn: flag<boolean, FlagContext>({
       key,
       defaultValue: cfg.defaultValue,
-      // Only userSelectable flags need to look up the user + DB overrides.
-      // Skipping identify for the rest avoids a needless session/DB hit per
-      // request (and avoids re-entry when called from inside the Better Auth
-      // middleware in @/lib/auth.ts).
-      ...(cfg.userSelectable ? { identify: identifyFlagContext } : {}),
+      identify: identifyFlagContext,
       decide: async ({ entities }) => {
         const ctx: FlagContext = entities ?? { userId: null, role: null, overrides: {} };
-        if (cfg.userSelectable && ctx.overrides[key] != null) {
-          return ctx.overrides[key]!;
-        }
-        return cfg.decide(ctx);
+        const override = readOverride(key, cfg.userSelectable, ctx);
+        return override ?? cfg.decide(ctx);
       },
     }),
   };
@@ -246,8 +249,9 @@ export async function resolveFlagsForUser(userId: string): Promise<Flags> {
     Object.entries(registry).map(async ([key, defined]) => {
       const flagKey = key as keyof Flags;
       let value: boolean;
-      if (defined.config.userSelectable && ctx.overrides[flagKey] != null) {
-        value = ctx.overrides[flagKey]!;
+      const override = readOverride(flagKey, defined.config.userSelectable, ctx);
+      if (override != null) {
+        value = override;
       } else {
         try {
           value = await defined.decide(ctx);
