@@ -1,0 +1,309 @@
+/* ── Celebration overlay ───────────────── */
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background: #0b1238b3;
+  animation: fadeIn 0.25s ease-out;
+}
+@keyframes fadeIn { from { opacity: 0; } }
+
+.piece {
+  position: absolute;
+  top: -8vh;
+  left: var(--x);
+  width: var(--w);
+  height: var(--h);
+  border-radius: var(--r);
+  background: var(--c);
+  animation: fall var(--d) linear var(--delay) forwards, sway calc(var(--d) / 3) ease-in-out var(--delay) infinite alternate;
+  pointer-events: none;
+}
+.star, .heart, .sparkle { height: var(--w); border-radius: 0; }
+.star { clip-path: polygon(50% 0, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%); }
+.heart { clip-path: polygon(50% 96%, 10% 58%, 1% 38%, 3% 18%, 15% 5%, 32% 3%, 50% 18%, 68% 3%, 85% 5%, 97% 18%, 99% 38%, 90% 58%); }
+.sparkle { clip-path: polygon(50% 0, 60% 40%, 100% 50%, 60% 60%, 50% 100%, 40% 60%, 0 50%, 40% 40%); }
+@keyframes fall {
+  to { top: 108vh; rotate: var(--spin); }
+}
+@keyframes sway {
+  from { translate: -18px 0; }
+  to { translate: 18px 0; }
+}
+
+.burst {
+  position: absolute;
+  left: var(--x);
+  top: var(--y);
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+.spark {
+  position: absolute;
+  width: 7px;
+  height: 7px;
+  margin: -3.5px;
+  border-radius: 50%;
+  background: var(--c);
+  box-shadow: 0 0 8px var(--c);
+  opacity: 0;
+  animation: spark 1.3s cubic-bezier(0.1, 0.7, 0.3, 1) var(--delay) 3;
+}
+@keyframes spark {
+  0% { opacity: 1; transform: rotate(var(--a)) translateX(0) scale(1.2); }
+  70% { opacity: 1; }
+  100% { opacity: 0; transform: rotate(var(--a)) translateX(var(--dist)) scale(0.4); }
+}
+
+.thanks {
+  position: relative;
+  z-index: 2;
+  width: min(360px, calc(100vw - 32px));
+  overflow: hidden;
+  padding-bottom: 18px;
+  border: 4px solid #fff;
+  border-radius: 4px;
+  background: #fff;
+  box-shadow: 0 0 0 3px #1d2b6b, 0 6px 0 3px #1d2b6b;
+  text-align: center;
+  animation: pop 0.55s cubic-bezier(0.2, 1.6, 0.4, 1);
+}
+@keyframes pop { from { scale: 0.3; rotate: -8deg; } }
+.thanksTop {
+  padding: 14px 10px 10px;
+  background: linear-gradient(90deg, #ff6f62, #ffb23a, #ffe23a, #9be03a, #3fbcff, #b56cf7);
+}
+.thanksTitle {
+  font: 700 34px/1 var(--net-font-pop), sans-serif;
+  color: #fff;
+  -webkit-text-stroke: 7px #1d2b6b;
+  paint-order: stroke;
+}
+.thanksKana {
+  margin-top: 4px;
+  font: 800 20px var(--net-font-jp), sans-serif;
+  color: #ff3f6c;
+  -webkit-text-stroke: 6px #fff;
+  paint-order: stroke;
+}
+.medal {
+  display: inline-grid;
+  place-items: center;
+  width: 86px;
+  height: 86px;
+  margin-top: 14px;
+  border: 4px solid #fff;
+  border-radius: 50%;
+  background: #ffd23a;
+  box-shadow: 0 0 0 3px #7a3b12, 0 4px 0 3px #7a3b12;
+  font: 700 13px var(--net-font-pop), sans-serif;
+  color: #fff;
+  -webkit-text-stroke: 3.5px #7a3b12;
+  paint-order: stroke;
+  animation: wobble 1.6s ease-in-out infinite;
+}
+@keyframes wobble {
+  0%, 100% { rotate: -10deg; scale: 1; }
+  50% { rotate: 10deg; scale: 1.08; }
+}
+.thanksBody {
+  padding: 12px 18px 0;
+  font-size: 13px;
+  line-height: 1.6;
+}
+.thanksBody strong { color: #e0457b; }
+.thanksFine {
+  padding: 8px 18px 12px;
+  font-size: 10px;
+  color: #888;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .piece, .spark { display: none; }
+  .thanks, .medal, .overlay { animation: none; }
+}
+
+/* ── Premium nudge dialog ──────────────── */
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 900;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: #0b1238aa;
+  animation: fadeIn 0.2s ease-out;
+}
+.nudge {
+  position: relative;
+  width: min(380px, 100%);
+  max-height: calc(100dvh - 32px);
+  overflow: auto;
+  border: 4px solid #fff;
+  border-radius: 4px;
+  background: #fff;
+  box-shadow: 0 0 0 3px #1d2b6b, 0 8px 0 3px #1d2b6b;
+  text-align: center;
+  animation: pop 0.45s cubic-bezier(0.2, 1.5, 0.4, 1);
+}
+/* Deliberately tiny and faint, the joke is how hard it is to find */
+.close {
+  position: absolute;
+  right: 6px;
+  top: 6px;
+  z-index: 1;
+  width: 10px;
+  height: 10px;
+  padding: 0;
+  border: 0;
+  background:
+    linear-gradient(45deg, transparent 43%, #ffffffaa 43% 57%, transparent 57%),
+    linear-gradient(-45deg, transparent 43%, #ffffffaa 43% 57%, transparent 57%);
+  cursor: pointer;
+}
+.nudgeHead {
+  padding: 16px 12px 12px;
+  background: #ff4fa8;
+  color: #fff;
+}
+.nudgeEyebrow {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 4px;
+  background: #ffec3d;
+  font: 700 11px var(--net-font-pop), sans-serif;
+  color: #b0204f;
+  animation: blink 0.9s steps(1) infinite;
+}
+@keyframes blink { 50% { background: #fff; } }
+.nudgeTitle {
+  margin-top: 8px;
+  font: 700 24px/1.1 var(--net-font-pop), sans-serif;
+  -webkit-text-stroke: 6px #4a1f80;
+  paint-order: stroke;
+}
+.price {
+  margin-top: 10px;
+  font: 700 30px/1 var(--net-font-pop), sans-serif;
+  color: #ffec3d;
+  -webkit-text-stroke: 6px #4a1f80;
+  paint-order: stroke;
+}
+.price s {
+  margin-right: 8px;
+  font-size: 15px;
+  color: #fff;
+  -webkit-text-stroke: 3px #4a1f80;
+}
+.price small { font-size: 13px; }
+.timer {
+  margin-top: 6px;
+  font-size: 12px;
+  font-weight: 700;
+}
+.timer b {
+  display: inline-block;
+  min-width: 46px;
+  margin-left: 4px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: #1d2b6b;
+  font-variant-numeric: tabular-nums;
+  color: #ffec3d;
+}
+.perks {
+  margin: 12px 18px 0;
+  list-style: none;
+  text-align: left;
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+.perks li {
+  position: relative;
+  padding: 4px 0 4px 24px;
+  border-bottom: 2px dotted #e3e3e3;
+}
+.perks li::before {
+  content: "";
+  position: absolute;
+  left: 2px;
+  top: 7px;
+  width: 15px;
+  height: 15px;
+  background: #ffb21f;
+  clip-path: polygon(50% 0, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+}
+.nudgeActions {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  padding: 16px 16px 14px;
+}
+.big {
+  font-size: 16px !important;
+  padding: 8px 26px !important;
+}
+.decline {
+  border: 0;
+  background: none;
+  cursor: pointer;
+  font-size: 9.5px;
+  color: #aaa;
+  text-decoration: underline;
+}
+.sad {
+  padding: 22px 16px 4px;
+}
+.sadFace { line-height: 0; }
+.sadFace svg { margin: 0 auto; }
+.sadTitle {
+  margin-top: 8px;
+  font: 700 20px var(--net-font-pop), sans-serif;
+  color: #fff;
+  -webkit-text-stroke: 5px #1d2b6b;
+  paint-order: stroke;
+}
+.sadBody {
+  margin-top: 6px;
+  font-size: 12.5px;
+  line-height: 1.6;
+}
+
+/* ── Header badge ──────────────────────── */
+.badge {
+  position: absolute;
+  left: 50%;
+  top: 92px;
+  z-index: 2;
+  translate: -50% 0;
+  padding: 2px 12px;
+  border: 2px solid #fff;
+  border-radius: 4px;
+  box-shadow: 0 2px 0 #1d2b6b;
+  font: 700 11px var(--net-font-pop), sans-serif;
+  letter-spacing: 1px;
+  color: #fff;
+  -webkit-text-stroke: 3px #7a3b12;
+  paint-order: stroke;
+  white-space: nowrap;
+}
+.badgeStandard { background: #5fe0be; -webkit-text-stroke-color: #1f7a63; }
+.badgePremium::before,
+.badgePremium::after {
+  content: "";
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  margin: 0 5px;
+  vertical-align: -1px;
+  background: #c2541a;
+  clip-path: polygon(50% 0, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+}
+.badgePremium { background: #ffd23a; }
+@media (prefers-reduced-motion: reduce) {
+  .nudgeEyebrow { animation: none; }
+}

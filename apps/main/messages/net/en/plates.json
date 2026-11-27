@@ -1,0 +1,59 @@
+{
+  "title": "Name Plate",
+  "setting": "SETTING NAMEPLATE",
+  "usingCurrently": "Using Currently",
+  "favorite": "FAVORITE : {count}/30",
+  "count": "NAMEPLATE COUNT : {count}",
+  "filter": {
+    "label": "Filter name plates",
+    "all": "ALL",
+    "earned": "OBTAINED",
+    "locked": "NOT YET"
+  },
+  "groups": {
+    "special": "SPECIAL",
+    "version": "{version}"
+  },
+  "tags": {
+    "version": "VERSION",
+    "login": "LOGIN",
+    "event": "EVENT",
+    "shop": "SHOP"
+  },
+  "types": {
+    "kiwami": "極",
+    "shou": "将",
+    "shin": "神",
+    "maimai": "舞舞"
+  },
+  "conditions": {
+    "kiwami": "FC or better on every BASIC to MASTER chart of {version}",
+    "shou": "SSS or better on every BASIC to MASTER chart of {version}",
+    "shin": "AP or better on every BASIC to MASTER chart of {version}",
+    "maimai": "FULL SYNC DX on every BASIC to MASTER chart of {version}"
+  },
+  "progress": "{done, number} / {total, number} charts",
+  "locked": "LOCKED",
+  "jokes": {
+    "login": {
+      "name": "再ログイン神",
+      "condition": "Logged in again 1,000 times. Probably more.",
+      "banner": "PLEASE LOG IN AGAIN"
+    },
+    "april": {
+      "name": "エイプリル皆勤賞",
+      "condition": "Opened tomomai NET on April 1st",
+      "banner": "APRIL 1st"
+    },
+    "course": {
+      "name": "Standard Course 会員",
+      "condition": "Requires the tomomai Standard Course (¥330/month)",
+      "banner": "STANDARD",
+      "cta": "See the Standard Course"
+    }
+  },
+  "hidden": "This player keeps their version plates in a drawer marked private.",
+  "noSnapshot": "No play data yet. The plates are still in the gacha machine.",
+  "empty": "No plates match this filter. Have you tried playing more?",
+  "note": "Version plates count every BASIC, ADVANCED, EXPERT and MASTER chart of a version in this region's current catalog. Favorites cannot be changed. There is only one."
+}

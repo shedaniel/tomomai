@@ -1,0 +1,181 @@
+.group {
+  margin: 22px 12px 0;
+  padding: 6px 12px;
+  border-radius: 4px;
+  background: #1d6fd6;
+  box-shadow: 0 3px 0 #1d2b6b;
+  text-align: center;
+  font: 700 14px var(--net-font-pop), sans-serif;
+  color: #fff;
+}
+.ended { background: #7a8a9a; box-shadow: 0 3px 0 #3b4652; }
+
+.entry {
+  padding: 14px 12px 16px;
+  border-bottom: 3px dotted #ffffffaa;
+}
+.entry:last-of-type { border-bottom: 0; }
+
+.head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.head > :last-child {
+  flex: 1;
+  min-width: 0;
+}
+.complete {
+  flex: none;
+  padding: 2px 10px;
+  border: 3px solid #fff;
+  border-radius: 4px;
+  background: #ffc03a;
+  box-shadow: 0 0 0 2px #8a4300;
+  rotate: -6deg;
+  font: 700 13px var(--net-font-pop), sans-serif;
+  color: #fff;
+  -webkit-text-stroke: 3px #e0457b;
+  paint-order: stroke;
+}
+.period {
+  margin-top: 6px;
+  text-align: right;
+  font-size: 11px;
+  color: #fff;
+  text-shadow: 0 1px 0 #1d6fd6;
+  overflow-wrap: anywhere;
+}
+
+.row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-top: 8px;
+}
+.banner {
+  flex: none;
+  width: 44%;
+  max-width: 180px;
+  overflow: hidden;
+  border: 2px solid #111;
+  border-radius: 4px;
+  background: #fff;
+}
+.banner img {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 5 / 2;
+  object-fit: contain;
+}
+.endedArt { filter: grayscale(0.7); }
+
+.body {
+  flex: 1;
+  min-width: 0;
+}
+
+/* ── Season ─────────────────────────────── */
+.seasonName {
+  font: 700 18px var(--net-font-pop), sans-serif;
+  text-align: center;
+  color: #1d6fd6;
+  overflow-wrap: anywhere;
+}
+.passLevel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 10px;
+}
+.passLevel em {
+  font: 800 11px var(--net-font-jp), sans-serif;
+  font-style: normal;
+  color: #ff4f6f;
+}
+.passLevel b {
+  font: 700 30px/1 var(--net-font-pop), sans-serif;
+  color: #ffd23a;
+  -webkit-text-stroke: 5px #c2541a;
+  paint-order: stroke;
+}
+.bar {
+  height: 16px;
+  margin-top: 10px;
+  overflow: hidden;
+  border: 2px solid #111;
+  border-radius: 4px;
+  background: #e8f4fd;
+}
+.bar > div {
+  height: 100%;
+  border-radius: 4px;
+  background: #6ccd3c;
+}
+.xp {
+  margin-top: 6px;
+  text-align: center;
+  font-size: 12px;
+}
+
+.track { padding: 0; overflow: hidden; }
+.trackHead {
+  margin: 0;
+  padding: 8px;
+  background: #78ccf7;
+  text-align: center;
+  font: 700 15px var(--net-font-pop), sans-serif;
+  color: #fff;
+  -webkit-text-stroke: 4px #1d6fb0;
+  paint-order: stroke;
+}
+.premiumHead {
+  background: #ffc24d;
+  -webkit-text-stroke-color: #8a4300;
+}
+.tiers {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.tier {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-top: 2px dotted #cfe3f2;
+  font-size: 12.5px;
+}
+.tier:first-child { border-top: 0; }
+.tierNumber {
+  flex: none;
+  width: 52px;
+  font: 700 11px var(--net-font-pop), sans-serif;
+  color: #2b6f99;
+}
+.tierReward {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.tierState {
+  flex: none;
+  padding: 1px 8px;
+  border-radius: 4px;
+  background: #d6dbe2;
+  font: 700 9.5px var(--net-font-pop), sans-serif;
+  color: #555;
+}
+.tierClaimed {
+  background: #3dbb3d;
+  color: #fff;
+}
+.tierDim { opacity: 0.6; }
+
+@media (max-width: 440px) {
+  .tierNumber { width: 44px; }
+  .tier { font-size: 11.5px; }
+  .passLevel b { font-size: 26px; }
+}

@@ -3,7 +3,7 @@ import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { user } from "@/lib/db/schema-pg";
 import { getServerSession } from "@/lib/auth-server";
-import { isAprilFools2026JST } from "@/lib/april-fools";
+import { isAprilFools2026JST, isAprilFools2027JST } from "@/lib/april-fools";
 
 export interface Flags {
   // dashboard
@@ -18,6 +18,7 @@ export interface Flags {
   settingsDeveloper: boolean;
   // theming
   aprilFools2026: boolean;
+  aprilFools2027: boolean;
   customThemes: boolean;
   // auth
   passkey: boolean;
@@ -170,6 +171,12 @@ const registry = {
     category: "theming",
     decide: () => isAprilFools2026JST(),
   }),
+  aprilFools2027: defineFlag("aprilFools2027", {
+    defaultValue: false,
+    userSelectable: false,
+    category: "theming",
+    decide: () => isAprilFools2027JST(),
+  }),
   customThemes: defineFlag("customThemes", {
     defaultValue: false,
     userSelectable: true,
@@ -278,6 +285,7 @@ export const useSettingsApplications = registry.settingsApplications.fn;
 export const useSettingsDeveloper = registry.settingsDeveloper.fn;
 // theming
 export const useAprilFools2026 = registry.aprilFools2026.fn;
+export const useAprilFools2027 = registry.aprilFools2027.fn;
 export const useCustomThemes = registry.customThemes.fn;
 // auth
 export const usePasskey = registry.passkey.fn;

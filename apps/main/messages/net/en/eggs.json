@@ -1,0 +1,256 @@
+{
+  "toast": {
+    "title": "SECRET FOUND!",
+    "count": "{found} / {total} secrets",
+    "seeAll": "SEE ALL",
+    "offList": "This one was not on the list."
+  },
+  "list": {
+    "welcome": {
+      "name": "Welcome",
+      "hint": "Open the SECRETS list. Done. That is how every chart starts."
+    },
+    "topAtTop": {
+      "name": "Nowhere To Go",
+      "hint": "Press the Top button when you're already at the top. Or Bottom at the bottom."
+    },
+    "copyright": {
+      "name": "Fine Print",
+      "hint": "Open the long copyright list in the footer and scroll all the way to the end."
+    },
+    "typeLogin": {
+      "name": "Login Loop",
+      "hint": "Click the \"Please log in again.\" text on HOME, or type login on your keyboard. Then keep logging in until it sticks."
+    },
+    "friendNobody": {
+      "name": "Nobody",
+      "hint": "On SEARCH FRIENDS, search for the code 0000000000000."
+    },
+    "serialTomomai": {
+      "name": "Self-Promotion",
+      "hint": "On SERIAL CODE, enter TOMOMAI."
+    },
+    "invertedDark": {
+      "name": "Blindfold Mode",
+      "hint": "Buy the fake Premium Course in SHOP and switch on its one real perk, dark mode."
+    },
+    "aprilFoolsBypass": {
+      "name": "Free Rider",
+      "hint": "Ignore the orange Subscribe button on any blurred paywall and tap the tiny line underneath it."
+    },
+    "grandTour": {
+      "name": "Arcade Sightseeing",
+      "hint": "Visit all eight colorful menu tiles across the top at least once."
+    },
+    "logo": {
+      "name": "Loose Logo",
+      "hint": "The big logo at the top is not glued on well. Tap it like a stream of TAP notes."
+    },
+    "gear": {
+      "name": "TOUCH HOLD",
+      "hint": "Don't tap the gear button. Hold it. Like a touch hold."
+    },
+    "slide": {
+      "name": "SLIDE!",
+      "hint": "Every maimai player knows this move. Draw a big circle on the page with your mouse or finger."
+    },
+    "ferris": {
+      "name": "Ride Operator",
+      "hint": "The Ferris wheel in the footer town still works. Click it a few times."
+    },
+    "phpWarning": {
+      "name": "Bug Fixer",
+      "hint": "That warning on HOME looks fixable. Click it until it is."
+    },
+    "aiPoke": {
+      "name": "Poke",
+      "hint": "tomomai AI on your friend list hates being poked. Poke it anyway."
+    },
+    "typeAime": {
+      "name": "Touch Your Card",
+      "hint": "tomomai AI says touch it harder. Press the Aime note on FRIENDS, or type aime, then slam the reader."
+    },
+    "optionsMute": {
+      "name": "Silent Play",
+      "hint": "In Options, turn every sound off and save."
+    },
+    "favoritesSpam": {
+      "name": "Superfan",
+      "hint": "Favorites are Premium. Ask on a song page anyway. Keep asking."
+    },
+    "friendSelf": {
+      "name": "Narcissist",
+      "hint": "Your own FRIEND CODE is on SEARCH FRIENDS. Search for it, then add whoever turns up."
+    },
+    "notFound": {
+      "name": "Lost",
+      "hint": "Follow the unavailable OLDER RECORDS link on HOME, or visit a NET address that does not exist."
+    },
+    "circleEscape": {
+      "name": "Button 3 Pact",
+      "hint": "Try to walk out on your Circle. Keep pressing the leave button until they lock the door."
+    },
+    "logoutSpam": {
+      "name": "Hotel California",
+      "hint": "Press LOG OUT in OPTIONS five times until the site admits you cannot leave."
+    },
+    "teapot": {
+      "name": "Short and Stout",
+      "hint": "Read the 404 page closely for where tomomai AI looked. Then feed the machine you find a few coins."
+    },
+    "stickyButton3": {
+      "name": "Button 3 Strikes Again",
+      "hint": "Look closely at the eight cabinet buttons on the teapot. One is the wrong color for a reason."
+    },
+    "friendError": {
+      "name": "Familiar Face",
+      "hint": "Search for the six-digit error code that haunts the footer, the login loop and your Circle."
+    },
+    "shopCancelFree": {
+      "name": "Cancel Nothing",
+      "hint": "Try to cancel the course that costs nothing."
+    },
+    "nudgeDecline": {
+      "name": "Hard to Get",
+      "hint": "Say no to Premium. Then again. Then once more, another day."
+    },
+    "danRetry": {
+      "name": "One More Try",
+      "hint": "Keep feeding credits into the impossible banquet course on DAN. Survive it and it hands you a word."
+    },
+    "konami": {
+      "name": "Wrong Company",
+      "hint": "A famous cheat code from another arcade publisher still works here. It also shouts a word at you."
+    },
+    "console": {
+      "name": "Job Applicant",
+      "hint": "Developers have a secret panel in the browser. On a phone, someone in the footer is hiring."
+    },
+    "tabAway": {
+      "name": "Come Back",
+      "hint": "Leave for a bit. The cabinet will notice."
+    },
+    "idle": {
+      "name": "Attract Mode",
+      "hint": "Hands off the controls for a full minute. Bored cabinets love showing off to an empty arcade."
+    },
+    "optionsMaxed": {
+      "name": "Speed Demon",
+      "hint": "Turn every option all the way up and save."
+    },
+    "optionsSpin": {
+      "name": "Spin Cycle",
+      "hint": "Turn the cabinet into a front-load washing machine in OPTIONS, with the goofiest hit sound."
+    },
+    "titlePersistent": {
+      "name": "Persistent",
+      "hint": "Try very hard to set a title you don't own."
+    },
+    "friendMirror": {
+      "name": "Mirror Mode",
+      "hint": "You, flipped end to end like a mirrored chart. Your FRIEND CODE is on SEARCH FRIENDS."
+    },
+    "serialUtage": {
+      "name": "Banquet Ticket",
+      "hint": "Survive the banquet or break the publisher's rules, then bring the word they shout to SERIAL CODE."
+    },
+    "admin": {
+      "name": "Staff Only",
+      "hint": "Every arcade has a door for staff. Button 3 knows where it is, and the password is easy."
+    },
+    "credits": {
+      "name": "Roll Credits",
+      "hint": "Fight the unkillable error behind the staff door until the closing roll starts, then stay past the last line."
+    },
+    "doubleSlide": {
+      "name": "EX Spin Slide",
+      "hint": "One circle is ADVANCED. Keep spinning without lifting your hand until the cabinet gets dizzy."
+    },
+    "buttonSpin": {
+      "name": "Full Ring",
+      "hint": "Hit all eight cabinet buttons in one clean clockwise sweep."
+    },
+    "printReceipt": {
+      "name": "Paper Trail",
+      "hint": "Ask your browser for a paper copy of your credit."
+    },
+    "fakeUrgency": {
+      "name": "Limited Time Only",
+      "hint": "Call the Premium popup's bluff and watch its urgent countdown run all the way out."
+    },
+    "everyTab": {
+      "name": "Full Sightread",
+      "hint": "Sightread every regular page on the whole site without missing a single sub-tab."
+    },
+    "maintenance": {
+      "name": "Night Owl",
+      "hint": "DX NET sleeps. We don't. Visit while it's asleep."
+    },
+    "aprilFools": {
+      "name": "Right On Time",
+      "hint": "Visit on the one day this site makes sense."
+    }
+  },
+  "page": {
+    "title": "Secrets",
+    "intro": "tomomai NET hides {total} secrets. Some are easy. Some are MASTER. Found ones are saved in this browser only.",
+    "introAccent": "No guessing required. Every secret has a hint below.",
+    "progress": "SECRET HUNT",
+    "complete": "ALL PERFECT+. Every secret, found. Please log in again to celebrate.",
+    "levels": {
+      "basic": "BASIC",
+      "advanced": "ADVANCED",
+      "expert": "EXPERT",
+      "master": "MASTER"
+    },
+    "levelNotes": {
+      "basic": "Hints spell it out.",
+      "advanced": "Hints point the way.",
+      "expert": "Hints are vague.",
+      "master": "Hints are barely hints."
+    },
+    "found": "FOUND",
+    "notFound": "NOT YET",
+    "levelCount": "{found} / {total}",
+    "reset": "Forget my secrets",
+    "resetConfirm": "Really forget all {count, plural, one {# secret} other {# secrets}}?",
+    "resetYes": "FORGET",
+    "resetNo": "KEEP",
+    "note": "Secrets live in this browser. A new browser means a fresh hunt, like a new Aime card.",
+    "achievement": "ACHIEVEMENT",
+    "level": "LEVEL",
+    "verdicts": {
+      "D": "D. Even the stranger behind you has found more.",
+      "C": "C. Halfway. maimai would call that a fail.",
+      "B": "B. You are poking around. tomomai AI is watching.",
+      "BB": "BB. The cabinet has started to notice you.",
+      "BBB": "BBB. Your Aime card is sweating.",
+      "A": "A. Getting warm. Do not get cocky.",
+      "AA": "AA. You are clearly avoiding playing real maimai.",
+      "AAA": "AAA. Your friends are worried about you.",
+      "S": "S. One more credit. Then one more secret.",
+      "S+": "S+. Button 3 respects you now.",
+      "SS": "SS. SEGA has been notified. They do not care.",
+      "SS+": "SS+. Only MASTER left, probably.",
+      "SSS": "SSS. So close you can taste the 101%.",
+      "SSS+": "SSS+. tomomai AI is impressed. Do not tell it we said that."
+    },
+    "offChart": "OFF THE CHART",
+    "offChartNote": "Secrets that were never on the list. You found these on your own."
+  },
+  "dialog": {
+    "open": "SECRETS",
+    "close": "CLOSE",
+    "label": "Secret hunt"
+  },
+  "hidden": {
+    "hasunosora": {
+      "name": "Lotus Sky",
+      "hint": "Watered the lotus in the corner of the footer, and the whole pond answered."
+    },
+    "gakumas": {
+      "name": "Hatsuboshi Producer",
+      "hint": "Kept poking a first star until a first-year idol turned up. Then you scouted her."
+    }
+  }
+}

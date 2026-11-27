@@ -1,0 +1,275 @@
+/* Pill title bar: "Game Record", "Song Scores" */
+.title {
+  position: relative;
+  height: 42px;
+  margin: 26px 34px 0;
+}
+/* One rounded bar skewered through the pill reads as both tails */
+.title::before {
+  content: "";
+  position: absolute;
+  left: -26px;
+  right: -26px;
+  top: 50%;
+  height: 14px;
+  translate: 0 -50%;
+  border: 2px solid #1d2b6b;
+  border-radius: 4px;
+  background: #fff;
+}
+.title > div {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  border: 4px solid #fff;
+  border-radius: 4px;
+  background: radial-gradient(#ffffff2e 2px, transparent 3px) 0 0 / 9px 9px, #2b6fe8;
+  box-shadow: 0 0 0 2px #1d2b6b;
+  font: 400 16px var(--net-font-pop), sans-serif;
+  color: #fff;
+}
+
+/* Blue-outlined explanation box */
+.info {
+  margin: 16px 12px 0;
+  padding: 12px 14px;
+  border: 3px solid #2b8fe6;
+  border-radius: 4px;
+  background: #fff;
+  font-size: 12.5px;
+  line-height: 1.55;
+}
+.accent { color: #e0457b; }
+
+/* White heading bar with a Phillips screw in each top corner */
+.section {
+  position: relative;
+  margin: 14px 12px 0;
+  padding: 10px 22px;
+  background: #fff;
+  box-shadow: 0 3px 0 #0002;
+  text-align: center;
+  font-size: 14px;
+}
+.section::before,
+.section::after {
+  content: "";
+  position: absolute;
+  top: 5px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background:
+    linear-gradient(#7d848e, #7d848e) center / 6px 1.6px no-repeat,
+    linear-gradient(#7d848e, #7d848e) center / 1.6px 6px no-repeat,
+    #d3d7dd;
+  box-shadow: inset 0 0 0 1px #9aa1aa;
+}
+.section::before { left: 5px; rotate: 15deg; }
+.section::after { right: 5px; rotate: -30deg; }
+
+/* Plain white card */
+.panel {
+  margin: 14px 12px 0;
+  padding: 12px;
+  border-radius: 4px;
+  background: #fff;
+  box-shadow: 0 3px 0 #0002;
+}
+.panelHeading {
+  margin-bottom: 8px;
+  text-align: center;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+/* Caption under lists */
+.note {
+  position: relative;
+  margin: 22px 16px 0;
+  padding: 10px 12px;
+  border-radius: 4px;
+  background: #ffffffe6;
+  text-align: center;
+  font-size: 11.5px;
+  line-height: 1.55;
+  color: #2b6f99;
+}
+
+/* DETAILS-style blue capsule button */
+.button {
+  display: inline-block;
+  padding: 4px 16px;
+  border: 3px solid #fff;
+  border-radius: 4px;
+  background: #3db0ff;
+  box-shadow: 0 0 0 2px #1d2b6b, 0 4px 0 2px #1d2b6b;
+  cursor: pointer;
+  font: 700 13px var(--net-font-pop), sans-serif;
+  color: #fff;
+  -webkit-text-stroke: 3px #1d6fd6;
+  paint-order: stroke;
+  text-decoration: none;
+}
+.buttonOrange {
+  background: #ff9a1f;
+  box-shadow: 0 0 0 2px #8a4300, 0 4px 0 2px #8a4300;
+  -webkit-text-stroke-color: #b35a00;
+}
+
+/* Black-outlined dropdown */
+.select {
+  position: relative;
+  display: block;
+  width: min(300px, calc(100% - 24px));
+  margin: 12px auto 0;
+}
+.select select {
+  width: 100%;
+  appearance: none;
+  padding: 5px 34px 5px 10px;
+  border: 2px solid #111;
+  border-radius: 4px;
+  background: #fff;
+  font: inherit;
+  font-size: 13px;
+  color: #222;
+}
+.select::after {
+  content: "";
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  translate: 0 -50%;
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border: 1.5px solid #111;
+  border-radius: 50%;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10'%3E%3Cpath d='M2 3.2h6L5 7.4z' fill='none' stroke='%23111' stroke-width='1.2' stroke-linejoin='round'/%3E%3C/svg%3E") center / 10px no-repeat;
+  pointer-events: none;
+}
+
+/* Difficulty pill row */
+.pills {
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+  margin: 12px 0 4px;
+}
+.pill {
+  position: relative;
+  flex: 1;
+  display: grid;
+  place-items: center;
+  height: 26px;
+  padding: 0 1px; white-space: nowrap;
+  border: 2px solid #111;
+  border-radius: 4px;
+  box-shadow: 0 2px 0 #111;
+  cursor: pointer;
+  font: 700 8px var(--net-font-pop), sans-serif;
+  color: #fff;
+  -webkit-text-stroke: 3px #0005;
+  paint-order: stroke;
+}
+.pillActive {
+  background: #fff !important;
+  color: #2b8fe6;
+  -webkit-text-stroke: 0;
+  text-decoration: underline;
+}
+.pillActive::before {
+  content: "";
+  position: absolute;
+  top: -14px;
+  left: 50%;
+  margin-left: -8px;
+  border: 8px solid transparent;
+  border-top: 10px solid #ffd21f;
+}
+
+/* LEVEL box */
+.level {
+  flex: none;
+  width: 44px;
+  overflow: hidden;
+  padding-bottom: 2px;
+  border: 2px solid #333;
+  border-radius: 4px;
+  background: #fff;
+  text-align: center;
+  font-size: 15px;
+}
+.level span {
+  display: block;
+  margin-bottom: 2px;
+  padding: 1px 0;
+  background: #444;
+  color: #fff;
+  font: 700 8px var(--net-font-pop), sans-serif;
+}
+
+/* Outlined difficulty word: "Re:MASTER" */
+.diffLabel {
+  font: 700 13px var(--net-font-pop), sans-serif;
+  color: #fff;
+  -webkit-text-stroke: 4px var(--net-diff-ink);
+  paint-order: stroke;
+}
+
+/* Rank glyphs: SSS+ */
+.rank {
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+  gap: 0.02em;
+  font: 700 17px/1 var(--net-font-pop), sans-serif;
+}
+.rankLetter {
+  -webkit-text-stroke: 0.17em #7a3b12;
+  paint-order: stroke;
+  filter: drop-shadow(0 0.07em 0 #7a3b12);
+}
+.rankPlus {
+  display: grid;
+  place-items: center;
+  width: 0.62em;
+  height: 0.62em;
+  margin: -0.5em 0 0 0.04em;
+  border: 0.07em solid #7a3b12;
+  border-radius: 50%;
+  background: #ff8a1a;
+  font-size: 0.9em;
+  line-height: 0;
+  letter-spacing: 0;
+  color: #fff;
+}
+
+/* FC / FS medal slots */
+.status {
+  display: inline-grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  background: #d5d5d5;
+  font: 700 6px var(--net-font-pop), sans-serif;
+  color: #fff;
+  -webkit-text-stroke: 2px #0006;
+  paint-order: stroke;
+}
+
+.empty {
+  margin: 24px 16px 0;
+  padding: 24px 16px;
+  border: 3px dashed #ffffffaa;
+  border-radius: 4px;
+  text-align: center;
+  font: 700 14px var(--net-font-pop), sans-serif;
+  color: #fff;
+}

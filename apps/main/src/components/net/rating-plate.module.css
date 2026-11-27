@@ -1,0 +1,58 @@
+.plate {
+  --plate: #e8e8e8;
+  --plate-ink: #777;
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 3px;
+  border-radius: 4px;
+  background: var(--plate);
+  box-shadow: inset 0 0 0 1.5px #0002;
+  font: 700 15px/1 var(--net-font-pop), sans-serif;
+}
+.plate em {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 36px;
+  font-size: 6px;
+  font-style: normal;
+  line-height: 1.1;
+  text-align: center;
+  white-space: nowrap;
+  color: #fff;
+  -webkit-text-stroke: 2px var(--plate-ink);
+  paint-order: stroke;
+}
+.plate b {
+  padding: 3px 6px;
+  border-radius: 4px;
+  background: #4a4a4a;
+  letter-spacing: 1px;
+  color: #fff;
+}
+.plate[data-tier="blue"] { --plate: #6ec3ff; --plate-ink: #1d6fd6; }
+.plate[data-tier="green"] { --plate: #7fdc6a; --plate-ink: #2a8a2a; }
+.plate[data-tier="yellow"] { --plate: #ffe066; --plate-ink: #b07a00; }
+.plate[data-tier="red"] { --plate: #ff7a7a; --plate-ink: #b8323f; }
+.plate[data-tier="purple"] { --plate: #c58af2; --plate-ink: #7a3bb8; }
+.plate[data-tier="bronze"] { --plate: #c5824f; --plate-ink: #6e3a12; }
+.plate[data-tier="silver"] { --plate: #d4d9e0; --plate-ink: #59606c; }
+.plate[data-tier="gold"] { --plate: #f8d45c; --plate-ink: #8a5f00; }
+.plate[data-tier="platinum"] { --plate: #ece2b4; --plate-ink: #8a7a30; }
+.plate[data-tier="rainbow"] {
+  --plate: linear-gradient(110deg, #ff6f62, #ffb23a, #ffe23a, #7fdc6a, #3fbcff, #b56cf7);
+  --plate-ink: #4a2f80;
+}
+.plate[data-tier="rainbow"] b,
+.plate[data-tier="platinum"] b,
+.plate[data-tier="gold"] b { background: #3d3d3d; color: #fff6c8; }
+
+/* Premium paints the number itself in the rainbow, whatever the band. */
+.premium b {
+  background: linear-gradient(90deg, #ff6f62, #ffb23a, #ffe23a, #9be03a, #3fbcff, #b56cf7);
+  color: #fff;
+  -webkit-text-stroke: 3px #1d2b6b;
+  paint-order: stroke;
+}

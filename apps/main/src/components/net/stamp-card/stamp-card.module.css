@@ -1,0 +1,174 @@
+.summary {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px;
+  margin: 12px 12px 0;
+}
+.summary span {
+  padding: 4px 10px;
+  border: 2px solid #111;
+  border-radius: 4px;
+  background: #cdeeff;
+  box-shadow: 0 3px 0 #111;
+  font-size: 12px;
+}
+
+.entry { margin: 16px 12px 0; }
+.label {
+  display: inline-block;
+  max-width: 100%;
+  padding: 1px 16px;
+  overflow: hidden;
+  border: 2px solid #fff;
+  border-radius: 4px;
+  background: #2b9de8;
+  box-shadow: 0 0 0 2px #2b9de8;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font: 700 13px var(--net-font-pop), sans-serif;
+  color: #fff;
+}
+
+.card {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto 64px;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+  padding: 20px 10px;
+  overflow: hidden;
+  border: 3px solid #111;
+  border-radius: 4px;
+  background:
+    radial-gradient(circle, #fff 0 7px, transparent 7.5px) 0 7px / 18px 14px repeat-x,
+    radial-gradient(circle, #fff 0 7px, transparent 7.5px) 0 calc(100% - 7px) / 18px 14px repeat-x,
+    linear-gradient(var(--stamp-band), var(--stamp-band)) 0 14px / 100% calc(100% - 28px) no-repeat,
+    #fff;
+}
+.stamps {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.stamp {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 1;
+  max-width: 52px;
+  width: 100%;
+  margin: 0 auto;
+  border: 2px dashed color-mix(in srgb, var(--stamp-ink) 45%, transparent);
+  border-radius: 50%;
+  background: #ffffffb0;
+  color: var(--stamp-ink);
+}
+.stamp svg {
+  width: 70%;
+  height: 70%;
+  opacity: 0.3;
+}
+.stampFilled {
+  border: 3px double var(--stamp-ink);
+  background: #fff;
+  rotate: -10deg;
+  box-shadow: 0 2px 0 #0002;
+}
+.stampFilled svg { opacity: 1; }
+.stampFilled:nth-child(even) { rotate: 8deg; }
+
+.arrow { width: 12px; height: 16px; }
+.reward {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 4px;
+  border: 3px solid #ffd21f;
+  border-radius: 4px;
+  background: #fff;
+  text-align: center;
+  font: 700 9px/1.1 var(--net-font-pop), sans-serif;
+  color: #555;
+}
+.reward .stamp { max-width: 40px; }
+
+.complete {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  rotate: -8deg;
+  pointer-events: none;
+  font: 900 clamp(30px, 11vw, 54px)/1 var(--net-font-pop), sans-serif;
+  letter-spacing: 1px;
+  color: #ffe14a;
+  -webkit-text-stroke: 8px #ff5a1a;
+  paint-order: stroke;
+  text-shadow: 0 4px 0 #b33a00;
+}
+
+.source {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 2px 10px;
+  margin-top: 4px;
+  font-size: 11.5px;
+  color: #555;
+}
+.source b { color: #2b6fe8; }
+
+.secretLabel {
+  background: #7a4fd8;
+  box-shadow: 0 0 0 2px #7a4fd8;
+}
+.secretCard {
+  position: relative;
+  margin-top: 6px;
+  padding: 12px 10px;
+  overflow: hidden;
+  border: 3px solid #111;
+  border-radius: 4px;
+  background: var(--stamp-band);
+  box-shadow: 0 4px 0 #111;
+}
+.secretStamps {
+  display: grid;
+  grid-template-columns: repeat(10, minmax(0, 1fr));
+  gap: 4px;
+}
+.secretStamps .stamp { max-width: 34px; border-width: 1.5px; }
+.secretStamps .stampFilled { border-width: 3px; }
+.secretSealed {
+  display: grid;
+  place-items: center;
+  gap: 4px;
+  padding: 22px 10px;
+  background: #3a2a5c;
+}
+.secretSeal {
+  font: 900 44px/1 var(--net-font-pop), sans-serif;
+  letter-spacing: 4px;
+  color: #d8c4ff;
+  -webkit-text-stroke: 6px #111;
+  paint-order: stroke;
+}
+.secretHint {
+  font-size: 12px;
+  color: #fff;
+}
+.secretActions {
+  margin-top: 10px;
+  text-align: center;
+}
+
+@media (max-width: 440px) {
+  .card { grid-template-columns: minmax(0, 1fr) 52px; padding: 20px 6px; }
+  .arrow { display: none; }
+  .stamps { gap: 3px; }
+  .stamp { border-width: 1.5px; }
+  .stampFilled { border-width: 3px; }
+}

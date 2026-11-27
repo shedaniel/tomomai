@@ -1,0 +1,17 @@
+{
+  "title": "Area",
+  "distance": "累計距離",
+  "km": "{distance, number} Km",
+  "nextReward": "NEXT REWARD",
+  "complete": "ALL REWARDS COLLECTED",
+  "notStarted": "Not started yet. The bus is still at the depot.",
+  "hidden": "This player folded their map into a pocket. Ask them nicely.",
+  "noSnapshot": "No play data yet. Nobody has walked anywhere.",
+  "empty": "No areas yet. Play a credit and the map unfolds itself.",
+  "locked": {
+    "name": "Standard Courseちほー",
+    "distance": "??? Km",
+    "note": "Subscribe to walk here"
+  },
+  "note": "EVENT AREA lives behind its own tab. It is a Standard Course feature, apparently."
+}

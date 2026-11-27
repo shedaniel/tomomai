@@ -1,0 +1,24 @@
+.receipt { display: none; }
+
+@media print {
+  :global(body) > :not(:has(.receipt)) { display: none !important; }
+  :global([data-net-stage]) > :not(.receipt) { display: none !important; }
+  :global(html), :global(body), :global([data-net-stage]) { background: #fff !important; }
+  .receipt {
+    display: block;
+    width: 72mm;
+    margin: 0 auto;
+    padding: 6mm 0;
+    color: #000;
+    font: 12px/1.5 "Courier New", monospace;
+    break-inside: avoid;
+  }
+  .title { text-align: center; font-size: 20px; font-weight: 700; }
+  .sub { text-align: center; font-size: 10px; letter-spacing: 0.1em; }
+  .rule { margin: 8px 0; border-top: 2px dashed #000; }
+  .row { display: flex; justify-content: space-between; }
+  .credit { text-align: center; font-size: 22px; font-weight: 700; }
+  .thanks { margin: 10px 0 4px; text-align: center; }
+  .keep { margin: 0; text-align: center; font-size: 10px; }
+  .error { margin-top: 12px; text-align: center; font-size: 7px; letter-spacing: 0.2em; opacity: 0.6; }
+}

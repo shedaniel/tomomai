@@ -1,0 +1,47 @@
+/* phpinfo()'s own stylesheet, on purpose: the joke is that it looks exactly like the real thing */
+.page {
+  margin: 14px 8px 0;
+  padding: 12px 0;
+  background: #fff;
+  color: #222;
+  font-family: sans-serif;
+  text-align: center;
+}
+.table {
+  width: 100%;
+  max-width: 934px;
+  margin: 1em auto;
+  border-collapse: collapse;
+  border: 0;
+  box-shadow: 1px 2px 3px #ccc;
+  text-align: left;
+  table-layout: fixed;
+}
+.table td,
+.table th {
+  border: 1px solid #666;
+  padding: 4px 5px;
+  font-size: 75%;
+  vertical-align: baseline;
+  overflow-wrap: anywhere;
+}
+.h { background: #99c; font-weight: bold; }
+.h td { padding: 4px 5px; }
+.e { width: 34%; background: #ccf; font-weight: bold; }
+.v { background: #ddd; }
+.p { margin: 0; font-size: 150%; font-weight: bold; text-align: left; }
+.h2 { margin: 1em 0 0; font-size: 125%; font-weight: bold; }
+.hr { width: 100%; max-width: 934px; margin: 1em auto; border: 0; height: 1px; background: #ccc; }
+.logo {
+  float: right;
+  display: grid;
+  place-items: center;
+  width: 74px;
+  height: 40px;
+  border: 2px solid #4f5b93;
+  border-radius: 50%;
+  background: #8892bf;
+  color: #fff;
+  font: italic 700 20px/1 sans-serif;
+  letter-spacing: -1px;
+}

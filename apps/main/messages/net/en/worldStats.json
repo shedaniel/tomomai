@@ -1,0 +1,34 @@
+{
+  "title": "World Stats",
+  "hidden": "This player keeps their world private. It has a population of 1 and a strict door policy.",
+  "noSnapshot": "No play data yet. The world is still loading.",
+  "population": "Population",
+  "populationValue": "1",
+  "populationNote": "(you)",
+  "worldRate": "World {metric}",
+  "charts": "{count, number} charts",
+  "level": "LEVEL {level}",
+  "allLevels": "ALL LEVELS",
+  "metrics": {
+    "sssp": "SSS+ CLEAR RATE",
+    "sss": "SSS CLEAR RATE",
+    "s": "S CLEAR RATE",
+    "clear": "CLEAR RATE",
+    "fc": "FULL COMBO RATE",
+    "ap": "ALL PERFECT RATE",
+    "fdx": "FULL SYNC DX RATE"
+  },
+  "descending": "Descending",
+  "ascending": "Ascending",
+  "hideAchieved": "Don't display the songs you achieved",
+  "all": "ALL",
+  "rate": "{rate}%",
+  "players": "{count} of 1 players",
+  "empty": "No songs here. The world is smaller than we thought.",
+  "more": "+{count, number} more songs. The world ends here for free users.",
+  "notes": {
+    "line1": "※ The clear rate is calculated from every player in the world. There is one.",
+    "line2": "※ That player is you. Congratulations on being #1 and last.",
+    "line3": "※ The clear rate will be updated when you log in again."
+  }
+}

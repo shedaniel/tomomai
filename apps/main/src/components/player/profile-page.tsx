@@ -4,6 +4,7 @@ import { Header } from "@/components/header";
 import type { Flags } from "@/lib/flags";
 import { ProfileData } from "@/lib/types";
 import type { Region } from "@/lib/games/ids";
+import { NetNag } from "@/components/net/nag/net-nag";
 import { TomomaiAI } from "@/components/games/maimai/tomomai-ai";
 import type { GameSnapshotData } from "@/lib/games/player-view";
 import { supportsGameFeature } from "@/lib/games/frontend";
@@ -77,6 +78,7 @@ export function ProfilePage({
           />
         </Suspense>
       </div>
+      {flags.aprilFools2027 && game.id === "maimai" && <NetNag username={username} region={region} />}
       {supportsGameFeature(game, "assistant") && snapshotData && <TomomaiAI snapshotData={snapshotData} region={region} aprilFools2026={flags.aprilFools2026} />}
     </div>
   );

@@ -1,0 +1,36 @@
+{
+  "title": "Album",
+  "unsupported": "Album is not available in this region. Please log in again from another region.",
+  "info": {
+    "body": "Only your {limit} most recent photos are kept. Take a new one and the oldest is gone.",
+    "accent": "Just kidding. tomomai never throws them away."
+  },
+  "judgements": {
+    "critical": "CRITICAL",
+    "tap": "TAP",
+    "perfect": "PERFECT",
+    "hold": "HOLD",
+    "great": "GREAT",
+    "slide": "SLIDE",
+    "miss": "MISS",
+    "break": "BREAK"
+  },
+  "locked": {
+    "body": "Photos in the Album can only be viewed by the player who took them.",
+    "accent": "Ask them to show you on their phone like a normal person.",
+    "songName": "A SONG YOU ARE NOT ALLOWED TO SEE",
+    "frame": "This player declined to be photographed",
+    "footer": "Please log in again as someone else"
+  },
+  "empty": {
+    "songName": "THE PHOTO YOU FORGOT TO TAKE",
+    "frame": "Nobody here yet",
+    "footer": "This photo expired before it was taken",
+    "body": "No photos yet. Tap the camera on the result screen, then sync with tomomai."
+  },
+  "note": {
+    "limit": "Only your {limit} most recent photos can be displayed.",
+    "more": "tomomai kept the older ones anyway. They live on normal tomomai.",
+    "all": "ALL PHOTOS"
+  }
+}

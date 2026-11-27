@@ -1,0 +1,234 @@
+{
+  "comment": {
+    "line1": "You have logged in from another device.",
+    "line2": "Please log in again.",
+    "line3": "(The other device was also you.)"
+  },
+  "options": "Adjust the",
+  "optionsBig": "OPTIONS!",
+  "standardCourse": "STANDARD COURSE",
+  "menu": {
+    "home": "HOME",
+    "records": "RECORDS",
+    "playData": "PLAY DATA",
+    "collection": "COLLECTION",
+    "shop": "SHOP",
+    "links": {
+      "home": "HOME",
+      "rating": "ともまい RATING",
+      "history": "RECORD OF tomomai",
+      "gameRecord": "GAME RECORD",
+      "songScore": "SONG SCORE",
+      "olderRecords": "OLDER RECORDS (unavailable)",
+      "playData": "PLAY DATA",
+      "album": "ALBUM",
+      "area": "AREA",
+      "namePlate": "NAME PLATE",
+      "tomomile": "tomomile SHOP",
+      "standardCourse": "STANDARD COURSE (¥330/month)",
+      "premiumCourse": "PREMIUM COURSE (unlocks dark mode)",
+      "stampCard": "STAMP CARD",
+      "friends": "FRIENDS",
+      "friendSearch": "SEARCH FRIENDS",
+      "circle": "CIRCLE",
+      "dan": "段位認定",
+      "worldStats": "World Stats",
+      "icon": "ICON",
+      "frame": "FRAME",
+      "title": "TITLE",
+      "partner": "PARTNER",
+      "eventArea": "EVENT AREA",
+      "season": "SEASON INFO",
+      "songRanking": "SONG RANKING",
+      "ratingRanking": "ともまい RATING RANKING",
+      "serial": "SERIAL CODE"
+    },
+    "friends": "FRIENDS",
+    "event": "EVENT",
+    "ranking": "RANKING"
+  },
+  "noSnapshot": "No play data has been imported for this region yet.",
+  "hidden": {
+    "phpinfo": {
+      "version": "PHP Version 5.6.40",
+      "logo": "php",
+      "system": {
+        "system": "SEGA-PHP-01 1.0.0 (down since two weeks ago)",
+        "buildDate": "Jan 10 2019 (still)",
+        "serverApi": "Apache 2.0 Handler (unhandled)",
+        "virtualDirectory": "disabled",
+        "iniPath": "/etc/please/log/in/again",
+        "iniLoaded": "(none, it fell off)",
+        "phpApi": "20131106",
+        "debugBuild": "no (it shows)",
+        "threadSafety": "disabled",
+        "streams": "https, ftp, tears"
+      },
+      "zend": "This program makes use of the Please Log In Again Engine v100001, Copyright (c) nobody wants it",
+      "configuration": "Configuration",
+      "core": "Core",
+      "directive": "Directive",
+      "localValue": "Local Value",
+      "masterValue": "Master Value",
+      "directives": {
+        "display_errors": "On (decorative)",
+        "error_reporting": "E_ALL | E_PLEASE_LOG_IN_AGAIN",
+        "max_execution_time": "2 weeks",
+        "max_input_time": "until the stranger behind you coughs",
+        "memory_limit": "your wrist",
+        "post_max_size": "1 credit",
+        "session_auto_logout": "always",
+        "session_gc_maxlifetime": "0",
+        "session_cookie_lifetime": "shorter than a BREAK note",
+        "short_open_tag": "Off",
+        "upload_max_filesize": "¥330",
+        "date_timezone": "Asia/Tokyo (maintenance at 04:00)",
+        "tomomai_uses_php": "No"
+      },
+      "masterOverrides": {
+        "display_errors": "On",
+        "memory_limit": "your other wrist"
+      },
+      "player": "maimai",
+      "playerRows": {
+        "support": "enabled (sometimes)",
+        "name": "Player",
+        "rating": "Rating",
+        "region": "Region",
+        "loggedIn": "Logged in",
+        "loggedInValue": "no",
+        "noRating": "unknown (please log in again)"
+      },
+      "extensions": "Loaded Extensions",
+      "extensionList": "ext-please-log-in-again, ext-error-100001, ext-maintenance, ext-your-wrist, ext-standard-course, ext-premium-course, ext-mysql (deprecated in 2015, load-bearing)",
+      "variables": "PHP Variables",
+      "variable": "Variable",
+      "value": "Value",
+      "variableRows": {
+        "session": "false",
+        "cookie": "\"no\"",
+        "user": "\"{name}\"",
+        "request": "\"Please log in again.\""
+      },
+      "license": "PHP License",
+      "licenseBody": "This program is free software. You can redistribute it as long as nobody finds out it is still running. If you did not receive a copy of the PHP license, please log in again."
+    },
+    "admin": {
+      "door": "STAFF ONLY",
+      "doorNote": "Players beyond this point will be asked to log in again.",
+      "title": "STAFF LOGIN",
+      "user": "STAFF ID",
+      "password": "PASSWORD",
+      "submit": "LOG IN",
+      "wrong": "Wrong password. Hint: it's 'password'.",
+      "correct1": "Correct. Please log in again.",
+      "correct2": "Correct again. Your session expired while you typed. Please log in again.",
+      "dashboard": "STAFF PANEL",
+      "welcome": "Welcome back, staff. Do not touch the coin box.",
+      "stats": {
+        "cabinets": "Cabinets online",
+        "cabinetsValue": "1 of 2 (2P side is a washing machine today)",
+        "queue": "Strangers waiting behind players",
+        "queueValue": "4",
+        "gloves": "Sweaty gloves in lost and found",
+        "glovesValue": "38"
+      },
+      "fixButton": "Fix button 3",
+      "fixButtonNote": "Scheduled for next version.",
+      "rollNote": "Error 100001 cannot be deleted. It is on the staff roll.",
+      "rollCredits": "ROLL STAFF CREDITS",
+      "sss": "Give everyone SSS+",
+      "sssDenied": "Denied by SEGA.",
+      "deleteError": "Delete Error 100001",
+      "errorsTitle": "Open errors",
+      "errorRow": "Error 100001: Please log in again.",
+      "noErrors": "No open errors. Enjoy it.",
+      "errorBack": "Error 100001 came back. It always comes back. (Deleted {count, plural, one {# time} other {# times}})",
+      "logout": "LOG OUT",
+      "loggedOut": "You were never logged in."
+    },
+    "notFound": {
+      "title": "ERROR",
+      "code": "ERROR CODE: 404001",
+      "body": "The page could not be found. Please log in again.",
+      "aside": "tomomai AI looked everywhere. Even behind the <cabinet>cabinet</cabinet>, where the lost Aime cards live.",
+      "home": "Back to HOME"
+    },
+    "teapot": {
+      "title": "418 I'm a teapot",
+      "code": "ERROR CODE: 418",
+      "body": "This cabinet is a teapot. It refuses to brew a credit.",
+      "aside": "Short and stout. Here is my handle, here is my spout. Button 3 is sticky.",
+      "insert": "INSERT ¥100",
+      "inserted": "The cabinet poured tea into the coin slot. CREDIT(S): 0",
+      "insertedAgain": "More tea. Still CREDIT(S): 0. The stranger behind you sighs.",
+      "jamScreen": "MISS",
+      "buttonLabel": "Button {n}",
+      "jamNote": "Button 3 stuck again. Service ticket filed at <staff>/staff</staff>. Please stop mashing it, the stranger behind you is judging.",
+      "screen": "418"
+    },
+    "credits": {
+      "title": "STAFF ROLL",
+      "heading": "tomomai NET STAFF",
+      "starring": "Starring",
+      "roles": {
+        "director": {
+          "role": "Director",
+          "name": "the front-load washing machine"
+        },
+        "designer": {
+          "role": "Lead Designer",
+          "name": "tomomai AI (smugly)"
+        },
+        "ratings": {
+          "role": "Ratings",
+          "name": "you"
+        },
+        "inflation": {
+          "role": "Rating Inflation",
+          "name": "the yearly new version"
+        },
+        "button": {
+          "role": "Sticky Button 3",
+          "name": "as itself"
+        },
+        "queue": {
+          "role": "Waiting Behind You",
+          "name": "the stranger"
+        },
+        "card": {
+          "role": "Card Reader",
+          "name": "touch it harder"
+        },
+        "maintenance": {
+          "role": "Night Shift",
+          "name": "04:00 to 07:00 JST maintenance"
+        },
+        "slides": {
+          "role": "Slide Choreography",
+          "name": "your left arm, mostly"
+        },
+        "gloves": {
+          "role": "Wardrobe",
+          "name": "one sweaty glove"
+        },
+        "money": {
+          "role": "Catering",
+          "name": "100 yen per credit"
+        }
+      },
+      "thanksTitle": "Special Thanks",
+      "thanks": {
+        "error": "Error code 100001",
+        "wrist": "your wrist",
+        "utage": "the friend who carried you in Utage",
+        "region": "every region-locked song",
+        "break": "every BREAK note you missed",
+        "two": "the 2P side, for being there"
+      },
+      "end": "THANK YOU FOR PLAYING.",
+      "endSub": "Please log in again.",
+      "track": "TRACK 4: no more credits"
+    }
+  }
+}

@@ -1,0 +1,170 @@
+.card {
+  position: relative;
+  margin: 22px 12px 0;
+  padding: 0 6px 8px;
+  border: 2px solid var(--ink);
+  border-radius: 4px;
+  background: var(--fill);
+  box-shadow: 0 3px 0 #0003;
+}
+.head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 24px;
+  padding: 0 2px;
+}
+.diff {
+  font: 700 13px var(--net-font-pop), sans-serif;
+  color: #fff;
+  -webkit-text-stroke: 4px var(--ink);
+  paint-order: stroke;
+}
+.stars {
+  flex: 1;
+  display: flex;
+  gap: 1px;
+}
+.date {
+  font-size: 12px;
+  color: #fff;
+  text-shadow: 0 1px 0 #0004;
+}
+.titleBar {
+  overflow: hidden;
+  padding: 5px 8px;
+  border-radius: 4px;
+  background: #5a3b4a;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 14px;
+  color: #fff;
+}
+.photo {
+  display: block;
+  margin-top: 6px;
+  border: 2px solid #333;
+  background: #ffb3e6;
+}
+.photo img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.venue {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  margin-top: 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 11px;
+  color: #fff;
+  text-shadow: 0 1px 0 #0005;
+}
+.venue svg { flex: none; }
+.venue span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Result-screen mock shown where a photo can't be */
+.result {
+  position: relative;
+  height: 236px;
+  margin-top: 6px;
+  overflow: hidden;
+  border: 2px solid #333;
+  background: #ffb3e6;
+}
+.frame {
+  position: absolute;
+  left: 14px;
+  top: 40px;
+  display: grid;
+  place-items: center;
+  width: 118px;
+  height: 156px;
+  padding: 6px;
+  background: #fff;
+  box-shadow: 0 2px 0 #0004;
+  rotate: -3deg;
+  text-align: center;
+  font-size: 10px;
+  line-height: 1.4;
+  color: #888;
+}
+.frame i {
+  display: block;
+  margin-bottom: 6px;
+  font-style: normal;
+  line-height: 0;
+}
+.frame i svg { margin: 0 auto; }
+.resultRight {
+  position: absolute;
+  left: 148px;
+  right: 10px;
+  top: 12px;
+}
+.resultDiff {
+  padding: 3px 8px;
+  border: 2px solid #fff;
+  border-radius: 4px;
+  background: #ff5f8f;
+  font: 700 12px var(--net-font-pop), sans-serif;
+  color: #fff;
+}
+.resultDiff small {
+  display: block;
+  margin-top: 2px;
+  overflow: hidden;
+  border-radius: 4px;
+  background: #123a7a;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font: 400 11px sans-serif;
+}
+.big {
+  margin-top: 8px;
+  white-space: nowrap;
+  font: 700 32px var(--net-font-pop), sans-serif;
+  color: #ffd23a;
+  -webkit-text-stroke: 6px #ff5f8f;
+  paint-order: stroke;
+}
+.big small { font-size: 20px; }
+.judgements {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3px;
+  margin-top: 6px;
+  font-size: 9px;
+}
+.judgements span {
+  display: flex;
+  justify-content: space-between;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: #fff;
+}
+.footer {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 16px;
+  padding: 2px 8px;
+  background: #3d3db0;
+  font-size: 8px;
+  color: #fff;
+}
+@media (max-width: 400px) {
+  .frame { width: 96px; height: 130px; }
+  .resultRight { left: 122px; }
+  .big { font-size: 26px; }
+  .big small { font-size: 16px; }
+}

@@ -1,0 +1,39 @@
+{
+  "title": "Song Scores",
+  "tabs": {
+    "category": "Category",
+    "best": "My Best",
+    "latest": "10 Latest Songs"
+  },
+  "modes": {
+    "genre": "Song Genre",
+    "title": "あいうえお",
+    "level": "LEVEL",
+    "version": "VERSION",
+    "sort": "Sorting"
+  },
+  "all": {
+    "genre": "All genre",
+    "title": "All titles",
+    "level": "All levels",
+    "version": "All versions",
+    "sort": "Sorted by achievement"
+  },
+  "filterLabel": "Filter",
+  "levelGroup": "LEVEL {level}",
+  "otherTitles": "Others",
+  "sortHeading": "Sorted by achievement",
+  "sortFeature": "Sorting songs",
+  "summary": {
+    "clear": "CLEAR",
+    "sync": "SYNC PLAY",
+    "note": "Out of {total} charts. Sorting by rating is a Standard Course feature."
+  },
+  "bestHeading": "My Best",
+  "latestHeading": "10 Latest Songs",
+  "showing": "Showing {shown} of {total} charts. Tap the button below to load the next 20, just like the real one.",
+  "more": "Load the next 20",
+  "allShown": "That's every chart. Tap Top to scroll all the way back up.",
+  "empty": "No charts here. Please log in again.",
+  "noSnapshot": "No play data yet. Please log in again."
+}

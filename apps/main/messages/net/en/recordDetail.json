@@ -1,0 +1,60 @@
+{
+  "title": "Game Record",
+  "track": "TRACK {track}",
+  "hidden": {
+    "body": "This player keeps their Game Record to themselves.",
+    "accent": "Even tomomai NET respects that. Mostly."
+  },
+  "notFound": "This play could not be found. Please log in again.",
+  "back": "BACK",
+  "songPage": "Song page",
+  "dxStars": "DX STARS",
+  "dxPercent": "{percent}% of the max",
+  "details": "詳細",
+  "fast": "FAST",
+  "late": "LATE",
+  "maxCombo": "MAX COMBO",
+  "maxSync": "MAX SYNC",
+  "total": "TOTAL",
+  "notes": {
+    "tap": "TAP",
+    "hold": "HOLD",
+    "slide": "SLIDE",
+    "touch": "TOUCH",
+    "break": "BREAK"
+  },
+  "judgements": {
+    "cPerfect": "CRITICAL PERFECT",
+    "perfect": "PERFECT",
+    "great": "GREAT",
+    "good": "GOOD",
+    "miss": "MISS"
+  },
+  "venue": "VENUE",
+  "venueUnknown": "Unknown. tomomai AI guesses your living room.",
+  "rating": "RATING",
+  "ratingUp": "+{change}",
+  "ratingDown": "-{change}",
+  "ratingSame": "±0. The cabinet saw nothing.",
+  "noPlaylog": "The judgement details of this play were never fetched. The score is real. The rest is left to your imagination. Please log in again.",
+  "ai": {
+    "heading": "tomomai AI VERDICT",
+    "perfect": "Flawless. tomomai AI has nothing to roast. Please log in again so we can check.",
+    "worst": "Your {note} {judgement}s cost you {loss}. tomomai AI suggests hitting them instead.",
+    "missed": "You missed {count, plural, one {# note} other {# notes}}. They were right there.",
+    "late": "{late} LATEs against {fast} FASTs. Late like a DX NET maintenance window.",
+    "early": "{fast} FASTs against {late} LATEs. Eager. tomomai AI respects it, a little.",
+    "balanced": "FAST and LATE are balanced. Your wrist is the only stable thing here.",
+    "noPlaylog": "tomomai AI cannot roast a play it never saw. It is very upset about this.",
+    "speechless": "Nothing to roast. tomomai AI is speechless.",
+    "speechlessSub": "It checked every note twice. It is now staring at the wall.",
+    "close": "{gap}% away from 101. So close that tomomai AI almost had nothing to say. Almost."
+  },
+  "losses": {
+    "heading": "POINTS LOST",
+    "feature": "The points-lost breakdown",
+    "note": "NOTE",
+    "total": "Total lost: {loss}",
+    "none": "Nothing lost. Suspicious."
+  }
+}

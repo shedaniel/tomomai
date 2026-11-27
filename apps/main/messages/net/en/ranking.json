@@ -1,0 +1,52 @@
+{
+  "plateLabel": "ともまいRATING",
+  "song": {
+    "title": "Song Ranking",
+    "scope": {
+      "all": "ALL",
+      "area": "Your arcade (Premium)",
+      "friends": "Your friends (you have 1)"
+    },
+    "metrics": {
+      "level": "Hardest internal level",
+      "title": "Longest song title",
+      "nicknames": "Most nicknames"
+    },
+    "board": {
+      "exRanking": "EX ranking",
+      "funRanking": "Fun ranking (coming in 2031)"
+    },
+    "metricShort": {
+      "level": "LEVEL",
+      "title": "CHARS",
+      "nicknames": "NAMES"
+    },
+    "note": "※ Ranking will be updated constantly. The songs are real. The ranking criteria are not what you wanted.",
+    "update": "{date} 01:00 update",
+    "holder": "World #1: <b>{name}</b> {score}",
+    "noHolder": "World #1: nobody. It could be you.",
+    "paywall": "Ranks 4 to {count}",
+    "empty": "Nothing to rank here. Even our ranking engine gave up."
+  },
+  "rating": {
+    "title": "ともまいRATING",
+    "scope": {
+      "house": "{name}'s house ranking",
+      "ex": "EX ranking (Premium)",
+      "national": "National ranking (Premium)",
+      "world": "World ranking (region locked)"
+    },
+    "note1": "※ The ranking will be updated once a day.",
+    "note2": "(The house ranking is updated whenever someone else moves in.)",
+    "current": "Your current ともまいRATING",
+    "currentNote": "※It may be different from ranking data. It isn't, there is only you.",
+    "heading": "{name}'s house ranking",
+    "update": "{date} 01:00 update",
+    "participants": "Participants: {count}",
+    "you": "YOU",
+    "ghost": "Rank 2 is up for grabs. Ask your cat to start playing.",
+    "paywall": "The other players in your house",
+    "victory": "Congratulations. You are the best maimai player under this roof. Your rival, the fridge, has no hands.",
+    "noSnapshot": "No play data yet. You are rank 1 of 0. Please log in again."
+  }
+}

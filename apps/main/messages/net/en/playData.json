@@ -1,0 +1,38 @@
+{
+  "title": "Player's Data",
+  "counts": {
+    "version": "play count of current version : {count}",
+    "total": "tomomai total play count : {count}",
+    "hidden": "a secret"
+  },
+  "all": "ALL",
+  "clear": "CLEAR",
+  "locked": {
+    "line1": "This player keeps their grades and medals to themselves.",
+    "line2": "Even tomomai only got a quick peek."
+  },
+  "noSnapshot": "No play data yet. Please log in again.",
+  "mission": {
+    "heading": "Weekly Mission",
+    "title": "WEEKLY MISSION",
+    "until": "Until {date}",
+    "clear": "CLEAR {count}/{total}",
+    "reward": "tomomile",
+    "unlock": "Unlock by Mission Clear!",
+    "cleared": "Cleared! (you had no choice)",
+    "items": {
+      "login": {
+        "label": "LOGIN",
+        "text": "Log in again 3 times"
+      },
+      "roast": {
+        "label": "ROAST",
+        "text": "Get roasted by tomomai about your slides"
+      },
+      "shop": {
+        "label": "SHOP",
+        "text": "Look at the Standard Course page for 30 seconds"
+      }
+    }
+  }
+}
