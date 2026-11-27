@@ -58,6 +58,7 @@ function fetchScores(region: "jp" | "intl" = "jp") {
 const persisted: PersistedSnapshotContext = {
   game: "chunithm", userId: "user", region: "jp", snapshotId: 1, gameVersion: 9,
   chartResolution: new Map([["Raw　Title|2|0", BigInt(7)]]),
+  recentSongIds: new Map(["2026-09-28T03:31:00Z", "2026-09-28T03:32:00Z"].map(playedAt => [`Raw　Title|2|0@${Date.parse(playedAt)}`, BigInt(7)])),
 };
 
 function detailUpdates() {

@@ -5,7 +5,8 @@ import { db } from "@/lib/db";
 import { userEvents, userRecentSongs, userSnapshots } from "@/lib/db/schema-pg";
 import type { NotFoundScore } from "@/lib/api/schemas";
 import type { CanonicalGameId, Region } from "@/lib/games/ids";
-import { buildChartResolution, chartKey, writeSnapshotScores, type SnapshotScore } from "./score-storage";
+import { getVersionFromDate } from "@/lib/games/versions";
+import { buildChartResolution, chartKey, recentKey, writeSnapshotScores, type DbSong, type SnapshotScore } from "./score-storage";
 import type { ChartRef, GameFetchResult, NormalizedScore, PersistedSnapshotContext } from "./types";
 import { logger } from "@/lib/logger";
 
@@ -24,14 +25,15 @@ function notFoundScore({ chart }: NormalizedScore): NotFoundScore {
 
 /**
  * Saves a fetched snapshot with its scores, recent plays and events in one transaction.
- * Only charts of the fetch's game, region and version are matched. The scores without a match are returned.
+ * Only charts of the fetch's game, region and version are matched, except that a recent play is matched in the
+ * version it was played in when that version has the chart. The scores without a match are returned.
  */
 export async function persistFetchResult(input: PersistFetchResultInput): Promise<{ context: PersistedSnapshotContext; notFoundScores: NotFoundScore[] }> {
   const { game, region, userId, gameVersion, fetched, deadline } = input;
   const inFetch = (chart: ChartRef) => chart.game === game && chart.region === region && chart.version === gameVersion;
 
   if (deadline && Date.now() >= deadline) throw new Error("Fetch operation timed out before persistence");
-  const { snapshotId, chartResolution, unmatched } = await db.transaction(async tx => {
+  const { snapshotId, chartResolution, recentSongIds, unmatched } = await db.transaction(async tx => {
     if (deadline) await tx.execute(sql`SELECT set_config('statement_timeout', ${String(Math.max(1, deadline - Date.now()))}, true)`);
     const { player } = fetched;
     const [insertedSnapshot] = await tx.insert(userSnapshots).values({
@@ -69,21 +71,38 @@ export async function persistFetchResult(input: PersistFetchResultInput): Promis
     }
     await writeSnapshotScores(tx, { game, snapshotId, gameVersion, scores: resolvedScores });
 
-    const recents = (fetched.recents ?? []).flatMap(recent => {
-      const songId = inFetch(recent.chart) ? chartResolution.get(chartKey(recent.chart)) : undefined;
-      if (songId === undefined) return [];
-      return [{ game, userId, songId, playedAt: recent.playedAt,
+    const resolutions = new Map([[gameVersion, { chartResolution, songsById }]]);
+    const recentSongIds = new Map<string, bigint>();
+    const recents: (typeof userRecentSongs.$inferInsert)[] = [];
+    for (const recent of fetched.recents ?? []) {
+      if (!inFetch(recent.chart)) continue;
+      // A play keeps the chart of the version it was played in, so fetches either side of a cutoff store it once.
+      const playedVersion = getVersionFromDate(game, region, recent.playedAt, gameVersion);
+      let song: DbSong | undefined;
+      for (const version of new Set([playedVersion, gameVersion])) {
+        let resolution = resolutions.get(version);
+        if (!resolution) {
+          resolution = await buildChartResolution(tx, game, region, version);
+          resolutions.set(version, resolution);
+        }
+        const songId = resolution.chartResolution.get(chartKey(recent.chart));
+        song = songId === undefined ? undefined : resolution.songsById.get(songId);
+        if (song) break;
+      }
+      if (!song) continue;
+      recentSongIds.set(recentKey(recent), song.id);
+      recents.push({ game, userId, songId: song.id, parentId: song.parentId, region, playedAt: recent.playedAt,
         scoreValue: recent.scoreValue, secondaryScore: recent.secondaryScore,
         comboStatus: recent.comboStatus, syncStatus: recent.syncStatus, clearStatus: recent.clearStatus,
         track: recent.track,
         maxSecondaryScore: recent.maxSecondaryScore,
-      }];
-    });
+      });
+    }
     if (recents.length) await tx.insert(userRecentSongs).values(recents).onConflictDoNothing();
     const events = (fetched.events ?? []).map(event => ({ ...event, game, snapshotId }));
     if (events.length) await tx.insert(userEvents).values(events);
     if (deadline && Date.now() >= deadline) throw new Error("Fetch operation timed out before persistence completed");
-    return { snapshotId, chartResolution, unmatched };
+    return { snapshotId, chartResolution, recentSongIds, unmatched };
   });
 
   if (unmatched.length > 0) {
@@ -93,7 +112,7 @@ export async function persistFetchResult(input: PersistFetchResultInput): Promis
     );
   }
   return {
-    context: { game, userId, region, snapshotId, gameVersion, chartResolution },
+    context: { game, userId, region, snapshotId, gameVersion, chartResolution, recentSongIds },
     notFoundScores: unmatched.map(notFoundScore),
   };
 }

@@ -6,7 +6,7 @@ import { RANKING_BUCKETS } from "@/lib/games/codes";
 import { getGame } from "@/lib/games/registry";
 import { rankScores, type StoredRankings } from "@/lib/games/ranking";
 import type { CanonicalGameId, Region } from "@/lib/games/ids";
-import type { ChartRef, ChartResolutionMap, NormalizedScore } from "./types";
+import type { ChartRef, ChartResolutionMap, NormalizedRecent, NormalizedScore } from "./types";
 import { logger } from "@/lib/logger";
 
 type ScoreConnection = Pick<typeof db, "select" | "insert">;
@@ -16,6 +16,11 @@ export type ScoreDataValues = { songId: bigint } & Pick<NormalizedScore, "scoreV
 /** A chart's key in a ChartResolutionMap. The map holds one game's slice, so unlike catalogChartKey the key leaves the game out. */
 export function chartKey(chart: Pick<ChartRef, "songName" | "difficulty" | "chartType">): string {
   return `${chart.songName}|${chart.difficulty}|${chart.chartType}`;
+}
+
+/** A recent play's key in PersistedSnapshotContext.recentSongIds. */
+export function recentKey(recent: Pick<NormalizedRecent, "chart" | "playedAt">): string {
+  return `${chartKey(recent.chart)}@${recent.playedAt.getTime()}`;
 }
 
 function scoreDataKey(score: ScoreDataValues): string {

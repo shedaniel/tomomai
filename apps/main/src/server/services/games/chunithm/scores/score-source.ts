@@ -6,7 +6,7 @@ import { userRecentSongs } from "@/lib/db/schema-pg";
 import { FETCH_STATES, songDataState } from "@/lib/fetch-states";
 import type { FetchRun } from "@/server/services/games/fetch-run";
 import { mirrorPlayerIcon } from "@/server/services/games/icons";
-import { chartKey } from "@/server/services/games/score-storage";
+import { recentKey } from "@/server/services/games/score-storage";
 import { openGameSite, releaseGameSiteSession, type GameSiteClient } from "@/server/services/games/sega/http";
 import type { Enrichment, NormalizedScore, ScoreFetchContext, ScoreFetchOutcome } from "@/server/services/games/types";
 import { signInChunithm } from "../login";
@@ -68,7 +68,7 @@ function recentDetails(site: GameSiteClient, plays: readonly ChunithmRecentRow[]
     const playKey = (songId: bigint, playedAt: Date) => `${songId}@${playedAt.getTime()}`;
     const done = new Set(detailed.map(row => playKey(row.songId, row.playedAt)));
     const pending = plays.flatMap(({ recent, form }) => {
-      const songId = persisted.chartResolution.get(chartKey(recent.chart));
+      const songId = persisted.recentSongIds.get(recentKey(recent));
       return songId === undefined || done.has(playKey(songId, recent.playedAt)) ? [] : [{ songId, playedAt: recent.playedAt, form }];
     });
 
