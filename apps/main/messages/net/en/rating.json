@@ -1,0 +1,12 @@
+{
+  "info": "You can check the songs that are used for your ともまいRATING calculation.",
+  "infoAccent": "Songs 4 and below in each list are a Standard Course feature.",
+  "playersData": "Player's Data",
+  "newSongs": "Songs for Rating (New)",
+  "oldSongs": "Songs for Rating (Old)",
+  "paywallNew": "ともまいRATING songs 4 to {count} (New)",
+  "paywallOld": "ともまいRATING songs 4 to {count} (Old)",
+  "empty": "No songs here yet. Please log in again.",
+  "noSnapshot": "No play data yet. Please log in again.",
+  "total": "New {newTotal} + Old {oldTotal} = {total}. The math is free, even without the Standard Course."
+}

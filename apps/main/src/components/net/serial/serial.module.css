@@ -1,0 +1,101 @@
+.form {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  margin: 16px 10px 0;
+  padding: 22px 14px 18px;
+  border-radius: 4px;
+  background: #fff;
+  box-shadow: 0 3px 0 #0002;
+}
+.input {
+  width: min(300px, 100%);
+  min-width: 0;
+  padding: 10px 12px;
+  border: 3px solid #2b9de8;
+  border-radius: 4px;
+  box-shadow: 0 4px 0 #0001;
+  background: #fff;
+  text-align: center;
+  font: 600 16px var(--net-font-pop), sans-serif;
+  letter-spacing: 0.06em;
+  color: #222;
+}
+.input:focus-visible {
+  outline: 3px solid #ffd23a;
+  outline-offset: 2px;
+}
+.rules {
+  font-size: 12px;
+  line-height: 1.6;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+.submit {
+  min-width: 112px;
+  font-size: 15px;
+}
+.result {
+  width: 100%;
+  padding: 8px 10px;
+  border: 2px solid #e0457b;
+  border-radius: 4px;
+  background: #fff0f5;
+  text-align: center;
+  font-size: 12.5px;
+  color: #a02a55;
+}
+.back {
+  margin-top: 22px;
+  text-align: center;
+}
+
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 24px;
+  z-index: 50;
+  width: min(340px, calc(100% - 32px));
+  padding: 0 0 14px;
+  overflow: hidden;
+  border: 3px solid #111;
+  border-radius: 4px;
+  background: #fff;
+  box-shadow: 0 5px 0 #0005;
+  text-align: center;
+  translate: -50% 0;
+}
+.toast h4 {
+  margin: 0 0 10px;
+  padding: 8px;
+  background: #ffc24d;
+  font: 700 15px var(--net-font-pop), sans-serif;
+  color: #fff;
+  -webkit-text-stroke: 4px #8a4300;
+  paint-order: stroke;
+}
+.toast p {
+  margin: 0 14px 12px;
+  font-size: 13px;
+}
+.toastArt {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 6px;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .toast { animation: pop 260ms ease-out; }
+}
+@keyframes pop {
+  from { opacity: 0; translate: -50% 16px; }
+  to { opacity: 1; translate: -50% 0; }
+}
+
+.toast[data-reward="php"] h4 { background: #8892bf; -webkit-text-stroke-color: #343a66; }
+.toast[data-reward="sega"] h4 { background: #1e5bd8; -webkit-text-stroke-color: #0b2f7a; }
+.toast[data-reward="utage"] h4 { background: #e04050; -webkit-text-stroke-color: #6e0f1c; }
+.toast[data-reward="chunithm"] h4 { background: #aab4bf; -webkit-text-stroke-color: #3d434b; }
+.toast[data-reward="hunter2"] h4 { background: #333; -webkit-text-stroke-color: #000; letter-spacing: 0.2em; }
+.toast[data-reward="tomomai"] h4 { background: #ff7aa8; -webkit-text-stroke-color: #8a1240; }
+.toast[data-reward="iddqd"] h4 { background: #ffd23a; -webkit-text-stroke-color: #8a4300; }

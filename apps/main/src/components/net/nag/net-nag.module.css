@@ -1,0 +1,108 @@
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: #0d1530b8;
+  font-family: var(--net-font-jp), sans-serif;
+  font-synthesis: none;
+}
+.card {
+  width: min(380px, 100%);
+  max-height: 100%;
+  overflow-y: auto;
+  border: 3px solid #1d2b6b;
+  border-radius: 4px;
+  background: #fff;
+  box-shadow: 0 0 0 3px #fff, 0 7px 0 3px #1d2b6b;
+  color: #222;
+}
+.head {
+  padding: 14px 14px 16px;
+  background: radial-gradient(#ffffff2e 2px, transparent 3px) 0 0 / 9px 9px, #2b6fe8;
+  text-align: center;
+}
+.tag {
+  display: inline-block;
+  padding: 2px 10px;
+  border: 2px solid #1d2b6b;
+  border-radius: 4px;
+  background: #ffd21f;
+  font: 400 11px var(--net-font-pop), sans-serif;
+  letter-spacing: 1px;
+  color: #1d2b6b;
+}
+.logo {
+  margin-top: 8px;
+  font: 400 34px/1 var(--net-font-pop), sans-serif;
+  color: #fff;
+  -webkit-text-stroke: 7px #1d2b6b;
+  paint-order: stroke;
+}
+.logo b { color: #ffd93b; font-weight: 400; }
+.logo i {
+  margin-left: 6px;
+  padding: 0 6px;
+  border: 2px solid #1d2b6b;
+  border-radius: 4px;
+  background: #e0457b;
+  font-size: 16px;
+  font-style: normal;
+  vertical-align: 14px;
+  -webkit-text-stroke: 0;
+}
+.title {
+  margin: 10px 0 0;
+  font: 400 17px var(--net-font-pop), sans-serif;
+  color: #fff;
+  -webkit-text-stroke: 4px #1d2b6b;
+  paint-order: stroke;
+}
+.body { padding: 14px 18px 12px; text-align: center; font-size: 13px; line-height: 1.6; }
+.body p { margin: 0 0 6px; }
+.accent { color: #e0457b; font-weight: 700; }
+.list {
+  margin: 10px 0 14px;
+  padding: 8px 12px;
+  border: 2px dotted #1d2b6b66;
+  border-radius: 4px;
+  list-style: none;
+  text-align: left;
+  font-weight: 500;
+}
+.list li { position: relative; padding-left: 18px; }
+.list li::before { content: "★"; position: absolute; left: 0; color: #ffb81f; }
+.go {
+  display: block;
+  padding: 8px 14px;
+  border: 3px solid #fff;
+  border-radius: 4px;
+  background: #ff9a1f;
+  box-shadow: 0 0 0 2px #8a4300, 0 4px 0 2px #8a4300;
+  font: 400 15px var(--net-font-pop), sans-serif;
+  letter-spacing: 0.5px;
+  color: #fff;
+  -webkit-text-stroke: 3px #b35a00;
+  paint-order: stroke;
+  text-decoration: none;
+}
+.later {
+  display: block;
+  margin: 14px auto 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  color: #666;
+  text-decoration: underline;
+}
+.foot { margin-top: 8px; font-size: 11px; color: #888; }
+.logo sup {
+  margin-left: 2px;
+  font-size: 10px;
+  vertical-align: 22px;
+  -webkit-text-stroke: 0;
+}

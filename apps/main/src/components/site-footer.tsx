@@ -38,6 +38,7 @@ export function SiteFooter({ inset = false }: { inset?: boolean }) {
       className={cn(
         "mt-auto border-t border-border/40 bg-muted/20",
         !inset && "[body:has([data-inset-footer])_&]:hidden",
+        "[body:has([data-hide-site-footer])_&]:hidden",
       )}
     >
       <div className="container mx-auto max-w-5xl px-6 py-5">

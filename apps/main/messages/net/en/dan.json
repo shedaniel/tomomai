@@ -1,0 +1,31 @@
+{
+  "title": "段位認定",
+  "noSnapshot": "This will be shown if you play the 段位認定.",
+  "current": "Your rank",
+  "course": "COURSE",
+  "classRank": "CLASS",
+  "noBadge": "No badge yet",
+  "courses": "段位認定 COURSES",
+  "reached": "REACHED",
+  "unknown": "We can see your badge but not which course it is. SEGA renamed them again in the new version.",
+  "joke": {
+    "name": "段位認定: 宴皆伝",
+    "result": "FAILED",
+    "cleared": "CLEARED",
+    "detail": "Life 0/300. Failed on track 2 because a stranger stood behind you.",
+    "retry": "RETRY",
+    "playing": "TRACK {track} / 4",
+    "life": "LIFE {life}/300",
+    "credits": "Credits used: {count} (¥{yen})",
+    "excuses": {
+      "0": "Life 0/300 on track {track}. Button 3 was sticky. It is always button 3.",
+      "1": "Life 0/300 on track {track}. Your glove got sweaty and slid off a BREAK.",
+      "2": "Life 0/300 on track {track}. The cabinet next door started a song at full volume.",
+      "3": "Life 0/300 on track {track}. Someone asked if this is a washing machine.",
+      "4": "Life 0/300 on track {track}. The stranger behind you sighed. Loudly."
+    },
+    "win": "Life {life}/300. CLEARED. Your Aime card was not touched, so it did not save.",
+    "code": "Reward code: UTAGE"
+  },
+  "note": "Courses use the real rank badge from your latest data. The 宴 course is ours."
+}

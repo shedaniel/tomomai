@@ -1,0 +1,301 @@
+{
+  "grid": {
+    "usingCurrently": "Using Currently",
+    "favorite": "FAVORITE : 0/30",
+    "favoriteButton": "FAVORITE",
+    "set": "SET",
+    "inUse": "IN USE",
+    "locked": "LOCKED",
+    "own": "(You own : {count})",
+    "empty": "Nothing matches this filter. Have you tried playing more?",
+    "filter": {
+      "label": "Filter the collection",
+      "all": "ALL",
+      "owned": "OBTAINED",
+      "locked": "NOT YET"
+    },
+    "notice": {
+      "premium": "Changing your {thing} is a tomomai Premium perk. Free players keep what the cabinet gave them.",
+      "shop": "See the Premium Course",
+      "saved": "Set! Saved to this tab only. Reload and it forgets, just like DX NET forgets your login.",
+      "favorite": "Favorites are full (0/30). Please log in again and try later."
+    },
+    "persistent": {
+      "refusals": {
+        "1": "You don't own this title. SET does nothing.",
+        "2": "Still locked. Pressing harder will not help.",
+        "3": "This title is locked. That was the third time.",
+        "4": "The server has noted your enthusiasm.",
+        "5": "Error 100001. Please log in again.",
+        "6": "tomomai AI is watching you press this.",
+        "7": "Three more and something might happen. (Nothing will happen.)",
+        "8": "Button 3 is sticky now. You did that.",
+        "9": "Okay. One more. Then we talk."
+      },
+      "granted": "Fine. You earned a title. Just not that one.",
+      "name": "Persistent",
+      "tag": "EARNED",
+      "condition": "Press SET on a title you don't have, 10 times. Gone on reload."
+    }
+  },
+  "icon": {
+    "title": "Icon",
+    "thing": "icon",
+    "setting": "SETTING ICON",
+    "count": "ICON : {count}",
+    "groups": {
+      "current": "CURRENT",
+      "joke": "tomomai EXCLUSIVE"
+    },
+    "tags": {
+      "current": "CABINET",
+      "default": "DEFAULT",
+      "premium": "PREMIUM",
+      "event": "EVENT"
+    },
+    "current": {
+      "name": "Your current icon",
+      "condition": "Picked on the cabinet. tomomai only saw the picture."
+    },
+    "items": {
+      "default": {
+        "name": "DEFAULT",
+        "condition": "Owned from the start. Like your first credit."
+      },
+      "smug": {
+        "name": "tomomai AI (smug)",
+        "condition": "Let tomomai AI read your Best 50 without crying"
+      },
+      "brace": {
+        "name": "Wrist brace",
+        "condition": "Clear 1,000 slides in a single week"
+      },
+      "php": {
+        "name": "Crane game elephant",
+        "condition": "Spend ¥3,000 on the claw machine next to the cabinet"
+      },
+      "error": {
+        "name": "Error 100001",
+        "condition": "See the maintenance page 100,001 times"
+      },
+      "washer": {
+        "name": "Front-load washer",
+        "condition": "Explain maimai to a stranger without saying washing machine"
+      },
+      "coin": {
+        "name": "One more credit",
+        "condition": "Say one more credit and actually mean it"
+      },
+      "glove": {
+        "name": "Sweaty glove",
+        "condition": "Play 30 credits in August without the AC"
+      },
+      "tap": {
+        "name": "Lonely tap note",
+        "condition": "Miss the only TAP in a slide section"
+      },
+      "cookie": {
+        "name": "Expired session cookie",
+        "condition": "Get logged out mid score check"
+      }
+    }
+  },
+  "frame": {
+    "title": "Frame",
+    "thing": "frame",
+    "setting": "SETTING FRAME",
+    "count": "FRAME COUNT : {count}",
+    "groups": {
+      "default": "DEFAULT",
+      "joke": "tomomai EXCLUSIVE"
+    },
+    "tags": {
+      "default": "DEFAULT",
+      "premium": "PREMIUM",
+      "event": "EVENT"
+    },
+    "items": {
+      "default": {
+        "name": "DEFAULT",
+        "condition": "Owned from the start",
+        "motif": "tomomai"
+      },
+      "rainbow": {
+        "name": "Rainbow Rush (bootleg)",
+        "condition": "Find the real one in a capsule machine",
+        "motif": "RAINBOW"
+      },
+      "php": {
+        "name": "Aime card",
+        "condition": "Get your card read on the first touch",
+        "motif": "AIME"
+      },
+      "maintenance": {
+        "name": "Scheduled maintenance",
+        "condition": "Visit DX NET during maintenance 50 times",
+        "motif": "MAINTENANCE"
+      },
+      "bluescreen": {
+        "name": "Cabinet blue screen",
+        "condition": "Witness a cabinet reboot mid MASTER chart",
+        "motif": ":("
+      },
+      "sunset": {
+        "name": "Last train home",
+        "condition": "Play until the arcade closes and miss it anyway",
+        "motif": "23:58"
+      },
+      "washer": {
+        "name": "Spin cycle",
+        "condition": "Hold a spin slide for 40 seconds",
+        "motif": "SPIN"
+      },
+      "login": {
+        "name": "Login screen",
+        "condition": "Log in again. Then again.",
+        "motif": "LOG IN"
+      }
+    }
+  },
+  "title": {
+    "title": "Title",
+    "thing": "title",
+    "setting": "SETTING TITLE",
+    "count": "TITLE COUNT : {count}",
+    "rarity": {
+      "normal": "NORMAL",
+      "bronze": "BRONZE",
+      "silver": "SILVER",
+      "gold": "GOLD",
+      "rainbow": "RAINBOW"
+    },
+    "current": {
+      "noTitle": "No title yet",
+      "condition": "Equipped on the cabinet. Condition known only to SEGA."
+    },
+    "items": {
+      "loggedIn": {
+        "name": "Logged in again",
+        "condition": "Open tomomai NET"
+      },
+      "oneMore": {
+        "name": "One more credit",
+        "condition": "Play at least 1 credit"
+      },
+      "regular": {
+        "name": "Arcade regular",
+        "condition": "Play 1,000 credits"
+      },
+      "staff": {
+        "name": "The staff know my name",
+        "condition": "Play 5,000 credits"
+      },
+      "rating": {
+        "name": "Rating is just a number",
+        "condition": "Reach rating 10,000"
+      },
+      "rainbow": {
+        "name": "Rainbow rating haver",
+        "condition": "Reach rating 15,000"
+      },
+      "php": {
+        "name": "1P side loyalist",
+        "condition": "Never play on the 2P side. Not even once."
+      },
+      "maintenance": {
+        "name": "Back after maintenance",
+        "condition": "Refresh DX NET every 5 minutes for a day"
+      },
+      "apDreams": {
+        "name": "AP+ (in my dreams)",
+        "condition": "Get AP+ on a MASTER 15 while asleep"
+      },
+      "slide": {
+        "name": "Slide early, slide often",
+        "condition": "Get 100 FAST judgements on slides"
+      },
+      "wrist": {
+        "name": "Wrist of steel",
+        "condition": "Clear a 14+ with a wrist brace on"
+      },
+      "queue": {
+        "name": "Just one more queue",
+        "condition": "Wait 2 hours for a single credit"
+      },
+      "glove": {
+        "name": "Glove enthusiast",
+        "condition": "Own more gloves than socks"
+      },
+      "aiFriend": {
+        "name": "tomomai AI's only friend",
+        "condition": "Let tomomai AI roast you 1,000 times"
+      },
+      "premium": {
+        "name": "Paid for Premium",
+        "condition": "Buy tomomai Premium. It was free."
+      },
+      "april": {
+        "name": "It's April 1st",
+        "condition": "Read every joke on tomomai NET"
+      }
+    }
+  },
+  "partner": {
+    "title": "Partner",
+    "thing": "partner",
+    "setting": "SETTING PARTNER",
+    "count": "PARTNER COUNT : {count}",
+    "groups": {
+      "owned": "PARTNER",
+      "locked": "COMING SOON (NEVER)"
+    },
+    "tags": {
+      "default": "DEFAULT",
+      "premium": "PREMIUM"
+    },
+    "level": "Lv{level}",
+    "affection": {
+      "stages": {
+        "0": "Ignores you",
+        "1": "Notices you",
+        "2": "Tolerates you"
+      },
+      "now": "Affection MAX : Tolerates you",
+      "quotes": {
+        "0": "I looked at your Best 50. I need a minute.",
+        "1": "You again. Fine. Sit down.",
+        "2": "Your slides are early. Your excuses are on time.",
+        "3": "I am not proud of you. I am aware of you.",
+        "4": "Another credit? Bold."
+      }
+    },
+    "formation": {
+      "heading": "TOUR MEMBER'S FORMATION",
+      "leader": "LEADER",
+      "locked": "PREMIUM"
+    },
+    "items": {
+      "ai": {
+        "name": "tomomai AI",
+        "condition": "Owned from the start. You did not get a choice."
+      },
+      "php": {
+        "name": "Crane game elephant",
+        "condition": "Win it from the crane game next to the cabinet"
+      },
+      "brace": {
+        "name": "Wrist brace (talks now)",
+        "condition": "Wear it for 1,000 credits"
+      },
+      "washer": {
+        "name": "The washing machine",
+        "condition": "Say thank you to the cabinet out loud"
+      },
+      "cookie": {
+        "name": "Session cookie",
+        "condition": "Stay logged in for 24 hours. Impossible."
+      }
+    }
+  },
+  "noSnapshot": "No play data yet. Your real collection is still inside the cabinet."
+}

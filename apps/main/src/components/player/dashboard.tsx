@@ -31,6 +31,7 @@ import { InvitesDialog } from "@/components/invites-dialog";
 import { Header } from "@/components/header";
 import { ChangelogDialog } from "@/components/changelog-dialog";
 import { ConsentGate } from "@/components/consent-gate";
+import { NetNag } from "@/components/net/nag/net-nag";
 import { TomomaiAI } from "@/components/games/maimai/tomomai-ai";
 import { PostMeta } from "@/lib/posts";
 import { HttpProxyAuthSubDialog } from "@/components/games/maimai/cn-token-dialog";
@@ -342,6 +343,7 @@ export function Dashboard({ user, initialUserData, initialRegion, initialSnapsho
       <ConsentGate />
 
       <FetchToastContainer state={fetchToastState} />
+      {flags.aprilFools2027 && game.id === "maimai" && userData?.username && <NetNag username={userData.username} region={selectedRegion} />}
       {supportsGameFeature(game, "assistant") && <TomomaiAI snapshotData={selectedSnapshotData || null} region={selectedRegion} aprilFools2026={flags.aprilFools2026} />}
     </div>
   );

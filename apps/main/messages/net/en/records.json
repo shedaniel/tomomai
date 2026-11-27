@@ -1,0 +1,15 @@
+{
+  "title": "Game Record",
+  "track": "TRACK {track}",
+  "details": "DETAILS",
+  "empty": "No plays on record yet. Please play a credit, then log in again.",
+  "unsupported": "Game Record is not available in this region. Please log in again from another region.",
+  "hidden": {
+    "body": "This player keeps their Game Record to themselves.",
+    "accent": "Even tomomai NET respects that. Mostly.",
+    "empty": "TRACK 01 could not be displayed."
+  },
+  "note": "Only your {limit} most recent plays can be displayed.",
+  "noteMore": "We have the other {count, plural, one {# play} other {# plays}}. We are just not showing them.",
+  "lockedFeature": "Tracks {from} to {to}"
+}

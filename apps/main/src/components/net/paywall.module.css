@@ -1,0 +1,65 @@
+/* Tall enough for the offer card even when the locked content is a single short panel. */
+.wrap {
+  position: relative;
+  display: flow-root;
+  min-height: 290px;
+}
+.locked {
+  filter: blur(4px);
+  opacity: 0.75;
+  pointer-events: none;
+  user-select: none;
+}
+/* Zero-height sticky rail so the offer follows the reader down a long blurred list. */
+.rail {
+  position: sticky;
+  top: 22vh;
+  z-index: 2;
+  height: 0;
+}
+.card {
+  position: absolute;
+  left: 50%;
+  top: 40px;
+  z-index: 2;
+  width: min(330px, calc(100% - 40px));
+  overflow: hidden;
+  padding-bottom: 14px;
+  border: 3px solid #111;
+  border-radius: 4px;
+  background: #fff;
+  box-shadow: 0 5px 0 #0005;
+  text-align: center;
+  translate: -50% 0;
+}
+.card h4 {
+  padding: 7px;
+  background: #ff7f73;
+  font: 700 15px var(--net-font-pop), sans-serif;
+  color: #fff;
+  -webkit-text-stroke: 3px #a8443b;
+  paint-order: stroke;
+}
+.card p {
+  padding: 10px 14px 0;
+  font-size: 12px;
+  line-height: 1.6;
+}
+.price {
+  font: 700 28px var(--net-font-pop), sans-serif;
+  color: #ff3f6c;
+  -webkit-text-stroke: 6px #fff;
+  paint-order: stroke;
+  filter: drop-shadow(0 2px 0 #c22a52);
+}
+.price small { font-size: 13px; }
+.free {
+  display: block;
+  margin: 10px auto 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  font-size: 10px;
+  color: #2b8fe6;
+  text-decoration: underline;
+}

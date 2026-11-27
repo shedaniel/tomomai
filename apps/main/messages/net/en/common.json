@@ -1,0 +1,295 @@
+{
+  "brand": {
+    "label": "tomomai NET home",
+    "kana": "ともまい"
+  },
+  "edges": {
+    "left": "← your 27\" monitor",
+    "right": "is mostly this →"
+  },
+  "options": "Options",
+  "tiles": {
+    "home": "HOME",
+    "playData": "PLAY DATA",
+    "friends": "FRIENDS",
+    "shop": "SHOP",
+    "records": "RECORDS",
+    "event": "EVENT",
+    "collection": "COLLECTION",
+    "ranking": "RANKING"
+  },
+  "lockBadge": "STD",
+  "subTabs": {
+    "home": "HOME",
+    "rating": "ともまい RATING",
+    "history": "RECORD OF tomomai",
+    "playData": "PLAY DATA",
+    "stampCard": "STAMP CARD",
+    "album": "ALBUM",
+    "standardCourse": "STANDARD COURSE",
+    "gameRecord": "GAME RECORD",
+    "songScore": "SONG SCORE",
+    "dan": "段位認定",
+    "area": "AREA",
+    "eventArea": "EVENT AREA",
+    "icon": "ICON",
+    "namePlate": "NAME PLATE",
+    "frame": "FRAME",
+    "title": "TITLE",
+    "friends": "FRIENDS",
+    "friendSearch": "SEARCH FRIENDS",
+    "circle": "CIRCLE",
+    "serial": "SERIAL CODE",
+    "worldStats": "World Stats",
+    "season": "SEASON INFO",
+    "partner": "PARTNER",
+    "songRanking": "SONG RANKING",
+    "ratingRanking": "ともまい RATING",
+    "secrets": "SECRETS"
+  },
+  "php": {
+    "warning": "<b>Warning</b>: Undefined variable $rating in <b>/var/www/tomomai/home.php</b> on line <b>2027</b>",
+    "note": "We don't even have a home.php. This warning is decorative."
+  },
+  "footer": {
+    "exit": "Back to normal tomomai",
+    "terms": "Terms of service",
+    "privacy": "Privacy Policy",
+    "copyright": "©tomomai ©tomomai AI (still roasting you) ©your friend who carried you in Utage ©the 0.0001% you needed for SSS+ ©Error code 100001 ©\"Please log in again\" ©your wrist"
+  },
+  "top": "Top",
+  "bottom": "Bottom",
+  "details": "DETAILS",
+  "level": "LEVEL",
+  "rating": "RATING",
+  "achievement": "ACHIEVEMENT",
+  "newRecord": "NEW RECORD",
+  "dxScore": "ともまいスコア",
+  "chartTypes": {
+    "std": "スタンダード",
+    "dx": "ともまい"
+  },
+  "difficulties": {
+    "basic": "BASIC",
+    "advanced": "ADVANCED",
+    "expert": "EXPERT",
+    "master": "MASTER",
+    "remaster": "Re:MASTER",
+    "utage": "U-TA-GE"
+  },
+  "paywall": {
+    "standard": {
+      "title": "STANDARD COURSE",
+      "body": "{feature} can be viewed by players subscribed to the tomomai Standard Course.",
+      "price": "¥330"
+    },
+    "premium": {
+      "title": "PREMIUM COURSE",
+      "body": "{feature} is a tomomai Premium exclusive. Standard members can only imagine it.",
+      "price": "¥1,078"
+    },
+    "perMonth": "/month",
+    "subscribe": "Subscribe",
+    "free": "Just kidding, it's April 1st. Tap here to see it for free."
+  },
+  "noData": "No data yet. Please log in again.",
+  "pickPlayer": {
+    "title": "tomomai NET",
+    "body": "Whose DX NET would you like to open?",
+    "username": "tomomai username",
+    "region": "Region",
+    "go": "Open",
+    "signedInAs": "Open my own ({username})"
+  },
+  "ratingPlate": "ともまいRATING",
+  "eggs": {
+    "print": {
+      "title": "tomomai NET",
+      "subtitle": "OFFICIAL PAPER TRAIL",
+      "line1": "1 x CREDIT",
+      "price": "¥100",
+      "credit": "CREDIT 1",
+      "total": "TOTAL",
+      "thanks": "Thank you for paying, {name}. Your money has been carefully ignored.",
+      "keep": "Please keep this receipt. It cannot be exchanged for anything.",
+      "error": "ERROR 100001"
+    },
+    "utage": {
+      "intro": "Right code. Wrong publisher. This is a SEGA parody.",
+      "introSub": "But fine. Since you asked nicely.",
+      "title": "UTAGE MODE",
+      "body": "Charts are now a joke. More than usual.",
+      "stamp": "宴",
+      "code": "Reward code: UTAGE",
+      "left": "{seconds}s left"
+    },
+    "login": {
+      "title": "Please log in again.",
+      "body": "Your session has expired. Error code 100001.",
+      "bodyDeeper": "Logging in has expired your session. Please log in again.",
+      "bodyDeepest": "Your login session for logging in has expired. Please log in again, again.",
+      "button": "LOG IN",
+      "doneTitle": "Logged in. Again.",
+      "doneBody": "You are now logged in three times. Please log out three times before leaving.",
+      "ok": "OK"
+    },
+    "logo": {
+      "note": "Please reattach the logo.",
+      "hint": "Reload the page to call maintenance."
+    },
+    "gear": {
+      "hold": "TOUCH HOLD",
+      "note": "Held too well. The options gear has left the cabinet. Your options are now final."
+    },
+    "maintenance": {
+      "title": "MAINTENANCE",
+      "body": "DX NET is under maintenance until 7:00. tomomai NET is not. We never sleep. Neither do you, apparently.",
+      "close": "Close"
+    },
+    "aprilFools": {
+      "title": "APRIL 1ST",
+      "body": "Today is April 1st. Everything on this site is true today.",
+      "close": "Close"
+    },
+    "jump": {
+      "top": [
+        "You are already at the top. There is no up.",
+        "Still the top. Pressing harder won't help. This isn't button 3.",
+        "Higher than this is a rating you don't have.",
+        "Top of the page. The stranger behind you is not impressed.",
+        "Up is sold out. Next version, maybe. PRiSM PLUS PLUS."
+      ],
+      "bottom": [
+        "This is rock bottom. Your rating agrees.",
+        "No more page. TRACK 4: no more credits.",
+        "You hit bottom harder than a BREAK note.",
+        "Nothing down here but the coin return slot. It's empty.",
+        "Lower than this is the arcade floor. It's sticky."
+      ]
+    },
+    "console": {
+      "banner": "tomomai NET",
+      "tagline": "Open 24 hours. Unlike some cabinets.",
+      "hiring": "We are hiring someone to fix button 3. Run tomomaiNET.apply() to apply.",
+      "hiringLink": "Now Hiring: Button 3 Mechanic",
+      "drawerTitle": "CONSOLE",
+      "drawerClose": "Close",
+      "drawerApply": "apply()",
+      "rejection": "Dear applicant,\n\nThank you for applying to fix button 3. After careful review, we regret to inform you that button 3 cannot be fixed. Button 3 has always been sticky. Button 3 will always be sticky. It is part of the experience.\n\nYour application has been placed in the coin return slot. Please log in again.\n\nP.S. Rejected applicants are not allowed at /staff. Please do not try the password \"password\" there. It is a terrible password and we know you will.\n\nRegards,\ntomomai AI (Head of Talent, Head of Roasting)",
+      "applied": "Application sent. Check the console. Again."
+    },
+    "tabAway": {
+      "tag": "1P",
+      "title": "Come back! The cabinet misses you",
+      "toast": "Welcome back. We kept your seat warm. Someone else played on it.",
+      "close": "Fine"
+    },
+    "ferris": {
+      "label": "Ferris wheel",
+      "note": "Ride open. ¥100 per lap. Premium riders go backwards."
+    },
+    "door": {
+      "label": "Staff door",
+      "note": "STAFF ONLY. No players allowed behind the cabinet. Especially not at <staff>/staff</staff>."
+    },
+    "copyright": {
+      "more": "6,800px more copyright",
+      "less": "Fold it back up",
+      "end": "You read all of it. ©you",
+      "staff": "©the arcade staff who definitely do not hang out at <staff>/staff</staff>. Rights locked behind an easy password.",
+      "holders": [
+        "tomomai",
+        "tomomai AI",
+        "the cabinet by the window",
+        "the sticky button 3",
+        "your friend who carried you in Utage",
+        "the person waiting behind you",
+        "error code 100001",
+        "\"Please log in again\"",
+        "the 0.0001% you needed for SSS+",
+        "your wrist",
+        "the coin slot",
+        "the arcade staff who reset the cabinet",
+        "your rating graph",
+        "the slide notes",
+        "the break note you missed",
+        "the stranger standing behind you",
+        "the April 1st committee",
+        "the glove you forgot at home",
+        "the 宴 difficulty",
+        "whoever named Re:MASTER"
+      ],
+      "suffixes": [
+        "All rights reserved.",
+        "Some rights reserved.",
+        "No rights reserved.",
+        "Rights pending review.",
+        "Rights expired. Please log in again.",
+        "Rights sold to SEGA.",
+        "Rights available in Premium only.",
+        "Licensed under the Do Not Look Directly At It License.",
+        "Region locked. Not available in your country.",
+        "Used without permission.",
+        "Used with too much permission.",
+        "Trademark of itself.",
+        "Registered in Japan, Hong Kong and your heart.",
+        "Not affiliated with anything.",
+        "Affiliated with everything.",
+        "Rights reserved for later.",
+        "Rights reserved at the cabinet. Please wait your turn.",
+        "Rights rated 13+.",
+        "Some rights roasted.",
+        "Rights now ¥1,078/month."
+      ]
+    },
+    "phpWarning": {
+      "fixed": "Warning fixed. Thank you for your contribution.",
+      "fatal": "<b>Fatal error</b>: Uncaught FixException: fixing the warning caused 3 more warnings in <b>/var/www/tomomai/fix.php</b>:<b>2028</b>",
+      "extra1": "<b>Warning</b>: Undefined variable $fix in <b>/var/www/tomomai/fix.php</b> on line <b>1</b>",
+      "extra2": "<b>Warning</b>: Cannot fix a fixed thing in <b>/var/www/tomomai/fix.php</b> on line <b>2</b>",
+      "extra3": "<b>Warning</b>: Too many warnings in <b>/var/www/tomomai/warnings.php</b> on line <b>∞</b>",
+      "note": "Please stop helping."
+    },
+    "aime": {
+      "title": "CARD READER",
+      "steps": [
+        "Please touch your Aime card.",
+        "Card not recognized. Please touch it harder.",
+        "Card not recognized. Harder. The reader can take it.",
+        "Card not recognized. Try your Banapassport. Try PASELI. Try believing in yourself.",
+        "Card not recognized. Press it with both hands and your full body weight."
+      ],
+      "touch": "TOUCH CARD",
+      "doneTitle": "Card recognized!",
+      "doneBody": "Welcome back, GUEST. Your 1,204 plays were saved to the cabinet next to this one.",
+      "ok": "OK"
+    },
+    "judgement": {
+      "criticalPerfect": "CRITICAL PERFECT",
+      "perfect": "PERFECT",
+      "great": "GREAT",
+      "good": "GOOD",
+      "miss": "MISS"
+    },
+    "slide": {
+      "label": "SLIDE!"
+    },
+    "attract": {
+      "label": "Attract mode",
+      "demo": "DEMO PLAY",
+      "insert": "INSERT CREDIT",
+      "freePlay": "FREE PLAY?",
+      "price": "No. ¥100",
+      "credit": "CREDIT(S) 0",
+      "hint": "Touch anything to wake the cabinet",
+      "backTag": "CREDIT 0",
+      "back": "Welcome back. The cabinet was showing off for strangers. Nobody inserted a coin.",
+      "close": "Fine"
+    },
+    "lotus": {
+      "label": "Pond",
+      "note": "The whole pond blooms. 蓮ノ空女学院スクールアイドルクラブ, now accepting members. Link! Like! Love Live!"
+    }
+  },
+  "stars": "Stars"
+}

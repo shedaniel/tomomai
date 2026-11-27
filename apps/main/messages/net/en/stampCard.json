@@ -1,0 +1,43 @@
+{
+  "title": "Stamp Card",
+  "intro": "Play maimai, get stamps. Fill a card, get a stamp.",
+  "subtitle": "Collect 10 stamps to get 1 more stamp!",
+  "total": "STAMPS : {count}",
+  "complete": "COMPLETE",
+  "reward": "+1 STAMP",
+  "filled": "{count} / 10",
+  "madeUp": "Play count is private, so these stamps are made up.",
+  "cards": {
+    "plays": {
+      "label": "Credit Card",
+      "source": "1 stamp per 100 credits. You have {count, number}."
+    },
+    "version": {
+      "label": "This Version",
+      "source": "1 stamp per 30 credits this version. You have {count, number}."
+    },
+    "scores": {
+      "label": "Score Collector",
+      "source": "1 stamp per 50 charts played. You have {count, number}."
+    },
+    "login": {
+      "label": "Login Bonus",
+      "source": "1 stamp per login. The last one needs one more login."
+    },
+    "bonus": {
+      "label": "Stamp Card Card",
+      "source": "1 stamp per COMPLETE card above. The reward is another stamp."
+    }
+  },
+  "noSnapshot": "No play data yet. These stamps were drawn by tomomai AI from imagination.",
+  "note": "Stamps cannot be exchanged for credits, presents, or a faster DX NET. Completing every card rewards you with 1 stamp.",
+  "secret": {
+    "label": "SECRET STAMP CARD",
+    "sealed": "Find a secret to open.",
+    "source": "1 stamp per secret found in this browser.",
+    "count": "{found} / {total}",
+    "completeStamp": "COMPLETE",
+    "complete": "COMPLETE. tomomai AI is impressed. Do not tell it we said that.",
+    "open": "SECRETS"
+  }
+}

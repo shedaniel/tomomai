@@ -1,0 +1,27 @@
+{
+  "title": "RECORD OF tomomai",
+  "info": "Your ともまいRATING history. Snapshots are listed newest first, one per upload.",
+  "infoAccent": "Rating graphs are a Premium Course feature. Premium Course also unlocks dark mode.",
+  "graph": {
+    "feature": "The rating graph",
+    "label": "Rating graph from {from} to {to}"
+  },
+  "delta": {
+    "first": "where it all began",
+    "song": "thanks to {song}",
+    "bigUp": "a new SSS+, probably",
+    "up": "tomomai has notes",
+    "flat": "you played and nothing happened",
+    "down": "how?"
+  },
+  "archived": {
+    "line1": "Only the latest {count} snapshots are shown. Older snapshots have been archived.",
+    "line2": "Please log in again to view archived snapshots."
+  },
+  "empty": "No snapshots yet. Please log in again.",
+  "locked": {
+    "info": "RECORD OF tomomai can only be viewed by the player it belongs to.",
+    "accent": "Not even the Premium Course can change that.",
+    "empty": "This page is between {name} and tomomai."
+  }
+}

@@ -1,0 +1,153 @@
+/* White box holding plates, like "SETTING NAMEPLATE" and each list section */
+.box {
+  margin: 14px 12px 0;
+  padding: 12px;
+  border-radius: 4px;
+  background: #fff;
+  box-shadow: 0 3px 0 #0002;
+}
+.boxHeading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 2px;
+  font-size: 15px;
+  font-weight: 700;
+}
+.setting { margin-top: 22px; }
+.setting .boxHeading::before,
+.setting .boxHeading::after {
+  content: "";
+  width: 14px;
+  height: 2px;
+  background: #222;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px;
+  margin: 12px 12px 0;
+}
+.chips span {
+  padding: 4px 10px;
+  border: 2px solid #111;
+  border-radius: 4px;
+  background: #cdeeff;
+  box-shadow: 0 3px 0 #111;
+  font-size: 12px;
+}
+
+.plate {
+  position: relative;
+  margin-top: 10px;
+  padding: 8px 10px;
+  border: 3px solid #ffa51f;
+  border-radius: 4px;
+}
+.plateLocked { border-color: #111; }
+.tag {
+  position: absolute;
+  top: 4px;
+  right: 8px;
+  font-size: 11px;
+  color: #ffa51f;
+}
+.plateLocked .tag { color: #999; }
+.name {
+  padding-right: 64px;
+  font-size: 14px;
+}
+.condition {
+  margin-top: 6px;
+  padding-top: 4px;
+  border-top: 3px dotted #ccc;
+  font-size: 11.5px;
+  color: #666;
+}
+
+.banner {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  height: 52px;
+  margin-top: 6px;
+  padding: 0 10px 0 64px;
+  overflow: hidden;
+  border: 3px solid #ffd21f;
+  font: 700 15px var(--net-font-pop), var(--net-font-jp), sans-serif;
+  letter-spacing: 0;
+  color: #fff;
+  -webkit-text-stroke: 5px #0004;
+  paint-order: stroke;
+  text-align: right;
+}
+.banner span {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.stamp {
+  position: absolute;
+  left: 5px;
+  top: 4px;
+  width: 52px;
+  rotate: -12deg;
+  font: 700 9px/1.05 var(--net-font-pop), sans-serif;
+  font-style: normal;
+  letter-spacing: 0;
+  text-align: left;
+  -webkit-text-stroke: 3px #0006;
+}
+.kiwami { background: repeating-linear-gradient(120deg, #ff5a3a 0 24px, #ff7f5a 24px 48px); }
+.shou { background: repeating-linear-gradient(120deg, #f2a900 0 24px, #ffc53a 24px 48px); }
+.shin { background: repeating-linear-gradient(120deg, #7b3fe0 0 24px, #9b6cf0 24px 48px); }
+.maimai { background: linear-gradient(90deg, #ff6f62, #ffb23a, #9be03a, #3fbcff, #b56cf7); }
+.login { background: #65c143; }
+.april { background: repeating-linear-gradient(120deg, #ff7a1a 0 24px, #ff9a4a 24px 48px); }
+.course { background: #ffa533; }
+.lockedLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.lockedLabel svg { flex: none; }
+.bannerLocked {
+  border-color: #bbb;
+  background: repeating-linear-gradient(120deg, #9a9a9a 0 24px, #ababab 24px 48px);
+  font-size: 16px;
+}
+
+.progress {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+  font-size: 11.5px;
+  color: #555;
+  white-space: nowrap;
+}
+.bar {
+  flex: 1;
+  height: 8px;
+  overflow: hidden;
+  border: 1.5px solid #111;
+  border-radius: 4px;
+  background: #e8e8e8;
+}
+.bar i {
+  display: block;
+  height: 100%;
+  background: #3490f4;
+}
+.plate:not(.plateLocked) .bar i { background: #ffa533; }
+
+.cta {
+  margin-top: 6px;
+  text-align: right;
+  font-size: 12px;
+}
+.cta a { color: #e0457b; text-decoration: underline; }

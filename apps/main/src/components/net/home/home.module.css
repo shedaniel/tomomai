@@ -1,0 +1,117 @@
+.buttons {
+  margin-top: 22px;
+  text-align: center;
+}
+.options {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 18px;
+  border: 3px solid #fff;
+  border-radius: 4px;
+  outline: 2px solid #3b1a7a;
+  background: #9558f0;
+  box-shadow: 0 4px 0 2px #3b1a7a;
+  font: 700 15px var(--net-font-pop), sans-serif;
+  color: #fff;
+  text-decoration: none;
+}
+.options big {
+  padding: 0 6px;
+  border-radius: 4px;
+  background: #fff;
+  font-size: 20px;
+  color: #7b3fe0;
+}
+.course {
+  display: inline-block;
+  margin-top: 16px;
+  padding: 6px 16px;
+  border: 2px solid #111;
+  border-radius: 4px;
+  background: #fff;
+  box-shadow: 0 4px 0 #111;
+  font: 700 16px var(--net-font-pop), sans-serif;
+  color: #fff;
+  -webkit-text-stroke: 5px #3dbb3d;
+  paint-order: stroke;
+  text-decoration: none;
+}
+
+.menu {
+  margin: 22px 12px 0;
+  padding: 10px 22px;
+  border: 4px solid #fff;
+  border-radius: 4px;
+  outline: 2px solid #2b8fe6;
+  outline-offset: -6px;
+  background: #fff;
+}
+.item {
+  display: flex;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 3px dotted #bbb;
+}
+.item:last-child { border-bottom: 0; }
+.icon {
+  position: relative;
+  flex: none;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  width: 110px;
+  height: 62px;
+  overflow: hidden;
+  padding-bottom: 3px;
+  border: 5px solid #fff;
+  border-radius: 4px;
+  box-shadow: 0 0 0 1px #ddd;
+}
+.icon svg {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 62px;
+  height: 44px;
+  translate: -50% 0;
+  overflow: visible;
+  filter: drop-shadow(1.5px 0 0 #fff) drop-shadow(-1.5px 0 0 #fff) drop-shadow(0 1.5px 0 #fff) drop-shadow(0 -1.5px 0 #fff);
+}
+.icon span {
+  position: relative;
+  z-index: 1;
+  font: 700 12px var(--net-font-pop), sans-serif;
+  color: #fff;
+  -webkit-text-stroke: 3.5px #4b3a2f;
+  paint-order: stroke;
+}
+.links {
+  list-style: none;
+  font-size: 13.5px;
+  line-height: 1.75;
+}
+.links a { color: #2aa8f2; text-decoration: underline; }
+.links a.joke { color: #e0457b; }
+@media (max-width: 400px) {
+  .menu { padding: 10px 12px; }
+  .icon { width: 84px; }
+}
+.options svg {
+  flex: none;
+  padding: 1px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 0 0 1.5px #3b1a7a;
+}
+
+.loginLink {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}

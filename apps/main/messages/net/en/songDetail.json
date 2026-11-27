@@ -1,0 +1,33 @@
+{
+  "title": "Song Scores",
+  "back": "BACK",
+  "version": "VERSION",
+  "bpm": "BPM",
+  "constant": "CONST {constant}",
+  "estimated": "estimated",
+  "notPlayed": "Not played yet. The cabinet is waiting.",
+  "lastPlayed": "Last played date",
+  "playCount": "PLAY COUNT",
+  "playCountValue": "{count} (that we saw)",
+  "noRecent": "No recent plays on record",
+  "hiddenPlays": "Play dates are private",
+  "dxScore": "{score} / {max}",
+  "noSnapshot": "No play data yet. Please log in again.",
+  "favorite": {
+    "add": "Add to favorites",
+    "added": "ADDED (SOMEWHERE)",
+    "nope": {
+      "1": "Favorites are a Premium Course feature. Your heart is not a payment method.",
+      "2": "Still Premium.",
+      "3": "Premium hasn't changed. It has been two seconds.",
+      "4": "The stranger behind you is waiting for the cabinet. And for you to stop."
+    },
+    "fine": "Fine. Added to favorites. There is no favorites page."
+  },
+  "worldRecord": {
+    "heading": "WORLD RECORD",
+    "feature": "The world record holder",
+    "holder": "1st: {name}, probably",
+    "note": "Source: tomomai AI, who has not checked."
+  }
+}

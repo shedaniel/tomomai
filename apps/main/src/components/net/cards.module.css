@@ -1,0 +1,368 @@
+/* ── Profile card ───────────────────────── */
+.profile {
+  margin: 24px 16px 0;
+  padding: 10px;
+  border: 2px solid #111;
+  border-radius: 4px;
+  background: #9fdcfb;
+  box-shadow: 2px 3px 0 #0006;
+}
+.profileCard {
+  display: flex;
+  gap: 10px;
+  padding: 10px;
+  border-radius: 4px;
+  background: #fff;
+  box-shadow: 0 2px 0 #0002;
+}
+.avatar {
+  flex: none;
+  width: 84px;
+  height: 84px;
+  overflow: hidden;
+  border: 2px solid #ddd;
+  border-radius: 4px;
+  background: #e9f3ff;
+}
+.avatar img { width: 100%; height: 100%; object-fit: cover; }
+.profileBody { flex: 1; min-width: 0; }
+.trophy {
+  overflow: hidden;
+  padding: 3px 6px;
+  border: 2px solid #c25a26;
+  border-radius: 4px;
+  background: #f58a4b;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 11px;
+  font-weight: 700;
+  color: #fff;
+  -webkit-text-stroke: 2.5px #8a3a14;
+  paint-order: stroke;
+}
+.trophy[data-type="bronze"] { background: #cf8a55; border-color: #8a4f22; }
+.trophy[data-type="silver"] { background: #d7dbe2; border-color: #7d838f; -webkit-text-stroke-color: #4d535e; }
+.trophy[data-type="gold"] { background: #f7cc3a; border-color: #b07a00; -webkit-text-stroke-color: #7a5300; }
+.trophy[data-type="rainbow"] { background: linear-gradient(90deg, #ff8a8a, #ffd36b, #8ae68a, #7ac8ff, #c49bff); border-color: #7a5ab8; -webkit-text-stroke-color: #4a2f80; }
+.nameRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 7px;
+}
+.name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  padding: 2px 8px;
+  border: 2px solid #ccc;
+  border-radius: 4px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  letter-spacing: 5px;
+  font: 16px "Courier New", monospace;
+}
+@media (max-width: 440px) {
+  .name { letter-spacing: 1px; font-size: 14px; }
+}
+.metaRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 2px dotted #bbb;
+  font-size: 13px;
+}
+.metaRow img { height: 26px; width: auto; }
+.star { display: flex; align-items: center; gap: 3px; }
+.starButton { display: flex; padding: 0; border: 0; background: none; cursor: default; }
+.profileFoot {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+.comment {
+  flex: 1;
+  min-height: 90px;
+  padding: 10px;
+  border-radius: 4px;
+  background: #e1f3fd;
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: #2b6f99;
+}
+.counts {
+  margin: 8px 4px 0;
+  text-align: right;
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+/* ── Compact song row (rating / song score lists) ── */
+.row {
+  position: relative;
+  margin: 10px 12px 0;
+  padding-bottom: 6px;
+  border-radius: 4px;
+  background: var(--fill);
+  box-shadow: 0 3px 0 #0003;
+}
+.rowHead {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 22px;
+  padding-left: 4px;
+  border-radius: 4px 4px 0 0;
+  background: var(--strip);
+}
+.rowStars {
+  display: inline-flex;
+  gap: 1px;
+}
+.tag {
+  position: absolute;
+  right: 2px;
+  top: -10px;
+  padding: 0 6px;
+  border-radius: 4px;
+  background: #fff;
+  box-shadow: 0 1px 0 #0003;
+  font: 800 9.5px var(--net-font-jp), sans-serif;
+  color: #ff3f6c;
+}
+.tagDx { color: #ff3f6c; }
+.tagStd { color: #2b8fe6; }
+.rowMain {
+  display: flex;
+  gap: 6px;
+  padding: 0 6px;
+}
+.rowTitle {
+  flex: 1;
+  min-width: 0;
+  align-self: center;
+  overflow: hidden;
+  padding: 5px 8px;
+  border-radius: 4px;
+  background: #333;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12.5px;
+  color: #fff;
+}
+a.rowLink { text-decoration: none; }
+a.rowLink::after {
+  content: " ›";
+  color: #ffd23a;
+}
+.rowScore {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 6px 0;
+}
+.pct {
+  min-width: 96px;
+  padding: 1px 8px;
+  border-radius: 4px;
+  background: #fff;
+  text-align: right;
+  font-size: 12.5px;
+}
+.dx {
+  flex: 1;
+  display: flex;
+  justify-content: space-between;
+  gap: 6px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: #fff;
+  font-size: 12px;
+}
+.dx em {
+  font: 800 8px var(--net-font-jp), sans-serif;
+  font-style: normal;
+  white-space: nowrap;
+  color: #3ed63e;
+  -webkit-text-stroke: 2.5px #1f6b1f;
+  paint-order: stroke;
+}
+.extra {
+  margin-left: auto;
+  padding: 1px 8px;
+  border-radius: 4px;
+  background: #fff;
+  font: 700 12px var(--net-font-pop), sans-serif;
+  color: #555;
+}
+.rank2 { min-width: 56px; justify-content: center; }
+
+/* ── Big record card (game record) ───────── */
+.record {
+  position: relative;
+  margin: 34px 16px 0;
+}
+.recordDiff {
+  position: absolute;
+  left: 0;
+  top: -21px;
+  font: 700 19px var(--net-font-pop), sans-serif;
+  color: #fff;
+  -webkit-text-stroke: 6px var(--ink);
+  paint-order: stroke;
+  filter: drop-shadow(1px 1px 0 #fff) drop-shadow(-1px -1px 0 #fff);
+}
+.track {
+  position: absolute;
+  right: 0;
+  top: -24px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 22px;
+  padding: 0 14px 0 30px;
+  border-radius: 4px;
+  background: #fff;
+  box-shadow: -6px 4px 0 #2b9de8;
+  font-size: 11.5px;
+}
+.track b { font-weight: 500; color: #e3242b; }
+.recordCard {
+  padding: 14px 12px 12px;
+  border-radius: 4px;
+  background: var(--fill);
+  box-shadow: 0 3px 0 var(--strip);
+}
+.recordTop {
+  display: flex;
+  gap: 8px;
+}
+.recordTitle {
+  flex: 1;
+  min-width: 0;
+  align-self: center;
+  overflow: hidden;
+  padding: 6px 10px;
+  border-radius: 4px;
+  background: #fff;
+  box-shadow: 0 2px 0 #0002;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+}
+.recordBody {
+  display: flex;
+  margin-top: 8px;
+}
+.jacket {
+  position: relative;
+  flex: none;
+  width: 196px;
+  height: 196px;
+  border: 2px solid #fff;
+  background: repeating-linear-gradient(135deg, #fff3b0 0 14px, #c9f0b0 14px 28px);
+}
+.jacket img { width: 100%; height: 100%; object-fit: cover; }
+.jacketTag {
+  position: absolute;
+  left: -6px;
+  top: -8px;
+  padding: 0 6px;
+  border-radius: 4px;
+  background: #fff;
+  box-shadow: 0 1px 0 #0003;
+  font: 800 10px var(--net-font-jp), sans-serif;
+}
+.recordRight { flex: 1; min-width: 0; }
+.achLabel {
+  width: 66%;
+  padding: 2px 12px;
+  border-radius: 0 3px 3px 0;
+  background: color-mix(in srgb, var(--strip) 55%, #777);
+  font: 700 10px var(--net-font-pop), sans-serif;
+  letter-spacing: 0.5px;
+  color: #fff;
+}
+.achRow {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-top: 22px;
+  padding: 0 6px 0 16px;
+}
+.newRecord {
+  display: block;
+  text-align: right;
+  white-space: nowrap;
+  font: 700 9px var(--net-font-pop), sans-serif;
+  color: #ff9a1a;
+  -webkit-text-stroke: 2px #fff;
+  paint-order: stroke;
+}
+.achValue {
+  font-size: 34px;
+  line-height: 1;
+  color: #fff;
+  -webkit-text-stroke: 4px #2b2b2b;
+  paint-order: stroke;
+}
+.achValue small { font-size: 21px; }
+.bigRank {
+  align-self: flex-start;
+  margin-top: -34px;
+}
+.dots {
+  margin: 8px 0 8px 10px;
+  border-top: 3px dotted #fff;
+}
+.dxBox {
+  position: relative;
+  margin-left: 10px;
+  padding: 6px;
+  border-radius: 4px;
+  background: #fff;
+}
+.dxBox .newRecord { position: absolute; right: 6px; top: -11px; }
+.dxBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 5px 8px;
+  border-radius: 4px;
+  background: #3b3b3b;
+  font-size: 15px;
+  color: #fff;
+}
+.dxBar b {
+  font: 800 11px var(--net-font-jp), sans-serif;
+  color: #3ed63e;
+  -webkit-text-stroke: 3px #fff;
+  paint-order: stroke;
+}
+.dxStars {
+  width: 58px;
+  margin-left: auto;
+  padding: 0 4px;
+  border-radius: 0 0 4px 4px;
+  background: #3b3b3b;
+  text-align: right;
+  font-size: 11px;
+  color: #7cf05a;
+}
+.medals {
+  display: flex;
+  gap: 10px;
+  padding: 6px 8px;
+}
+.details {
+  margin-top: 8px;
+  text-align: right;
+}
+@media (max-width: 440px) {
+  .jacket { width: 140px; height: 140px; }
+  .achValue { font-size: 26px; }
+  .achValue small { font-size: 16px; }
+}

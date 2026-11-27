@@ -1,0 +1,84 @@
+{
+  "title": "STANDARD COURSE",
+  "intro": "Some corners of tomomai NET are reserved for course members. Every tile and tab with an STD badge has been quietly leading you here.",
+  "introAccent": "Prices include tax. Prices also include a joke.",
+  "tomomile": "tomomile : {count, number}",
+  "perMonth": "/month",
+  "recommended": "RECOMMENDED",
+  "courses": {
+    "light": {
+      "name": "Light Course",
+      "price": "¥0",
+      "lead": "It is just the normal tomomai site.",
+      "f1": "Every score you uploaded",
+      "f2": "Ratings, plates, maps and charts",
+      "f3": "A footer of reasonable height",
+      "action": "Open normal tomomai"
+    },
+    "standard": {
+      "name": "Standard Course",
+      "price": "¥330",
+      "lead": "The course every locked tile keeps nagging you about.",
+      "f1": "FRIENDS and RANKING tiles",
+      "f2": "STAMP CARD, 段位認定, ICON, FRAME and TITLE tabs",
+      "f3": "A stroll through Standard Courseちほー",
+      "f4": "The Standard Course 会員 name plate",
+      "action": "Subscribe"
+    },
+    "premium": {
+      "name": "Premium Course",
+      "price": "¥1,078",
+      "lead": "Everything in Standard, plus dark mode.",
+      "f1": "Dark mode. That is the whole feature.",
+      "f2": "Your rating in a slightly shinier font",
+      "f3": "Priority access to \"Please log in again\"",
+      "action": "Subscribe"
+    }
+  },
+  "fineprint": "tomomai NET never asks for payment details. There is no checkout. There never was.",
+  "current": "CURRENT COURSE",
+  "enjoy": "Enjoy your course",
+  "downgrade": "Downgrade (why?)",
+  "member": {
+    "standard": {
+      "title": "You are a Standard Course member!",
+      "body": "Every STD lock is gone. The FRIENDS and RANKING tiles still lead here, because we never built them."
+    },
+    "premium": {
+      "title": "You are a tomomai Premium member!",
+      "body": "Everything is unlocked, the ribbon under the logo is gold, and dark mode is yours. Your rating is unchanged."
+    },
+    "darkOn": "Turn on Premium dark mode",
+    "darkOff": "Turn off dark mode (please)"
+  },
+  "cancel": {
+    "start": "Cancel subscription",
+    "step1": "Are you sure you want to cancel?",
+    "step2": "Really? tomomai will remember this.",
+    "step3": "Last chance. Your PREMIUM ribbon will be very sad.",
+    "keep": "Keep my course",
+    "confirm": "Yes, cancel",
+    "doneTitle": "Subscription cancelled",
+    "doneBody": "You have been refunded ¥0. All the locks are back, exactly where you left them."
+  },
+  "cancelFree": {
+    "start": "Cancel",
+    "ask": "We're sorry to see you go. Where would you go?",
+    "choices": {
+      "other": "Another rhythm game",
+      "outside": "Outside",
+      "nextDoor": "The cabinet next door"
+    },
+    "replies": {
+      "other": "The other one also wants ¥100 a credit. We checked.",
+      "outside": "Outside has no BREAK notes. We checked that too.",
+      "nextDoor": "That is also maimai. It is the same washing machine."
+    },
+    "confirmAsk": "Cancel the Light Course anyway? You would save ¥0 a month.",
+    "keep": "Keep my ¥0 course",
+    "confirm": "Cancel anyway",
+    "doneTitle": "You cannot cancel nothing.",
+    "doneBody": "Your Light Course is still here. It is free. It will always be here.",
+    "close": "OK"
+  }
+}

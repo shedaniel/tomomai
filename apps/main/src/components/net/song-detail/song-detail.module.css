@@ -1,0 +1,192 @@
+.card {
+  display: flex;
+  gap: 12px;
+  margin: 16px 12px 0;
+  padding: 10px;
+  border-radius: 4px;
+  background: #fff;
+  box-shadow: 0 3px 0 #0002;
+}
+.jacket {
+  flex: none;
+  width: 180px;
+  height: 180px;
+  border: 2px solid #fff;
+  border-radius: 4px;
+  outline: 1px solid #ddd;
+  background: repeating-linear-gradient(135deg, #fff3b0 0 14px, #c9f0b0 14px 28px);
+  overflow: hidden;
+}
+.jacket img { width: 100%; height: 100%; object-fit: cover; }
+.info {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+.infoTop {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px 8px;
+}
+.tag {
+  padding: 1px 10px;
+  border: 2px solid currentColor;
+  border-radius: 4px;
+  background: #fff;
+  box-shadow: 0 2px 0 #0002;
+  font: 800 11px var(--net-font-jp), sans-serif;
+}
+.tagDx { color: #ff3f6c; }
+.tagStd { color: #2b8fe6; }
+.genre { font-size: 12.5px; color: #2b8fe6; }
+.name {
+  margin-top: 10px;
+  padding-bottom: 6px;
+  border-bottom: 2px solid #888;
+  font-size: 17px;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+.artist {
+  margin-top: 6px;
+  font-size: 12.5px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  margin-top: 8px;
+  font-size: 12px;
+}
+.meta > div { display: flex; gap: 6px; min-width: 0; }
+.meta dt { font: 800 11px var(--net-font-pop), sans-serif; color: #2d4b8c; }
+.meta dd { min-width: 0; overflow-wrap: anywhere; }
+.favorite { align-self: flex-start; margin-top: 10px; }
+.favoriteNope {
+  margin-top: 6px;
+  font-size: 11.5px;
+  line-height: 1.45;
+  color: #e0457b;
+}
+
+.chart {
+  margin: 14px 12px 0;
+  padding: 6px 8px 8px;
+  border-radius: 4px;
+  background: var(--fill);
+  box-shadow: 0 3px 0 var(--strip);
+}
+.chartHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px 8px;
+  margin-bottom: 6px;
+}
+.constant {
+  padding: 0 8px;
+  border-radius: 4px;
+  background: #ffffffcc;
+  font-size: 12px;
+  font-weight: 700;
+}
+.constant small { margin-left: 4px; font-weight: 400; color: #777; }
+.chartBody {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.medals {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+.noRank { width: 54px; }
+.stars { display: inline-flex; gap: 1px; margin-left: 2px; }
+.plays {
+  flex: 1 1 170px;
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  padding: 4px 8px;
+  border-radius: 4px;
+  background: #3b3b3b;
+  color: #fff;
+  font-size: 12px;
+}
+.plays > div { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0 8px; }
+.plays dt { color: #d8d8d8; }
+.scoreLine {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 6px;
+}
+.pct {
+  min-width: 96px;
+  padding: 1px 8px;
+  border-radius: 4px;
+  background: #fff;
+  text-align: right;
+  font-size: 13px;
+}
+.dx {
+  flex: 1 1 160px;
+  display: flex;
+  justify-content: space-between;
+  gap: 6px;
+  min-width: 0;
+  padding: 1px 8px;
+  border-radius: 4px;
+  background: #fff;
+  font-size: 13px;
+}
+.dx em {
+  font: 800 10px var(--net-font-jp), sans-serif;
+  font-style: normal;
+  color: #3ed63e;
+  -webkit-text-stroke: 2.5px #1f6b1f;
+  paint-order: stroke;
+}
+.unplayed {
+  margin-top: 6px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: #ffffffaa;
+  font-size: 12px;
+  color: #555;
+}
+
+.record {
+  text-align: center;
+  font: 700 16px var(--net-font-pop), sans-serif;
+  color: #c2861a;
+}
+.recordNote {
+  margin-top: 4px;
+  text-align: center;
+  font-size: 11.5px;
+  color: #777;
+}
+
+.actions {
+  display: flex;
+  justify-content: center;
+  margin: 22px 16px 0;
+}
+
+@media (max-width: 440px) {
+  .card { flex-direction: column; align-items: center; }
+  .jacket { width: 160px; height: 160px; }
+  .info { width: 100%; }
+  .name { font-size: 15px; }
+}

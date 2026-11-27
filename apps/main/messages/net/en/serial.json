@@ -1,0 +1,49 @@
+{
+  "title": "SERIAL CODE",
+  "label": "Serial code",
+  "placeholder": "Enter serial code",
+  "notice": "※Please Note:",
+  "rule1": "・Enter the serial code using half-width numbers only.",
+  "rule2": "・If the maximum limit is exceeded, the items will be discarded.",
+  "rule3": "・Letters are not allowed. Some letters are allowed. We won't say which.",
+  "submit": "送信",
+  "empty": "Please enter a serial code. Even a made-up one.",
+  "used": "This serial code has already been used by you, in a dream.",
+  "back": "BACK",
+  "rewards": {
+    "php": {
+      "title": "SERIAL CODE ACCEPTED",
+      "body": "You received 1x PHP Elephant (icon). It is blue and it is tired."
+    },
+    "aprilfools": {
+      "title": "SERIAL CODE ACCEPTED",
+      "body": "You received Premium Course for 0 seconds. It has already expired."
+    },
+    "sega": {
+      "title": "BRAND LOYALTY",
+      "body": "You received 1x SEGA logo (sticker). Please apply it to the cabinet you already pay rent to."
+    },
+    "utage": {
+      "title": "宴 UNLOCKED",
+      "body": "You received 1x Utage chart. Its level is 宴. Nobody knows what that means. Good luck."
+    },
+    "chunithm": {
+      "title": "WRONG CABINET",
+      "body": "This code is for the cabinet next door. Please walk 3 meters left and queue again."
+    },
+    "hunter2": {
+      "title": "PASSWORD ACCEPTED",
+      "body": "You typed *******? Weird, I only see *******."
+    },
+    "tomomai": {
+      "title": "SELF-PROMOTION",
+      "body": "You received 1x tomomai sticker. It says tomomai. That is the whole design."
+    },
+    "iddqd": {
+      "title": "GOD MODE",
+      "body": "Degreelessness mode on. Your rating is still {rating}."
+    },
+    "iddqdNoRating": "Degreelessness mode on. Your rating is still whatever it was. Please log in again."
+  },
+  "close": "OK"
+}

@@ -22,6 +22,15 @@ const privacyColumns = {
  * only kept out of the sitemap, search engines and in-site search.
  */
 export async function resolvePublicUserByUsername(game: CanonicalGameId, username: string) {
+  return resolveUserByUsername(game, username, null);
+}
+
+/** Like resolvePublicUserByUsername, but the profile's owner gets it even while it is unpublished. */
+export async function resolveUserByUsernameForViewer(game: CanonicalGameId, username: string, viewerId: string | null | undefined) {
+  return resolveUserByUsername(game, username, viewerId ?? null);
+}
+
+async function resolveUserByUsername(game: CanonicalGameId, username: string, viewerId: string | null) {
   const reserved = await GAME_SERVER_MODULES[game].reserved?.user(username);
   if (reserved) return reserved;
 
@@ -48,7 +57,7 @@ export async function resolvePublicUserByUsername(game: CanonicalGameId, usernam
 
   const userData = userRecord[0];
 
-  if (!userData.publishProfile) {
+  if (!userData.publishProfile && userData.id !== viewerId) {
     throw new TRPCError({
       code: "NOT_FOUND",
       message: "Profile not published",

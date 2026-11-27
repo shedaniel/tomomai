@@ -1,0 +1,55 @@
+{
+  "nudge": {
+    "eyebrow": "APRIL 1st ONLY!!",
+    "eyebrowUpgrade": "STANDARD IS NOT ENOUGH",
+    "title": "Go tomomai Premium",
+    "oldPrice": "¥9,999",
+    "price": "¥1,078",
+    "perMonth": "/month",
+    "endsIn": "This offer ends in",
+    "extended": "{count, plural, one {Offer extended!} other {Offer extended # times!}} Ends in",
+    "perks": {
+      "p1": "See songs 4 to 50 of your own rating",
+      "p2": "Recent plays past TRACK 03",
+      "p3": "Dark mode (it is a CSS filter)",
+      "p4": "A gold PREMIUM ribbon under the logo",
+      "p5": "\"Please log in again\" now says please twice"
+    },
+    "buy": "Get Premium",
+    "decline": "No thanks, I enjoy being limited",
+    "closeLabel": "Close",
+    "sad": {
+      "title": "Are you sure?",
+      "body": "tomomai was really looking forward to this. Your rating will not go up either way, but it will feel a little lonelier.",
+      "buy": "OK fine, get Premium",
+      "decline": "Yes, I am sure. Leave me alone.",
+      "again": "{count, plural, one {You said no once before.} other {You said no # times before.}} tomomai is keeping count."
+    },
+    "remind": "Remind me later",
+    "eyebrowReminder": "YOU ASKED US TO REMIND YOU",
+    "final": {
+      "title": "We'll stop asking.",
+      "aside": "(We won't.)",
+      "body": "Three no's. tomomai has written this down next to your slides that were too early.",
+      "close": "Thank you, I guess"
+    }
+  },
+  "thanks": {
+    "title": "THANK YOU!!",
+    "kana": "ありがとう！",
+    "medal": {
+      "standard": "STANDARD",
+      "premium": "PREMIUM"
+    },
+    "body": {
+      "standard": "Welcome to the <strong>Standard Course</strong>. Every STD lock is gone and the tiles finally stopped nagging you.",
+      "premium": "Welcome to <strong>tomomai Premium</strong>. Everything is unlocked, dark mode is in the SHOP, and your rating is exactly the same."
+    },
+    "fine": "You were charged ¥0. It's April 1st. Nothing here costs anything, and it is saved only in this browser.",
+    "close": "Enjoy!"
+  },
+  "badge": {
+    "standard": "STANDARD COURSE",
+    "premium": "PREMIUM"
+  }
+}
